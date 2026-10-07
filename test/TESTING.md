@@ -56,6 +56,14 @@ gas exhaustion, malformed returns, blocking, pauses, and erased token runtime.
 The 27,900,000-gas external-call budget checks redemption liveness without comparing
 `gasleft()` across Foundry's isolated calls.
 
+An additional 128-run fuzz test mixes transfer and balance-read failures across all
+64 assets, with existing claims belonging to another holder, partial deficits, and
+direct donations. It checks redemption rounding with independent floor inequalities,
+fee routing, preservation of prior claims, and exact payment-or-debt accounting.
+Real custody is inspected after restoring mock reads, so a failed transfer cannot
+silently move tokens. The same gas budget applies while deposit pauses, asset closes,
+broken feeds, and a zero NAV cap are active.
+
 The existing governance, price, cap, probation, loss, and access-control tests remain
 part of the full suite. Fixed-price round-trip properties make no claim about the
 accepted lagging-feed profit risk or retired assets' zero NAV contribution. Local
