@@ -27,6 +27,7 @@ export function useWallet(refresh: () => void) {
   const [message, setMessage] = useState("");
   const [hash, setHash] = useState<Hex>();
   const [busy, setBusy] = useState(false);
+  const [confirmed, setConfirmed] = useState<{ hash: Hex; functionName: string }>();
   useEffect(() => {
     const p = window.ethereum;
     if (!p) return;
@@ -132,7 +133,8 @@ export function useWallet(refresh: () => void) {
         throw new Error(
           "The transaction reverted. Refresh the data before retrying.",
         );
-      setMessage("Transaction confirmed. Vault data refreshed.");
+      setConfirmed({ hash: tx, functionName: s.functionName });
+      setMessage(s.functionName === "deposit" ? "Deposit confirmed" : "Transaction confirmed. Vault data refreshed.");
       refresh();
     } catch (e) {
       const message = await explainAction(e, s);
@@ -148,6 +150,7 @@ export function useWallet(refresh: () => void) {
     message,
     hash,
     busy,
+    confirmed,
     connect,
     switchChain,
     send,

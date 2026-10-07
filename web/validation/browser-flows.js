@@ -30,6 +30,7 @@ async (page) => {
  o.failAggregate=true;o.failFeed=true;
  await page.getByRole('button',{name:'Refresh vault'}).click();await page.waitForFunction(()=>!document.querySelector('button.refresh').disabled);
  ensure(await page.locator('.stock-card').count()===3,'Aggregate failure recovers every stock individually');
+ await page.locator('.stock-card').nth(1).getByText('Price age: unreadable',{exact:true}).waitFor();
  ensure((await page.locator('.stock-card').nth(1).innerText()).includes('unreadable'),'Failed feed marked unreadable while healthy stock remains priced');
  ensure((await page.locator('.stock-card').nth(0).innerText()).includes('$100'),'Healthy feed survives another failed read');
  ensure((await page.locator('.stats').innerText()).includes('unreadable'),'Partial held-price NAV is unreadable');

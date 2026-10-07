@@ -4,7 +4,7 @@ async (page) => {
  const clickTx=async (locator)=>{const n=await page.evaluate(()=>window.__testWallet.sent.length);await locator.click();await page.waitForFunction(n=>window.__testWallet.sent.length>n,n);await page.waitForFunction(()=>!document.querySelector('.wallet-status')?.textContent.includes('Checking transaction'));};
  const panel=(title)=>page.locator('.panel').filter({has:page.getByRole('heading',{name:title,exact:true})});
  const submit=async(title,values={},confirm=false)=>{const p=panel(title);for(const [label,value] of Object.entries(values))await p.getByLabel(label,{exact:false}).fill(value);if(confirm)await p.getByRole('checkbox').check();await clickTx(p.locator('button[type=submit]'));};
- await page.getByRole('link',{name:'Owner',exact:true}).click();
+ await page.getByRole('link',{name:'Owner controls',exact:true}).click();
  await page.getByRole('button',{name:'Execute',exact:true}).waitFor();
  ensure(await page.getByRole('button',{name:'Execute',exact:true}).count()===1,'Only successful execution simulation shows Execute');
  ensure((await page.locator('main').innerText()).includes('waiting, executable from'),'Failed execute simulation shows reason');
@@ -42,6 +42,7 @@ async (page) => {
  await submit('Finalize genesis',{},true);
  f.calls[f.VAULT+':'+f.selector.allAssets]=f.populatedAssets;
  await page.getByRole('button',{name:'Refresh vault'}).click();await page.waitForFunction(()=>!document.querySelector('button.refresh').disabled);
+ await page.getByRole('link',{name:'Redeem',exact:true}).click();
  await page.getByLabel('Receiving address (optional)').fill('');await clickTx(page.getByRole('button',{name:'Claim CHAR'}));
  ensure(o.errors.length===0,'All owner reads and simulations preserve gas limits');
  return {results,sent:await page.evaluate(()=>window.__testWallet.sent)};

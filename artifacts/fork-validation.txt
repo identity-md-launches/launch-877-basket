@@ -1,24 +1,28 @@
 Compiling 1 files with Solc 0.8.26
-Solc 0.8.26 finished in 10.22s
+Solc 0.8.26 finished in 7.01s
 Compiler run successful!
 
 Ran 4 tests for test/WebsiteFork.t.sol:WebsiteForkTest
-[PASS] testWebsiteAllOwnerControlsAndProposalKinds() (gas: 3942212)
+[PASS] testWebsiteAllOwnerControlsAndProposalKinds() (gas: 3651524)
 Logs:
-  Fork block: 82772718
+  Fork block: 82830094
+  Live stock count before local fixture reset: 25
 
-[PASS] testWebsiteCapsBucketAndWaitingState() (gas: 2394579)
+[PASS] testWebsiteCapsBucketAndWaitingState() (gas: 2172279)
 Logs:
-  Fork block: 82772718
+  Fork block: 82830094
+  Live stock count before local fixture reset: 25
 
-[PASS] testWebsiteLaunchDepositRedeemClaimLoss() (gas: 1811781)
+[PASS] testWebsiteLaunchDepositRedeemClaimLoss() (gas: 1589481)
 Logs:
-  Fork block: 82772718
+  Fork block: 82830094
+  Live stock count before local fixture reset: 25
 
-[PASS] testWebsiteRetirementVoidsProposalsAndFreesFeed() (gas: 2150906)
+[PASS] testWebsiteRetirementVoidsProposalsAndFreesFeed() (gas: 1860206)
 Logs:
-  Fork block: 82772718
+  Fork block: 82830094
+  Live stock count before local fixture reset: 25
 
-Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 10.38s (21.45s CPU time)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 10.22s (20.23s CPU time)
 
-Ran 1 test suite in 10.38s (10.38s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)
+Ran 1 test suite in 10.22s (10.22s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

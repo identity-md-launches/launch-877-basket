@@ -8,7 +8,7 @@ async (page) => {
   const key=(name,args=[])=>f.VAULT+':'+data(name,args).toLowerCase();
   const set=(name,value,args=[])=>{f.calls[key(name,args)]=encodeFunctionResult({abi,functionName:name,result:value});};
   const refresh=async()=>{await page.getByRole('button',{name:'Refresh vault'}).click();await page.waitForFunction(()=>document.querySelector('button.refresh')?.disabled===false);};
-  const nav=async name=>{await page.getByRole('navigation').getByRole('link',{name,exact:true}).click();};
+  const nav=async name=>{await (['Owner','Losses'].includes(name)?page.locator('footer').getByRole('link',{name:name==='Owner'?'Owner controls':name,exact:true}):page.getByRole('navigation').getByRole('link',{name,exact:true})).click();};
   const quote=async()=>{await page.getByLabel('Amount',{exact:true}).fill('10');await page.getByRole('button',{name:'Preview deposit',exact:true}).click();await page.getByRole('heading',{name:'Deposit preview'}).waitFor();};
   const txCount=()=>page.evaluate(()=>window.__testWallet.sent.length);
   await nav('Deposit');await quote();
@@ -88,7 +88,7 @@ async (page) => {
   await page.getByRole('heading',{name:'Redemption preview'}).waitFor();
   ensure(await page.getByRole('button',{name:'Redeem BASK',exact:true}).isDisabled(),'Disconnected visitor can preview redemption with retired legs');
   const layout=[];
-  for(const width of [320,768,1440]){
+  for(const width of [320,375,768,1440]){
     await page.setViewportSize({width,height:1000});
     for(const name of ['Vault','Deposit','Redeem','Owner','Losses','Docs']){
       await nav(name);

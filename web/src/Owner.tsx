@@ -199,18 +199,18 @@ export function Pairings({ assets }: { assets: Pairing[] }) {
         <tbody>
           {assets.map((a) => (
             <tr key={a.token} className={pairingMatches(a.symbol, a.description) ? "" : "warning"}>
-              <th scope="row">
+              <th scope="row"><span className="mobile-field" aria-hidden="true">Stock Token</span>
                 <bdi>{a.symbol}</bdi>
                 <AddressLink value={a.token} />
               </th>
-              <td>
+              <td><span className="mobile-field" aria-hidden="true">Feed description</span>
                 <span className="chain-text">
                   <bdi>{a.description}</bdi>
                 </span>
                 {!pairingMatches(a.symbol, a.description) && <strong className="pairing-warning">check this pairing</strong>}
                 <AddressLink value={a.feed} />
               </td>
-              <td>
+              <td><span className="mobile-field" aria-hidden="true">Current price</span>
                 {a.feedReadable && a.answer !== undefined
                   ? "$" + fmt(a.answer, 8, 4)
                   : "unreadable"}

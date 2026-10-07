@@ -1,18 +1,18 @@
 {
-  "checkedAt": "2026-10-07T21:03:54.765Z",
+  "checkedAt": "2026-10-07T22:35:35.038Z",
   "network": {
     "multicall": true
   },
   "vault": "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-  "block": "82775415",
+  "block": "82828977",
   "globals": {
     "owner": "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
     "guardian": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
     "pendingOwner": "0x0000000000000000000000000000000000000000",
     "feeRecipient": "0x0000000000000000000000000000000000000000",
-    "genesisFinalized": false,
+    "genesisFinalized": true,
     "depositsPaused": false,
-    "depositsOpenAt": "0",
+    "depositsOpenAt": "1791671011",
     "NAV_CAP": "1000000000000000000000000",
     "totalSupply": "0",
     "proposalCount": "0"
@@ -146,16 +146,16 @@
         "1000000000000000000",
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "995",
-        "1791407631"
+        "1791413132"
       ],
-      "result": "Genesis has not been finalized. Stock at fault: none."
+      "result": "The 72-hour opening delay has not ended. Stock at fault: none."
     },
     {
       "function": "redeem",
       "args": [
         "0",
         "",
-        "1791407631"
+        "1791413132"
       ],
       "result": "success (read-only simulation)"
     },

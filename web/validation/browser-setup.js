@@ -29,7 +29,11 @@ async (page) => {
         const indexKeys=Object.keys(fixture.calls).filter(k=>k.includes(fixture.indexSelector));
         for(const k of indexKeys)fixture.calls[k]='0x'+word(1);
       }
-      result=null;
+      result=observations.confirmReceipt?{
+        transactionHash:'0x'+'1'.repeat(64),transactionIndex:'0x0',blockHash:'0x'+'2'.repeat(64),blockNumber:'0x5000000',
+        from:fixture.owner,to:fixture.VAULT,cumulativeGasUsed:'0x5208',gasUsed:'0x5208',contractAddress:null,
+        logs:[],logsBloom:'0x'+'0'.repeat(512),status:'0x1',effectiveGasPrice:'0x1',type:'0x2'
+      }:null;
     }
     else if(req.method==='eth_blockNumber')result='0x5000000';
     else if(req.method==='eth_call'){

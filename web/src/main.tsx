@@ -9,11 +9,13 @@ import { DepositPage, RedeemPage, Claims } from "./Flows";
 import { OwnerPage } from "./Owner";
 import { DocsPage } from "./Docs";
 import { LossesPage } from "./Losses";
+import { NightSky, Planet } from "./Scenery";
 import "./styles.css";
-const pages = ["Vault", "Deposit", "Redeem", "Owner", "Losses", "Docs"];
+const pages = ["Vault", "Deposit", "Redeem", "Docs"];
+const routes = [...pages, "Owner", "Losses"];
 function currentPage() {
   const p = location.hash.slice(1).toLowerCase();
-  return pages.find((n) => n.toLowerCase() === p) ?? "Vault";
+  return routes.find((n) => n.toLowerCase() === p) ?? "Vault";
 }
 function App() {
   const [page, setPage] = useState(currentPage);
@@ -86,9 +88,10 @@ function App() {
         </p>
       </div>
       <header>
+        <NightSky />
         <div className="header-inner">
           <a href="#vault" className="brand" aria-label="Basket Protocol home">
-            <BasketIcon />
+            <Planet />
             <span>
               Basket<span className="brand-sub">Protocol</span>
             </span>
@@ -117,15 +120,12 @@ function App() {
         </div>
         <nav aria-label="Primary navigation">
           <div>
-            {pages.map((p, i) => (
+            {pages.map((p) => (
               <a
                 key={p}
                 href={"#" + p.toLowerCase()}
                 aria-current={p === page ? "page" : undefined}
               >
-                <span className="nav-number" aria-hidden="true">
-                  0{i + 1}
-                </span>
                 {p}
               </a>
             ))}
@@ -200,14 +200,14 @@ function App() {
         ) : (
           <LossesPage snapshot={snapshot} wallet={wallet} />
         )}
-        <Claims snapshot={snapshot} wallet={wallet} />
+        <div hidden={page !== "Redeem"}><Claims snapshot={snapshot} wallet={wallet} /></div>
       </main>
       <footer>
         <div>
           <BasketIcon />
           <strong>Basket Protocol</strong>
           <span>Stock Tokens. One basket.</span>
-          <span className="footer-links"><a href="#docs">Docs</a><a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">Basket Protocol on X</a></span>
+          <span className="footer-links"><a href="#owner" aria-current={page === "Owner" ? "page" : undefined}>Owner controls</a><a href="#losses" aria-current={page === "Losses" ? "page" : undefined}>Losses</a><a href="#docs">Docs</a><a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">Basket Protocol on X</a></span>
         </div>
         <div>
           <span>BaskVault · Chain 4663</span>

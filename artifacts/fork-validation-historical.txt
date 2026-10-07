@@ -1,0 +1,18 @@
+No files changed, compilation skipped
+2026-10-07T22:35:28.815000Z ERROR sharedbackend: Failed to send/recv `basic` err=failed to get account for 0xd77a5F93F9d85E6990f389147713a9ad8Ce5764C: server returned an error response: error code -32000: historical state 12fcae05ddd0f7242ecbc7eb3421c61fb059e4d7c0d397be2bb65576830cc6b0 is not available address=0xd77a5F93F9d85E6990f389147713a9ad8Ce5764C
+2026-10-07T22:35:28.935719Z ERROR sharedbackend: Failed to send/recv `basic` err=failed to get account for 0xA4b000000000000000000073657175656e636572: server returned an error response: error code -32000: historical state 12fcae05ddd0f7242ecbc7eb3421c61fb059e4d7c0d397be2bb65576830cc6b0 is not available address=0xA4b000000000000000000073657175656e636572
+
+Ran 1 test for test/WebsiteFork.t.sol:WebsiteForkTest
+[FAIL: EVM error; database error: failed to get account for 0xA4b000000000000000000073657175656e636572: server returned an error response: error code -32000: historical state 12fcae05ddd0f7242ecbc7eb3421c61fb059e4d7c0d397be2bb65576830cc6b0 is not available] setUp() (gas: 0)
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 866.36ms (0.00ns CPU time)
+
+Ran 1 test suite in 867.39ms (866.36ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/WebsiteFork.t.sol:WebsiteForkTest
+[FAIL: EVM error; database error: failed to get account for 0xA4b000000000000000000073657175656e636572: server returned an error response: error code -32000: historical state 12fcae05ddd0f7242ecbc7eb3421c61fb059e4d7c0d397be2bb65576830cc6b0 is not available] setUp() (gas: 0)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test
+Tip: Run `forge test --debug --match-test <TEST_NAME>` to inspect one failing test in the debugger

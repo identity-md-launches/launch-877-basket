@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Address } from "viem";
 import { read, safe, many, vault, token, explain, simulate, InputError, VAULT } from "./chain";
 import {
@@ -33,12 +33,15 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   const [allowance, setAllowance] = useState<bigint>();
   const stock = open.find((a) => a.token === selected) ?? open[0];
   const id = useRef(0);
-  useEffect(() => {
+  useLayoutEffect(() => {
     id.current++;
     setQuote(undefined);
     setError("");
     setWorking(false);
-  }, [stock?.token, input, w.account]);
+  }, [stock?.token, input, w.account, w.confirmed]);
+  useLayoutEffect(() => {
+    if (w.confirmed?.functionName === "deposit") setInput("");
+  }, [w.confirmed]);
   useEffect(() => {
     let active = true;
     setBalance(undefined);
@@ -307,12 +310,12 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
   const [working, setWorking] = useState(false);
   const [balance, setBalance] = useState<bigint>();
   const id = useRef(0);
-  useEffect(() => {
+  useLayoutEffect(() => {
     id.current++;
     setQuote(undefined);
     setError("");
     setWorking(false);
-  }, [input, s.loadedAt, w.account]);
+  }, [input, s.loadedAt, w.account, w.confirmed]);
   useEffect(() => {
     let active = true;
     setBalance(undefined);

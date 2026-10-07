@@ -1,6 +1,7 @@
 import { zeroAddress, reasons } from "./chain";
 import { fmt, usd, navOf, age, date, type Snapshot, type Asset } from "./model";
-import { AddressLink, BasketIcon, Empty, Note } from "./components";
+import { AddressLink, Empty, Note } from "./components";
+import { Storefront } from "./Scenery";
 export function faultName(s: Snapshot, a: string) {
   return a === zeroAddress
     ? "none"
@@ -71,15 +72,8 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
           </div>
         </div>
         <div className="hero-illustration" aria-hidden="true">
-          <span className="produce p1" />
-          <span className="produce p2" />
-          <span className="produce p3" />
-          <BasketIcon large />
-          <div className="hanging-tag">
-            <span>Basket</span>
-            <strong>BASK</strong>
-            <div className="barcode" />
-          </div>
+          <Storefront />
+          <div className="store-sign"><span>Basket</span><strong>BASK</strong></div>
         </div>
       </section>
       <div className="stats">

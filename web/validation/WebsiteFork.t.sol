@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 import {Test} from "forge-std/Test.sol";
+import {stdStorage, StdStorage} from "forge-std/StdStorage.sol";
 import {BaskVault} from "../src/BaskVault.sol";
 import {MockStock, MockFeed, MockFactory} from "./Mocks.sol";
 contract WebsiteForkTest is Test {
+    using stdStorage for StdStorage;
     BaskVault v;
     MockStock[4] stocks;
     MockFeed[4] feeds;
@@ -19,7 +21,14 @@ contract WebsiteForkTest is Test {
         assertEq(block.chainid, 4663);
         assertEq(address(v).codehash, 0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0);
         owner = v.owner(); guardian = v.guardian();
-        require(!v.genesisFinalized(), "live genesis changed");
+        // The live vault has now finalized genesis. Isolate the original launch
+        // scenarios in fork-only storage, retaining and verifying deployed code.
+        // No state change is broadcast and no replacement vault is deployed.
+        require(v.totalSupply() == 0, "fixture requires pre-deposit live state");
+        emit log_named_uint("Live stock count before local fixture reset", v.assetCount());
+        stdstore.target(address(v)).sig("genesisFinalized()").enable_packed_slots().checked_write(false);
+        stdstore.target(address(v)).sig("assetCount()").checked_write(uint256(0));
+        assertEq(address(v).codehash, 0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0);
         vm.etch(v.STOCK_FACTORY(), address(new MockFactory()).code);
         for(uint i; i<4; i++) {
             stocks[i] = new MockStock(bytes32(i+1)); feeds[i] = new MockFeed();

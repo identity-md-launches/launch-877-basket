@@ -24,6 +24,18 @@
     "Losses has one page heading at 320px",
     "Docs reflows at 320px without a wallet",
     "Docs has one page heading at 320px",
+    "Vault reflows at 375px without a wallet",
+    "Vault has one page heading at 375px",
+    "Deposit reflows at 375px without a wallet",
+    "Deposit has one page heading at 375px",
+    "Redeem reflows at 375px without a wallet",
+    "Redeem has one page heading at 375px",
+    "Owner reflows at 375px without a wallet",
+    "Owner has one page heading at 375px",
+    "Losses reflows at 375px without a wallet",
+    "Losses has one page heading at 375px",
+    "Docs reflows at 375px without a wallet",
+    "Docs has one page heading at 375px",
     "Vault reflows at 768px without a wallet",
     "Vault has one page heading at 768px",
     "Deposit reflows at 768px without a wallet",
@@ -83,6 +95,36 @@
     {
       "page": "Docs",
       "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Vault",
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "page": "Deposit",
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "page": "Redeem",
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "page": "Owner",
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "page": "Losses",
+      "width": 375,
+      "overflow": false
+    },
+    {
+      "page": "Docs",
+      "width": 375,
       "overflow": false
     },
     {
@@ -155,21 +197,21 @@
     },
     {
       "selector": ".docs-grid .panel",
-      "foreground": "rgb(41, 46, 38)",
-      "background": "rgb(255, 254, 249)",
-      "ratio": 13.744665887756208
+      "foreground": "rgb(24, 37, 60)",
+      "background": "rgb(255, 254, 248)",
+      "ratio": 15.185192742110969
     },
     {
       "selector": ".page-title > p:last-child",
-      "foreground": "rgb(102, 105, 95)",
-      "background": "rgb(248, 246, 237)",
-      "ratio": 5.171249799173315
+      "foreground": "rgb(255, 254, 248)",
+      "background": "rgb(17, 26, 49)",
+      "ratio": 17.09307222370901
     },
     {
       "selector": "nav a[aria-current=\"page\"]",
-      "foreground": "rgb(36, 81, 60)",
-      "background": "rgb(255, 254, 249)",
-      "ratio": 8.974765704465176
+      "foreground": "rgb(17, 26, 49)",
+      "background": "rgb(212, 187, 245)",
+      "ratio": 10.054799048930205
     }
   ],
   "limitations": [

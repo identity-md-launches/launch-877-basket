@@ -1,0 +1,1 @@
+PASS: 25 rendered-wallet requests; all 24 action function names and critical arguments, minimums, deadlines, USD scaling, launch arrays and claim recipient order.

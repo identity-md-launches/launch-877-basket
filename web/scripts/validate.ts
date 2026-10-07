@@ -181,7 +181,7 @@ for (const [name, args, account] of calls) {
 try {
   await read(vault("previewDeposit", [VAULT, 10n ** 18n]));
 } catch (e) {
-  assert.match(explain(e, undefined, true), /(Genesis|Stock is not listed).*Stock at fault:/);
+  assert.match(explain(e, undefined, true), /(Genesis|Stock is not listed|The 72-hour opening delay has not ended|Outside deposit hours|Not enough fresh stock feeds).*Stock at fault:/);
 }
 fs.writeFileSync(
   "../artifacts/live-validation.json",

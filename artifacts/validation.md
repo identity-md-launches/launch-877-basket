@@ -1,80 +1,98 @@
-# Website revision validation — 7 October 2026
+# Redesign validation — 2026-10-08 (Europe/Berlin)
 
-Complete for the stated website scope. This is the worker's local evidence, not independent certification. The production export is `dist/`; the source and unchanged frontend manifest/lockfile are in `web/`. No contract, protected build configuration, dependency lockfile, ignore file or Git metadata was modified. No live transaction or publication occurred.
+## Scope and assumptions
 
-## Binding and implementation
+Completed the existing Vite/React website redesign, four-item menu, public footer routes, deposit reset and phone card layouts. The deployed vault remains `0xd77a5f93f9d85e6990f389147713a9ad8ce5764c`, chain 4663. The supplied deployment metadata still describes the older launch; the assignment's explicit vault and the existing verified `web/src/deployment.ts` binding take precedence. No contract source, dependency, lockfile, existing build configuration, ignore file, Git metadata or external deployment was changed.
 
-Authoritative source: launch-929-basket, commit `b12f8ecdaac0acc13e47646441b4f312a2aab160`. The earlier repository contract source and deployment input were not used to build this website's ABI or fork target. The explicit task address takes precedence over the older supplied deployment notes.
+The Vault already used stock cards. Its stock fields/prices/availability/address links were preserved and made single-column on phones. Both uses of Owner's pairing table use one card per stock on phones, including the mismatch mark. Claims are displayed on Redeem and kept mounted under `hidden` elsewhere to preserve their existing reads.
 
-Solidity 0.8.26 / via IR / 200 optimizer runs / Cancun / no bytecode metadata hash / constant optimizer disabled produced a 22,258-byte runtime with keccak256 `0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0`. The regenerated canonical ABI hash is `0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89`. Public RPC code at `0xd77a5f93f9d85e6990f389147713a9ad8ce5764c` matched it on chain 4663.
+The final production export is `dist/`. The bounded Playwright runner served that export under `/preview/`, exercised fixture and live contexts, and closed its browser/server. No new external service is used: runtime requests remain the existing RPCs and user-activated explorer/social links. The local Damion font carries its OFL license. All SVG/CSS artwork is original geometric work, without commercial brands, film references, numerals, currency or price tags. The existing Basket/BASK caption is retained; it is the site's own project identity, not a product label or price.
 
-The binding includes positional deposit/redeem previews, six-field assets, deficit records, proposal IDs followed by detail/state reads, all seven kinds/states and all 20 deposit reasons. Removed obsolete probation and stock-limit UI. Every send retains chain/account/code verification and exact-call simulation. Deposit headroom solves the post-deposit NAV inequality with bigint rounding; allowance and stock balance gates precede sending. Pairing validation is tied to the exact pasted input and uses fresh listing-index reads. Listing receipt uncertainty triggers reconciliation before retry. Docs and X links retain the existing title, hosting name, banner and grocery theme.
+## Actual commands and outcomes
 
-## Actual commands and results
+Dependencies were installed with the unchanged `web/package.json` and `web/package-lock.json` in `/tmp/basket-redesign/web`, using `npm ci --prefix /tmp/basket-redesign/web --cache /tmp/basket-npm-cache`. Source/public/scripts/validation were mirrored there for checks; outputs were copied back. No repository `node_modules` or cache was created. Commands below ran from that mirrored `web/`, except the read-only source-preservation check, which points back at the actual checkout.
 
-Commands are from repository root unless a `web/` working directory is stated.
-
-| Check | Actual result |
+| Command | Actual outcome / evidence |
 | --- | --- |
-| `npm ci --prefix web --cache /tmp/basket-npm-cache` | Passed using existing manifest and lockfile; neither changed. |
-| From `web/`: `SOLC=/tmp/basket-solc-0.8.26 ./node_modules/.bin/tsx scripts/regenerate-abi.ts` | Passed; pinned compilation exactly matched expected runtime and generated ABI. |
-| `npm run typecheck --prefix web` | Passed, exit 0. |
-| `npm run build --prefix web` | Passed, exit 0; final output recorded in `build-validation.txt`. Main JS 519,570 bytes, 156.56 kB gzip. Vite's >500 kB advisory remains non-fatal. |
-| `npm run validate --prefix web` | Passed, exit 0; live block 82,775,415, exact chain/code hash, canonical ABI, parsing, NAV/staleness, retired assets, feed prefixes, pairing boundaries, deposit headroom boundaries and 23 vault-action encodings/simulations. `live-validation.json` and `live-check.txt`. |
-| Isolated Forge project under `test/scratch/fork/`, pinned source only; `BASKET_FORK_BLOCK=82772718 forge test --root test/scratch/fork --use /tmp/basket-solc-0.8.26 --remappings "forge-std/=$PWD/lib/forge-std/src/" -vv` | **4 passed, 0 failed**, against the real deployed bytecode after the required block. `fork-validation.txt`. Preparation is reproducible with `web/scripts/run-fork.sh` (shell syntax checked). |
-| From `web/`: `tsx scripts/make-browser-fixture.ts`, `tsx scripts/assemble-browser-check.ts` using local `node_modules/.bin/tsx` | Passed; generated disposable fixture data using the regenerated ABI and live runtime. |
-| From `web/`: `PLAYWRIGHT_MODULE=/tmp/basket-browser/node_modules/playwright/index.mjs CHROMIUM_PATH=/root/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome node scripts/run-browser.mjs` | Passed, exit 0; actual production export served at `/preview/` by a bounded local server. All sessions/server closed on completion. No browser console/page errors or live HTTP failure responses. `browser-check.txt`, `browser-interactions.json`, `browser-regressions.json`, `browser-live.json`. |
-| From `web/`: `./node_modules/.bin/tsx scripts/check-browser-transactions.ts` | Passed; **25 captured requests, all 24 UI action function names**, vault/token targets, critical arguments, deposit receiver, minima, deadlines, cap scaling, launch arrays and claim recipient order. `transaction-mapping.json`. |
-| `git diff --check` and submission integrity script | Passed; no abandoned-address bytes anywhere in deliverable candidates, no submodules/dependency caches/archives, protected paths unchanged and every relative HTML asset present. `package-audit.json`. |
+| `npm run build` | Exit 0; final TypeScript/Vite production export. Non-fatal >500kB JS advisory. `build-validation.txt` |
+| `npm run typecheck` | Exit 0, separate `tsc --noEmit`. `build-validation.txt` |
+| `npm run validate` | Exit 0; canonical ABI, exact runtime hash/chain, input/math/feed-prefix/headroom checks and 23 live read-only action simulations. `live-check.txt`, `live-validation.json` |
+| `SOLC=/tmp/basket-solc-0.8.26 bash scripts/run-fork.sh` | Exit 0; four tests passed at block **82,830,094**, using unchanged deployed runtime and local state fixtures. `fork-validation.txt` |
+| `./node_modules/.bin/tsx scripts/make-browser-fixture.ts` | Generated disposable current-runtime fixture outside the deliverable |
+| `./node_modules/.bin/tsx scripts/assemble-browser-check.ts` | Generated disposable browser scenario |
+| `PLAYWRIGHT_MODULE=/opt/imd-tools/npm/node_modules/playwright/index.mjs CHROMIUM_PATH=/home/imd-worker/.cache/ms-playwright/chromium-1247/chrome-linux64/chrome node scripts/run-browser.mjs` | Exit 0; base flows, 65 existing regression assertions, 80 redesign assertions, final screenshots, live public routes. No console/page errors. `browser-check.txt`, `browser-interactions.json`, `browser-regressions.json`, `browser-redesign.json`, `browser-live.json` |
+| `./node_modules/.bin/tsx scripts/check-browser-transactions.ts` | Exit 0; 25 captured requests cover all 24 transaction function names, target addresses, arguments, tolerances, deadlines, USD scaling, launch arrays and recipient order. `transaction-check.txt`, `transaction-mapping.json` |
+| `BASKET_SOURCE_ROOT=<checkout> node scripts/check-preservation.mjs` | Exit 0; **128 unchanged RPC/transaction expressions**, 15 byte-identical core/configuration files and preserved JSX text. `preservation.json` |
+| `npm audit --json` | Exit 1: four findings (two moderate, two high) in the immutable existing dependency tree. No dependencies changed. `package-audit.json` |
+| `git diff --check` | Exit 0 after whitespace cleanup |
 
-The fork exercised launch listing and finalization, stock approval/deposit, redemption with owed legs, claims, flagging/recognising deficits, all seven proposal kinds, execution/cancellation, role controls, ownership transfer, fee recipient, cap changes, pause/unpause and closure. Added checks prove that previews can succeed before cap/bucket reverts, refill permits a later deposit, a single stock can hold the whole NAV, Waiting execution returns `InvalidProposal`, retirement voids a pending band and frees the feed, and guardian/cap proposals execute correctly.
+The local solc 0.8.26 executable was downloaded to `/tmp`; existing Foundry tools and vendored forge-std were used without modifying repository `lib/`. No actual wallet signed or broadcast a transaction. Receipt success/failure and wallet requests in browser checks are intercepted test fixtures.
 
-The first fork attempt used an unavailable historical RPC state. A recent explicit block was selected instead. Additional time-warp tests initially exposed compiler caching of `block.timestamp` across cheatcode calls; using `vm.getBlockTimestamp()` in the test scaffold fixed those test failures. The final four-test run is the one reported above.
+### Validation adaptations and failed attempts
 
-Browser fixtures cover amount-limit warnings, insufficient-balance approval prevention, post-allowance simulation failure, code changing before send, correctly cleaned pairing labels, edited/mismatched/unreadable pairings, already-listed tokens, receipt-timeout reconciliation, role permissions, pagination, fallback asset reads and retired claims. The capture-only test wallet rejects signatures; the receipt scenario returns a dummy hash and never broadcasts. Public preview checks also run after disconnecting. A separate fresh browser context used live public RPCs with **no injected wallet at all** on all six routes.
+The original live check reached the correct custom error but expected only pre-genesis/unlisted messages. The live vault is now in its 72-hour opening delay. The assertion was expanded to recognize the existing legitimate opening/market/freshness wording; all action encodings and calls remain unchanged.
 
-## Better Interface review
+The first original fork run failed `live genesis changed` at block 82,827,765. The previous validation block 82,772,718 was unavailable from the primary RPC; the other configured RPC returned an archive-access error. Logs are retained in `fork-initial-live-state.txt` and `fork-validation-historical.txt`.
 
-Applied the pinned workflow and core principles in accessibility, layout, writing, typography, colors and UI during implementation, then checked the production export. Preserved the existing tokens, typography, basket/shelf motifs and warm palette. No new theme, font, icon package or unrelated feature was introduced. The pinned guide and license were read from supplied inputs; attribution/licenses remain in `web/validation/DESIGN-GUIDANCE-LICENSE`.
+The fork harness now requires **zero live supply**, records the live 25-stock count, and resets only the genesis flag and stock-array length in its local fork. Owner/guardian reads, chain ID and deployed code-hash assertions remain; the vault bytecode is never replaced. Mock tokens/feed/factory state and time warps remain confined to that fork. All four original transaction scenarios then passed. This tests deployed bytecode with controlled local launch state, not successful execution against the live finalized state. A future nonzero supply requires a new fixture strategy; the current guard will fail clearly.
 
-| Domain | Coverage and evidence | Limits |
+Browser navigation and refresh checks were corrected to wait for rendered headings/expected data instead of inspecting the previous React render. Owner navigation selectors now target its footer label. Existing Owner tests navigate to Redeem before claiming. No application guard was removed to make a test pass.
+
+## Transaction and copy preservation
+
+`preservation.json` records structural TypeScript comparisons against the original checkout for every `vault`, `token`, `feed`, read, batch, simulation, wallet request/send and argument-builder call. The chain implementation, model/calculations, ABI, deployment binding, shared transaction controls, Docs and Losses are byte-identical. Foundry/Vite/TypeScript configuration, Solidity source and the frontend manifest/lockfile are also byte-identical.
+
+Wallet chain 4663, account identity, public chain/runtime hash, exact calldata simulation, final chain recheck, target and encoding are preserved. The only send-path change publishes confirmed UI state after a successful receipt and selects the explicitly requested deposit success wording. Layout effects invalidate the quote before paint and cancel stale async preview completions; a successful deposit also clears its amount. Browser tests verify the transaction link, absent Approve/Deposit controls, and the requirement for a new amount plus explicit preview. Confirmed approval, redemption and claim also invalidate previous previews.
+
+The banner, warnings, labels, existing confirmation text, Docs, token-symbol-only and feed-cleaning logic are preserved. The new visible wording is limited to the requested navigation/footer label and `Deposit confirmed`; mobile field labels repeat existing table headings. Decorative menu numerals were removed. Rendering checks confirm all new SVG scenes have no text nodes, are hidden from assistive technology, and cannot introduce a price, currency, brand or film name. Manual inspection confirms the items are plain geometric packages, with no imported artwork or film characters.
+
+## Better Interface six-domain review
+
+The pinned contents/workflow, core principles of all six domains and final documentation method were read and applied during implementation. The original palette/token convention and interaction system were retained where appropriate. One fixed theme is supported; localization, dialogs, filters and downloads are absent and **Not applicable**.
+
+| Domain | Coverage | Evidence / limits |
 | --- | --- | --- |
-| Accessibility — Checked | Native labeled controls; disabled List/Approve/Deposit with nearby explanations; explicit pairing warning text; keyboard skip link moves focus to main; a visible 3px focus outline inspected in `keyboard-focus.png`; route heading focus; no-wallet and non-owner access; reduced-motion check. | No screen-reader session, automated accessibility scanner or physical-device check; focus was sampled, not exhaustively inspected at every control/state. |
-| Layout — Checked | All six populated fixture pages at 320, 768 and 1440 CSS pixels, no document overflow; scrollable labeled pairing tables; Docs changes from two columns to one; six-link mobile navigation wraps; live empty-genesis export inspected. | CSS 200% text enlargement checked on Docs, not native browser zoom. English/LTR only; no RTL or pseudo-localization check. |
-| Writing — Checked | Plain 20-reason list and custom errors; Waiting includes execution date; proposal pause warning; cap/daily amounts and refill explanation; clear insufficient balance, pairing and receipt-recovery messages; requested Docs sections. | Requested US-holiday wording is preserved, but contract source has a weekday UTC gate, not an explicit holiday calendar. |
-| Typography — Checked | Existing Georgia/Arial system stacks, descending heading hierarchy, tabular numbers, 16px inputs and Docs body; wrapped addresses; 65ch Docs measure; desktop/mobile screenshots reviewed. | Exact system-font glyphs vary; no physical iOS input-zoom check. |
-| Colors — Checked | Existing semantic palette reused; yellow/brown pairing and proposal warnings also have text. Computed rendered foreground/background pairs measured below. | Measured representative pairs only; no blanket accessibility claim or unsupported dark theme. |
-| UI — Checked | Loading, empty, blocked, mismatch, declined-signature, receipt-timeout and successful-simulation states exercised. Existing flat panels, receipt rules and local basket icon preserved. Reduced motion removes transitions. | No slow-motion Animations-panel inspection. No dialogs/themes/localization exist, so those variant checks are not applicable. |
+| Accessibility | **Checked** | Native navigation/forms, one h1, skip link, keyboard focus, label/error wiring, native disabled guards, decorative hiding, 44px links/buttons/disclosures, reduced motion. Browser keyboard path and focus screenshot. No screen-reader session, physical phone or comprehensive AT matrix. |
+| Layout | **Checked** | All six public pages reflow at 320/375/768/1440. Screenshots at 1440/375, realistic populated stock fixtures plus separate live data. Owner pasted/listed pairings stack with no internal horizontal scrolling. Vault cards preserve fields. Footer routes remain public. Docs at 200% CSS text enlargement; native browser zoom unperformed. |
+| Writing | **Checked** | Preserved JSX copy inventory and byte-identical Docs, warnings/role confirmations inspected. No rewritten financial copy or added promotional text. Existing holiday-wording limitation retained below. |
+| Typography | **Checked** | Local script only on display headings/brand, ordinary body/owner controls and tabular financial values, 16px inputs, wrapping addresses, semantic hierarchy. Local font asset loaded by production browser. No claim of identical rendering on every OS. |
+| Colors | **Checked** | 214 computed rendered financial/warning/action/heading pairs across all six pages at desktop/375 passed 4.5:1; four shared pairs also measured by existing regressions. Solid wallet backing removes scenery interference. Glows/artwork are decorative and not scored as text. No claim of a full automated accessibility audit. |
+| UI details | **Checked** | Default/hover/focus/active/disabled/busy/empty/error/confirmed states; plain owner buttons; 120ms press transform only, no continuous animation. Reduced-motion emulation shows no animation or transitions. No 10%-speed DevTools animation session; only the short press transform exists. |
 
-Measured rendered pairs from `browser-regressions.json`:
+### Findings, corrections and rechecks
 
-- Restriction/warning text `#654810` on `#fff1cb`: **7.52:1**.
-- Docs body text `#292e26` on `#fffef9`: **13.74:1**.
-- Supporting text `#66695f` on `#f8f6ed`: **5.17:1**.
-- Active navigation `#24513c` on `#fffef9`: **8.97:1**.
-
-All measured text pairs exceeded 4.5:1. These are computed rendered solid-background pairs, not estimates.
-
-## Findings, fixes and rechecks
-
-| Severity | Source | Evidence, impact and correction | Recheck |
+| Severity | Source | Finding and correction | Recheck |
 | --- | --- | --- | --- |
-| High | `web/src/Flows.tsx:26`, `web/src/model.ts:274` | Old quote fields omitted the new receiver-share data and implied preview checked limits. Positional decoding, separately computed exact cap/bucket headroom and wallet simulation now control sending. | Browser quotes/limits/reverts; math boundaries; live encoding; fork cap/bucket tests pass. |
-| High | `web/src/Flows.tsx:81` | A stock approval could be offered despite insufficient wallet stock. Display and pre-click balance checks now block it with a corrective message. | Browser low-balance case passes with no approval request. |
-| High | `web/src/Owner.tsx:227` | Pasted pairings were not displayed/read until List. Added a chain-read table tied to input, mismatched/unreadable/duplicate/feed-reuse guards and listing-index rereads. | Prefix, edited input, mismatch, failed metadata and already-listed cases pass. |
-| High | `web/src/Owner.tsx:237` | Receipt failure could offer duplicate listing. Reconciliation now reads and shows the current vault before another attempt, and keeps already-listed tokens blocked. | Simulated receipt timeout with a mined listing passes. |
-| High | `web/src/Flows.tsx:546` | Browser refresh from populated to empty assets left a stale claim row dereferencing a missing asset, crashing the page. Guarded that transient row. | The same refresh/listing recovery scenario passes without console/page errors. |
-| High | `web/src/Owner.tsx:580`, `web/src/chain.ts:194` | Old proposal tuple/state handling could mislabel waiting proposals or send the wrong cap selector. Switched to IDs plus positional details/state and exact new enums/functions; simulate before showing Execute and reread state on failure. | Browser Waiting/permissions/pagination; all proposal kinds and invalidation on fork pass. |
-| Medium | `web/src/Owner.tsx:210`, `web/src/Owner.tsx:705` | Feed labels lacked requested cleanup/mismatch warning; pending changes lacked deposit-pause guidance. Added cleaned labels, warning text/color and exact pause guidance for List/Feed/Band/Retire. | Pairing screenshot, browser reads and source review pass. |
-| Medium | `web/src/styles.css:1274` | Sixth navigation item needed narrow-screen space. Enabled wrapping while keeping every page visible. | All routes reflow at 320/768/1440px; mobile Docs screenshot reviewed. |
-| Medium | `web/src/chain.ts:261` | Receipt timeout showed a long raw technical message/hash. Replaced it with a plain recovery message and retained transaction link. | Receipt scenario and focused-state screenshot show the new wording. |
+| High | `web/src/Flows.tsx:36`, `web/src/wallet.tsx:136` | A confirmed deposit retained its prior quote/amount. Successful receipt state now invalidates all previews before paint and clears deposited amount, preserving the transaction link. | Confirmed deposit/approval/redeem/claim assertions and `deposit-confirmed-375.webp` |
+| Medium | `web/src/main.tsx:13`, `web/src/main.tsx:210` | Main menu had six items. Restricted it to the four requested pages, with Owner controls/Losses in footer and all routes retained. Claims visibly scoped to Redeem without removing reads. | Exact menu assertion, public route checks and 44px footer targets |
+| Medium | `web/src/Owner.tsx:185`, `web/src/styles.css:1244` | Pairing tables required a wide phone table. Rows now stack into labelled cards using the existing data and mismatch warning. | Both listed/pasted variants at 375, warning disabled-state capture |
+| Medium | `web/src/styles.css:1143` | Ordinary/footer links and the refresh control lacked uniform touch height. All links/buttons/disclosures now reach 44px. | All six pages at 375 and 1440; no short visible targets |
+| Medium | `web/src/styles.css:1152`, `web/src/Scenery.tsx:30` | Header artwork could pass behind account text. Wallet now uses a solid navy backing; rocket moved out of that region. | Final phone/desktop screenshots and preserved high-contrast text |
+| Medium | `web/src/styles.css:860` | Background transitions could briefly lighten a newly enabled primary button while its label was white. Removed background interpolation, retaining only the short press transform. | Primary text measured **7.074:1**, screenshot immediately after ready simulation |
+| Low | `web/src/styles.css:123` | An offscreen translated skip link appeared in full-page screenshots of scrolled forms. It is now clipped until focus. | Keyboard skip still works; final full-page screenshots have no stray overlay |
+| Low | `web/src/assets/`, `dist/` | Public-folder font placement duplicated the same font in the export. Moved source assets into Vite's asset pipeline; removed superseded export hashes and obsolete evidence screenshots. | Complete runtime/font/license output and bundle inventory |
 
-No known required website behavior remains unfixed. Broader immutable-contract risks are documented in the requested Docs and pinned upstream README, not changed by this site update.
+Representative measured pairs: data/owner buttons `#18253c` on `#fffef8` **15.185:1**; supporting text **7.008:1**; warning text **7.515:1**; primary action and footer links **7.074:1**; error text **8.010:1**; lime display text on navy **14.487:1**; pink eyebrow on navy **9.519:1**. JSON records exact values and selectors. These measurements cover the tested states; they are not an exhaustive WCAG certification.
 
-## Screenshots and delivery
+## Screenshots
 
-Inspected actual production screenshots: `vault-desktop-live.png`, `owner-launch-live.png`, `deposit-desktop-fixture.png`, `redeem-mobile-fixture.png`, `docs-desktop.png`, `docs-mobile.png`, `pairing-warning.png`, `keyboard-focus.png`. “Fixture” and pairing images contain synthetic stocks/accounts; live images use public chain reads. Screenshots are evidence of the displayed states, not proof of live transactions.
+The six pairs below are final full-page production captures with capture-only fixtures. All fixture values are test data, not live market quotes. Live captures are separately named.
 
-Final design documentation is `DESIGN.md`. Install, preview, rebuild, publish and reproducible validation commands are in root `README.md`. The export has relative assets and hash routes. The source, existing lockfile and required runtime assets remain complete. `package-audit.json` records the final byte inventory; it is comfortably below 8 MiB even using an uncompressed full-snapshot estimate plus existing Git pack storage. No ignore-file change was needed.
+| Page | Desktop, 1440px | Phone, 375px |
+| --- | --- | --- |
+| Vault | [vault-1440.webp](vault-1440.webp) | [vault-375.webp](vault-375.webp) |
+| Deposit | [deposit-1440.webp](deposit-1440.webp) | [deposit-375.webp](deposit-375.webp) |
+| Redeem / claims | [redeem-1440.webp](redeem-1440.webp) | [redeem-375.webp](redeem-375.webp) |
+| Owner controls | [owner-1440.webp](owner-1440.webp) | [owner-375.webp](owner-375.webp) |
+| Losses | [losses-1440.webp](losses-1440.webp) | [losses-375.webp](losses-375.webp) |
+| Docs | [docs-1440.webp](docs-1440.webp) | [docs-375.webp](docs-375.webp) |
 
-Unperformed checks: screen reader, physical devices, native browser zoom, automated accessibility scan, cross-browser matrix, real wallet signatures/live transactions, independent audit and publishing. Public RPC state/inclusion and issuer behavior can change after this run. No network certification is claimed.
+Additional evidence: [confirmed deposit](deposit-confirmed-375.webp), [phone pairing mismatch](owner-pairing-375.webp), [keyboard focus](keyboard-focus.png), [live Vault](vault-desktop-live.webp), [live Owner](owner-desktop-live.webp). Source/design review and screenshot inspection found no numbers/currency on decorative packages, no commercial brand/film imagery, and no clipped phone actions. Owner full-page captures are intentionally tall because every public control remains present. The initial Owner/Redeem captures raced asynchronous content; the final runner waits for network idle and fonts/layout, then asserts each screenshot height equals the complete rendered document height. All twelve page captures pass that assertion.
+
+## Completion and limitations
+
+**Complete for the stated scope.** Production build, typecheck, read-only live checks, fork scenarios, browser transaction decoding, requested phone behavior and all-page screenshots are delivered. The source, unchanged lockfile and complete relative-URL static export are included; the README describes install, preview, rebuild and publishing. `DESIGN.md` documents actual final tokens and components. Size/integrity is recorded in `bundle-check.json`.
+
+No live transaction, contract deployment, hosting publication, screen-reader session, physical-device test or native browser zoom check was performed. The preserved holiday sentence is broader than the immutable contract's weekday/feed-freshness checks. Audit findings in immutable dependencies and the non-fatal Vite chunk warning are disclosed. RPC state can change, and the fork fixture is explicitly local. These are worker observations with no independent certification authority.
+
+Guidance attribution/licenses: `web/validation/DESIGN-GUIDANCE-LICENSE`, including Better Interface (Jakub Krehel, MIT) and the adapted Impeccable documentation method (Paul Bakaus, Apache-2.0). Existing attribution is retained; this review records the current redesign.

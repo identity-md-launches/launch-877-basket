@@ -1,0 +1,29 @@
+{
+  "fileCount": 128,
+  "submissionFileBytesExcludingThisReport": 5006715,
+  "limitBytes": 8388608,
+  "conservativeReportAllowanceBytes": 65536,
+  "underLimit": true,
+  "tarGzipTransportEstimateBytes": 3260571,
+  "distBytes": 637297,
+  "artifactsBytes": 2971810,
+  "protectedFilesChanged": [],
+  "submodules": [],
+  "generatedDependenciesOrCaches": [],
+  "relativeHtmlReferences": [
+    "./favicon.svg",
+    "./assets/index-pqKNbyyG.js",
+    "./assets/index-ZiW_H0iq.css"
+  ],
+  "artworkReview": "Original SVG primitives only; no text/image/foreignObject/external references or currency glyphs in new artwork. CSS decoration reviewed visually and with SVG text checks. Package labels have no brands, prices or film references.",
+  "exportSha256": {
+    "dist/assets/Damion-Regular-BmrwnGAX.ttf": "a51fd6c3c517feb9924b98139c2e902a7317caee52c22a2ec9682973969562bf",
+    "dist/assets/ccip-FpXhomlt.js": "4d5596804e4e48ac87c8aeed52bd93b40be96272a0165c33b0521670099bb92f",
+    "dist/assets/index-ZiW_H0iq.css": "a7426592166efc85b761de06d607d3efb33c101d657b5511f4ca054c55a7bfe6",
+    "dist/assets/index-pqKNbyyG.js": "78bf1ce18dfdb833536307edbc586a31598001e66746d9b53a9e401cee2646f4",
+    "dist/favicon.svg": "b2ac94046e05ef2a477ed1304f3bad254aba6a244db069f7caa73aa4760740b8",
+    "dist/fonts/OFL.txt": "cf28b0c2cd8dea6aaec899baf5d050ef1f578daeaf51e931a934d100b4de9ecc",
+    "dist/index.html": "fe7b1b8130c74266f7fb3e904e16712615a444128aebba915b963ee1fc0fc4f1"
+  },
+  "note": "Read-only Git inventory of existing and new submission files. No commit or Git metadata changes; publishing/commit is owned by the contributor submission process. Source, unchanged manifest/lockfile, complete static export and screenshots included."
+}

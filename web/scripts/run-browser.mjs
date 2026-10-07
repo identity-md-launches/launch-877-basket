@@ -31,19 +31,24 @@ try {
     fs.writeFileSync('../artifacts/browser-regressions.json', JSON.stringify(extra, null, 2) + '\n');
     console.log('PASS regressions:', extra);
   }
+  const designCheck = eval('(' + fs.readFileSync('validation/browser-redesign.js', 'utf8') + ')');
+  const redesign = await designCheck(page);
+  fs.writeFileSync('../artifacts/browser-redesign.json', JSON.stringify(redesign, null, 2) + '\n');
+  console.log('PASS redesign:', redesign.results);
   const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const liveIssues = [];
   live.on('pageerror', e => liveIssues.push(e.message));
   live.on('response', r => { if (r.status() >= 400) liveIssues.push(`${r.status()} ${r.url()}`); });
   await live.goto(url);
   await live.waitForFunction(() => document.querySelector('button.refresh')?.disabled === false, { timeout: 60000 });
-  await live.screenshot({ path: '../artifacts/vault-desktop-live.png', fullPage: true });
-  await live.getByRole('navigation').getByRole('link', { name: 'Owner', exact: true }).click();
+  await live.screenshot({ path: '../artifacts/vault-desktop-live.webp', type:'webp', quality:78, fullPage: true });
+  await live.locator('footer').getByRole('link', { name: 'Owner controls', exact: true }).click();
   await live.getByRole('heading', { name: 'Pending proposals', exact: true }).waitFor();
-  await live.screenshot({ path: '../artifacts/owner-launch-live.png', fullPage: true });
+  await live.screenshot({ path: '../artifacts/owner-desktop-live.webp', type:'webp', quality:78, fullPage: true });
   const liveRoutes=[];
   for(const name of ['Vault','Deposit','Redeem','Owner','Losses','Docs']) {
-    await live.getByRole('navigation').getByRole('link',{name,exact:true}).click();
+    await (['Owner','Losses'].includes(name)?live.locator('footer').getByRole('link',{name:name==='Owner'?'Owner controls':name,exact:true}):live.getByRole('navigation').getByRole('link',{name,exact:true})).click();
+    await live.getByRole('heading',{level:1,name:{Vault:'A basket of stocks.',Deposit:'Deposit Stock Tokens',Redeem:'Redeem BASK',Owner:'Owner',Losses:'Losses',Docs:'Docs'}[name],exact:name!=='Vault'}).waitFor();
     liveRoutes.push({page:name,heading:await live.locator('h1').innerText(),noWallet:await live.evaluate(()=>!window.ethereum)});
   }
   await live.screenshot({path:'../artifacts/docs-desktop.png',fullPage:true});
