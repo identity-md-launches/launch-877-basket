@@ -20,7 +20,7 @@ export function LossesPage({
     many(
       shorts.flatMap((a) => [
         token(a.token, "balanceOf", [VAULT]),
-        vault("losses", [a.token]),
+        vault("deficits", [a.token]),
       ]),
     ).then((r) => {
       if (!active) return;

@@ -25,6 +25,9 @@ import {
   depositArgs,
   redeemArgs,
   loadSnapshot,
+  cleanFeedDescription,
+  pairingMatches,
+  depositLimits,
   type Asset,
 } from "../src/model";
 const canonical = (o: any): any =>
@@ -40,13 +43,13 @@ const canonical = (o: any): any =>
 assert.equal(keccak256(toHex(JSON.stringify(canonical(vaultAbi)))), ABI_HASH);
 assert.equal(
   ABI_HASH,
-  "0xa544e47473b63007f79a156bb1126ddd87d72cc1d59605b2d8ce8161780c8161",
+  "0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89",
 );
 assert.equal(fmt(-10_000_000n,8,4), "-0.1");
 try { amount("1e18"); } catch(e) { assert.match(explain(e,undefined,true), /Enter a decimal amount/); }
 assert.equal(client.ccipRead, false);
 assert.equal(GAS, 10_000_000n);
-assert.equal(reasons.length, 22);
+assert.equal(reasons.length, 20);
 assert.equal(amount("1000000"), 1_000_000n * 10n ** 18n);
 assert.equal(amount("0", true), 0n);
 for (const invalid of ["-1", "1e18", "0", "1.0000000000000000001"])
@@ -84,7 +87,29 @@ assert.equal(navOf([base], false, 1001).nav, undefined);
 console.log(
   "PASS: canonical ABI; input/address validation; 18-decimal USD caps; minimums/deadlines; NAV, retirement and stale boundaries.",
 );
+assert.equal(cleanFeedDescription("Robinhood AAPL / USD", "AAPL"), "AAPL / USD");
+assert.equal(cleanFeedDescription("RHSPY / USD", "SPY"), "SPY / USD");
+assert.equal(cleanFeedDescription("Robinhood SGOV-USD", "SGOV"), "SGOV-USD");
+assert.equal(cleanFeedDescription("RHOTHER / USD", "SPY"), "RHOTHER / USD");
+assert.equal(pairingMatches("AAPL", "AAPLX / USD"), false);
+assert.equal(pairingMatches("AAPL", "AAPL / USD"), true);
+assert.equal(pairingMatches("AAPL", "AAPL"), false);
+const E = 10n ** 18n;
+for (const nav of [0n, 200_000n * E, 600_000n * E, 1_100_000n * E]) {
+  for (const bucket of [0n, 10_000n * E, 100_000n * E, 200_000n * E]) {
+    const limits = depositLimits(nav, 1_000_000n * E, bucket, 0n);
+    if (limits.fits > 0n) {
+      const at = depositLimits(nav, 1_000_000n * E, bucket, limits.fits);
+      const above = depositLimits(nav, 1_000_000n * E, bucket, limits.fits + 1n);
+      assert.ok(!at.overSize && !at.overDaily);
+      assert.ok(above.overSize || above.overDaily);
+    }
+  }
+}
+console.log("PASS: feed prefix/pairing boundaries and exact size/daily headroom boundaries.");
 const network = await verifyNetwork();
+const block = await client.getBlockNumber();
+assert.ok(block > 82708976n);
 const snapshot = await loadSnapshot();
 assert.equal(snapshot.errors.length, 0);
 const owner = snapshot.globals.owner as Address;
@@ -102,13 +127,13 @@ const calls: [string, readonly unknown[], Address][] = [
   ["proposeReopen", [VAULT], owner],
   ["proposeRetire", [VAULT], owner],
   ["proposeGuardian", [VAULT], owner],
-  ["proposeNAVCap", [2_000_000n * 10n ** 18n], owner],
+  ["proposeNavCap", [2_000_000n * 10n ** 18n], owner],
   ["executeProposal", [1n], owner],
   ["cancelProposal", [1n], owner],
   ["closeAsset", [VAULT], guardian],
   ["pauseDeposits", [], guardian],
   ["unpauseDeposits", [], owner],
-  ["lowerNAVCap", [500000n * 10n ** 18n], owner],
+  ["lowerNavCap", [500000n * 10n ** 18n], owner],
   ["setFeeRecipient", [guardian], owner],
   ["transferOwnership", [VAULT], owner],
   ["acceptOwnership", [], owner],
@@ -156,7 +181,7 @@ for (const [name, args, account] of calls) {
 try {
   await read(vault("previewDeposit", [VAULT, 10n ** 18n]));
 } catch (e) {
-  assert.match(explain(e, undefined, true), /Genesis.*Stock at fault: none/);
+  assert.match(explain(e, undefined, true), /(Genesis|Stock is not listed).*Stock at fault:/);
 }
 fs.writeFileSync(
   "../artifacts/live-validation.json",
@@ -164,10 +189,12 @@ fs.writeFileSync(
     {
       checkedAt: new Date().toISOString(),
       network,
+      vault: VAULT,
+      block,
       globals: snapshot.globals,
       results,
       limitations:
-        "Live vault is in empty genesis. Invalid stock/proposal cases intentionally reach deployed custom errors. Successful populated flows are separately checked on a local fork; no live transaction is sent.",
+        "Invalid stock/proposal cases intentionally reach deployed custom errors; read-only calls do not predict successful transactions. Successful populated flows are separately checked on a local fork; no live transaction is sent.",
     },
     (_, v) => (typeof v === "bigint" ? v.toString() : v),
     2,

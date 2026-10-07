@@ -34,8 +34,6 @@ const assets = [0, 1, 2].map((i) => ({
   maxAnswer: 10n ** 20n,
   open: i === 0,
   retired: i === 2,
-  probation: i === 1,
-  listedAt: now - 86400n,
   managed: 10n * E,
   short: i === 2,
   balanceReadable: true,
@@ -69,21 +67,20 @@ for (const [i, a] of assets.entries()) {
     a.feed,
     a.open,
     a.retired,
-    true,
     a.minAnswer,
     a.maxAnswer,
-    a.listedAt,
   ]);
   add(vault("managed", [a.token]), a.managed);
+  add(vault("assetIndexPlusOne", [a.token]), BigInt(i + 1));
   add(vault("totalOwed", [a.token]), a.totalOwed);
   add(token(a.token, "symbol"), ["ALFA", "BRAV", "CHAR"][i]);
   add(
     feed(a.feed, "description"),
-    ["ALFA / USD", "BRAV / USD", "CHAR / USD"][i],
+    ["Robinhood ALFA / USD", "RHBRAV / USD", "Robinhood CHAR-USD"][i],
   );
   add(feed(a.feed, "latestRoundData"), [1n, a.answer, now, a.updatedAt, 1n]);
   add(token(a.token, "balanceOf", [VAULT]), i === 2 ? 8n * E : 10n * E);
-  add(vault("losses", [a.token]), [i === 2 ? 3n * E : 0n, now - 8n * 86400n]);
+  add(vault("deficits", [a.token]), [i === 2 ? 3n * E : 0n, now - 8n * 86400n]);
   for (const wallet of [owner, guardian, pending, user]) {
     add(vault("owed", [wallet, a.token]), i === 2 ? E : 0n);
     add(token(a.token, "balanceOf", [wallet]), 100n * E);
@@ -91,28 +88,19 @@ for (const [i, a] of assets.entries()) {
   }
   if (a.open) add(vault("depositStatus", [a.token]), [0, addr(0)]);
   for (const n of [1n * E, 10n * E])
-    add(vault("previewDeposit", [a.token, n]), {
-      nav: 3000n * E,
-      value: n * 100n,
-      gross: n * 100n,
-      fee: n / 2n,
-      receiverShares: (n * 995n) / 10n,
-      lockedShares: 0n,
-      bucketAfter: n * 100n,
-    });
+    add(vault("previewDeposit", [a.token, n]), [(n * 995n) / 10n, n / 2n, 0n]);
   errors[encode(vault("previewDeposit", [a.token, 999n * E]))] =
     encodeErrorResult({
       abi: vaultAbi,
       errorName: "DepositUnavailable",
-      args: [19, a.token],
+      args: [18, a.token],
     });
 }
 for (const wallet of [owner, guardian, pending, user])
   add(vault("balanceOf", [wallet]), 100n * E);
 add(vault("previewRedeem", [10n * E]), [
-  E / 20n,
-  10n * E - E / 20n,
   [E, E * 2n, E * 3n],
+  E / 20n,
 ]);
 const proposals = [
   {
@@ -121,8 +109,9 @@ const proposals = [
     target: assets[0].feed,
     value: 0n,
     createdAt: now - 8n * 86400n,
-    version: 0n,
-    state: 1,
+    epoch: 0n,
+    cancelled: false,
+    executed: false,
   },
   {
     kind: 5,
@@ -130,15 +119,21 @@ const proposals = [
     target: addr(999),
     value: 0n,
     createdAt: now - 86400n,
-    version: 0n,
-    state: 1,
+    epoch: 0n,
+    cancelled: false,
+    executed: false,
   },
 ];
-add(vault("pendingProposals", [1n, 20n]), [[1n, 2n], proposals]);
-add(vault("pendingProposals", [21n, 20n]), [[], []]);
+add(vault("pendingProposals", [1n, 20n]), [1n, 2n]);
+for (const [i, p] of proposals.entries()) {
+  add(vault("proposals", [BigInt(i + 1)]), [p.kind, p.token, p.target, p.value, p.createdAt, p.epoch, p.cancelled, p.executed]);
+  add(vault("proposalState", [BigInt(i + 1)]), i === 0 ? 2 : 1);
+}
+add(vault("decayedBucket"), 0n);
+add(vault("pendingProposals", [21n, 20n]), []);
 errors[encode(vault("executeProposal", [2n]))] = encodeErrorResult({
   abi: vaultAbi,
-  errorName: "ProposalNotReady",
+  errorName: "InvalidProposal",
   args: [2n],
 });
 const actionSelectors = vaultAbi
@@ -151,6 +146,10 @@ const actionSelectors = vaultAbi
   .map((a: any) => a.name);
 const fixture = {
   calls,
+  emptyAssets: encodeFunctionResult({ ...vault("allAssets"), result: [] }),
+  populatedAssets: encodeFunctionResult({ ...vault("allAssets"), result: assets }),
+  indexSelector: encode(vault("assetIndexPlusOne", [assets[0].token])).slice(0,10),
+  countData: encode(vault("assetCount")),
   errors,
   owner,
   guardian,
@@ -159,6 +158,7 @@ const fixture = {
   assets,
   VAULT,
   runtime: await client.getCode({ address: VAULT }),
+  depositSelector: encode(vault("deposit", [assets[0].token, 1n, owner, 0n, now])).slice(0,10),
   selector: {
     allAssets: encode(vault("allAssets")).slice(0, 10),
     aggregate3: "0x82ad56cb",

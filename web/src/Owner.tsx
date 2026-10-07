@@ -9,6 +9,9 @@ import {
   token,
   feed,
   explain,
+  explainAction,
+  proposalStateWords,
+  InputError,
   zeroAddress,
   type Spec,
 } from "./chain";
@@ -16,6 +19,9 @@ import {
   address,
   amount,
   parseLaunch,
+  cleanFeedDescription,
+  pairingMatches,
+  loadSnapshot,
   usd,
   fmt,
   date,
@@ -173,7 +179,8 @@ function ActionForm({
     </section>
   );
 }
-export function Pairings({ assets }: { assets: Asset[] }) {
+type Pairing = Pick<Asset, "token" | "feed" | "symbol" | "description" | "answer" | "feedReadable">;
+export function Pairings({ assets }: { assets: Pairing[] }) {
   return assets.length ? (
     <div
       className="table-wrap"
@@ -191,7 +198,7 @@ export function Pairings({ assets }: { assets: Asset[] }) {
         </thead>
         <tbody>
           {assets.map((a) => (
-            <tr key={a.token}>
+            <tr key={a.token} className={pairingMatches(a.symbol, a.description) ? "" : "warning"}>
               <th scope="row">
                 <bdi>{a.symbol}</bdi>
                 <AddressLink value={a.token} />
@@ -200,6 +207,7 @@ export function Pairings({ assets }: { assets: Asset[] }) {
                 <span className="chain-text">
                   <bdi>{a.description}</bdi>
                 </span>
+                {!pairingMatches(a.symbol, a.description) && <strong className="pairing-warning">check this pairing</strong>}
                 <AddressLink value={a.feed} />
               </td>
               <td>
@@ -215,6 +223,86 @@ export function Pairings({ assets }: { assets: Asset[] }) {
   ) : (
     <p>No listed stock/feed pairs yet.</p>
   );
+}
+function LaunchListing({ snapshot: s, wallet: w }: Props) {
+  const [lines, setLines] = useState("");
+  const [table, setTable] = useState<{ input: string; rows: Pairing[]; error: string }>();
+  const [checking, setChecking] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const [error, setError] = useState("");
+  const [listed, setListed] = useState<Asset[]>();
+  const [mustReconcile, setMustReconcile] = useState(false);
+  async function reconcile() {
+    setChecking(true);
+    setMustReconcile(true);
+    try {
+      const latest = await loadSnapshot();
+      if (!latest.complete) throw new InputError("The listed stocks could not all be read. Retry the listing check before listing again.");
+      setListed(latest.assets);
+      setMustReconcile(false);
+      setRevision(n => n + 1);
+    } catch (e) { setError(explain(e)); }
+    finally { setChecking(false); }
+  }
+  useEffect(() => {
+    let active = true;
+    setTable(undefined);
+    if (!lines.trim()) { setChecking(false); return; }
+    setChecking(true);
+    (async () => {
+      try {
+        const parsed = parseLaunch(lines);
+        const reads = await many(parsed.flatMap(r => [token(r.token, "symbol"), feed(r.feed, "description"), feed(r.feed, "latestRoundData"), vault("assetIndexPlusOne", [r.token])]));
+        const issues: string[] = [];
+        const rows = parsed.map((r, i) => {
+          const [sym, desc, price, index] = reads.slice(i * 4, i * 4 + 4);
+          const symbol = sym.ok ? String(sym.value) : "unreadable";
+          const description = desc.ok ? cleanFeedDescription(String(desc.value), symbol) : "unreadable";
+          if (![sym, desc, price, index].every(r => r.ok)) issues.push(`Line ${i + 1}: a chain read failed. Retry the pairing check.`);
+          if (symbol !== r.ticker) issues.push(`Line ${i + 1}: pasted ticker does not match symbol().`);
+          if (index.ok && index.value !== 0n) issues.push(`Line ${i + 1}: ${symbol} is already listed. Remove this line.`);
+          if (!pairingMatches(symbol, description)) issues.push(`Line ${i + 1}: check this pairing.`);
+          if (price.ok && price.value[1] <= 0n) issues.push(`Line ${i + 1}: price must be positive.`);
+          const reused = s.assets.find(a => !a.retired && same(a.feed, r.feed));
+          if (reused) issues.push(`Line ${i + 1}: feed already serves ${reused.symbol}.`);
+          return { token: r.token, feed: r.feed, symbol, description, answer: price.ok ? price.value[1] as bigint : undefined, feedReadable: price.ok };
+        });
+        if (new Set(parsed.map(r => r.feed.toLowerCase())).size !== parsed.length) issues.push("A feed can serve only one unretired stock.");
+        if (active) setTable({ input: lines, rows, error: issues.join(" ") });
+      } catch (e) { if (active) setTable({ input: lines, rows: [], error: explain(e) }); }
+      finally { if (active) setChecking(false); }
+    })();
+    return () => { active = false; };
+  }, [lines, s.loadedAt, revision]);
+  const blocked = checking || sending || mustReconcile || !table || table.input !== lines || !!table.error || !table.rows.length;
+  return <section className="panel action-panel">
+    <h3>List the launch basket</h3>
+    <p>Paste one TICKER tokenAddress feedAddress per line. Check the chain-read pairings below before listing them together.</p>
+    <form onSubmit={async e => {
+      e.preventDefault();
+      if (blocked || !table) return;
+      const rows = table.rows;
+      setSending(true); setError("");
+      try {
+        const indexes = await many(rows.map(r => vault("assetIndexPlusOne", [r.token])));
+        if (indexes.some(r => !r.ok || r.value !== 0n)) throw new InputError("A stock is already listed or unreadable. Check the refreshed listed stocks below.");
+        await w.send(vault("proposeAssets", [rows.map(r => r.token), rows.map(r => r.feed)]));
+      } catch (e) { setError(explain(e)); }
+      finally { await reconcile(); setSending(false); }
+    }}>
+      <label>Stock Token and feed pairs<textarea rows={5} value={lines} disabled={sending || w.busy} onChange={e => { setLines(e.target.value); setError(""); }} aria-describedby="listing-error" aria-invalid={!!table?.error} placeholder="TICKER 0x…token 0x…feed" /></label>
+      {checking && <p role="status">Reading stock and feed pairings…</p>}
+      {table && table.input === lines && <Pairings assets={table.rows} />}
+      <p className="error" role="alert" id="listing-error">{table?.input === lines ? table.error : ""} {error}</p>
+      <RoleInfo role="owner" snapshot={s} />
+      <div className="button-row">
+        <button type="submit" disabled={blocked || w.busy || !permitted("owner", w, s) || s.globals.genesisFinalized !== false}>{sending ? "Listing stocks…" : "List all stocks"}</button>
+        <button type="button" disabled={checking || sending} onClick={() => { if (mustReconcile) void reconcile(); else setRevision(n => n + 1); }}>Retry pairing check</button>
+      </div>
+    </form>
+    {listed && <div className="receipt"><h3>Listed now · read from the vault</h3><Pairings assets={listed} /></div>}
+  </section>;
 }
 export function OwnerPage({ snapshot: s, wallet: w }: Props) {
   const live = s.assets.filter((a) => !a.retired);
@@ -265,43 +353,12 @@ export function OwnerPage({ snapshot: s, wallet: w }: Props) {
           </span>
         </div>
         <div className="launch-steps">
-          <ActionForm
-            {...props}
-            title="List the launch basket"
-            label="List all stocks"
-            description="Paste one TICKER tokenAddress feedAddress per line. All pairs are listed in one transaction. The ticker is checked against symbol()."
-            fields={[
-              {
-                key: "lines",
-                label: "Stock Token and feed pairs",
-                type: "textarea",
-                hint: "Format: TICKER 0x…token 0x…feed",
-              },
-            ]}
-            disabled={s.globals.genesisFinalized !== false}
-            build={async (v) => {
-              const rows = parseLaunch(v.lines);
-              const symbols = await many(
-                rows.map((r) => token(r.token, "symbol")),
-              );
-              for (let i = 0; i < rows.length; i++) {
-                const symbol = symbols[i];
-                if (!symbol.ok || symbol.value !== rows[i].ticker)
-                  throw new Error(
-                    `Line ${i + 1}: ticker does not match the readable symbol().`,
-                  );
-              }
-              return vault("proposeAssets", [
-                rows.map((r) => r.token),
-                rows.map((r) => r.feed),
-              ]);
-            }}
-          />
+          <LaunchListing {...props} />
           <section className="panel">
             <h3>Check the shelf labels</h3>
             <p>
               Verify the stock symbol, feed description and price belong together.
-              Feed text is shown exactly as read.
+              Feed labels omit the issuer prefix. A feed can serve only one unretired stock; a retired stock’s feed can be reused.
             </p>
             <Pairings assets={s.assets} />
           </section>
@@ -332,9 +389,11 @@ export function OwnerPage({ snapshot: s, wallet: w }: Props) {
             label="Propose stock"
             fields={[{ key: "token", label: "Stock Token address" }, feedField]}
             disabled={!s.globals.genesisFinalized}
-            build={(v) =>
-              vault("proposeAsset", [address(v.token), address(v.feed)])
-            }
+            build={async (v) => {
+              const t = address(v.token);
+              if (await read(vault("assetIndexPlusOne", [t])) !== 0n) throw new InputError("This stock is already listed. Choose an unlisted stock.");
+              return vault("proposeAsset", [t, address(v.feed)]);
+            }}
           />
           <ActionForm
             {...props}
@@ -383,7 +442,7 @@ export function OwnerPage({ snapshot: s, wallet: w }: Props) {
             fields={[
               { key: "cap", label: "New NAV cap (USD)", type: "amount" },
             ]}
-            build={(v) => vault("proposeNAVCap", [amount(v.cap)])}
+            build={(v) => vault("proposeNavCap", [amount(v.cap)])}
           />
         </div>
       </section>
@@ -398,7 +457,7 @@ export function OwnerPage({ snapshot: s, wallet: w }: Props) {
             title="Close a stock"
             label="Close stock"
             role="operator"
-            description="Stops deposits of this stock and cancels earlier reopening proposals."
+            description="Stops deposits of this stock and voids earlier reopening proposals."
             fields={[stock(s.assets)]}
             build={(v) => vault("closeAsset", [address(v.stock)])}
           />
@@ -431,11 +490,11 @@ export function OwnerPage({ snapshot: s, wallet: w }: Props) {
             {...props}
             title="Lower the NAV cap"
             label="Lower NAV cap"
-            description="This also cancels every pending NAV-cap raise. Enter dollars; the transaction uses dollars × 10¹⁸. Zero is allowed."
+            description="This also voids every pending NAV-cap raise. Enter dollars; the transaction uses dollars × 10¹⁸. Zero is allowed."
             fields={[
               { key: "cap", label: "Lower NAV cap (USD)", type: "amount" },
             ]}
-            build={(v) => vault("lowerNAVCap", [amount(v.cap, true)])}
+            build={(v) => vault("lowerNavCap", [amount(v.cap, true)])}
           />
           <ActionForm
             {...props}
@@ -497,6 +556,10 @@ type Proposal = {
   target: Address;
   value: bigint;
   createdAt: bigint;
+  epoch: bigint;
+  cancelled: boolean;
+  executed: boolean;
+  state: number;
   symbol: string;
   description?: string;
   price?: bigint;
@@ -516,17 +579,13 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
     setError("");
     (async () => {
       try {
-        const [ids, pending] = await read(
-          vault("pendingProposals", [start, 20n]),
-        );
+        const ids: bigint[] = await read(vault("pendingProposals", [start, 20n]));
         const result = await Promise.all(
-          pending.map(async (p: any, i: number) => {
-            const row: Proposal = {
-              ...p,
-              id: ids[i],
-              symbol: "unreadable",
-              executable: false,
-            };
+          ids.map(async (id) => {
+            const [detail, state] = await Promise.all([read(vault("proposals", [id])), read(vault("proposalState", [id]))]);
+            const [kind, tokenAddress, target, value, createdAt, epoch, cancelled, executed] = detail;
+            const p = { kind: Number(kind), token: tokenAddress as Address, target: target as Address, value, createdAt, epoch, cancelled, executed };
+            const row: Proposal = { ...p, state: Number(state), id, symbol: "unreadable", executable: false };
             if (p.token !== zeroAddress) {
               const sym = await safe(token(p.token, "symbol"));
               row.symbol = sym.ok ? sym.value : "unreadable";
@@ -536,14 +595,14 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
                 feed(p.target, "description"),
                 feed(p.target, "latestRoundData"),
               ]);
-              row.description = meta[0].ok ? meta[0].value : "unreadable";
+              row.description = meta[0].ok ? cleanFeedDescription(meta[0].value, row.symbol) : "unreadable";
               row.price = meta[1].ok ? meta[1].value[1] : undefined;
             }
             try {
-              await simulate(vault("executeProposal", [ids[i]]), w.account);
+              await simulate(vault("executeProposal", [id]), w.account);
               row.executable = true;
             } catch (e) {
-              row.simulation = explain(e);
+              row.simulation = await explainAction(e, vault("executeProposal", [id]));
             }
             return row;
           }),
@@ -596,7 +655,8 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
               </>
             )}
             {(p.kind === 0 || p.kind === 1) && (
-              <div className="receipt">
+              <div className={pairingMatches(p.symbol, p.description ?? "") ? "receipt" : "receipt warning"}>
+                {!pairingMatches(p.symbol, p.description ?? "") && <p><strong>check this pairing</strong></p>}
                 <dl>
                   <div>
                     <dt>Stock symbol</dt>
@@ -641,6 +701,8 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
               <br />
               Expires {date(p.createdAt + 14n * 86400n)}
             </p>
+            <p>State: {proposalStateWords(p.state, p.createdAt)}</p>
+            {[0, 1, 2, 4].includes(p.kind) && <Note warning>Pause deposits before this can be executed and keep them paused until it is executed and checked.</Note>}
             <RoleInfo role="anyone" snapshot={s} />
             {p.executable ? (
               <TxButton

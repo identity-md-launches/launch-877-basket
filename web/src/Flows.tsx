@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { Address } from "viem";
-import { read, safe, many, vault, token, explain, VAULT } from "./chain";
+import { read, safe, many, vault, token, explain, simulate, InputError, VAULT } from "./chain";
 import {
   amount,
   address,
   depositArgs,
+  depositLimits,
+  navOf,
   redeemArgs,
   fmt,
   exact,
@@ -20,7 +22,11 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   const open = s.assets.filter((a) => a.open && !a.retired);
   const [selected, setSelected] = useState("");
   const [input, setInput] = useState("");
-  const [quote, setQuote] = useState<any>();
+  const [quote, setQuote] = useState<{ amount: bigint; token: Address; shares: bigint; fee: bigint; locked: bigint }>();
+  const [limits, setLimits] = useState<ReturnType<typeof depositLimits>>();
+  const [value, setValue] = useState<bigint>();
+  const [check, setCheck] = useState("Preview a deposit to check its limits.");
+  const [simulated, setSimulated] = useState(false);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [balance, setBalance] = useState<bigint>();
@@ -51,8 +57,41 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       active = false;
     };
   }, [stock?.token, w.account, s.loadedAt]);
-  const needsApproval =
-    quote && (allowance === undefined || allowance < quote.amount);
+  const needsApproval = !!quote && (allowance === undefined || allowance < quote.amount);
+  const shortBalance = !!quote && balance !== undefined && balance < quote.amount;
+  useEffect(() => {
+    let active = true;
+    setLimits(undefined);
+    setValue(undefined);
+    setSimulated(false);
+    setCheck(quote ? "Checking current limits…" : "");
+    if (quote && stock) (async () => {
+      try {
+        const bucket = await read(vault("decayedBucket")) as bigint;
+        const nav = navOf(s.assets, s.complete).nav;
+        if (nav === undefined || s.globals.NAV_CAP === undefined || !stock.feedReadable || stock.answer === undefined || stock.answer <= 0n)
+          throw new InputError("Deposit limits are unreadable. Refresh the vault and retry.");
+        const value = quote.amount * stock.answer / 100_000_000n;
+        const limits = depositLimits(nav, s.globals.NAV_CAP, bucket, value);
+        if (!active) return;
+        setValue(value);
+        setLimits(limits);
+        if (limits.overSize || limits.overDaily) { setCheck(""); return; }
+        if (!w.account) { setCheck("Connect a wallet to approve and deposit."); return; }
+        if (balance === undefined) { setCheck("Wallet stock balance is unreadable. Refresh before approving."); return; }
+        if (balance < quote.amount) { setCheck("Your stock balance is too low. Reduce the amount before approving."); return; }
+        if (allowance === undefined) { setCheck("Stock allowance is unreadable. Refresh before continuing."); return; }
+        if (needsApproval) { setCheck("Approve this amount, then the deposit will be simulated from your wallet."); return; }
+        setCheck("Simulating the deposit from your wallet…");
+        await simulate(vault("deposit", depositArgs(quote.token, quote.amount, w.account, quote.shares)), w.account);
+        if (active) { setSimulated(true); setCheck("Deposit simulation passed. Prices and limits can change before confirmation."); }
+      } catch (e) {
+        if (active) setCheck(explain(e, a => s.assets.find(x => same(x.token, a))?.symbol ?? a));
+      }
+    })();
+    return () => { active = false; };
+  }, [quote, balance, allowance, w.account, w.chainId, s.loadedAt]);
+  const limitBlocked = !limits || limits.overSize || limits.overDaily;
   return (
     <>
       <PageTitle eyebrow="Add to the basket" title="Deposit Stock Tokens">
@@ -81,11 +120,8 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                   setWorking(true);
                   try {
                     const n = amount(input);
-                    const q = await read(
-                      vault("previewDeposit", [stock.token, n]),
-                    );
-                    if (seq === id.current)
-                      setQuote({ ...q, amount: n, token: stock.token });
+                    const [shares, fee, locked] = await read(vault("previewDeposit", [stock.token, n]));
+                    if (seq === id.current) setQuote({ shares, fee, locked, amount: n, token: stock.token });
                   } catch (e) {
                     if (seq === id.current)
                       setError(
@@ -147,32 +183,28 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                   <dl>
                     <div>
                       <dt>Stock value</dt>
-                      <dd>{usd(quote.value)}</dd>
-                    </div>
-                    <div>
-                      <dt>Gross shares</dt>
-                      <dd>{fmt(quote.gross)} BASK</dd>
+                      <dd>{usd(value)}</dd>
                     </div>
                     <div>
                       <dt>Fee · 0.5%</dt>
                       <dd>{fmt(quote.fee)} BASK</dd>
                     </div>
-                    {quote.lockedShares > 0n && (
+                    {quote.locked > 0n && (
                       <div>
                         <dt>First-deposit locked shares</dt>
-                        <dd>{fmt(quote.lockedShares)} BASK</dd>
+                        <dd>{fmt(quote.locked)} BASK</dd>
                       </div>
                     )}
                     <div className="total">
                       <dt>You receive</dt>
-                      <dd title={exact(quote.receiverShares)}>
-                        {fmt(quote.receiverShares)} BASK
+                      <dd title={exact(quote.shares)}>
+                        {fmt(quote.shares)} BASK
                       </dd>
                     </div>
                     <div>
                       <dt>Minimum received</dt>
-                      <dd title={exact((quote.receiverShares * 995n) / 1000n)}>
-                        {fmt((quote.receiverShares * 995n) / 1000n)} BASK
+                      <dd title={exact((quote.shares * 995n) / 1000n)}>
+                        {fmt((quote.shares * 995n) / 1000n)} BASK
                       </dd>
                     </div>
                   </dl>
@@ -180,23 +212,34 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                     Minimum is 0.5% under this preview. Deadline: 10 minutes
                     from sending.
                   </p>
+                  <div aria-live="polite">
+                    {limits && <Note warning={limits.overSize || limits.overDaily}>
+                      <p>Fits now: {usd(limits.fits)} of stock value, within both limits.</p>
+                      <p>Size limit remaining: {usd(limits.sizeRoom)}. Today’s remaining room: {usd(limits.dailyRoom)}. The daily limit refills over 24 hours.</p>
+                      {limits.overSize && <p>This amount is over the vault size limit. Reduce the amount.</p>}
+                      {limits.overDaily && <p>This amount is over today’s limit. Reduce the amount or wait for it to refill.</p>}
+                    </Note>}
+                    <p>{check}</p>
+                  </div>
                   <div className="button-row">
                     <TxButton
                       label="1. Approve stock"
                       primary={!!needsApproval}
                       wallet={w}
                       snapshot={s}
-                      disabled={!needsApproval}
-                      getSpec={() =>
-                        token(quote.token, "approve", [VAULT, quote.amount])
-                      }
+                      disabled={!needsApproval || limitBlocked || shortBalance || balance === undefined || allowance === undefined}
+                      getSpec={async () => {
+                        const current = await read(token(quote.token, "balanceOf", [w.account!]));
+                        if (current < quote.amount) throw new InputError("Your stock balance is too low. Reduce the amount before approving.");
+                        return token(quote.token, "approve", [VAULT, quote.amount]);
+                      }}
                     />
                     <TxButton
                       label="2. Deposit"
                       primary={!needsApproval}
                       wallet={w}
                       snapshot={s}
-                      disabled={!!needsApproval}
+                      disabled={needsApproval || limitBlocked || !simulated || shortBalance}
                       getSpec={() =>
                         vault(
                           "deposit",
@@ -204,7 +247,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                             quote.token,
                             quote.amount,
                             w.account!,
-                            quote.receiverShares,
+                            quote.shares,
                           ),
                         )
                       }
@@ -229,8 +272,9 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
             Monday to Friday, 15:30 to 19:30 UTC, closed on US market holidays.
           </p>
           <p>
-            The preview checks current availability and amount limits. Prices
-            and availability can change before a transaction confirms.
+            The quote checks stock availability. This page checks the vault size
+            and daily limits separately, then simulates your deposit once approved.
+            Prices and availability can change before a transaction confirms.
           </p>
           <dl>
             <div>
@@ -298,11 +342,11 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
               setWorking(true);
               try {
                 const n = amount(input);
-                const [fee, net, amounts] = await read(
+                const [amounts, fee] = await read(
                   vault("previewRedeem", [n]),
                 );
                 if (seq === id.current)
-                  setQuote({ fee, net, amounts, shares: n });
+                  setQuote({ fee, net: n - fee, amounts, shares: n });
               } catch (e) {
                 if (seq === id.current) setError(explain(e, undefined, true));
               } finally {
@@ -498,7 +542,8 @@ function ClaimRow({
   wallet: w,
 }: Props & { debt: { token: Address; value: bigint } }) {
   const [to, setTo] = useState("");
-  const a = s.assets.find((a) => a.token === debt.token)!;
+  const a = s.assets.find((a) => a.token === debt.token);
+  if (!a) return null;
   return (
     <div className="claim-row">
       <div>

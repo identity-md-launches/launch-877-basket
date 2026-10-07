@@ -1,0 +1,179 @@
+{
+  "results": [
+    "Size overflow blocked although preview succeeds",
+    "Daily overflow blocked and refill explained",
+    "Insufficient stock balance prevents approval",
+    "Allowance-covered deposit simulated and revert blocks wallet",
+    "Code hash rechecked before send; changed code blocks wallet",
+    "Pairing preview cleans issuer prefixes",
+    "Editing pasted lines rereads pairings; mismatch disables List",
+    "Unreadable pasted metadata disables List",
+    "Already-listed token cannot be listed again",
+    "Receipt timeout rereads vault, shows mined listings and prevents duplicate retry",
+    "Disconnected visitor can preview a deposit without a wallet prompt",
+    "Disconnected visitor can preview redemption with retired legs",
+    "Vault reflows at 320px without a wallet",
+    "Vault has one page heading at 320px",
+    "Deposit reflows at 320px without a wallet",
+    "Deposit has one page heading at 320px",
+    "Redeem reflows at 320px without a wallet",
+    "Redeem has one page heading at 320px",
+    "Owner reflows at 320px without a wallet",
+    "Owner has one page heading at 320px",
+    "Losses reflows at 320px without a wallet",
+    "Losses has one page heading at 320px",
+    "Docs reflows at 320px without a wallet",
+    "Docs has one page heading at 320px",
+    "Vault reflows at 768px without a wallet",
+    "Vault has one page heading at 768px",
+    "Deposit reflows at 768px without a wallet",
+    "Deposit has one page heading at 768px",
+    "Redeem reflows at 768px without a wallet",
+    "Redeem has one page heading at 768px",
+    "Owner reflows at 768px without a wallet",
+    "Owner has one page heading at 768px",
+    "Losses reflows at 768px without a wallet",
+    "Losses has one page heading at 768px",
+    "Docs reflows at 768px without a wallet",
+    "Docs has one page heading at 768px",
+    "Vault reflows at 1440px without a wallet",
+    "Vault has one page heading at 1440px",
+    "Deposit reflows at 1440px without a wallet",
+    "Deposit has one page heading at 1440px",
+    "Redeem reflows at 1440px without a wallet",
+    "Redeem has one page heading at 1440px",
+    "Owner reflows at 1440px without a wallet",
+    "Owner has one page heading at 1440px",
+    "Losses reflows at 1440px without a wallet",
+    "Losses has one page heading at 1440px",
+    "Docs reflows at 1440px without a wallet",
+    "Docs has one page heading at 1440px",
+    "Docs reflows with 200% CSS text enlargement",
+    "Reduced motion removes button transitions",
+    "Skip link moves keyboard focus to main content",
+    "Keyboard focus has a visible three-pixel outline",
+    "Measured rendered text pairs meet 4.5:1"
+  ],
+  "layout": [
+    {
+      "page": "Vault",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Deposit",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Redeem",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Owner",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Losses",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Docs",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "page": "Vault",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Deposit",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Redeem",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Owner",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Losses",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Docs",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "page": "Vault",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "page": "Deposit",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "page": "Redeem",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "page": "Owner",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "page": "Losses",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "page": "Docs",
+      "width": 1440,
+      "overflow": false
+    }
+  ],
+  "contrast": [
+    {
+      "selector": ".restriction",
+      "foreground": "rgb(101, 72, 16)",
+      "background": "rgb(255, 241, 203)",
+      "ratio": 7.515361409892634
+    },
+    {
+      "selector": ".docs-grid .panel",
+      "foreground": "rgb(41, 46, 38)",
+      "background": "rgb(255, 254, 249)",
+      "ratio": 13.744665887756208
+    },
+    {
+      "selector": ".page-title > p:last-child",
+      "foreground": "rgb(102, 105, 95)",
+      "background": "rgb(248, 246, 237)",
+      "ratio": 5.171249799173315
+    },
+    {
+      "selector": "nav a[aria-current=\"page\"]",
+      "foreground": "rgb(36, 81, 60)",
+      "background": "rgb(255, 254, 249)",
+      "ratio": 8.974765704465176
+    }
+  ],
+  "limitations": [
+    "No screen-reader session, physical device or native browser zoom test.",
+    "Fixtures test failure states; separate fork suite tests deployed bytecode."
+  ]
+}

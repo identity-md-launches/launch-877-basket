@@ -9,6 +9,8 @@ async (page) => {
     return '0x'+word(32)+word(tuples.length)+offsets+tuples.join('');
   };
   const resolve=(address,data)=>{
+    if(observations.unreadableDescription===address.toLowerCase()&&data.startsWith('0x7284e416'))return {success:false,data:'0x'};
+    if(observations.depositFailure&&data.startsWith(fixture.depositSelector))return {success:false,data:observations.depositFailure};
     if(fixture.errors[data])return {success:false,data:fixture.errors[data]};
     const key=address.toLowerCase()+':'+data.toLowerCase();
     if(!observations.allowance&&fixture.allowanceKeys.includes(key))return {success:true,data:'0x'+word(0)};
@@ -19,7 +21,17 @@ async (page) => {
     const req=route.request().postDataJSON();observations.calls.push(req);
     let result='0x',error;
     if(req.method==='eth_chainId')result='0x1237';
-    else if(req.method==='eth_getCode')result=req.params[0].toLowerCase()===fixture.VAULT?fixture.runtime:'0x01';
+    else if(req.method==='eth_getCode')result=req.params[0].toLowerCase()===fixture.VAULT?(observations.badCode?'0x01':fixture.runtime):'0x01';
+    else if(req.method==='eth_getTransactionReceipt'){
+      if(observations.listOnSubmit){
+        fixture.calls[fixture.VAULT+':'+fixture.selector.allAssets]=fixture.populatedAssets;
+        fixture.calls[fixture.VAULT+':'+fixture.countData]='0x'+word(3);
+        const indexKeys=Object.keys(fixture.calls).filter(k=>k.includes(fixture.indexSelector));
+        for(const k of indexKeys)fixture.calls[k]='0x'+word(1);
+      }
+      result=null;
+    }
+    else if(req.method==='eth_blockNumber')result='0x5000000';
     else if(req.method==='eth_call'){
       const {to,data,gas}=req.params[0];
       if(gas!=='0x989680')observations.errors.push('wrong gas '+gas);
@@ -43,7 +55,7 @@ async (page) => {
       if(method==='eth_accounts'||method==='eth_requestAccounts')return [window.__testWallet.account];
       if(method==='eth_chainId')return window.__testWallet.chain;
       if(method==='wallet_switchEthereumChain'){window.__testWallet.chain=params[0].chainId;listeners.chainChanged?.(params[0].chainId);return null;}
-      if(method==='eth_sendTransaction'){window.__testWallet.sent.push({...params[0],capturedAt:Date.now()});throw {code:4001,message:'User rejected test signature'};}
+      if(method==='eth_sendTransaction'){window.__testWallet.sent.push({...params[0],capturedAt:Date.now()});if(window.__testWallet.receiptMode)return '0x'+'1'.repeat(64);throw {code:4001,message:'User rejected test signature'};}
       throw Error('Unexpected wallet request '+method);
     }};
   },{owner:fixture.owner});

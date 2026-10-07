@@ -9,7 +9,7 @@ async (page) => {
  ensure((await page.locator('.receipt').innerText()).includes('995 BASK'),'Deposit preview shows fee and received shares');
  await clickTx('2. Deposit');
  await page.getByLabel('Amount',{exact:true}).fill('999');await page.getByRole('button',{name:'Preview deposit',exact:true}).click();
- await page.getByText('This deposit exceeds the NAV cap. Stock at fault: ALFA.',{exact:true}).waitFor();results.push('DepositUnavailable decoded in plain words with stock');
+ await page.getByText('Stock has an accounting shortfall. Stock at fault: ALFA.',{exact:true}).waitFor();results.push('DepositUnavailable decoded in plain words with stock');
  o.allowance=false;await page.getByRole('button',{name:'Refresh vault'}).click();await page.waitForFunction(()=>!document.querySelector('button.refresh').disabled);
  await page.getByLabel('Amount',{exact:true}).fill('10');await page.getByRole('button',{name:'Preview deposit',exact:true}).click();await page.getByRole('heading',{name:'Deposit preview'}).waitFor();
  await clickTx('1. Approve stock');

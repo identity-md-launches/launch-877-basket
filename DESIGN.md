@@ -2,7 +2,7 @@
 
 ## Overview
 
-A public vault interface for holders of Basket (BASK), Stock Token depositors, and vault operators. The grocery-store direction uses a shopping basket, a small hanging BASK tag, green shelf edges and cream surfaces. Financial values, restrictions and irreversible actions use plain language. The five hash-routed pages share one header, restriction banner, navigation and footer.
+A public vault interface for holders of Basket (BASK), Stock Token depositors, and vault operators. The grocery-store direction uses a shopping basket, a small hanging BASK tag, green shelf edges and cream surfaces. Financial values, restrictions and irreversible actions use plain language. The six hash-routed pages share one header, restriction banner, navigation and footer.
 
 The implemented source of truth is `web/src/styles.css`, with shared elements in `web/src/components.tsx`. There is no component framework, external font, stock photography, chart library, dark theme or animation dependency.
 
@@ -33,7 +33,7 @@ Body: `Arial, Helvetica, sans-serif`, browser/system supplied. Display: `Georgia
 
 The body is 16px with 1.55 line height. Supporting text is 14px, small text 13px, compact eyebrow text 11px. Fields stay at 16px. H3 is 20px/1.35, H2 28px/1.2, page titles clamp from 36px to 60px/1.09. The vault hero alone clamps from 43.2px to 68.8px; its second line is green italic serif. Display headings use weight 400, tight tracking (`-.035em`) and balanced wrapping. UI emphasis requests weight 600, resolved by installed system fonts. This is not a claim of bundled 600-weight font files.
 
-Numbers use tabular numerals. Copy has a maximum measure of 75 characters; explanatory copy generally uses 41–68 characters. Addresses wrap instead of being clipped. Feed descriptions preserve whitespace and case with `.chain-text` and bidirectional isolation. Stock labels come from `symbol()` only. Full precision remains in bigint calculations and transaction arguments; display values are formatted for reading.
+Numbers use tabular numerals. Copy has a maximum measure of 75 characters; explanatory copy generally uses 41–68 characters. Addresses wrap instead of being clipped. Feed descriptions preserve case and spacing after removing the specified issuer prefix; `.chain-text` and bidirectional isolation retain the cleaned label. A mismatched pairing has warning background and explicit “check this pairing” text. Stock labels come from `symbol()` only. Full precision remains in bigint calculations and transaction arguments; display values are formatted for reading.
 
 ## Layout
 
@@ -43,11 +43,12 @@ The shared desktop content width is 1200px. Page sections use normal document fl
 - `.stock-grid`: three columns, two below 60rem, one below 34rem.
 - `.flow-layout`: main form and explanatory panel; one column below 45rem.
 - `.two-col`: owner/loss cards; one column below 45rem.
-- `.launch-steps`: stacked listing form, pairing table and genesis confirmation, in that order.
+- `.docs-grid`: two columns with 24px gaps; one below 45rem. Docs body copy stays at 16px with a 65ch maximum.
+- `.launch-steps`: stacked listing form with a chain-read preview table before its List button, listed-pairing table and genesis confirmation, in that order.
 - `.roles`: three address columns; stacked below 60rem.
 - `.claim-row`: amount, recipient and button; wraps at 60rem and stacks at 45rem.
 - At 80rem, shared gutters become 32px; at 45rem, 20px; at 34rem, 16px.
-- Navigation remains visible on small screens. Decorative navigation numbers disappear below 45rem; the large basket illustration disappears below 34rem.
+- Navigation remains visible on small screens and wraps below 34rem to fit the new Docs link. Decorative navigation numbers disappear below 45rem; the large basket illustration disappears below 34rem.
 - The pairing table has a named, keyboard-focusable horizontal scroll region on narrow screens. Page content itself reflows without horizontal overflow.
 
 Browser evidence covers 320px, 768px and 1440px widths, both empty and populated states, plus desktop text enlargement. Physical devices and native browser zoom are separate unperformed checks.
@@ -67,15 +68,16 @@ Panels use 10px radii, stock cards 8px, notes/buttons 7px, fields 6px and receip
 | `components.tsx`: `PageTitle`, `Empty`, `Note` | Shared heading, empty-state and warning patterns; no dismissible essential warnings |
 | `components.tsx`: `BasketIcon`, `Addr`, `AddressLink` | Reusable basket drawing, wrapping full addresses, explorer links |
 | `components.tsx`: `RoleInfo`, `TxButton` | Visible allowed role/address; disabled unavailable actions; local error feedback and transaction state |
+| `Owner.tsx`: `LaunchListing`, `Pairings` | Editing lines rereads symbols, cleaned labels and prices; unreadable/mismatched/listed rows block List; receipt uncertainty rereads and shows the listed basket |
 | `Owner.tsx`: `ActionForm` | Native labels, fields, selects, checkboxes and submit; immutable-action confirmations; form errors and focus return |
 | `Vault.tsx`: `DepositState` | Plain deposit reason and stock at fault; zero fault is “none” |
-| `Flows.tsx`: receipt / claim patterns | Fee, net amount and minimum together; connected-wallet claims on every page |
-| `main.tsx`: site shell | Exact restriction banner, five hash links, active `aria-current`, refresh status, wallet status and skip link |
+| `Flows.tsx`: receipt / claim patterns | Fee, receiver shares, minima, size/daily headroom and simulation state before transaction buttons; connected-wallet claims on every page |
+| `main.tsx`: site shell | Exact restriction banner, six hash links, active `aria-current`, refresh status, wallet status and skip link |
 
 The primary green fill identifies the main action. Approval/deposit emphasis follows the allowance state. Other actions use neutral bordered buttons. Native controls provide keyboard behavior. Buttons have at least 44px height except the 40px refresh control; page navigation and text links follow their native semantics. Focus is visible; forced-colors uses system colors. Button press scaling (`.96`) and 120ms transitions are enabled only with `prefers-reduced-motion: no-preference`. No load animation is used.
 
 ## Do's and Don'ts
 
-Reuse the panel, flow, receipt, note and role components. Keep irreversible-action wording beside its checkbox. Keep all public information visible regardless of wallet role. Use plain numbers and exact chain text; never substitute a Stock Token's `name()` for its symbol. Preserve full precision in transaction arguments. Add no unrelated pages, analytics, theme switches or marketing claims.
+Reuse the panel, flow, receipt, note and role components. Keep irreversible-action wording beside its checkbox. Keep all public information visible regardless of wallet role. Docs and X links appear in the footer. Use plain numbers and cleaned feed labels; never substitute a Stock Token's `name()` for its symbol. Preserve full precision in transaction arguments. Add no unrelated pages, analytics, theme switches or marketing claims.
 
 Design review used the pinned Better Interface guide (Jakub Krehel, MIT) and documentation guidance adapted from Impeccable (Paul Bakaus, Apache-2.0). Attribution and both licenses are retained in `web/validation/DESIGN-GUIDANCE-LICENSE`; review evidence is in `artifacts/validation.md`.

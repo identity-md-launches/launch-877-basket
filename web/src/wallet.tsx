@@ -5,6 +5,8 @@ import {
   client,
   encode,
   explain,
+  explainAction,
+  InputError,
   simulate,
   verifyNetwork,
   type Spec,
@@ -133,8 +135,9 @@ export function useWallet(refresh: () => void) {
       setMessage("Transaction confirmed. Vault data refreshed.");
       refresh();
     } catch (e) {
-      setMessage(explain(e));
-      throw e;
+      const message = await explainAction(e, s);
+      setMessage(message);
+      throw new InputError(message);
     } finally {
       setBusy(false);
     }

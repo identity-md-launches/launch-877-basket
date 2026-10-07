@@ -1,0 +1,24 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 10.22s
+Compiler run successful!
+
+Ran 4 tests for test/WebsiteFork.t.sol:WebsiteForkTest
+[PASS] testWebsiteAllOwnerControlsAndProposalKinds() (gas: 3942212)
+Logs:
+  Fork block: 82772718
+
+[PASS] testWebsiteCapsBucketAndWaitingState() (gas: 2394579)
+Logs:
+  Fork block: 82772718
+
+[PASS] testWebsiteLaunchDepositRedeemClaimLoss() (gas: 1811781)
+Logs:
+  Fork block: 82772718
+
+[PASS] testWebsiteRetirementVoidsProposalsAndFreesFeed() (gas: 2150906)
+Logs:
+  Fork block: 82772718
+
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 10.38s (21.45s CPU time)
+
+Ran 1 test suite in 10.38s (10.38s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

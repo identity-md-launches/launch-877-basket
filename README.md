@@ -1,212 +1,74 @@
-# Basket Protocol
+# Basket Protocol website
 
-Basket is an immutable index vault for Stock Tokens on Robinhood Chain (chain ID **4663**). The vault itself is the **Basket / BASK** ERC-20 share, with 18 decimals, zero initial supply and no supply cap. Deposits mint shares; redemptions burn shares. This project contains contracts, local mocks, tests, a deployment manifest and the static website.
+The static website serves **BaskVault `0xd77a5f93f9d85e6990f389147713a9ad8ce5764c`**, Basket (BASK), on **Robinhood Chain, chain ID 4663**. Its existing hosting name remains **basket-protocol.site.identitymd.eth**. This update changes the website only; no contract has been changed or deployed.
 
-## Website
+`web/` contains the React, TypeScript and Vite source and the unchanged, pinned frontend package manifest and lockfile. `dist/` contains the complete production export. The public Vault, Deposit, Redeem, Owner, Losses and Docs pages use hash navigation and work without a wallet. Wallet transactions use an injected Ethereum-compatible provider.
 
-The static Basket Protocol website is in **`dist/`**, with React/TypeScript source, its own package manifest and lockfile in **`web/`**. It connects to the existing BaskVault at `0x518aa023c1b982a0a64b207b7d3a19bf973796e1` on **Robinhood Chain (4663)**. No contract was changed or deployed for the website.
+## Install, preview and build
 
-The five pages are Vault, Deposit, Redeem, Owner and Losses. All public information works without a wallet. A browser-injected Ethereum wallet is needed to send; the UI checks chain 4663, the deployed runtime, the connected account, and transaction simulation before requesting a signature. Owner controls stay visible to visitors. Claims are read for connected wallets on every page, including retired stocks.
-
-### Install, preview and rebuild
-
-Use Node.js 22.12+ (validated with Node 24.21.0 and npm 11.19.0).
+Use Node.js 22.12+ or 24 and npm. From the repository root:
 
 ```sh
 npm ci --prefix web
-npm run --prefix web typecheck
-npm run --prefix web build
-npm run --prefix web preview
+npm run typecheck --prefix web
+npm run build --prefix web
+npm run preview --prefix web -- --host 127.0.0.1
 ```
 
-Open the preview URL printed by Vite. For development, run `npm run --prefix web dev`. To inspect the submitted export at a subpath without rebuilding:
+Open the preview URL printed by Vite. For development use `npm run dev --prefix web`. Installation downloads the existing locked dependencies; no dependency archives or offline registry are required. Keep every `node_modules/`, compiler output and cache out of the submission.
+
+The build empties and regenerates `dist/`. Vite uses `base: './'`, so HTML, JavaScript, CSS and the local favicon work under a static subpath. No backend, environment secret, external font or server route rewrite is needed. Public reads require access to either configured RPC endpoint.
+
+## Publish
+
+Publish the **contents of `dist/`** through the existing site's static/IPFS publishing process and update the existing name **basket-protocol.site.identitymd.eth** to that export. Retain `web/` (including `package.json` and `package-lock.json`) and all of `dist/` in the submission. The publisher serves the export directly and does not rebuild it. This assignment prepared the export locally; it did not publish it or change the hosting name.
+
+## Exact contract binding
+
+The website's authority is [launch-929-basket at b12f8ecdaac0acc13e47646441b4f312a2aab160](https://github.com/identity-md-launches/launch-929-basket/tree/b12f8ecdaac0acc13e47646441b4f312a2aab160), specifically `src/BaskVault.sol`, `src/BaskMath.sol`, the compiler settings and README there. **Do not derive this website's ABI or runtime from this repository's root `src/` or historical contract documentation.** Those files belong to an earlier project iteration and remain unchanged.
+
+- Runtime keccak256: `0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0` (22,258 bytes).
+- Canonical ABI keccak256: `0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89`.
+- Canonicalization recursively sorts object keys, preserves array order, serializes compact JSON and hashes its UTF-8 bytes.
+- Compiler: Solidity 0.8.26, optimizer 200 runs, via IR, Cancun, no metadata bytecode hash, constant optimizer disabled, matching the pinned launch.
+
+To reproduce the ABI and deployment constants, with a local solc 0.8.26 executable:
 
 ```sh
-python3 -m http.server 4173
-# Open http://localhost:4173/dist/
-```
-
-The production build writes `dist/index.html`, relative `./assets/` bundles and a local SVG favicon. It needs no backend, credentials, external fonts, runtime registry or dependency folder. The export can load without RPC connectivity; chain-dependent values then show unreadable.
-
-### Publish
-
-Upload **the contents of `dist/`** to any static HTTPS host. Keep `assets/` and `favicon.svg` beside `index.html`. The Vite base is `./` and navigation uses hashes, so gateway subpaths and ENS-hosted static content need no route rewrites. The publisher serves the checked-in export; always rebuild and include the updated `dist/` together with source, `web/package.json` and `web/package-lock.json`. There is no website hosting URL in the supplied deployment record; this assignment produces the publishable export without publishing it.
-
-### Integration and verification
-
-- ABI derived with `forge inspect src/BaskVault.sol:BaskVault abi --json`; canonical Keccak matches `a544e47473b63007f79a156bb1126ddd87d72cc1d59605b2d8ce8161780c8161`. The live runtime matches the local compiler output, hash `efc36bd14ee8f31dc308dd4217f6fe245187f80f756937c82e83c7a797d92407`.
-- Stock/feed/role addresses come from the vault, except new addresses entered into the required owner/claim forms. Multicall3 is the read-only infrastructure exception: the SDK's canonical deployment is probed for code on chain 4663 before use. No external asset/role address is configured. See [Viem's batching documentation](https://viem.sh/docs/contract/multicall).
-- Every contract read/simulation uses 10,000,000 gas. Off-chain lookups are disabled (`ccipRead: false`). `allAssets`, `depositStatus` and `previewDeposit` are separate calls, never Multicall3 entries. Small reads are grouped in bounded batches; failures retry individually. `allAssets` failure falls back to individual asset, accounting, feed and balance reads. NAV uses bigint managed balances, ignores retired stocks and marks held prices older than 26 hours stale.
-- Deposit approval is for the entered amount. Deposit minimum is 99.5% of the preview; redemption minimums are 99.9% of each leg, with ten-minute deadlines. Transactions are simulated again before signing. Successful confirmation refreshes the data; the approval flow retains its preview. No background polling beyond transaction receipts; refresh data explicitly. Age labels update locally each minute.
-- The requested market-hours copy includes US market holidays. The contract itself uses a fixed UTC weekday gate and feed freshness rather than an explicit holiday calendar. Actual eligibility comes from its `depositStatus` and `previewDeposit` views; the site adds no calendar rule.
-
-Actual worker checks on 2026-10-07:
-
-```sh
-npm run --prefix web typecheck       # passed
-npm run --prefix web build           # passed; 509.63 kB main JS, 153.33 kB gzip
-npm run --prefix web validate        # passed: unit boundaries, ABI/runtime, 23 live read-only action simulations
-# With captured browser-interactions.json:
 cd web
+SOLC=/path/to/solc-0.8.26 ./node_modules/.bin/tsx scripts/regenerate-abi.ts
+```
+
+This fetches only the pinned launch source, compiles it in memory, requires the expected runtime hash, and writes `src/vault.abi.json` and `src/deployment.ts`. It never deploys. ABI functions, events and errors come from compiler output. Proposal enums, reason words, positional reads and fixtures match the pinned source. Every send checks public RPC chain/code, wallet chain/account and simulates the exact calldata before requesting a signature.
+
+The Deposit page separately computes size and daily headroom using managed NAV and `decayedBucket()`, checks stock balance before approval, and simulates allowance-covered deposits from the wallet. Listing sends the exact chain-read table rows; unreadable/mismatched/already-listed entries disable List. Receipt uncertainty triggers a new vault read and displays what is listed before retrying.
+
+## Validation
+
+From `web/`:
+
+```sh
+npm run validate
+SOLC=/path/to/solc-0.8.26 bash scripts/run-fork.sh
+```
+
+`validate` checks hashes, math, pairings, encodings and public read-only calls. The fork script downloads the pinned source into disposable `test/scratch/fork/`, uses a recent block greater than 82,708,976, and runs the website tests against the actual vault bytecode. Mock stocks/feeds and factory substitution exist only inside the local fork. It never broadcasts, compiles root `src/`, or modifies the existing Foundry configuration. Override `BASKET_FORK_BLOCK` to reproduce a particular block if the RPC retains it.
+
+Production-browser checks use Playwright installed outside the submission; for example:
+
+```sh
+npm install --prefix /tmp/basket-browser playwright@1.56.1
+/tmp/basket-browser/node_modules/.bin/playwright install chromium
+./node_modules/.bin/tsx scripts/make-browser-fixture.ts
+./node_modules/.bin/tsx scripts/assemble-browser-check.ts
+PLAYWRIGHT_MODULE=/tmp/basket-browser/node_modules/playwright/index.mjs node scripts/run-browser.mjs
 ./node_modules/.bin/tsx scripts/check-browser-transactions.ts
-# passed: 25 rendered wallet requests covering all 24 action functions
 ```
 
-The build emits a non-blocking Vite chunk-size advisory at 500 kB. Two local-fork tests against the deployed vault passed (deposit/redeem/claim/loss and governance). To reproduce those tests without changing Foundry configuration:
+If using an existing Chromium, set `CHROMIUM_PATH` to its executable. The runner owns a temporary foreground HTTP server, serves the production export under `/preview/`, closes the browser/server when done, and writes evidence under `artifacts/`. Fixture wallets capture requests and reject signatures; the receipt-failure scenario returns a dummy local hash. No real wallet or live send is used.
 
-```sh
-mkdir -p test/scratch
-cp web/validation/WebsiteFork.t.sol test/scratch/WebsiteFork.t.sol
-forge test --match-path test/scratch/WebsiteFork.t.sol -vv
-```
+Actual results for this revision are in [artifacts/validation.md](artifacts/validation.md): production build and typecheck passed; live chain/runtime checks and 23 vault-action simulations passed; 25 captured browser requests cover all 24 UI action functions; four fork tests passed at block **82,772,718**. Tests cover new return layouts, cap/bucket rejection and refill, waiting-state errors, retirement invalidation, feed reuse, pairing/approval guards and failed-receipt reconciliation. Browser checks cover all six pages at 320, 768 and 1440 pixels, including visitors without a wallet. Screenshots and measured contrast pairs are recorded there. Vite reports a non-fatal main-chunk size advisory (about 520 kB before gzip).
 
-They fork the public RPC and create mock Stock Tokens/feeds only inside the test EVM. The tests assume the observed empty, unfinalized launch state; a later launch needs adjusted fixtures. No live transaction is sent. Browser tests used the actual production export with both live no-wallet reads and isolated mocked RPC/wallet scenarios. All five pages were checked at 320, 768 and 1440 CSS pixels, plus desktop text enlargement, keyboard focus and reduced motion. A rendered request-capture wallet deliberately declines signatures; successful state transitions were checked separately on the fork.
+Limitations: public RPC availability and state may change; a preview cannot guarantee inclusion or prevent later state changes. The requested holiday wording is retained, but the immutable source enforces a weekday UTC window and feed freshness, not an explicit US-holiday calendar. There was no live transaction, independent audit, screen-reader session, physical-device test or native browser zoom test. The first attempted historical fork lacked RPC state; validation used the later block above. Worker checks are evidence of this local run, not independent certification.
 
-See [validation evidence and limitations](artifacts/validation.md), [transaction mapping](artifacts/transaction-mapping.json) and [implemented design](DESIGN.md). The guide's six domains were reviewed and applicable findings repaired. A screen-reader session, physical devices, native browser zoom, real extension signing and live funded transactions were not performed. Browser fixture source is under `web/validation/`; its synthetic addresses/data are never bundled into the site.
-
-Packaging budget: `.gitignore` is explicitly budgeted at **256 bytes** (201 used). It excludes dependency/cache folders at every level and tool screenshots, and includes the required `artifacts/` evidence despite the workspace-level exclusion. No existing contract build configuration/dependencies, submodules, `.github`, `.env` or `node_modules` content is part of the change. Required source, lockfile and static assets remain complete; final byte counts are in the validation record.
-
-## Build and test
-
-```sh
-forge build
-forge test
-forge fmt --check
-```
-
-`foundry.toml` pins Solidity **0.8.26**, optimization with **200 runs**, **Cancun**, and `bytecode_hash = "none"`. Production contracts have no external library dependencies. Forge Standard Library v1.9.7 is vendored as ordinary files under `lib/forge-std`, with its licenses. Once Foundry and the pinned compiler are installed, compilation and tests need no network. Tests use chain ID 4663, local mocks and fixed timestamps; no fork, environment variables, FFI or filesystem cheatcodes are used.
-
-## Deployment
-
-Deploy `BaskVault(address owner_, address guardian_)` using the literal arguments in [launch.json](launch.json):
-
-| Parameter | Value |
-| --- | --- |
-| Network | Robinhood Chain, 4663 |
-| `owner_` | `0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3` |
-| `guardian_` | `0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68` |
-| `STOCK_FACTORY` source constant | `0x4783C67b63dE2B358Ac5951a7D41F47A38F3C046` |
-| Initial `NAV_CAP` | USD 1,000,000, expressed as `1_000_000e18` |
-
-The constructor makes no external calls and does not derive ownership from the deploying factory. It rejects zero or equal role arguments. Network selection is the deployer's responsibility; there is no additional chain-ID gate. The pinned factory address comes from the assignment and was exercised with local mocks, not verified against a live RPC. No transactions have been broadcast. The vault remains below 24,000 bytes, so a separate lens is unnecessary.
-
-Before opening deposits, the owner must verify each token/feed pair, list at least three assets using `proposeAsset` or `proposeAssets`, and call `finalizeGenesis` once. During genesis these functions list directly and return proposal ID zero. Finalization opens deposits after 72 hours, subject to all other checks. The contract cannot determine whether a feed describes the correct stock; that pairing is an owner responsibility.
-
-## Assets and accounting
-
-Assets are append-only, in listing order, with a maximum of 64. Listing validates 18 token decimals, `uid()` registration at the factory, 8 feed decimals, a nonzero feed aggregator, unique feed use and a positive answer. Bands start at `answer / 4` and `answer * 4`; an answer too large to represent the upper band is rejected. Feeds answer USD per whole token. All USD amounts have 18 decimals: `value = floor(amount * answer / 1e8)`.
-
-Only `managed[token]` contributes to NAV. Direct donations never mint shares or enter managed accounting. Physical balances are read to detect deficits, reserve debts and verify transfers; surplus can cover existing obligations but is never independently withdrawable. There is no rescue, sweep, asset trading or rebalancing entry point.
-
-A closed asset still contributes to NAV and deposit health checks. A retired asset remains in the list and redemption basket, is permanently closed, contributes zero NAV, and is skipped by **every** deposit check, including the freshness quorum and deficit reads. Feed replacement preserves the existing band, listing timestamp and probation status. Genesis assets have no probation; later listings have 30 days of probation beginning at execution.
-
-## Deposits
-
-`deposit(token, amount, receiver, minSharesOut, deadline)` requires finalized genesis, the 72-hour delay, no deposit pause, an open asset, and a receiver other than zero or the vault. Deadlines are inclusive.
-
-The market gate is exactly Monday through Friday, **15:30 inclusive to 19:30 exclusive UTC**, calculated from Unix time. It does not adjust for holidays or daylight saving time. At least three unretired listed assets must have a successfully read feed timestamp no more than four hours old and not in the future; closed assets can count. The quorum only tests timestamps. Full price validation separately applies to the deposited asset and every unretired asset with managed funds.
-
-Full price validation requires a successful feed read, a positive answer inside the inclusive band, a nonfuture timestamp no more than 26 hours old, and `oraclePaused() == false`. Every unretired asset must have a readable balance and no accounting shortfall. The deposited asset's balance must cover all its outstanding claims.
-
-The incoming transfer must increase the vault balance by exactly `amount`. Using pre-deposit NAV, gross shares equal deposit value for the first deposit, or `floor(value * totalSupply / NAV)` thereafter. Existing supply with zero NAV rejects deposits. The fee is `ceil(gross / 200)`; the receiver gets gross minus fee, less the first deposit's permanent `1e15` shares minted to `address(0xdEaD)`. The receiver must receive a positive amount meeting `minSharesOut`. When the fee recipient is unset, its fee shares are **not minted**, but the fee is still deducted from the receiver's allocation.
-
-If every managed position is retired or fully written off, this zero-NAV rejection is permanent under the specified rules. Redeeming all user shares leaves the dead shares outstanding. New listings and direct donations do not restore managed NAV, and there is no reset or recapitalization entry point. Redeem and claim remain available, subject to their existing entitlements and token behavior.
-
-The following limits apply to the post-deposit value:
-
-| Limit | Formula |
-| --- | --- |
-| Total NAV | `NAV2 <= NAV_CAP` |
-| Deposited asset, ordinary | `max(floor(NAV2 * 5 / 100), 25_000e18)` |
-| Deposited asset, probation | `max(floor(NAV2 / 100), 5_000e18)` |
-| One global deposit bucket | `max(floor(NAV2 / 4), 100_000e18)` |
-
-The bucket decays before adding deposit value: subtract `floor(bucket * elapsed / 86400)`, or set it to zero after at least a day. Only successful deposits update the stored bucket and its timestamp. A successful deposit also clears all unretired deficit records.
-
-## Redemption, failed payments and claims
-
-`redeem(shares, minAmountsOut, deadline)` never reads a feed or an oracle pause flag. It ignores genesis, market hours, deposit pauses, asset closes, retirement and caps. Its only administrative fee destination is an internal BASK balance update; the vault never calls `feeRecipient`.
-
-The fee is `ceil(shares / 200)` and net shares are `shares - fee`. With a fee recipient, fee shares are transferred to that address and net shares burned. Otherwise all supplied shares are burned. Each leg uses total supply **before** burning:
-
-```
-available = max(vault balance - totalOwed[token], 0)
-leg = floor(min(managed[token], available) * net / supplyBeforeBurn)
-```
-
-Each balance read for this calculation is a low-level static call with 50,000 gas and a 32-byte output buffer. Failure or a return size other than exactly 32 bytes uses `available = managed[token]`. All leg amounts are determined before any token payment. Missing minimum entries mean zero; entries past the asset list are ignored. A minimum checks the leg entitlement, which may become debt if payment fails.
-
-Each nonzero leg reduces managed accounting and is paid in an external self-call capped at 250,000 gas. `payLeg` is callable only by the vault. It requires a successful transfer returning no data or exactly the boolean true, and an exact decrease in the vault balance. Failed postconditions revert the entire self-call, including any token movement. The outer redemption then records `owed[caller][token]` and `totalOwed[token]` and proceeds to the other assets. Bounded return buffers avoid copying hostile return data. Full precision multiplication avoids intermediate overflow in proportional legs.
-
-`claim(token, to)` pays `min(caller's debt, current vault balance)`. Claims ignore all gates and role controls. The self-call and its balance reads have no fixed gas allowance on this path, permitting recovery after a token becomes more expensive. If a claim fails, its debt reduction rolls back. A blocked caller can nominate another receiving address. If actual funds cannot cover all creditors, claims use available funds in transaction order, as specified. Outgoing checks measure the vault's decrease; they do not guarantee what an externally modified token credits to its recipient.
-
-Every user-facing state change holds the reentrancy guard and emits an event. The self-only payment helper runs under its caller's guard and emits `LegPaid`. No role can seize shares, move assets outside these flows, prohibit redeem/claim, upgrade the vault or change the fee.
-
-## Deficits
-
-`flagDeficit(token)` records `managed - available` only when positive and larger than the existing record; an increased record starts a new seven-day wait. An identical or smaller shortfall cannot reset the clock. `recognizeLoss(token)` becomes permissionless at seven days and reduces managed by the smaller of the recorded and current shortfall, then clears the record. Neither operation treats an unreadable balance as a proven loss. Nothing reduces managed automatically merely because tokens disappear. Donations can repair a deficit without increasing managed.
-
-A readable but incorrect balance can establish a shortfall. Pausing deposits does not stop flagging or recognition, and neither role can cancel the loss clock. Recovery before recognition reduces or eliminates the recognized loss because the balance is checked again. Recovery after recognition does not restore managed accounting: returned funds become surplus, may cover existing obligations, and otherwise cannot be withdrawn. In particular, if managed and owed are both zero, returned funds remain stranded.
-
-## Governance
-
-The owner can propose listings, feed replacements, band re-centering, reopening, retirement, guardian replacement and NAV-cap increases. Anyone can execute from `createdAt + 7 days` inclusive until `createdAt + 14 days` exclusive. Listing and feed metadata checks repeat at execution. Replacement feed answers must fit the current band both times. Band re-centering uses the execution answer, which must be positive, nonfuture and **strictly less** than 26 hours old; it may be outside the old band.
-
-Listing and feed replacement share one 24-hour execution cooldown. Genesis direct listings are exempt. Retirement requires closure at both proposal and execution. Every later close cancels earlier reopening proposals, including another close of an already closed asset. Lowering the NAV cap immediately cancels every pending increase; increases cannot exceed `10_000_000_000e18`. Zero is a valid lowered cap.
-
-After genesis, a batch creates independent proposals with a common creation time; it does not reserve execution slots or extend expiry. At most seven listing/feed changes from that batch can execute within its seven-day execution window, even with perfect timing and no competing changes. Stagger proposals and account for all pending listing/feed changes; expired proposals require a new proposal and wait.
-
-The owner can cancel any pending proposal. The guardian can cancel all except guardian replacement. Both can pause deposits or close an asset immediately; only the owner can unpause. The owner also has two-step ownership transfer with no renounce entry point, and a one-time `setFeeRecipient` that rejects zero and the vault. No function later changes that recipient. Pending ownership and other pending proposals are not implicitly discarded by an ownership transfer.
-
-Distinct owner and guardian addresses are required at construction. The ownership transfer flow can subsequently make them equal, including when a guardian replacement executes before the pending owner accepts. Maintaining separate operational keys across both workflows is an operator responsibility; the guardian has no withdrawal veto even when the roles coincide.
-
-Reopening and cap-raise cancellation use version counters, so an arbitrary number of old proposals never makes a close or cap decrease expensive. `proposalState(id)` is the effective status, including these cancellations and time expiry. The raw `proposals(id)` getter preserves the stored record and may still show Pending for an effectively cancelled or expired proposal.
-
-## Views and integration
-
-| View | Meaning |
-| --- | --- |
-| `assets(index)`, `assetCount()`, `assetIndex(token)` | Stable asset order; token index is one-based, zero means unlisted |
-| `allAssets()` | Feed, answer, timestamp, band, open/retired/probation flags, listing time, managed amount, short flag, read-success flags and total debt |
-| `previewDeposit(token, amount)` | NAV, value, gross, fee, receiver shares, locked shares and updated bucket; enforces current eligibility and amount-dependent caps |
-| `previewRedeem(shares)` | Fee, net and leg entitlements in asset order; does not simulate payment success |
-| `depositStatus(token)` | Current token and vault eligibility, using the same shared checks and reason codes as deposit |
-| `pendingProposals(start, count)` | Pending IDs and records within a page of historical IDs, starting at 1; start zero means 1 |
-| `proposalState(id)` | Effective lifecycle state |
-
-`depositStatus` has no amount, receiver, minimum or deadline arguments; use `previewDeposit` and transaction simulation for those checks. `DepositUnavailable(reason, asset)` uses the following enum values. Global faults have the zero address; amount-dependent caps report the deposited token.
-
-| Code | Reason | Code | Reason |
-| --- | --- | --- | --- |
-| 0 | OK | 11 | FeedUnreadable |
-| 1 | Genesis | 12 | NonpositivePrice |
-| 2 | OpeningDelay | 13 | OutsideBand |
-| 3 | Paused | 14 | FuturePrice |
-| 4 | NotListed | 15 | StalePrice |
-| 5 | Closed | 16 | OracleUnreadable |
-| 6 | MarketClosed | 17 | OraclePaused |
-| 7 | MarketNotFresh | 18 | ZeroNAV |
-| 8 | BalanceUnreadable | 19 | NAVCap |
-| 9 | OwedUncovered | 20 | AssetCap |
-| 10 | Deficit | 21 | BucketCap |
-
-An unreadable asset's `short` flag is false because available falls back to managed; consult `balanceReadable` to distinguish that from proven solvency. Prices in `allAssets` are raw observations, not assertions of price validity. Previews can change before execution; set deadlines and minimums.
-
-## Review and operations
-
-The accepted design includes these risks without additional mechanisms:
-
-1. A deposit followed by redemption can profit if a feed lags more than the 1% round-trip fee.
-2. The owner must pair each token with its true feed.
-3. An untransferable asset retains its feed value until deposits are paused. The guardian and owner must monitor transfers and act promptly.
-4. Retirement makes an asset worth zero in deposit NAV while preserving its redemption leg.
-
-Retirement can therefore transfer substantial value from existing holders to later depositors. In the local reproduction, retiring a $10,000 position while leaving only $1 of live NAV lets a $100 deposit followed by redemption receive about 98.51 of the 100 retired Stock Tokens. Deposit caps constrain the deposit's nominal value, not this extraction. Retirement should be reserved for positions whose economic value is already negligible or whose transfers are permanently broken; treating a valuable position as zero can dilute holders severely. Transfer recovery after retirement can expose the same issue. This is the accepted zero-NAV accounting rule, with no added mechanism.
-
-A pending band proposal authorizes anyone to re-centre on a fresh execution-time answer, including an outlier outside the old band. Post-genesis listing also uses the execution answer to initialize its band. A temporary outlier can consequently enable mispriced deposits and extraction from other holdings; a return to the honest price can then block all deposits while the asset remains managed. Local tests reproduce both paths, including the smaller probation cap for a new listing. Operators can use the existing deposit pause before these changes become executable and assess the resulting feed and band before unpausing; the contracts do not enforce that workflow. Monitoring or cancellation cannot guarantee winning a transaction race against an executor.
-
-A stale held feed plus a replacement answer outside the old band has no truthful feed/band repair path while those conditions persist: replacement requires an in-band answer and re-centering requires a fresh answer from the current feed. Retirement skips the affected checks but has the dilution, quorum and zero-NAV consequences described here. Keep at least three fresh unretired feeds: retiring one of exactly three removes the deposit quorum, even if its feed remains fresh. List replacements before retirement where continued deposit availability is needed.
-
-Operators must monitor feed freshness, token upgrades and restrictions, physical deficits, outstanding claims, pending proposals and cap usage. External token administrators and the chain can affect whether assets actually move. The vault can isolate a failed payment and preserve its claim; it cannot make an external token honor transfers.
-
-The local adversarial suite covers paused, blocked, missing-runtime, malformed-return and gas-exhausting tokens; 64-asset redemptions; debt conservation; exact transfer rollback; reentrancy; price and market boundaries; proposal timing and roles; losses; fees and caps. Fuzzing checks arithmetic and mixed deposit/redeem/claim/donation sequences. All 64-asset attacks use cold accesses and a 27,900,000-gas call ceiling. See [REVIEW.md](REVIEW.md) for measured results and limitations. This implementation and its self-review still require independent adversarial review before a funded release.
+[DESIGN.md](DESIGN.md) documents the preserved grocery-store design and new components. The pinned Better Interface guide informed all six review domains; its retained attribution and licenses are in `web/validation/DESIGN-GUIDANCE-LICENSE`.

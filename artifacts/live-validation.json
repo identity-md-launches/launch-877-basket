@@ -1,8 +1,10 @@
 {
-  "checkedAt": "2026-10-07T16:33:20.579Z",
+  "checkedAt": "2026-10-07T21:03:54.765Z",
   "network": {
     "multicall": true
   },
+  "vault": "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
+  "block": "82775415",
   "globals": {
     "owner": "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
     "guardian": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
@@ -27,54 +29,54 @@
     {
       "function": "proposeAsset",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "finalizeGenesis",
       "args": [],
-      "result": "This action is not available in the current contract state."
+      "result": "This action is unavailable in the current vault state. Refresh and check its requirements."
     },
     {
       "function": "proposeFeed",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "proposeBand",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "proposeReopen",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "proposeRetire",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "proposeGuardian",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
       "result": "success (read-only simulation)"
     },
     {
-      "function": "proposeNAVCap",
+      "function": "proposeNavCap",
       "args": [
         "2000000000000000000000000"
       ],
@@ -85,21 +87,21 @@
       "args": [
         "1"
       ],
-      "result": "This proposal is no longer pending."
+      "result": "Check the proposal’s current state and refresh proposals."
     },
     {
       "function": "cancelProposal",
       "args": [
         "1"
       ],
-      "result": "This proposal is no longer pending."
+      "result": "Check the proposal’s current state and refresh proposals."
     },
     {
       "function": "closeAsset",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "pauseDeposits",
@@ -112,7 +114,7 @@
       "result": "success (read-only simulation)"
     },
     {
-      "function": "lowerNAVCap",
+      "function": "lowerNavCap",
       "args": [
         "500000000000000000000000"
       ],
@@ -128,7 +130,7 @@
     {
       "function": "transferOwnership",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
       "result": "success (read-only simulation)"
     },
@@ -140,11 +142,11 @@
     {
       "function": "deposit",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
         "1000000000000000000",
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "995",
-        "1791391396"
+        "1791407631"
       ],
       "result": "Genesis has not been finalized. Stock at fault: none."
     },
@@ -153,14 +155,14 @@
       "args": [
         "0",
         "",
-        "1791391396"
+        "1791407631"
       ],
       "result": "success (read-only simulation)"
     },
     {
       "function": "claim",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3"
       ],
       "result": "success (read-only simulation)"
@@ -168,17 +170,17 @@
     {
       "function": "flagDeficit",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "The Stock Token is not valid for this action."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     },
     {
       "function": "recognizeLoss",
       "args": [
-        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
       ],
-      "result": "Flag a shortfall first and wait seven days before recognition."
+      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
     }
   ],
-  "limitations": "Live vault is in empty genesis. Invalid stock/proposal cases intentionally reach deployed custom errors. Successful populated flows are separately checked on a local fork; no live transaction is sent."
+  "limitations": "Invalid stock/proposal cases intentionally reach deployed custom errors; read-only calls do not predict successful transactions. Successful populated flows are separately checked on a local fork; no live transaction is sent."
 }

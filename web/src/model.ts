@@ -20,8 +20,6 @@ export type Asset = {
   maxAnswer: bigint;
   open: boolean;
   retired: boolean;
-  probation: boolean;
-  listedAt: bigint;
   managed?: bigint;
   short?: boolean;
   balanceReadable: boolean;
@@ -94,10 +92,8 @@ export async function loadSnapshot(): Promise<Snapshot> {
           f,
           open,
           retired,
-          genesisAsset,
           minAnswer,
           maxAnswer,
-          listedAt,
         ] = row.value;
         const managed = await safe(vault("managed", [t]));
         const debt = await safe(vault("totalOwed", [t]));
@@ -116,11 +112,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
           retired,
           minAnswer,
           maxAnswer,
-          listedAt,
           index: i,
-          probation:
-            !genesisAsset &&
-            BigInt(Math.floor(Date.now() / 1000)) < listedAt + 30n * 86400n,
           managed: managed.ok ? managed.value : undefined,
           totalOwed: debt.ok ? debt.value : undefined,
           answer: price.ok ? price.value[1] : undefined,
@@ -148,7 +140,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
     const sym = meta[2 * i],
       desc = meta[2 * i + 1];
     a.symbol = sym.ok ? sym.value : "unreadable";
-    a.description = desc.ok ? desc.value : "unreadable";
+    a.description = desc.ok ? cleanFeedDescription(desc.value, a.symbol) : "unreadable";
   });
   await Promise.all(
     assets.map(async (a) => {
@@ -266,3 +258,26 @@ export const depositArgs = (t: Address, n: bigint, w: Address, q: bigint) =>
   [t, n, w, (q * 995n) / 1000n, deadline()] as const;
 export const redeemArgs = (n: bigint, legs: bigint[]) =>
   [n, legs.map((a) => (a * 999n) / 1000n), deadline()] as const;
+
+// The only issuer prefixes removed are those specified by the product.
+export function cleanFeedDescription(description: string, symbol: string) {
+  if (description.startsWith("Robinhood ")) return description.slice(10);
+  if (description.startsWith("RH") && description.slice(2).startsWith(symbol)) return description.slice(2);
+  return description;
+}
+export function pairingMatches(symbol: string, description: string) {
+  const clean = cleanFeedDescription(description, symbol);
+  return symbol !== "unreadable" && symbol.length > 0 && clean.startsWith(symbol)
+    && [" ", "/", "-"].includes(clean.charAt(symbol.length));
+}
+// Solve the contract's post-deposit NAV bucket bound, including integer rounding.
+export function depositLimits(nav: bigint, cap: bigint, bucket: bigint, value: bigint) {
+  const floor = 100_000n * 10n ** 18n;
+  const sizeRoom = cap > nav ? cap - nav : 0n;
+  const floorRoom = floor > bucket ? floor - bucket : 0n;
+  const ratioRoom = nav > 4n * bucket ? (nav - 4n * bucket) / 3n : 0n;
+  const dailyRoom = floorRoom > ratioRoom ? floorRoom : ratioRoom;
+  const fits = sizeRoom < dailyRoom ? sizeRoom : dailyRoom;
+  const dailyLimit = (nav + value) / 4n > floor ? (nav + value) / 4n : floor;
+  return { fits, sizeRoom, dailyRoom, overSize: nav + value > cap, overDaily: bucket + value > dailyLimit };
+}

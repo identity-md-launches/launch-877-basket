@@ -229,10 +229,6 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
                       </dd>
                     </div>
                     <div>
-                      <dt>On probation</dt>
-                      <dd>{a.probation ? "Yes" : "No"}</dd>
-                    </div>
-                    <div>
                       <dt>Short</dt>
                       <dd>
                         {!a.balanceReadable || a.short === undefined

@@ -1,38 +1,38 @@
 {
-  "checkedAt": "2026-10-07T16:33:54.927639+00:00",
+  "checkedAt": "2026-10-07T21:04:29.681794+00:00",
   "limitBytes": 8388608,
-  "candidateFileCount": 91,
-  "candidateRawBytes": 2478477,
-  "existingGitStorageBytes": 162738,
-  "conservativeTotalWithExistingGitBytes": 2641215,
-  "distBytes": 531613,
-  "ignorePathBudgetBytes": 256,
-  "ignoreFileBytes": 201,
+  "candidateFileCount": 106,
+  "candidateRawBytes": 3780549,
+  "distBytes": 541996,
   "dependencyAndCacheCandidates": 0,
   "submodules": 0,
   "existingProtectedFilesUnchanged": true,
+  "ignoreFilesChanged": false,
   "relativeExportAssetsExist": true,
+  "abandonedAddressMatches": 0,
   "exports": {
-    "dist/assets/ccip-BeLpi9tx.js": {
-      "bytes": 2610,
-      "sha256": "498e38069c826bd841c6c638d3995643a5608b36a524f19cb29c2736370f9fe2"
-    },
-    "dist/assets/index-D7VoPACC.js": {
-      "bytes": 509633,
-      "sha256": "d84b2cc0a998e3c34e356a1b78aa33ea53a75489d32d0dbbea98973ed1030558"
-    },
-    "dist/assets/index-wRK2KGWl.css": {
-      "bytes": 18406,
-      "sha256": "e622edad4ac4ecf63f5ee97a63072ce2221cb31f558bcf3ba4d27de6df1211c1"
-    },
     "dist/favicon.svg": {
       "bytes": 302,
       "sha256": "88e1ae3f9ef46305a7175ebcb5e7a0295134e26974848a25743772b4c973ce38"
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "5513764902161197c0df4f60b4064e3362a2f9b67e3da3eb3208c89f6bf281b2"
+      "sha256": "f6c294489d84ca0f7db4e45f6b525af7391d35a7fcb44ba25bcfa46ddc6834ad"
+    },
+    "dist/assets/index--jZUpBIh.js": {
+      "bytes": 519570,
+      "sha256": "3327f20ea560d6b2ceef957ed092d77d8fb68f6c061a7e478a0ba7886dc405b4"
+    },
+    "dist/assets/index-DI87J_Ah.css": {
+      "bytes": 18852,
+      "sha256": "7ca4b4cbb8a333a1136a8cbff304bac8ab7be3cfbadfc1e7f1052ff2d38f6fcb"
+    },
+    "dist/assets/ccip-CL3jygtN.js": {
+      "bytes": 2610,
+      "sha256": "d76111be1924eac81909bd446f6e9f7c70e7881ab90b9c04df9e15727723ce81"
     }
   },
-  "scope": "All tracked and nonignored candidate files, excluding input .imd/ and disposable test/scratch/. Includes existing repository files. Raw file sum plus existing Git storage is a conservative size check; no Git metadata was modified."
+  "scope": "All tracked and nonignored candidates, excluding supplied inputs and disposable scratch. Complete uncompressed snapshot plus existing Git pack bytes provides a conservative budget bound. No Git metadata or ignore files modified.",
+  "existingGitPackBytes": 976896,
+  "conservativeTotalWithExistingGitPackBytes": 4757445
 }

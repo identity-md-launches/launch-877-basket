@@ -7,9 +7,10 @@ import { AddressLink, BasketIcon } from "./components";
 import { VaultPage } from "./Vault";
 import { DepositPage, RedeemPage, Claims } from "./Flows";
 import { OwnerPage } from "./Owner";
+import { DocsPage } from "./Docs";
 import { LossesPage } from "./Losses";
 import "./styles.css";
-const pages = ["Vault", "Deposit", "Redeem", "Owner", "Losses"];
+const pages = ["Vault", "Deposit", "Redeem", "Owner", "Losses", "Docs"];
 function currentPage() {
   const p = location.hash.slice(1).toLowerCase();
   return pages.find((n) => n.toLowerCase() === p) ?? "Vault";
@@ -194,6 +195,8 @@ function App() {
           <RedeemPage snapshot={snapshot} wallet={wallet} />
         ) : page === "Owner" ? (
           <OwnerPage snapshot={snapshot} wallet={wallet} />
+        ) : page === "Docs" ? (
+          <DocsPage />
         ) : (
           <LossesPage snapshot={snapshot} wallet={wallet} />
         )}
@@ -204,6 +207,7 @@ function App() {
           <BasketIcon />
           <strong>Basket Protocol</strong>
           <span>Stock Tokens. One basket.</span>
+          <span className="footer-links"><a href="#docs">Docs</a><a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">Basket Protocol on X</a></span>
         </div>
         <div>
           <span>BaskVault · Chain 4663</span>

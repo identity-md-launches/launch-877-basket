@@ -10,11 +10,12 @@ const pick=(name:string)=>decoded.find((t:any)=>t.functionName===name);
 assert.deepEqual(pick('deposit').args.slice(0,4),['0x0000000000000000000000000000000000000064',10n*E,'0x000000000000000000000000000000000000006F',995n*E*995n/1000n]);
 assert.equal(pick('approve').args[0].toLowerCase(),VAULT);assert.equal(pick('approve').args[1],10n*E);
 assert.equal(pick('redeem').args[0],10n*E);assert.deepEqual(pick('redeem').args[1],[E*999n/1000n,2n*E*999n/1000n,3n*E*999n/1000n]);
-assert.equal(pick('proposeNAVCap').args[0],2000000n*E);assert.equal(pick('lowerNAVCap').args[0],500000n*E);
+assert.equal(pick('proposeNavCap').args[0],2000000n*E);assert.equal(pick('lowerNavCap').args[0],500000n*E);
 const claim=decoded.filter((t:any)=>t.functionName==='claim');assert.equal(claim.length,2);assert.equal(claim[0].args[0].toLowerCase(),'0x0000000000000000000000000000000000000066');assert.equal(claim[0].args[1].toLowerCase(),'0x00000000000000000000000000000000000001bc');assert.equal(claim[1].args[1].toLowerCase(),claim[1].from.toLowerCase());
 for(const name of ['deposit','redeem']){const t=pick(name);if(t.capturedAt){const deadline=Number(t.args.at(-1));const remaining=deadline-Math.floor(t.capturedAt/1000);assert.ok(remaining>=590&&remaining<=600);}}
-const expected=['deposit','approve','redeem','claim','flagDeficit','recognizeLoss','proposeAsset','proposeFeed','proposeBand','proposeReopen','proposeRetire','proposeGuardian','proposeNAVCap','executeProposal','cancelProposal','closeAsset','pauseDeposits','unpauseDeposits','lowerNAVCap','setFeeRecipient','transferOwnership','acceptOwnership','proposeAssets','finalizeGenesis'];
+const expected=['deposit','approve','redeem','claim','flagDeficit','recognizeLoss','proposeAsset','proposeFeed','proposeBand','proposeReopen','proposeRetire','proposeGuardian','proposeNavCap','executeProposal','cancelProposal','closeAsset','pauseDeposits','unpauseDeposits','lowerNavCap','setFeeRecipient','transferOwnership','acceptOwnership','proposeAssets','finalizeGenesis'];
 assert.deepEqual(new Set(decoded.map((t:any)=>t.functionName)),new Set(expected));
+for(const t of decoded) assert.equal(t.to.toLowerCase(),t.functionName==='approve'?'0x0000000000000000000000000000000000000064':VAULT);
 assert.equal(pick('proposeAssets').args[0].length,3);assert.equal(pick('proposeAssets').args[1].length,3);
 for(const name of ['proposeBand','proposeFeed','closeAsset'])assert.equal(pick(name).args[0].toLowerCase(),'0x0000000000000000000000000000000000000064');
 for(const name of ['proposeReopen','proposeRetire'])assert.equal(pick(name).args[0].toLowerCase(),'0x0000000000000000000000000000000000000065');
