@@ -6,6 +6,14 @@ import {BaskVault} from "../src/BaskVault.sol";
 import {MockStock, MockFeed} from "./mocks/Mocks.sol";
 
 contract RedemptionAttackTest is BaskTestBase {
+    struct LegState {
+        uint256 managed;
+        uint256 custody;
+        uint256 holderBalance;
+        uint256 backing;
+        bool pays;
+    }
+
     function setUp() public override {
         _setup(64);
         for (uint256 i; i < 64; ++i) {
@@ -21,12 +29,10 @@ contract RedemptionAttackTest is BaskTestBase {
         }
         vm.cool(address(vault));
         vm.prank(ALICE);
-        uint256 start = gasleft();
+        // A bounded call proves the gas ceiling even when Foundry isolates calls.
+        // gasleft() subtraction across those call boundaries is not reliable.
         (bool ok, bytes memory result) = address(vault).call{gas: 27_900_000}(data);
-        uint256 used = start - gasleft();
-        emit log_named_uint("64-asset redemption gas", used);
         assertTrue(ok, "hostile asset blocked redemption");
-        assertLt(used, 28_000_000);
         legs = abi.decode(result, (uint256[]));
         assertEq(legs.length, 64);
         assertEq(vault.balanceOf(ALICE), 0);
@@ -100,6 +106,91 @@ contract RedemptionAttackTest is BaskTestBase {
         for (uint256 i; i < 64; ++i) {
             assertEq(vault.totalOwed(address(stocks[i])), legs[i]);
         }
+    }
+
+    /// forge-config: default.fuzz.runs = 128
+    function testFuzz64MixedFailuresPreserveOtherClaimantsAndAccounting(uint256 seed, bool feesEnabled) public {
+        // Give Bob an existing claim on every asset before Alice exits.
+        vm.prank(ALICE);
+        vault.transfer(BOB, 100e18);
+        for (uint256 i; i < 64; ++i) {
+            stocks[i].setMode(MockStock.Mode.RevertCall);
+        }
+        vm.prank(BOB);
+        uint256[] memory priorDebt = vault.redeem(100e18, new uint256[](0), block.timestamp);
+        if (feesEnabled) {
+            vm.prank(OWNER);
+            vault.setFeeRecipient(BOB);
+        }
+
+        LegState[64] memory beforeState;
+        for (uint256 i; i < 64; ++i) {
+            seed = uint256(keccak256(abi.encode(seed, i)));
+            assertGt(priorDebt[i], 0, "prior claimant was not funded");
+            beforeState[i] = _mixFailure(i, seed, priorDebt[i]);
+        }
+        vm.prank(GUARDIAN);
+        vault.pauseDeposits();
+        vm.prank(OWNER);
+        vault.lowerNAVCap(0);
+        vm.warp(block.timestamp + 60 days);
+
+        uint256 supply = vault.totalSupply();
+        uint256 shares = vault.balanceOf(ALICE);
+        uint256 fee = (shares * 50 + 9999) / 10000;
+        uint256[] memory legs = _boundedRedeem();
+        assertEq(vault.totalSupply(), supply - shares + (feesEnabled ? fee : 0));
+        assertEq(vault.balanceOf(BOB), feesEnabled ? fee : 0);
+        assertEq(vault.totalSupply(), vault.balanceOf(BOB) + vault.balanceOf(address(0xdEaD)));
+
+        for (uint256 i; i < 64; ++i) {
+            LegState memory s = beforeState[i];
+            address token = address(stocks[i]);
+            // Floor inequalities independently check the leg, including the pre-burn denominator.
+            uint256 numerator = s.backing * (shares - fee);
+            assertLe(legs[i] * supply, numerator);
+            assertLt(numerator - legs[i] * supply, supply);
+            uint256 paid = s.pays ? legs[i] : 0;
+            uint256 queued = s.pays ? 0 : legs[i];
+            assertEq(vault.managed(token) + legs[i], s.managed);
+            assertEq(vault.owed(BOB, token), priorDebt[i], "redemption consumed another claimant's debt");
+            assertEq(vault.owed(ALICE, token), queued);
+            assertEq(vault.totalOwed(token), priorDebt[i] + queued);
+
+            // Restore only the mock's read behavior to inspect real custody after a failed payment.
+            stocks[i].setReadMode(MockStock.ReadMode.Normal);
+            assertEq(stocks[i].balanceOf(address(vault)) + paid, s.custody);
+            assertEq(stocks[i].balanceOf(ALICE), s.holderBalance + paid);
+            assertEq(stocks[i].balanceOf(BOB), 0);
+        }
+    }
+
+    function _mixFailure(uint256 i, uint256 seed, uint256 reserved) internal returns (LegState memory s) {
+        MockStock stock = stocks[i];
+        s.managed = vault.managed(address(stock));
+        // Positive but short custody, exact backing, or an ignored direct donation.
+        uint256 custodyMode = seed % 3;
+        if (custodyMode == 0) stock.confiscate(address(vault), 0.5e18);
+        if (custodyMode == 2) stock.mint(address(vault), 1e18);
+        s.custody = stock.balanceOf(address(vault));
+        s.holderBalance = stock.balanceOf(ALICE);
+        MockStock.Mode mode = MockStock.Mode((seed >> 8) % 9);
+        uint256 readVariant = (seed >> 16) % 8;
+        MockStock.ReadMode readMode = readVariant < 4 ? MockStock.ReadMode.Normal : MockStock.ReadMode(readVariant - 3);
+        bool blocked = (seed >> 24) % 8 == 0;
+        stock.setMode(mode);
+        stock.setReadMode(readMode);
+        stock.blockAddress(ALICE, blocked);
+        stock.setPaused(true);
+        feeds[i].setBroken(true);
+        vm.prank(i % 2 == 0 ? OWNER : GUARDIAN);
+        vault.closeAsset(address(stock));
+        s.backing = s.managed;
+        if (readMode == MockStock.ReadMode.Normal && s.custody - reserved < s.backing) {
+            s.backing = s.custody - reserved;
+        }
+        s.pays = readMode == MockStock.ReadMode.Normal && !blocked
+            && (mode == MockStock.Mode.Normal || mode == MockStock.Mode.NoReturn);
     }
 
     function testAssetLimitAndGlobalBucket() public {
