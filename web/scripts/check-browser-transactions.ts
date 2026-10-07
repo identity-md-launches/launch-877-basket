@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { decodeFunctionData,type Hex } from 'viem';
+import { vaultAbi, tokenAbi, VAULT } from '../src/chain';
+const results=JSON.parse(fs.readFileSync('../artifacts/browser-interactions.json','utf8'));
+const txs=results.owner.sent;
+const decoded=txs.map((t:any)=>({...decodeFunctionData({abi:t.to.toLowerCase()===VAULT?vaultAbi:tokenAbi,data:t.data as Hex}),from:t.from,to:t.to,capturedAt:t.capturedAt}));
+const E=10n**18n;
+const pick=(name:string)=>decoded.find((t:any)=>t.functionName===name);
+assert.deepEqual(pick('deposit').args.slice(0,4),['0x0000000000000000000000000000000000000064',10n*E,'0x000000000000000000000000000000000000006F',995n*E*995n/1000n]);
+assert.equal(pick('approve').args[0].toLowerCase(),VAULT);assert.equal(pick('approve').args[1],10n*E);
+assert.equal(pick('redeem').args[0],10n*E);assert.deepEqual(pick('redeem').args[1],[E*999n/1000n,2n*E*999n/1000n,3n*E*999n/1000n]);
+assert.equal(pick('proposeNAVCap').args[0],2000000n*E);assert.equal(pick('lowerNAVCap').args[0],500000n*E);
+const claim=decoded.filter((t:any)=>t.functionName==='claim');assert.equal(claim.length,2);assert.equal(claim[0].args[0].toLowerCase(),'0x0000000000000000000000000000000000000066');assert.equal(claim[0].args[1].toLowerCase(),'0x00000000000000000000000000000000000001bc');assert.equal(claim[1].args[1].toLowerCase(),claim[1].from.toLowerCase());
+for(const name of ['deposit','redeem']){const t=pick(name);if(t.capturedAt){const deadline=Number(t.args.at(-1));const remaining=deadline-Math.floor(t.capturedAt/1000);assert.ok(remaining>=590&&remaining<=600);}}
+const expected=['deposit','approve','redeem','claim','flagDeficit','recognizeLoss','proposeAsset','proposeFeed','proposeBand','proposeReopen','proposeRetire','proposeGuardian','proposeNAVCap','executeProposal','cancelProposal','closeAsset','pauseDeposits','unpauseDeposits','lowerNAVCap','setFeeRecipient','transferOwnership','acceptOwnership','proposeAssets','finalizeGenesis'];
+assert.deepEqual(new Set(decoded.map((t:any)=>t.functionName)),new Set(expected));
+assert.equal(pick('proposeAssets').args[0].length,3);assert.equal(pick('proposeAssets').args[1].length,3);
+for(const name of ['proposeBand','proposeFeed','closeAsset'])assert.equal(pick(name).args[0].toLowerCase(),'0x0000000000000000000000000000000000000064');
+for(const name of ['proposeReopen','proposeRetire'])assert.equal(pick(name).args[0].toLowerCase(),'0x0000000000000000000000000000000000000065');
+for(const name of ['flagDeficit','recognizeLoss'])assert.equal(pick(name).args[0].toLowerCase(),'0x0000000000000000000000000000000000000066');
+assert.equal(pick('acceptOwnership').from.toLowerCase(),'0x000000000000000000000000000000000000014d');
+fs.writeFileSync('../artifacts/transaction-mapping.json',JSON.stringify(decoded,(_,v)=>typeof v==='bigint'?v.toString():v,2)+'\n');
+console.log(`PASS: ${decoded.length} rendered-wallet requests; all 24 action function names and critical arguments, minimums, deadlines, USD scaling, launch arrays and claim recipient order.`);

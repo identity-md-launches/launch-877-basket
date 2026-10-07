@@ -1,6 +1,70 @@
 # Basket Protocol
 
-Basket is an immutable index vault for Stock Tokens on Robinhood Chain (chain ID **4663**). The vault itself is the **Basket / BASK** ERC-20 share, with 18 decimals, zero initial supply and no supply cap. Deposits mint shares; redemptions burn shares. This project contains contracts, local mocks, tests and a deployment manifest.
+Basket is an immutable index vault for Stock Tokens on Robinhood Chain (chain ID **4663**). The vault itself is the **Basket / BASK** ERC-20 share, with 18 decimals, zero initial supply and no supply cap. Deposits mint shares; redemptions burn shares. This project contains contracts, local mocks, tests, a deployment manifest and the static website.
+
+## Website
+
+The static Basket Protocol website is in **`dist/`**, with React/TypeScript source, its own package manifest and lockfile in **`web/`**. It connects to the existing BaskVault at `0x518aa023c1b982a0a64b207b7d3a19bf973796e1` on **Robinhood Chain (4663)**. No contract was changed or deployed for the website.
+
+The five pages are Vault, Deposit, Redeem, Owner and Losses. All public information works without a wallet. A browser-injected Ethereum wallet is needed to send; the UI checks chain 4663, the deployed runtime, the connected account, and transaction simulation before requesting a signature. Owner controls stay visible to visitors. Claims are read for connected wallets on every page, including retired stocks.
+
+### Install, preview and rebuild
+
+Use Node.js 22.12+ (validated with Node 24.21.0 and npm 11.19.0).
+
+```sh
+npm ci --prefix web
+npm run --prefix web typecheck
+npm run --prefix web build
+npm run --prefix web preview
+```
+
+Open the preview URL printed by Vite. For development, run `npm run --prefix web dev`. To inspect the submitted export at a subpath without rebuilding:
+
+```sh
+python3 -m http.server 4173
+# Open http://localhost:4173/dist/
+```
+
+The production build writes `dist/index.html`, relative `./assets/` bundles and a local SVG favicon. It needs no backend, credentials, external fonts, runtime registry or dependency folder. The export can load without RPC connectivity; chain-dependent values then show unreadable.
+
+### Publish
+
+Upload **the contents of `dist/`** to any static HTTPS host. Keep `assets/` and `favicon.svg` beside `index.html`. The Vite base is `./` and navigation uses hashes, so gateway subpaths and ENS-hosted static content need no route rewrites. The publisher serves the checked-in export; always rebuild and include the updated `dist/` together with source, `web/package.json` and `web/package-lock.json`. There is no website hosting URL in the supplied deployment record; this assignment produces the publishable export without publishing it.
+
+### Integration and verification
+
+- ABI derived with `forge inspect src/BaskVault.sol:BaskVault abi --json`; canonical Keccak matches `a544e47473b63007f79a156bb1126ddd87d72cc1d59605b2d8ce8161780c8161`. The live runtime matches the local compiler output, hash `efc36bd14ee8f31dc308dd4217f6fe245187f80f756937c82e83c7a797d92407`.
+- Stock/feed/role addresses come from the vault, except new addresses entered into the required owner/claim forms. Multicall3 is the read-only infrastructure exception: the SDK's canonical deployment is probed for code on chain 4663 before use. No external asset/role address is configured. See [Viem's batching documentation](https://viem.sh/docs/contract/multicall).
+- Every contract read/simulation uses 10,000,000 gas. Off-chain lookups are disabled (`ccipRead: false`). `allAssets`, `depositStatus` and `previewDeposit` are separate calls, never Multicall3 entries. Small reads are grouped in bounded batches; failures retry individually. `allAssets` failure falls back to individual asset, accounting, feed and balance reads. NAV uses bigint managed balances, ignores retired stocks and marks held prices older than 26 hours stale.
+- Deposit approval is for the entered amount. Deposit minimum is 99.5% of the preview; redemption minimums are 99.9% of each leg, with ten-minute deadlines. Transactions are simulated again before signing. Successful confirmation refreshes the data; the approval flow retains its preview. No background polling beyond transaction receipts; refresh data explicitly. Age labels update locally each minute.
+- The requested market-hours copy includes US market holidays. The contract itself uses a fixed UTC weekday gate and feed freshness rather than an explicit holiday calendar. Actual eligibility comes from its `depositStatus` and `previewDeposit` views; the site adds no calendar rule.
+
+Actual worker checks on 2026-10-07:
+
+```sh
+npm run --prefix web typecheck       # passed
+npm run --prefix web build           # passed; 509.63 kB main JS, 153.33 kB gzip
+npm run --prefix web validate        # passed: unit boundaries, ABI/runtime, 23 live read-only action simulations
+# With captured browser-interactions.json:
+cd web
+./node_modules/.bin/tsx scripts/check-browser-transactions.ts
+# passed: 25 rendered wallet requests covering all 24 action functions
+```
+
+The build emits a non-blocking Vite chunk-size advisory at 500 kB. Two local-fork tests against the deployed vault passed (deposit/redeem/claim/loss and governance). To reproduce those tests without changing Foundry configuration:
+
+```sh
+mkdir -p test/scratch
+cp web/validation/WebsiteFork.t.sol test/scratch/WebsiteFork.t.sol
+forge test --match-path test/scratch/WebsiteFork.t.sol -vv
+```
+
+They fork the public RPC and create mock Stock Tokens/feeds only inside the test EVM. The tests assume the observed empty, unfinalized launch state; a later launch needs adjusted fixtures. No live transaction is sent. Browser tests used the actual production export with both live no-wallet reads and isolated mocked RPC/wallet scenarios. All five pages were checked at 320, 768 and 1440 CSS pixels, plus desktop text enlargement, keyboard focus and reduced motion. A rendered request-capture wallet deliberately declines signatures; successful state transitions were checked separately on the fork.
+
+See [validation evidence and limitations](artifacts/validation.md), [transaction mapping](artifacts/transaction-mapping.json) and [implemented design](DESIGN.md). The guide's six domains were reviewed and applicable findings repaired. A screen-reader session, physical devices, native browser zoom, real extension signing and live funded transactions were not performed. Browser fixture source is under `web/validation/`; its synthetic addresses/data are never bundled into the site.
+
+Packaging budget: `.gitignore` is explicitly budgeted at **256 bytes** (201 used). It excludes dependency/cache folders at every level and tool screenshots, and includes the required `artifacts/` evidence despite the workspace-level exclusion. No existing contract build configuration/dependencies, submodules, `.github`, `.env` or `node_modules` content is part of the change. Required source, lockfile and static assets remain complete; final byte counts are in the validation record.
 
 ## Build and test
 

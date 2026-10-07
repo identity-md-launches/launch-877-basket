@@ -1,0 +1,184 @@
+{
+  "checkedAt": "2026-10-07T16:33:20.579Z",
+  "network": {
+    "multicall": true
+  },
+  "globals": {
+    "owner": "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
+    "guardian": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
+    "pendingOwner": "0x0000000000000000000000000000000000000000",
+    "feeRecipient": "0x0000000000000000000000000000000000000000",
+    "genesisFinalized": false,
+    "depositsPaused": false,
+    "depositsOpenAt": "0",
+    "NAV_CAP": "1000000000000000000000000",
+    "totalSupply": "0",
+    "proposalCount": "0"
+  },
+  "results": [
+    {
+      "function": "proposeAssets",
+      "args": [
+        "",
+        ""
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "proposeAsset",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "finalizeGenesis",
+      "args": [],
+      "result": "This action is not available in the current contract state."
+    },
+    {
+      "function": "proposeFeed",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "proposeBand",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "proposeReopen",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "proposeRetire",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "proposeGuardian",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "proposeNAVCap",
+      "args": [
+        "2000000000000000000000000"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "executeProposal",
+      "args": [
+        "1"
+      ],
+      "result": "This proposal is no longer pending."
+    },
+    {
+      "function": "cancelProposal",
+      "args": [
+        "1"
+      ],
+      "result": "This proposal is no longer pending."
+    },
+    {
+      "function": "closeAsset",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "pauseDeposits",
+      "args": [],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "unpauseDeposits",
+      "args": [],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "lowerNAVCap",
+      "args": [
+        "500000000000000000000000"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "setFeeRecipient",
+      "args": [
+        "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "transferOwnership",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "acceptOwnership",
+      "args": [],
+      "result": "This wallet is not allowed to perform this action."
+    },
+    {
+      "function": "deposit",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "1000000000000000000",
+        "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
+        "995",
+        "1791391396"
+      ],
+      "result": "Genesis has not been finalized. Stock at fault: none."
+    },
+    {
+      "function": "redeem",
+      "args": [
+        "0",
+        "",
+        "1791391396"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "claim",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1",
+        "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3"
+      ],
+      "result": "success (read-only simulation)"
+    },
+    {
+      "function": "flagDeficit",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "The Stock Token is not valid for this action."
+    },
+    {
+      "function": "recognizeLoss",
+      "args": [
+        "0x518aa023c1b982a0a64b207b7d3a19bf973796e1"
+      ],
+      "result": "Flag a shortfall first and wait seven days before recognition."
+    }
+  ],
+  "limitations": "Live vault is in empty genesis. Invalid stock/proposal cases intentionally reach deployed custom errors. Successful populated flows are separately checked on a local fork; no live transaction is sent."
+}

@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-10-07T16:33:54.927639+00:00",
+  "limitBytes": 8388608,
+  "candidateFileCount": 91,
+  "candidateRawBytes": 2478477,
+  "existingGitStorageBytes": 162738,
+  "conservativeTotalWithExistingGitBytes": 2641215,
+  "distBytes": 531613,
+  "ignorePathBudgetBytes": 256,
+  "ignoreFileBytes": 201,
+  "dependencyAndCacheCandidates": 0,
+  "submodules": 0,
+  "existingProtectedFilesUnchanged": true,
+  "relativeExportAssetsExist": true,
+  "exports": {
+    "dist/assets/ccip-BeLpi9tx.js": {
+      "bytes": 2610,
+      "sha256": "498e38069c826bd841c6c638d3995643a5608b36a524f19cb29c2736370f9fe2"
+    },
+    "dist/assets/index-D7VoPACC.js": {
+      "bytes": 509633,
+      "sha256": "d84b2cc0a998e3c34e356a1b78aa33ea53a75489d32d0dbbea98973ed1030558"
+    },
+    "dist/assets/index-wRK2KGWl.css": {
+      "bytes": 18406,
+      "sha256": "e622edad4ac4ecf63f5ee97a63072ce2221cb31f558bcf3ba4d27de6df1211c1"
+    },
+    "dist/favicon.svg": {
+      "bytes": 302,
+      "sha256": "88e1ae3f9ef46305a7175ebcb5e7a0295134e26974848a25743772b4c973ce38"
+    },
+    "dist/index.html": {
+      "bytes": 662,
+      "sha256": "5513764902161197c0df4f60b4064e3362a2f9b67e3da3eb3208c89f6bf281b2"
+    }
+  },
+  "scope": "All tracked and nonignored candidate files, excluding input .imd/ and disposable test/scratch/. Includes existing repository files. Raw file sum plus existing Git storage is a conservative size check; no Git metadata was modified."
+}

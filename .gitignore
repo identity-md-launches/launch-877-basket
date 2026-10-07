@@ -1,2 +1,11 @@
 out/
 cache/
+# Frontend dependency/cache exclusions; budget: 256 bytes total for this file.
+**/node_modules/
+**/.vite/
+**/.npm/
+**/.cache/
+**/*.tsbuildinfo
+**/.playwright-mcp/
+!artifacts/
+!artifacts/**
