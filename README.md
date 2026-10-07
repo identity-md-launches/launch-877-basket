@@ -46,6 +46,8 @@ Full price validation requires a successful feed read, a positive answer inside 
 
 The incoming transfer must increase the vault balance by exactly `amount`. Using pre-deposit NAV, gross shares equal deposit value for the first deposit, or `floor(value * totalSupply / NAV)` thereafter. Existing supply with zero NAV rejects deposits. The fee is `ceil(gross / 200)`; the receiver gets gross minus fee, less the first deposit's permanent `1e15` shares minted to `address(0xdEaD)`. The receiver must receive a positive amount meeting `minSharesOut`. When the fee recipient is unset, its fee shares are **not minted**, but the fee is still deducted from the receiver's allocation.
 
+If every managed position is retired or fully written off, this zero-NAV rejection is permanent under the specified rules. Redeeming all user shares leaves the dead shares outstanding. New listings and direct donations do not restore managed NAV, and there is no reset or recapitalization entry point. Redeem and claim remain available, subject to their existing entitlements and token behavior.
+
 The following limits apply to the post-deposit value:
 
 | Limit | Formula |
@@ -80,13 +82,19 @@ Every user-facing state change holds the reentrancy guard and emits an event. Th
 
 `flagDeficit(token)` records `managed - available` only when positive and larger than the existing record; an increased record starts a new seven-day wait. An identical or smaller shortfall cannot reset the clock. `recognizeLoss(token)` becomes permissionless at seven days and reduces managed by the smaller of the recorded and current shortfall, then clears the record. Neither operation treats an unreadable balance as a proven loss. Nothing reduces managed automatically merely because tokens disappear. Donations can repair a deficit without increasing managed.
 
+A readable but incorrect balance can establish a shortfall. Pausing deposits does not stop flagging or recognition, and neither role can cancel the loss clock. Recovery before recognition reduces or eliminates the recognized loss because the balance is checked again. Recovery after recognition does not restore managed accounting: returned funds become surplus, may cover existing obligations, and otherwise cannot be withdrawn. In particular, if managed and owed are both zero, returned funds remain stranded.
+
 ## Governance
 
 The owner can propose listings, feed replacements, band re-centering, reopening, retirement, guardian replacement and NAV-cap increases. Anyone can execute from `createdAt + 7 days` inclusive until `createdAt + 14 days` exclusive. Listing and feed metadata checks repeat at execution. Replacement feed answers must fit the current band both times. Band re-centering uses the execution answer, which must be positive, nonfuture and **strictly less** than 26 hours old; it may be outside the old band.
 
 Listing and feed replacement share one 24-hour execution cooldown. Genesis direct listings are exempt. Retirement requires closure at both proposal and execution. Every later close cancels earlier reopening proposals, including another close of an already closed asset. Lowering the NAV cap immediately cancels every pending increase; increases cannot exceed `10_000_000_000e18`. Zero is a valid lowered cap.
 
+After genesis, a batch creates independent proposals with a common creation time; it does not reserve execution slots or extend expiry. At most seven listing/feed changes from that batch can execute within its seven-day execution window, even with perfect timing and no competing changes. Stagger proposals and account for all pending listing/feed changes; expired proposals require a new proposal and wait.
+
 The owner can cancel any pending proposal. The guardian can cancel all except guardian replacement. Both can pause deposits or close an asset immediately; only the owner can unpause. The owner also has two-step ownership transfer with no renounce entry point, and a one-time `setFeeRecipient` that rejects zero and the vault. No function later changes that recipient. Pending ownership and other pending proposals are not implicitly discarded by an ownership transfer.
+
+Distinct owner and guardian addresses are required at construction. The ownership transfer flow can subsequently make them equal, including when a guardian replacement executes before the pending owner accepts. Maintaining separate operational keys across both workflows is an operator responsibility; the guardian has no withdrawal veto even when the roles coincide.
 
 Reopening and cap-raise cancellation use version counters, so an arbitrary number of old proposals never makes a close or cap decrease expensive. `proposalState(id)` is the effective status, including these cancellations and time expiry. The raw `proposals(id)` getter preserves the stored record and may still show Pending for an effectively cancelled or expired proposal.
 
@@ -128,6 +136,12 @@ The accepted design includes these risks without additional mechanisms:
 2. The owner must pair each token with its true feed.
 3. An untransferable asset retains its feed value until deposits are paused. The guardian and owner must monitor transfers and act promptly.
 4. Retirement makes an asset worth zero in deposit NAV while preserving its redemption leg.
+
+Retirement can therefore transfer substantial value from existing holders to later depositors. In the local reproduction, retiring a $10,000 position while leaving only $1 of live NAV lets a $100 deposit followed by redemption receive about 98.51 of the 100 retired Stock Tokens. Deposit caps constrain the deposit's nominal value, not this extraction. Retirement should be reserved for positions whose economic value is already negligible or whose transfers are permanently broken; treating a valuable position as zero can dilute holders severely. Transfer recovery after retirement can expose the same issue. This is the accepted zero-NAV accounting rule, with no added mechanism.
+
+A pending band proposal authorizes anyone to re-centre on a fresh execution-time answer, including an outlier outside the old band. Post-genesis listing also uses the execution answer to initialize its band. A temporary outlier can consequently enable mispriced deposits and extraction from other holdings; a return to the honest price can then block all deposits while the asset remains managed. Local tests reproduce both paths, including the smaller probation cap for a new listing. Operators can use the existing deposit pause before these changes become executable and assess the resulting feed and band before unpausing; the contracts do not enforce that workflow. Monitoring or cancellation cannot guarantee winning a transaction race against an executor.
+
+A stale held feed plus a replacement answer outside the old band has no truthful feed/band repair path while those conditions persist: replacement requires an in-band answer and re-centering requires a fresh answer from the current feed. Retirement skips the affected checks but has the dilution, quorum and zero-NAV consequences described here. Keep at least three fresh unretired feeds: retiring one of exactly three removes the deposit quorum, even if its feed remains fresh. List replacements before retirement where continued deposit availability is needed.
 
 Operators must monitor feed freshness, token upgrades and restrictions, physical deficits, outstanding claims, pending proposals and cap usage. External token administrators and the chain can affect whether assets actually move. The vault can isolate a failed payment and preserve its claim; it cannot make an external token honor transfers.
 
