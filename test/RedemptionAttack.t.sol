@@ -21,12 +21,10 @@ contract RedemptionAttackTest is BaskTestBase {
         }
         vm.cool(address(vault));
         vm.prank(ALICE);
-        uint256 start = gasleft();
+        // A bounded call proves the gas ceiling even when Foundry isolates calls.
+        // gasleft() subtraction across those call boundaries is not reliable.
         (bool ok, bytes memory result) = address(vault).call{gas: 27_900_000}(data);
-        uint256 used = start - gasleft();
-        emit log_named_uint("64-asset redemption gas", used);
         assertTrue(ok, "hostile asset blocked redemption");
-        assertLt(used, 28_000_000);
         legs = abi.decode(result, (uint256[]));
         assertEq(legs.length, 64);
         assertEq(vault.balanceOf(ALICE), 0);
