@@ -1,4 +1,6 @@
-// Generated from launch-929-basket at b12f8ecdaac0acc13e47646441b4f312a2aab160; solc 0.8.26, via IR.
-export const VAULT = "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c" as const;
-export const RUNTIME_HASH = "0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0" as const;
-export const ABI_HASH = "0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89" as const;
+// Generated from launch-1020-basket at 0a88bde525aed4557b375cf60ee503d707570ac0; transferTopic immutable filled.
+export const VAULT = "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd" as const;
+export const RUNTIME_HASH =
+  "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe" as const;
+export const ABI_HASH =
+  "0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25" as const;

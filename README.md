@@ -1,82 +1,71 @@
 # Basket Protocol website
 
-The static website serves **BaskVault `0xd77a5f93f9d85e6990f389147713a9ad8ce5764c`**, Basket (BASK), on **Robinhood Chain, chain ID 4663**. Its existing hosting name remains **basket-protocol.site.identitymd.eth**. This update changes the website only; no contract has been changed or deployed.
+Static React + TypeScript website for **vault 5**, BaskVault [`0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd`](https://robin.etherscan.io/address/0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd), on Robinhood Chain (4663). The site title is Basket Protocol; the share is Basket (BASK). Hosting remains `basket-protocol.site.identitymd.eth`.
 
-`web/` contains the React, TypeScript and Vite source and the unchanged, pinned frontend package manifest and lockfile. `dist/` contains the complete production export. The primary menu is Vault, Deposit, Redeem and Docs. Public Owner controls (`#owner`) and Losses (`#losses`) are footer links. All six pages work without a wallet, and claims are shown on Redeem. Wallet transactions use an injected Ethereum-compatible provider.
+The website follows [launch-1020-basket at `0a88bde525aed4557b375cf60ee503d707570ac0`](https://github.com/identity-md-launches/launch-1020-basket/tree/0a88bde525aed4557b375cf60ee503d707570ac0). All five Solidity source files, upstream README, compiler settings and math licenses are preserved in `web/pinned/`. Historical root contracts, tests and Foundry configuration are unchanged and are **not** used to generate this website's ABI. This task neither changes nor deploys a live contract.
 
-## Install, preview and build
+## Install, preview and rebuild
 
-Use Node.js 22.12+ or 24 and npm. From the repository root:
-
-```sh
-npm ci --prefix web
-npm run typecheck --prefix web
-npm run build --prefix web
-npm run preview --prefix web -- --host 127.0.0.1
-```
-
-Open the preview URL printed by Vite. For development use `npm run dev --prefix web`. Installation downloads the existing locked dependencies; no dependency archives or offline registry are required. Keep every `node_modules/`, compiler output and cache out of the submission.
-
-The build empties and regenerates `dist/`. Vite uses `base: './'`, so HTML, JavaScript, CSS and the local favicon work under a static subpath. No backend, environment secret, remote font service or server route rewrite is needed. Original SVG/CSS scenery and the licensed Damion font are bundled locally. Public reads require access to either configured RPC endpoint.
-
-## Publish
-
-Publish the **contents of `dist/`** through the existing site's static/IPFS publishing process and update the existing name **basket-protocol.site.identitymd.eth** to that export. Retain `web/` (including `package.json` and `package-lock.json`) and all of `dist/` in the submission. The publisher serves the export directly and does not rebuild it. This assignment prepared the export locally; it did not publish it or change the hosting name.
-
-## Redesign
-
-The navy night sky, saucer awning, ringed planet, neon script, aisle signs and Memphis patterns surround plain financial panels. All six pages reflow at 375px, Owner pairings become cards, and links/buttons are at least 44px tall. A confirmed deposit clears its amount and preview, displays **Deposit confirmed** with its transaction link, and requires a new explicit preview before another send. Every successful transaction invalidates old previews. All prior warnings and Docs copy remain unchanged.
-
-## Exact contract binding
-
-The website's authority is [launch-929-basket at b12f8ecdaac0acc13e47646441b4f312a2aab160](https://github.com/identity-md-launches/launch-929-basket/tree/b12f8ecdaac0acc13e47646441b4f312a2aab160), specifically `src/BaskVault.sol`, `src/BaskMath.sol`, the compiler settings and README there. **Do not derive this website's ABI or runtime from this repository's root `src/` or historical contract documentation.** Those files belong to an earlier project iteration and remain unchanged.
-
-- Runtime keccak256: `0x62b326b6d8b9191a8777932f5beb87bc1dd07765fdb83bad3c4463924da402d0` (22,258 bytes).
-- Canonical ABI keccak256: `0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89`.
-- Canonicalization recursively sorts object keys, preserves array order, serializes compact JSON and hashes its UTF-8 bytes.
-- Compiler: Solidity 0.8.26, optimizer 200 runs, via IR, Cancun, no metadata bytecode hash, constant optimizer disabled, matching the pinned launch.
-
-To reproduce the ABI and deployment constants, with a local solc 0.8.26 executable:
+Use Node.js 22.12 or later and npm. Dependency versions and the lockfile in `web/` are unchanged.
 
 ```sh
 cd web
-SOLC=/path/to/solc-0.8.26 ./node_modules/.bin/tsx scripts/regenerate-abi.ts
+npm ci
+npm run typecheck
+npm run build
+npm run preview
 ```
 
-This fetches only the pinned launch source, compiles it in memory, requires the expected runtime hash, and writes `src/vault.abi.json` and `src/deployment.ts`. It never deploys. ABI functions, events and errors come from compiler output. Proposal enums, reason words, positional reads and fixtures match the pinned source. Every send checks public RPC chain/code, wallet chain/account and simulates the exact calldata before requesting a signature.
+The build writes `dist/` at the repository root. `vite.config.ts` sets `base: './'`. All fonts, images, styles and scripts are local. Pages use hash navigation: Vault, Deposit, Redeem and Docs, with Owner controls and Losses in the footer. No rewrite server, backend, secret or private key is required. A browser wallet is required to send.
 
-The Deposit page separately computes size and daily headroom using managed NAV and `decayedBucket()`, checks stock balance before approval, and simulates allowance-covered deposits from the wallet. Listing sends the exact chain-read table rows; unreadable/mismatched/already-listed entries disable List. Receipt uncertainty triggers a new vault read and displays what is listed before retrying.
+If the workspace disallows dependency installation there, copy `web/` into a disposable directory, run the same commands, and copy the resulting `dist/` back. This delivery used `/tmp/basket-build/web` and an npm cache under `/tmp`; no dependency or cache directory belongs in the submission.
+
+## Publish
+
+Publish the **contents of the committed `dist/` directory** to the existing static host or IPFS deployment for `basket-protocol.site.identitymd.eth`. Keep `index.html` with its `assets/`, fonts/license files and favicon. Test the export at a subpath such as `/preview/`; do not publish `web/`, package caches or test fixtures. The publisher serves the export without rebuilding. This assignment prepares the export and does not publish it.
+
+## Integration
+
+- Vault reads and simulations use 30,000,000 gas. Asset metadata is batched through Multicall3 only after checking its deployment. Heavy aggregate reads remain independent.
+- Every send checks wallet account, chain 4663, public RPC chain and vault runtime hash, then simulates. Chain and account are checked again before requesting the transaction. Redemption and claim use estimated gas increased by 30%.
+- `allAssets()` supplies normalized NAV, price reasons and pool prices. Failed aggregate reads fall back to each stock individually; pool checks and reasons remain unreadable. One `depositStatus([])` supplies global status. Hours and other settings come from `settings()`.
+- Deposits use token/amount arrays, exact short approvals, wallet receiver, 0.5% minimum-share tolerance and a ten-minute deadline. The contract preview checks the size limit. Successful deposits clear inputs and the old preview.
+- Redemption refreshes its preview immediately before sending, uses a selected nonzero receiver other than the vault, and 0.1% minimum amounts in current `assetTokens` order. Unsent stocks are owed to that receiver. Claims read every listed token and send groups of at most ten.
+- Genesis listings are checked per row, preserve row order, re-read each listing after confirmation, and skip already-listed tokens. Stock feed pairings are marked `check this pairing`; quote labels are shown without pairing marks and quote feeds may repeat.
+- Governance encodings, enums, fields, errors and events come from the pinned source. Owner proposals wait two days; execution is owner-only within seven days. The UI additionally requires deposits paused to execute Retire and Resync, and to propose Resync.
+
+## Reproduce ABI and runtime
+
+```sh
+cd web
+SOLC=/path/to/solc-0.8.26 npx tsx scripts/regenerate-abi.ts
+npm run validate
+node scripts/check-preservation.mjs
+```
+
+Compilation uses optimizer 200 runs, IR, Cancun, and metadata bytecode hash `none`, matching `web/pinned/foundry.toml`. The generator fills every `transferTopic` immutable reference with the standard Transfer event topic before hashing runtime code.
+
+- Runtime: `0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe`
+- Canonical sorted-key ABI hash: `0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25`
+- Runtime size: 23,736 bytes.
 
 ## Validation
 
-From `web/`:
+`npm run validate` checks decimal-normalized NAV, indicative flags, all proposal payloads, minimums, receivers, listing input, hours, revert wording, live aggregate reads and bytecode identity. `check-preservation.mjs` checks unchanged protected configuration/contracts and current integration invariants; it replaces the old comparison against obsolete transaction expressions.
+
+The bounded browser/fork runner requires Anvil, solc 0.8.26, Playwright and Chromium. The runner requires an unfinalized empty genesis state so that it can exercise initial listing. Install Playwright outside the repository if necessary, and set `PLAYWRIGHT_MODULE` to its `index.mjs` when it is not at the runner's environment default.
 
 ```sh
-npm run validate
-SOLC=/path/to/solc-0.8.26 bash scripts/run-fork.sh
+cd web
+SOLC=/path/to/solc-0.8.26 \
+PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+npx tsx scripts/run-browser.mjs
+node scripts/inspect-export.mjs
+node scripts/check-guards.mjs
 ```
 
-`validate` checks hashes, math, pairings, encodings and public read-only calls. The fork script downloads the pinned source into disposable `test/scratch/fork/`, uses a recent block greater than 82,708,976, and runs the website tests against the actual verified vault bytecode. Because live genesis is now finalized, the harness requires zero live supply and resets only the genesis flag and stock-array length in its disposable local fork before exercising the original launch scenarios. Mock stocks/feeds and factory substitution exist only inside the local fork. It never broadcasts, compiles root `src/`, or modifies the existing Foundry configuration. Override `BASKET_FORK_BLOCK` to reproduce a particular block if the RPC retains it.
+It pins a fresh block after 83,448,310 (or `BASKET_FORK_BLOCK`), caches the needed genuine account/storage reads before public RPC pruning, preserves the actual vault bytecode, creates disposable Stock Token/feed/pool fixtures on the fork, serves the actual production export at `/preview/`, exercises wallet actions and writes screenshots and decoded sends to `artifacts/`. All child services close when the command ends. Historical-state retention differs across the RPC backends. Older attempts failed when state was pruned; the final runner pins a fresh block and caches the reads it needs without overwriting vault code or storage.
 
-Production-browser checks use Playwright installed outside the submission; for example:
+Actual final results, design review coverage, screenshots and limitations are recorded in [artifacts/validation.md](artifacts/validation.md). Fork evidence is local testing, not an independent certification or a live transaction. Root contract tests are outside this website migration and were not claimed as validation of vault 5.
 
-```sh
-npm install --prefix /tmp/basket-browser playwright@1.56.1
-/tmp/basket-browser/node_modules/.bin/playwright install chromium
-./node_modules/.bin/tsx scripts/make-browser-fixture.ts
-./node_modules/.bin/tsx scripts/assemble-browser-check.ts
-PLAYWRIGHT_MODULE=/tmp/basket-browser/node_modules/playwright/index.mjs node scripts/run-browser.mjs
-./node_modules/.bin/tsx scripts/check-browser-transactions.ts
-```
-
-If using an existing Chromium, set `CHROMIUM_PATH` to its executable. The runner owns a temporary foreground HTTP server, serves the production export under `/preview/`, closes the browser/server when done, and writes evidence under `artifacts/`. Fixture wallets capture requests; rejected, timed-out and confirmed receipts are simulated locally. Dummy hashes are never broadcast. No real wallet or live send is used.
-
-Actual results for this redesign are in [artifacts/validation.md](artifacts/validation.md): production build and typecheck passed; live chain/runtime checks and 23 read-only action simulations passed; 25 captured browser requests cover all 24 UI action functions; all four fork tests passed at block **82,830,094**. A structural source comparison proves **128 unchanged RPC/transaction call expressions** and 15 byte-identical core/configuration files. The browser suite covers confirmation resets, pairing/approval guards, wrong-chain/runtime rejection, permissions, all six public pages and phone layouts. All pages have 1440px and 375px screenshots, with additional confirmed-deposit and pairing-warning captures. No console/page errors were reported.
-
-To compare the current source against an original checkout, run `node scripts/check-preservation.mjs` from `web/`; set `BASKET_BASELINE` to the original commit when HEAD has moved. `BASKET_SOURCE_ROOT` optionally points to that working repository. The check is read-only with respect to Git and writes `artifacts/preservation.json`.
-
-Worker installation/build used an identical copy of `web/` in `/tmp/basket-redesign/web` so no repository dependency directory was created. The locked manifest, lockfile, Vite and TypeScript configuration were not edited. The built `dist/` was copied back intact. Tooling, compiler downloads, caches and temporary fork state stay outside the submission. Existing obsolete screenshots/hashed assets were replaced with current evidence/export files; required source, font license and runtime assets remain complete.
-
-Limitations: the initial fork run encountered finalized genesis; the earlier historical block was unavailable from both RPCs. Those attempts and the local-fixture adjustment are documented. No live send, external deployment, screen-reader session, physical-device session or native browser zoom test was performed. The unchanged holiday wording describes a US-holiday closure, while the immutable contract implements weekdays and feed freshness rather than an explicit holiday calendar. Vite retains its non-fatal >500kB chunk advisory. The current npm audit reports four issues (two moderate, two high) in the pinned dependency tree; dependencies are immutable in this assignment and were not altered. The audit report is included. Public state and RPC availability can change; these are local worker results, not independent certification.
-
-[DESIGN.md](DESIGN.md) documents the implemented night-supermarket design, source tokens, components and responsive behavior. The pinned Better Interface guide informed all six review domains; its retained attribution and licenses are in `web/validation/DESIGN-GUIDANCE-LICENSE`.
+Fonts are Anton and VT323 under the SIL Open Font License; notices are in `web/public/fonts/`. Supermarket illustrations are original SVG/CSS. The pinned Better Interface and Impeccable attribution and licenses are retained in `web/validation/DESIGN-GUIDANCE-LICENSE`.

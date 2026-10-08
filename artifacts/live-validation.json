@@ -1,186 +1,98 @@
 {
-  "checkedAt": "2026-10-07T22:35:35.038Z",
+  "at": "2026-10-08T17:43:34.402Z",
+  "block": "83498204",
+  "vault": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+  "runtimeHash": "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe",
+  "abiHash": "0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25",
   "network": {
     "multicall": true
   },
-  "vault": "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-  "block": "82828977",
   "globals": {
     "owner": "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
     "guardian": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
     "pendingOwner": "0x0000000000000000000000000000000000000000",
     "feeRecipient": "0x0000000000000000000000000000000000000000",
-    "genesisFinalized": true,
+    "genesisFinalized": false,
     "depositsPaused": false,
-    "depositsOpenAt": "1791671011",
     "NAV_CAP": "1000000000000000000000000",
     "totalSupply": "0",
-    "proposalCount": "0"
+    "proposalCount": "0",
+    "settings": {
+      "band": "4",
+      "maxAge": "288000",
+      "noPoolAge": "93600",
+      "freshCount": "0",
+      "freshHours": "4",
+      "hoursFrom": "0",
+      "hoursTo": "0",
+      "poolWindow": "1800",
+      "poolDeviation": "300",
+      "feedGas": "100000",
+      "pauseGas": "100000",
+      "poolGas": "150000",
+      "balanceGas": "50000",
+      "payGas": "250000",
+      "maxAssets": "250",
+      "directLimit": "50"
+    }
   },
-  "results": [
+  "assetCount": 0,
+  "status": [
+    1,
+    "0x0000000000000000000000000000000000000000"
+  ],
+  "actions": [
     {
-      "function": "proposeAssets",
-      "args": [
-        "",
-        ""
-      ],
-      "result": "success (read-only simulation)"
+      "action": 0,
+      "dataWords": "Feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68; pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
     },
     {
-      "function": "proposeAsset",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 1,
+      "dataWords": "New feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
     },
     {
-      "function": "finalizeGenesis",
-      "args": [],
-      "result": "This action is unavailable in the current vault state. Refresh and check its requirements."
+      "action": 2,
+      "dataWords": "Re-centre the band at the feed answer at execution."
     },
     {
-      "function": "proposeFeed",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 3,
+      "dataWords": "Reopen this stock for deposits."
     },
     {
-      "function": "proposeBand",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 4,
+      "dataWords": "Retire permanently; zero in deposit NAV, still paid on redemption."
     },
     {
-      "function": "proposeReopen",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 5,
+      "dataWords": "Pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
     },
     {
-      "function": "proposeRetire",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 6,
+      "dataWords": "Add positive excess to managed holdings. Keep deposits paused until executed and checked."
     },
     {
-      "function": "proposeGuardian",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "success (read-only simulation)"
+      "action": 7,
+      "dataWords": "New guardian 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
     },
     {
-      "function": "proposeNavCap",
-      "args": [
-        "2000000000000000000000000"
-      ],
-      "result": "success (read-only simulation)"
+      "action": 8,
+      "dataWords": "New size limit $2,000,000"
     },
     {
-      "function": "executeProposal",
-      "args": [
-        "1"
-      ],
-      "result": "Check the proposal’s current state and refresh proposals."
+      "action": 9,
+      "dataWords": "Fee recipient 0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3. Fees begin when executed; the recipient can never be unset."
     },
     {
-      "function": "cancelProposal",
-      "args": [
-        "1"
-      ],
-      "result": "Check the proposal’s current state and refresh proposals."
-    },
-    {
-      "function": "closeAsset",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
-    },
-    {
-      "function": "pauseDeposits",
-      "args": [],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "unpauseDeposits",
-      "args": [],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "lowerNavCap",
-      "args": [
-        "500000000000000000000000"
-      ],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "setFeeRecipient",
-      "args": [
-        "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
-      ],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "transferOwnership",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "acceptOwnership",
-      "args": [],
-      "result": "This wallet is not allowed to perform this action."
-    },
-    {
-      "function": "deposit",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-        "1000000000000000000",
-        "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
-        "995",
-        "1791413132"
-      ],
-      "result": "The 72-hour opening delay has not ended. Stock at fault: none."
-    },
-    {
-      "function": "redeem",
-      "args": [
-        "0",
-        "",
-        "1791413132"
-      ],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "claim",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c",
-        "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3"
-      ],
-      "result": "success (read-only simulation)"
-    },
-    {
-      "function": "flagDeficit",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
-    },
-    {
-      "function": "recognizeLoss",
-      "args": [
-        "0xd77a5f93f9d85e6990f389147713a9ad8ce5764c"
-      ],
-      "result": "The Stock Token is not valid for this action. Check its listing and retirement status."
+      "action": 10,
+      "dataWords": "hoursFrom 09:30:00, hoursTo 16:00:00 UTC"
     }
   ],
-  "limitations": "Invalid stock/proposal cases intentionally reach deployed custom errors; read-only calls do not predict successful transactions. Successful populated flows are separately checked on a local fork; no live transaction is sent."
+  "checks": [
+    "Decimal-normalized NAV and indicative flags",
+    "All 11 proposal payloads decoded",
+    "Exact deposit and redemption minimums",
+    "Input, receiver, hours and listing validation",
+    "Live chain, runtime hash, aggregate snapshot and status"
+  ],
+  "limitations": "Read-only live checks. Successful wallet flows run separately on an isolated fork."
 }

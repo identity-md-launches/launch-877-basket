@@ -1,7 +1,6 @@
 import { formatUnits, isAddress, parseUnits, type Address } from "viem";
 import {
   many,
-  read,
   safe,
   vault,
   token,
@@ -14,20 +13,24 @@ import {
 export type Asset = {
   token: Address;
   feed: Address;
-  answer?: bigint;
-  updatedAt?: bigint;
-  minAnswer: bigint;
-  maxAnswer: bigint;
+  pool: Address;
+  quoteFeed: Address;
+  minLiquidity: bigint;
+  tokenDecimals: number;
+  feedDecimals: number;
   open: boolean;
   retired: boolean;
+  centre: bigint;
+  answer?: bigint;
+  updatedAt?: bigint;
+  poolPrice?: bigint;
   managed?: bigint;
+  totalOwed?: bigint;
   short?: boolean;
   balanceReadable: boolean;
-  feedReadable: boolean;
-  totalOwed?: bigint;
+  reason?: number;
   symbol: string;
   description: string;
-  status?: ReadResult<[number, Address]>;
   index: number;
 };
 export const globalNames = [
@@ -37,10 +40,10 @@ export const globalNames = [
   "feeRecipient",
   "genesisFinalized",
   "depositsPaused",
-  "depositsOpenAt",
   "NAV_CAP",
   "totalSupply",
   "proposalCount",
+  "settings",
 ] as const;
 export type Globals = Partial<Record<(typeof globalNames)[number], any>>;
 export type Snapshot = {
@@ -48,6 +51,8 @@ export type Snapshot = {
   globals: Globals;
   errors: string[];
   complete: boolean;
+  aggregate: boolean;
+  status?: ReadResult;
   loadedAt: number;
 };
 export const initial: Snapshot = {
@@ -55,79 +60,85 @@ export const initial: Snapshot = {
   globals: {},
   errors: [],
   complete: false,
+  aggregate: false,
   loadedAt: 0,
 };
 export async function loadSnapshot(): Promise<Snapshot> {
-  const errors: string[] = [];
-  const globals: Globals = {};
-  const [globalResults, aggregate] = await Promise.all([
+  const errors: string[] = [],
+    globals: Globals = {};
+  const [gs, all, status] = await Promise.all([
     many(globalNames.map((n) => vault(n))),
     safe(vault("allAssets")),
+    safe(vault("depositStatus", [[]])),
   ]);
-  globalResults.forEach((r, i) => {
+  gs.forEach((r, i) => {
     if (r.ok) globals[globalNames[i]] = r.value;
     else errors.push(r.error);
   });
-  let assets: Asset[] = [];
-  let complete = true;
-  if (aggregate.ok)
-    assets = aggregate.value.map((a: Asset, i: number) => ({ ...a, index: i }));
+  if (!status.ok) errors.push(status.error);
+  let assets: Asset[] = [],
+    complete = true;
+  if (all.ok)
+    assets = all.value.map((v: any, index: number) => ({
+      ...v.config,
+      answer: v.answer,
+      updatedAt: v.updatedAt,
+      poolPrice: v.poolPrice,
+      managed: v.managed,
+      totalOwed: v.totalOwed,
+      short: v.short,
+      balanceReadable: v.readable,
+      reason: Number(v.reason),
+      symbol: "unreadable",
+      description: "unreadable",
+      index,
+    }));
   else {
-    errors.push("allAssets: unreadable. Showing individual stock reads.");
+    errors.push(
+      "allAssets: unreadable. Showing individual stock reads; pool checks and price reasons are unreadable.",
+    );
     const count = await safe(vault("assetCount"));
     if (!count.ok) {
-      errors.push(count.error);
       complete = false;
+      errors.push(count.error);
     } else
       for (let i = 0; i < Number(count.value); i++) {
-        // Isolated calls intentionally preserve healthy assets if any feed exhausts gas.
-        const row = await safe(vault("assets", [BigInt(i)]));
-        if (!row.ok) {
-          errors.push(`Stock ${i + 1}: unreadable`);
+        const t = await safe(vault("assetTokens", [BigInt(i)]));
+        if (!t.ok) {
           complete = false;
+          errors.push(`Stock ${i + 1}: unreadable`);
           continue;
         }
-        const [
-          t,
-          f,
-          open,
-          retired,
-          minAnswer,
-          maxAnswer,
-        ] = row.value;
-        const managed = await safe(vault("managed", [t]));
-        const debt = await safe(vault("totalOwed", [t]));
-        const price = await safe(feed(f, "latestRoundData"));
-        const balance = await safe(token(t, "balanceOf", [VAULT]));
-        const available =
-          balance.ok && debt.ok
-            ? balance.value > debt.value
-              ? balance.value - debt.value
-              : 0n
-            : undefined;
+        const c = await safe(vault("asset", [t.value]));
+        if (!c.ok) {
+          complete = false;
+          errors.push(c.error);
+          continue;
+        }
+        const a = c.value;
+        const [m, o, p, b] = await many([
+          vault("managed", [a.token]),
+          vault("totalOwed", [a.token]),
+          feed(a.feed, "latestRoundData"),
+          token(a.token, "balanceOf", [VAULT]),
+        ]);
         assets.push({
-          token: t,
-          feed: f,
-          open,
-          retired,
-          minAnswer,
-          maxAnswer,
-          index: i,
-          managed: managed.ok ? managed.value : undefined,
-          totalOwed: debt.ok ? debt.value : undefined,
-          answer: price.ok ? price.value[1] : undefined,
-          updatedAt: price.ok ? price.value[3] : undefined,
-          balanceReadable: balance.ok && debt.ok,
-          feedReadable: price.ok,
+          ...a,
+          managed: m.ok ? m.value : undefined,
+          totalOwed: o.ok ? o.value : undefined,
+          answer: p.ok ? p.value[1] : undefined,
+          updatedAt: p.ok ? p.value[3] : undefined,
+          balanceReadable: b.ok && o.ok,
           short:
-            available !== undefined && managed.ok
-              ? available < managed.value
+            b.ok && o.ok && m.ok
+              ? (b.value > o.value ? b.value - o.value : 0n) < m.value
               : undefined,
+          index: i,
           symbol: "unreadable",
           description: "unreadable",
         });
-        for (const r of [managed, debt, price, balance])
-          if (!r.ok) errors.push(`${t}: ${r.error}`);
+        for (const r of [m, o, p, b])
+          if (!r.ok) errors.push(`${a.token}: ${r.error}`);
       }
   }
   const meta = await many(
@@ -137,97 +148,130 @@ export async function loadSnapshot(): Promise<Snapshot> {
     ]),
   );
   assets.forEach((a, i) => {
-    const sym = meta[2 * i],
-      desc = meta[2 * i + 1];
-    a.symbol = sym.ok ? sym.value : "unreadable";
-    a.description = desc.ok ? cleanFeedDescription(desc.value, a.symbol) : "unreadable";
+    const s = meta[2 * i],
+      d = meta[2 * i + 1];
+    a.symbol = s.ok ? s.value : "unreadable";
+    a.description = d.ok
+      ? cleanFeedDescription(d.value, a.symbol)
+      : "unreadable";
+    if (!s.ok || !d.ok) errors.push(`${a.token}: label unreadable`);
   });
-  await Promise.all(
-    assets.map(async (a) => {
-      if (a.open && !a.retired)
-        a.status = await safe(vault("depositStatus", [a.token]));
-    }),
-  );
-  return { assets, globals, errors, complete, loadedAt: Date.now() };
+  return {
+    assets,
+    globals,
+    errors,
+    complete,
+    aggregate: all.ok,
+    status,
+    loadedAt: Date.now(),
+  };
 }
-export function navOf(
-  assets: Asset[],
-  complete = true,
-  now = Date.now() / 1000,
-) {
+export function assetValue(a: Asset): bigint | undefined {
+  if (a.retired) return 0n;
+  if (a.managed === undefined) return undefined;
+  if (a.managed === 0n) return 0n;
+  if (a.answer === undefined || a.answer <= 0n) return undefined;
+  return (
+    (a.managed * a.answer * 10n ** 18n) /
+    10n ** BigInt(a.tokenDecimals + a.feedDecimals)
+  );
+}
+export function navOf(assets: Asset[], complete = true) {
   let nav = 0n,
     readable = complete,
-    stale = false;
+    indicative = false;
   for (const a of assets) {
-    if (a.retired) continue;
-    if (a.managed === undefined) {
-      readable = false;
-      continue;
-    }
-    if (a.managed === 0n) continue;
-    if (!a.feedReadable || a.answer === undefined || a.answer <= 0n) {
-      readable = false;
-      continue;
-    }
-    nav += (a.managed * a.answer) / 100_000_000n;
-    if (a.updatedAt === undefined || Number(a.updatedAt) > now)
-      readable = false;
-    else if (now - Number(a.updatedAt) > 26 * 3600) stale = true;
+    const v = assetValue(a);
+    if (v === undefined) readable = false;
+    else nav += v;
+    if (a.managed !== 0n && a.reason !== 0) indicative = true;
   }
-  return { nav: readable ? nav : undefined, stale };
+  return { nav: readable ? nav : undefined, indicative };
 }
-export function amount(value: string, allowZero = false) {
-  if (!/^\d+(\.\d{1,18})?$/.test(value.trim()))
+export function amount(value: string, allowZero = false, decimals = 18) {
+  if (
+    !new RegExp(`^\\d+(\\.\\d{1,${Math.max(decimals, 1)}})?$`).test(
+      value.trim(),
+    ) ||
+    (decimals === 0 && value.includes("."))
+  )
     throw new InputError(
-      "Enter a decimal amount with up to 18 decimal places.",
+      `Enter a decimal amount with up to ${decimals} decimal places.`,
     );
-  const n = parseUnits(value.trim(), 18);
+  const n = parseUnits(value.trim(), decimals);
   if ((!allowZero && n === 0n) || n >= 2n ** 256n)
     throw new InputError(
       "Enter an amount greater than zero and within the supported range.",
     );
   return n;
 }
-export function address(value: string): Address {
-  if (!isAddress(value.trim()) || value.trim().toLowerCase() === zeroAddress)
+export function address(v: string, allowZero = false): Address {
+  if (!isAddress(v.trim()) || (!allowZero && same(v.trim(), zeroAddress)))
     throw new InputError("Enter a valid nonzero address.");
-  return value.trim() as Address;
+  return v.trim() as Address;
+}
+export function recipient(v: string): Address {
+  const a = address(v);
+  if (same(a, VAULT))
+    throw new InputError("The receiver must not be the vault.");
+  return a;
+}
+export function uint(v: string, bits = 256) {
+  if (!/^\d+$/.test(v) || BigInt(v) >= 2n ** BigInt(bits))
+    throw new InputError(`Enter an unsigned ${bits}-bit whole number.`);
+  return BigInt(v);
 }
 export function parseLaunch(input: string) {
-  const lines = input
-    .trim()
-    .split(/\n/)
-    .filter((s) => s.trim());
   if (!input.trim())
     throw new InputError(
-      "Enter at least one TICKER tokenAddress feedAddress line.",
+      "Enter at least one TICKER token feed pool quoteFeed minLiquidity line.",
     );
-  const parsed = lines.map((l, i) => {
-    const parts = l.trim().split(/\s+/);
-    if (parts.length !== 3)
-      throw new InputError(
-        `Line ${i + 1}: use TICKER tokenAddress feedAddress.`,
-      );
-    return {
-      ticker: parts[0],
-      token: address(parts[1]),
-      feed: address(parts[2]),
-    };
-  });
-  if (new Set(parsed.map((p) => p.token.toLowerCase())).size !== parsed.length)
+  const rows = input
+    .trim()
+    .split(/\n/)
+    .filter((x) => x.trim())
+    .map((line, i) => {
+      const p = line.trim().split(/\s+/);
+      if (p.length !== 6)
+        throw new InputError(
+          `Line ${i + 1}: use TICKER token feed pool quoteFeed minLiquidity.`,
+        );
+      const pool = address(p[3], true),
+        quoteFeed = address(p[4], true),
+        minLiquidity = uint(p[5], 128);
+      if (
+        same(pool, zeroAddress) &&
+        (!same(quoteFeed, zeroAddress) || minLiquidity !== 0n)
+      )
+        throw new InputError(
+          `Line ${i + 1}: no pool requires zero quote feed and zero liquidity.`,
+        );
+      if (!same(pool, zeroAddress) && same(quoteFeed, zeroAddress))
+        throw new InputError(`Line ${i + 1}: a pool requires a quote feed.`);
+      return {
+        ticker: p[0],
+        token: address(p[1]),
+        feed: address(p[2]),
+        pool,
+        quoteFeed,
+        minLiquidity,
+      };
+    });
+  if (new Set(rows.map((r) => r.token.toLowerCase())).size !== rows.length)
     throw new InputError("Each stock must appear only once.");
-  return parsed;
+  if (new Set(rows.map((r) => r.feed.toLowerCase())).size !== rows.length)
+    throw new InputError("Each stock feed must be unique.");
+  return rows;
 }
 export function fmt(n: bigint | undefined, decimals = 18, digits = 4): string {
   if (n === undefined) return "unreadable";
-  const raw = formatUnits(n, decimals);
-  const [whole, frac = ""] = raw.split(".");
-  const trimmed = frac.slice(0, digits).replace(/0+$/, "");
-  if (n > 0n && BigInt(whole) === 0n && !trimmed && frac.replace(/0/g, ""))
+  const [w, f = ""] = formatUnits(n, decimals).split(".");
+  const t = f.slice(0, digits).replace(/0+$/, "");
+  if (n > 0n && BigInt(w) === 0n && !t && f.replace(/0/g, ""))
     return `<0.${"0".repeat(digits - 1)}1`;
-  return `${whole === "-0" ? "-0" : BigInt(whole).toLocaleString("en-US")}${trimmed ? "." + trimmed : ""}`;
+  return `${w === "-0" ? "-0" : BigInt(w).toLocaleString("en-US")}${t ? "." + t : ""}`;
 }
-export const exact = (n: bigint) => formatUnits(n, 18);
+export const exact = (n: bigint, d = 18) => formatUnits(n, d);
 export const usd = (n: bigint | undefined) =>
   n === undefined ? "unreadable" : "$" + fmt(n, 18, 2);
 export const date = (n: bigint | undefined) =>
@@ -237,47 +281,43 @@ export const date = (n: bigint | undefined) =>
       ? "Not set"
       : new Date(Number(n) * 1000).toLocaleString("en-GB", {
           timeZone: "UTC",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
         }) + " UTC";
 export function age(n: bigint | undefined, now = Date.now() / 1000) {
-  if (n === undefined) return "unreadable";
+  if (n === undefined || n === 0n) return "unreadable";
   const s = Math.floor(now - Number(n));
-  if (s < 0) return "Future timestamp";
-  if (s < 60) return "Less than 1 min ago";
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
+  return s < 0
+    ? "Future timestamp"
+    : s < 60
+      ? "Less than 1 min ago"
+      : s < 3600
+        ? `${Math.floor(s / 60)} min ago`
+        : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 }
 export const same = (a?: string, b?: string) =>
   !!a && !!b && a.toLowerCase() === b.toLowerCase();
 export const deadline = () => BigInt(Math.floor(Date.now() / 1000) + 600);
-export const depositArgs = (t: Address, n: bigint, w: Address, q: bigint) =>
+export const depositArgs = (t: Address[], n: bigint[], w: Address, q: bigint) =>
   [t, n, w, (q * 995n) / 1000n, deadline()] as const;
-export const redeemArgs = (n: bigint, legs: bigint[]) =>
-  [n, legs.map((a) => (a * 999n) / 1000n), deadline()] as const;
-
-// The only issuer prefixes removed are those specified by the product.
-export function cleanFeedDescription(description: string, symbol: string) {
-  if (description.startsWith("Robinhood ")) return description.slice(10);
-  if (description.startsWith("RH") && description.slice(2).startsWith(symbol)) return description.slice(2);
-  return description;
+export const redeemArgs = (n: bigint, w: Address, legs: bigint[]) =>
+  [n, w, legs.map((a) => (a * 999n) / 1000n), deadline()] as const;
+export function cleanFeedDescription(description: string, _symbol = "") {
+  return description.replace(/^Robinhood\s+/, "").replace(/^RH\s*/, "");
 }
 export function pairingMatches(symbol: string, description: string) {
   const clean = cleanFeedDescription(description, symbol);
-  return symbol !== "unreadable" && symbol.length > 0 && clean.startsWith(symbol)
-    && [" ", "/", "-"].includes(clean.charAt(symbol.length));
+  return (
+    symbol !== "unreadable" &&
+    symbol.length > 0 &&
+    clean.startsWith(symbol) &&
+    [" ", "/", "-"].includes(clean.charAt(symbol.length))
+  );
 }
-// Solve the contract's post-deposit NAV bucket bound, including integer rounding.
-export function depositLimits(nav: bigint, cap: bigint, bucket: bigint, value: bigint) {
-  const floor = 100_000n * 10n ** 18n;
-  const sizeRoom = cap > nav ? cap - nav : 0n;
-  const floorRoom = floor > bucket ? floor - bucket : 0n;
-  const ratioRoom = nav > 4n * bucket ? (nav - 4n * bucket) / 3n : 0n;
-  const dailyRoom = floorRoom > ratioRoom ? floorRoom : ratioRoom;
-  const fits = sizeRoom < dailyRoom ? sizeRoom : dailyRoom;
-  const dailyLimit = (nav + value) / 4n > floor ? (nav + value) / 4n : floor;
-  return { fits, sizeRoom, dailyRoom, overSize: nav + value > cap, overDaily: bucket + value > dailyLimit };
+export const utcTime = (n: bigint) =>
+  `${String(n / 3600n).padStart(2, "0")}:${String((n % 3600n) / 60n).padStart(2, "0")}:${String(n % 60n).padStart(2, "0")}`;
+export function hoursWords(s: any) {
+  return !s
+    ? "unreadable"
+    : s.hoursFrom === 0n && s.hoursTo === 0n
+      ? "open at all hours"
+      : `Monday–Friday, ${utcTime(s.hoursFrom)}–${utcTime(s.hoursTo)} UTC`;
 }

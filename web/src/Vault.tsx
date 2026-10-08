@@ -1,190 +1,132 @@
-import { zeroAddress, reasons } from "./chain";
-import { fmt, usd, navOf, age, date, type Snapshot, type Asset } from "./model";
-import { AddressLink, Empty, Note } from "./components";
-import { Storefront } from "./Scenery";
-export function faultName(s: Snapshot, a: string) {
-  return a === zeroAddress
-    ? "none"
-    : s.assets.find((t) => t.token.toLowerCase() === a.toLowerCase())?.symbol +
-        " (" +
-        a +
-        ")";
-}
-export function DepositState({
-  asset,
-  snapshot,
-}: {
-  asset: Asset;
-  snapshot: Snapshot;
-}) {
-  if (!asset.open || asset.retired) return <span>Not open for deposits</span>;
-  const s = asset.status;
-  if (!s || !s.ok)
-    return <span className="error">Deposit status: unreadable</span>;
-  return s.value[0] === 0 ? (
-    <span>Taking deposits now</span>
-  ) : (
-    <>
-      <span>{reasons[s.value[0]] ?? `Unknown reason ${s.value[0]}`}</span>
-      <small>
-        Stock at fault:{" "}
-        {s.value[1] === zeroAddress
-          ? "none"
-          : (snapshot.assets.find(
-              (a) => a.token.toLowerCase() === s.value[1].toLowerCase(),
-            )?.symbol ?? s.value[1])}
-      </small>
-    </>
+import { VAULT, zeroAddress, reasons } from "./chain";
+import {
+  navOf,
+  assetValue,
+  fmt,
+  usd,
+  age,
+  pairingMatches,
+  hoursWords,
+  type Snapshot,
+} from "./model";
+import { PageTitle, AddressLink, Note, Empty } from "./components";
+import { Clerk, StoreShelf } from "./Scenery";
+export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
+  const r = s.status;
+  return (
+    <div className="deposit-state">
+      <strong>Vault deposit status</strong>
+      <p>
+        {!r || !r.ok
+          ? "unreadable — Retry vault"
+          : (reasons[Number(r.value[0])] ?? "unreadable")}
+      </p>
+      {r?.ok && r.value[1] !== zeroAddress && (
+        <p>
+          Stock at fault:{" "}
+          {s.assets.find(
+            (a) => a.token.toLowerCase() === r.value[1].toLowerCase(),
+          )?.symbol ?? r.value[1]}
+        </p>
+      )}
+      <p>Hours: {hoursWords(s.globals.settings)}</p>
+    </div>
   );
 }
 export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
-  const { nav, stale } = navOf(s.assets, s.complete);
-  const g = s.globals;
-  const per =
-    nav !== undefined && g.totalSupply > 0n
-      ? (nav * 10n ** 18n) / g.totalSupply
-      : undefined;
-  const capPercent =
-    nav !== undefined && g.NAV_CAP > 0n
-      ? Number((nav * 10000n) / g.NAV_CAP) / 100
-      : 0;
+  const nav = navOf(s.assets, s.complete),
+    supply = s.globals.totalSupply as bigint | undefined;
   return (
     <>
-      <section className="vault-hero">
-        <div>
-          <p className="eyebrow">Basket Protocol · Stock Token vault</p>
-          <h1 tabIndex={-1}>
-            A basket of stocks.
-            <br />
-            <em>One BASK.</em>
-          </h1>
-          <p>
-            Deposit Stock Tokens. Hold Basket. Redeem a share of every stock in
-            the vault.
-          </p>
-          <div className="hero-actions">
-            <a href="#deposit" className="button primary">
-              Deposit Stock Tokens <span aria-hidden="true">↗</span>
-            </a>
-            <a href="#redeem" className="button">
-              Redeem BASK
-            </a>
+      <div className="vault-hero">
+        <PageTitle
+          eyebrow="Stock Tokens. One basket."
+          title="A basket of stocks."
+        >
+          Meet Basket (BASK): your share of the Stock Tokens in this vault.
+        </PageTitle>
+        <div className="clerk-panel">
+          <span className="burst">WOW!</span>
+          <Clerk />
+        </div>
+      </div>
+      <section className="panel">
+        <div className="section-heading">
+          <h2>Inside the basket</h2>
+          <span className="eyebrow">On-chain figures</span>
+        </div>
+        <div className="stats">
+          <div>
+            <span>NAV{nav.indicative ? " · indicative" : ""}</span>
+            <strong>{usd(nav.nav)}</strong>
+          </div>
+          <div>
+            <span>NAV per BASK</span>
+            <strong>
+              {supply === undefined || nav.nav === undefined
+                ? "unreadable"
+                : supply === 0n
+                  ? "No BASK issued"
+                  : usd((nav.nav * 10n ** 18n) / supply)}
+            </strong>
+          </div>
+          <div>
+            <span>BASK supply</span>
+            <strong>{fmt(supply)}</strong>
+          </div>
+          <div>
+            <span>Size limit</span>
+            <strong>{usd(s.globals.NAV_CAP)}</strong>
           </div>
         </div>
-        <div className="hero-illustration" aria-hidden="true">
-          <Storefront />
-          <div className="store-sign"><span>Basket</span><strong>BASK</strong></div>
+        {nav.indicative && (
+          <Note warning>
+            NAV is indicative: at least one held stock has a price reason other
+            than OK, or an unreadable reason.
+          </Note>
+        )}
+        <div className="two-col">
+          <DepositState snapshot={s} />
+          <div>
+            <strong>Fees</strong>
+            <p>
+              {s.globals.feeRecipient === undefined
+                ? "Fee recipient unreadable — Retry vault"
+                : s.globals.feeRecipient === zeroAddress
+                  ? "no fees yet"
+                  : "0.5% on deposit and 0.5% on redemption"}
+            </p>
+            <p>BaskVault · Robinhood Chain</p>
+            <AddressLink value={VAULT} />
+          </div>
         </div>
       </section>
-      <div className="stats">
-        <section className="price-tag">
-          <span className="eyebrow">Total vault NAV</span>
-          <strong className="metric">{usd(nav)}</strong>
-          <span>
-            {stale
-              ? "Stale · held stock price over 26 hours old"
-              : "Managed Stock Tokens only"}
-          </span>
-        </section>
-        <section className="price-tag">
-          <span className="eyebrow">NAV per BASK</span>
-          <strong className="metric">
-            {g.totalSupply === 0n ? "—" : usd(per)}
-          </strong>
-          <span>
-            {g.totalSupply === 0n
-              ? "No BASK in circulation"
-              : stale
-                ? "Stale · based on stale NAV"
-                : `${fmt(g.totalSupply)} BASK in circulation`}
-          </span>
-        </section>
-        <section className="price-tag">
-          <span className="eyebrow">NAV / cap</span>
-          <strong className="metric cap-value">
-            {usd(nav)} <span>/ {usd(g.NAV_CAP)}</span>
-          </strong>
-          <div
-            className="meter"
-            role="meter"
-            aria-label="NAV cap used"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.min(capPercent, 100)}
-          >
-            <span style={{ width: `${Math.min(capPercent, 100)}%` }} />
-          </div>
-          <span>
-            {stale ? "Stale · " : ""}
-            {nav !== undefined && g.NAV_CAP !== undefined
-              ? g.NAV_CAP === 0n
-                ? "Cap is zero"
-                : `${capPercent.toFixed(2)}% used`
-              : "unreadable"}
-          </span>
-        </section>
-      </div>
-      <section className="shelf">
+      <section className="panel stock-section">
         <div className="section-heading">
-          <div>
-            <p className="eyebrow">Inside the basket</p>
-            <h2>
-              Stock Tokens{" "}
-              <span className="count">
-                {s.complete ? s.assets.length : "?"}
-              </span>
-            </h2>
-          </div>
-          <span className="badge">
-            {g.genesisFinalized === false
-              ? "Preparing for launch"
-              : g.depositsPaused === true
-                ? "Deposits paused"
-                : g.genesisFinalized === true
-                  ? "Genesis finalized"
-                  : "Status unreadable"}
-          </span>
+          <h2>Stock shelves</h2>
+          <span className="burst small">Fresh!</span>
         </div>
-        <p className="muted">
-          Monday to Friday, 15:30 to 19:30 UTC, closed on US market holidays.
-        </p>
-        {g.genesisFinalized && (
-          <p className="muted">
-            Deposit opening time: {date(g.depositsOpenAt)}. Current availability
-            appears for each open stock.
-          </p>
-        )}
+        <StoreShelf />
         {!s.assets.length ? (
           <Empty
-            title={
-              s.complete
-                ? "The shelves are not stocked yet"
-                : "Stocks are unreadable"
-            }
+            title={s.complete ? "The basket is empty" : "Stocks unreadable"}
           >
-            {s.complete ? (
-              <>
-                The owner can list Stock Tokens and finalize genesis on the{" "}
-                <a href="#owner">Owner page</a>. Deposits open 72 hours after
-                finalization.
-              </>
-            ) : (
-              "Refresh the vault data to try again."
-            )}
+            The owner lists the first Stock Tokens before deposits begin. Retry
+            the vault for current data.
           </Empty>
         ) : (
           <div className="stock-grid">
             {s.assets.map((a) => {
-              const value = a.retired
-                ? 0n
-                : a.managed === 0n
-                  ? 0n
-                  : a.managed !== undefined &&
-                      a.feedReadable &&
-                      a.answer !== undefined &&
-                      a.answer > 0n
-                    ? (a.managed * a.answer) / 100000000n
-                    : undefined;
+              const value = assetValue(a),
+                feedPrice =
+                  a.answer === undefined
+                    ? undefined
+                    : (a.answer * 10n ** 18n) / 10n ** BigInt(a.feedDecimals);
+              const gap =
+                a.poolPrice && feedPrice
+                  ? Number(((a.poolPrice - feedPrice) * 10000n) / feedPrice) /
+                    100
+                  : undefined;
               return (
                 <article className="stock-card" key={a.token}>
                   <div className="stock-top">
@@ -195,61 +137,81 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
                       {a.retired ? "Retired" : a.open ? "Open" : "Closed"}
                     </span>
                   </div>
-                  <p className="stock-price">
-                    {a.feedReadable && a.answer !== undefined
-                      ? "$" + fmt(a.answer, 8, 4)
-                      : "unreadable"}
+                  <p className="chain-text">
+                    <bdi>{a.description}</bdi>
                   </p>
-                  <p className="muted">
-                    {a.feedReadable
-                      ? age(a.updatedAt)
-                      : "Price age: unreadable"}
-                    {a.feedReadable &&
-                    a.updatedAt !== undefined &&
-                    Date.now() / 1000 - Number(a.updatedAt) > 26 * 3600
-                      ? " · stale"
-                      : ""}
-                  </p>
+                  {!pairingMatches(a.symbol, a.description) && (
+                    <p className="pairing-warning">check this pairing</p>
+                  )}
                   <dl>
+                    <div>
+                      <dt>Feed price / age</dt>
+                      <dd>
+                        {a.answer === undefined || a.answer <= 0n
+                          ? "unreadable / invalid feed"
+                          : "$" + fmt(a.answer, a.feedDecimals)}
+                        <small>{age(a.updatedAt)}</small>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Pool check</dt>
+                      <dd>
+                        {a.poolPrice === undefined
+                          ? "unreadable"
+                          : a.pool === zeroAddress
+                            ? "No pool; feed-age check"
+                            : a.poolPrice === 0n
+                              ? "Failed · poolPrice 0"
+                              : `${usd(a.poolPrice)} · ${gap === undefined ? "gap unreadable" : `${gap > 0 ? "+" : ""}${gap}% vs feed`}`}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Held (managed)</dt>
+                      <dd>{fmt(a.managed, a.tokenDecimals)}</dd>
+                    </div>
                     <div>
                       <dt>Share of NAV</dt>
                       <dd>
-                        {value === undefined || nav === undefined
+                        {nav.nav === undefined || value === undefined
                           ? "unreadable"
-                          : nav === 0n
+                          : nav.nav === 0n
                             ? "—"
-                            : `${fmt((value * 10000n) / nav, 2, 2)}%`}
-                        {stale ? " · stale" : ""}
+                            : fmt((value * 10000n) / nav.nav, 2, 2) + "%"}
                       </dd>
                     </div>
                     <div>
-                      <dt>Short</dt>
+                      <dt>Owed</dt>
+                      <dd>{fmt(a.totalOwed, a.tokenDecimals)}</dd>
+                    </div>
+                    <div>
+                      <dt>Price reason</dt>
                       <dd>
-                        {!a.balanceReadable || a.short === undefined
+                        {a.reason === undefined
+                          ? "unreadable"
+                          : reasons[a.reason]}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Balance check</dt>
+                      <dd>
+                        {!a.balanceReadable
                           ? "unreadable"
                           : a.short
-                            ? "Yes"
-                            : "No"}
+                            ? "vault short of this stock"
+                            : "Readable; no shortfall"}
                       </dd>
                     </div>
-                    <div>
-                      <dt>Amount owed</dt>
-                      <dd>{fmt(a.totalOwed)}</dd>
-                    </div>
                   </dl>
-                  <div className="stock-deposits">
-                    <DepositState asset={a} snapshot={s} />
-                  </div>
-                  <AddressLink value={a.token} />
+                  <details>
+                    <summary>Stock and feed addresses</summary>
+                    <AddressLink value={a.token} />
+                    <AddressLink value={a.feed} />
+                  </details>
                 </article>
               );
             })}
           </div>
         )}
-        <Note>
-          A retired stock counts 0 in NAV and for new deposits but is still paid
-          out on redemption.
-        </Note>
       </section>
     </>
   );

@@ -9,7 +9,7 @@ import { DepositPage, RedeemPage, Claims } from "./Flows";
 import { OwnerPage } from "./Owner";
 import { DocsPage } from "./Docs";
 import { LossesPage } from "./Losses";
-import { NightSky, Planet } from "./Scenery";
+import { Marquee, StoreShelf } from "./Scenery";
 import "./styles.css";
 const pages = ["Vault", "Deposit", "Redeem", "Docs"];
 const routes = [...pages, "Owner", "Losses"];
@@ -88,10 +88,10 @@ function App() {
         </p>
       </div>
       <header>
-        <NightSky />
+        <Marquee />
         <div className="header-inner">
           <a href="#vault" className="brand" aria-label="Basket Protocol home">
-            <Planet />
+            <BasketIcon large />
             <span>
               Basket<span className="brand-sub">Protocol</span>
             </span>
@@ -132,6 +132,9 @@ function App() {
           </div>
         </nav>
       </header>
+      <div className="shop-window">
+        <StoreShelf />
+      </div>
       <main id="main-content" tabIndex={-1}>
         <div className="data-bar">
           <span role="status">
@@ -146,7 +149,7 @@ function App() {
                 : "Vault data unreadable"}
           </span>
           <button className="refresh" disabled={loading} onClick={refresh}>
-            Refresh vault <span aria-hidden="true">↻</span>
+            Retry vault <span aria-hidden="true">↻</span>
           </button>
         </div>
         {error && (
@@ -200,14 +203,32 @@ function App() {
         ) : (
           <LossesPage snapshot={snapshot} wallet={wallet} />
         )}
-        <div hidden={page !== "Redeem"}><Claims snapshot={snapshot} wallet={wallet} /></div>
+        {page === "Redeem" && <Claims snapshot={snapshot} wallet={wallet} />}
       </main>
+      <div className="floor-strip" aria-hidden="true" />
       <footer>
         <div>
           <BasketIcon />
           <strong>Basket Protocol</strong>
           <span>Stock Tokens. One basket.</span>
-          <span className="footer-links"><a href="#owner" aria-current={page === "Owner" ? "page" : undefined}>Owner controls</a><a href="#losses" aria-current={page === "Losses" ? "page" : undefined}>Losses</a><a href="#docs">Docs</a><a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">Basket Protocol on X</a></span>
+          <span className="footer-links">
+            <a
+              href="#owner"
+              aria-current={page === "Owner" ? "page" : undefined}
+            >
+              Owner controls
+            </a>
+            <a
+              href="#losses"
+              aria-current={page === "Losses" ? "page" : undefined}
+            >
+              Losses
+            </a>
+            <a href="#docs">Docs</a>
+            <a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">
+              Basket Protocol on X
+            </a>
+          </span>
         </div>
         <div>
           <span>BaskVault · Chain 4663</span>

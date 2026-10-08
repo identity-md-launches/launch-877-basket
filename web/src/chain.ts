@@ -18,7 +18,7 @@ import { mainnet } from "viem/chains";
 import vaultJson from "./vault.abi.json";
 import { VAULT, RUNTIME_HASH } from "./deployment";
 export { VAULT, zeroAddress };
-export const GAS = 10_000_000n;
+export const GAS = 30_000_000n;
 export const chain = defineChain({
   id: 4663,
   name: "Robinhood Chain",
@@ -49,18 +49,19 @@ export const client = createPublicClient({
 export const vaultAbi = vaultJson as Abi;
 export const tokenAbi = parseAbi([
   "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function balanceOf(address) view returns (uint256)",
   "function allowance(address,address) view returns (uint256)",
   "function approve(address,uint256) returns (bool)",
 ]);
 export const feedAbi = parseAbi([
   "function description() view returns (string)",
+  "function decimals() view returns (uint8)",
   "function latestRoundData() view returns (uint80,int256,uint256,uint256,uint80)",
 ]);
 export class InputError extends Error {}
 export type ReadResult<T = any> =
-  | { ok: true; value: T }
-  | { ok: false; error: string };
+  { ok: true; value: T } | { ok: false; error: string };
 export type Spec = {
   address: Address;
   abi: Abi;
@@ -122,10 +123,15 @@ export async function verifyNetwork() {
 }
 export async function many(specs: Spec[]): Promise<ReadResult[]> {
   if (!specs.length) return [];
-  // Feed-heavy aggregate views MUST remain independent 10M-gas calls.
+  // Feed-heavy aggregate views MUST remain independent 30M-gas calls.
   if (
     specs.some((s) =>
-      ["allAssets", "depositStatus", "previewDeposit"].includes(s.functionName),
+      [
+        "allAssets",
+        "depositStatus",
+        "previewDeposit",
+        "previewRedeem",
+      ].includes(s.functionName),
     )
   )
     throw new Error("Heavy view cannot be batched");
@@ -170,65 +176,62 @@ export async function many(specs: Spec[]): Promise<ReadResult[]> {
   }
   return results;
 }
-// Ordinals and custom errors from the pinned launch-929 BaskVault source.
+// Ordinals match the pinned BaskTypes.Reason exactly.
 export const reasons = [
-  "Ready for deposits",
-  "Genesis has not been finalized",
-  "The 72-hour opening delay has not ended",
-  "Deposits are paused",
-  "Stock is not listed",
-  "Stock is retired",
-  "Stock is closed",
-  "Stock balance is unreadable",
-  "Stock balance does not cover outstanding claims",
-  "The deposit market window is closed",
-  "Fewer than three stock prices are fresh within four hours",
-  "Stock price feed is unreadable",
-  "Stock price is zero or negative",
-  "Stock price is outside its allowed band",
-  "Stock price is dated in the future",
-  "Stock price is more than 26 hours old",
-  "Oracle pause status is unreadable",
-  "Stock oracle is paused",
-  "Stock has an accounting shortfall",
-  "The vault has supply but zero NAV",
+  "OK",
+  "genesis not finished",
+  "deposits paused",
+  "outside deposit hours",
+  "not listed",
+  "closed or retired",
+  "listed twice",
+  "balance unreadable",
+  "vault short of this stock",
+  "feed price missing or too old",
+  "price outside its band",
+  "paused by its issuer",
+  "pool check failed (over 3% off, unreadable, under its floor or quote feed bad)",
+  "too few fresh prices",
 ];
-export const proposalKinds = ["List", "Feed", "Band", "Reopen", "Retire", "Guardian", "NavCap"] as const;
-export const proposalStates = ["Missing", "Waiting", "Ready", "Expired", "Cancelled", "Executed", "Voided"] as const;
-export function proposalStateWords(state: number, createdAt: bigint) {
-  if (state === 1) return "waiting, executable from " + new Date(Number(createdAt + 7n * 86400n) * 1000).toLocaleString("en-GB", { timeZone: "UTC" }) + " UTC";
-  return proposalStates[state]?.toLowerCase() ?? "state unreadable; refresh proposals";
-}
+export const proposalKinds = [
+  "List",
+  "Feed",
+  "Centre",
+  "Reopen",
+  "Retire",
+  "Pool",
+  "Resync",
+  "Guardian",
+  "NavCap",
+  "FeeRecipient",
+  "Setting",
+] as const;
 export const errorWords: Record<string, string> = {
   Unauthorized: "This wallet is not allowed to perform this action.",
   Reentrancy: "The contract rejected a reentrant call.",
   InvalidAddress: "Choose a valid allowed address.",
-  InvalidAsset: "The Stock Token is not valid for this action. Check its listing and retirement status.",
-  InvalidFeed: "Check the feed format, price and pairing. A feed may serve only one unretired stock.",
-  AssetLimit: "The vault has reached its 64-stock limit.",
-  LengthMismatch: "Token and feed lists must have the same length.",
-  InvalidState: "This action is unavailable in the current vault state. Refresh and check its requirements.",
-  InvalidProposal: "Check the proposal’s current state and refresh proposals.",
-  ChangeTooSoon: "The 24-hour stock/feed change cooldown has not ended.",
-  DeadlineExpired: "The deadline has passed. Refresh the preview and retry.",
+  InvalidInput:
+    "Check the amounts, array lengths and allowed values, then retry.",
+  InvalidAsset:
+    "Check this stock’s listing, feed uniqueness, decimals and closed or retired status.",
+  InvalidSetting:
+    "This setting is outside its bounds or exceeds the combined gas limits. Refresh settings and retry.",
+  InvalidProposal:
+    "This proposal is cancelled, expired or no longer valid. Retry the proposal list.",
+  TooEarly: "The waiting period has not ended. Check the execution time.",
+  Expired: "The deadline has passed. Refresh the preview and retry.",
+  TransferFailed:
+    "The stock transfer failed. If the issuer paused it, retry later or use another claim recipient.",
   Slippage: "The preview changed beyond your minimum. Refresh and retry.",
-  InvalidAmount: "Choose an amount within the allowed range and large enough to receive shares.",
   CapExceeded: "This deposit exceeds the vault size limit. Reduce the amount.",
-  BucketExceeded: "This deposit exceeds today’s limit. Reduce the amount or wait; the daily limit refills over 24 hours.",
-  TransferFailed: "The stock transfer failed. If the issuer paused it, retry later or use another claim recipient.",
+  ZeroNAV: "The vault has shares but zero NAV. Deposits cannot proceed.",
   InsufficientBalance: "Your balance is too low for this amount.",
-  InsufficientAllowance: "Approve the deposit amount first.",
-  BalanceUnreadable: "The stock balance is unreadable. Retry later.",
+  InvalidOracle:
+    "The feed or pool is invalid or unreadable. Check its configuration and retry.",
   MathOverflow: "This amount is outside the supported range.",
+  InvalidTick: "The pool tick is outside its supported range.",
 };
-export async function explainAction(e: unknown, spec: Spec): Promise<string> {
-  if (spec.functionName === "executeProposal") {
-    try {
-      const id = spec.args![0];
-      const [state, proposal] = await Promise.all([read(vault("proposalState", [id])), read(vault("proposals", [id]))]);
-      if (Number(state) !== 2) return "Proposal is " + proposalStateWords(Number(state), proposal[4]) + ".";
-    } catch { return "Proposal state is unreadable. Refresh proposals before retrying."; }
-  }
+export async function explainAction(e: unknown, _spec: Spec): Promise<string> {
   return explain(e);
 }
 function revertData(e: any): Hex | undefined {
@@ -257,7 +260,11 @@ export function explain(
     }
   if (readFailure) return "Preview: unreadable. Retry the preview.";
   const err = e as { shortMessage?: string; message?: string; code?: number };
-  if (/timed out while waiting for transaction|receipt.*not found/i.test(err.shortMessage ?? err.message ?? ""))
+  if (
+    /timed out while waiting for transaction|receipt.*not found/i.test(
+      err.shortMessage ?? err.message ?? "",
+    )
+  )
     return "Confirmation could not be read. Check the transaction link and refresh the vault before retrying.";
   if (err.code === 4001 || /rejected|denied/i.test(err.message ?? ""))
     return "The wallet request was declined. You can try again.";

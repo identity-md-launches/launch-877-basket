@@ -95,11 +95,11 @@ export function LossesPage({
               <dl>
                 <div>
                   <dt>Current shortfall</dt>
-                  <dd>{fmt(d?.shortfall)}</dd>
+                  <dd>{fmt(d?.shortfall, a.tokenDecimals)}</dd>
                 </div>
                 <div>
                   <dt>Recorded shortfall</dt>
-                  <dd>{fmt(d?.amount)}</dd>
+                  <dd>{fmt(d?.amount, a.tokenDecimals)}</dd>
                 </div>
                 <div>
                   <dt>Recognition available</dt>

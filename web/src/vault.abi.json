@@ -17,50 +17,19 @@
   },
   {
     "inputs": [],
-    "name": "AssetLimit",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "BalanceUnreadable",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "BucketExceeded",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "CapExceeded",
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "ChangeTooSoon",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "DeadlineExpired",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
-        "internalType": "enum BaskVault.Reason",
+        "internalType": "enum BaskTypes.Reason",
         "name": "reason",
         "type": "uint8"
       },
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -69,7 +38,7 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientAllowance",
+    "name": "Expired",
     "type": "error"
   },
   {
@@ -84,50 +53,32 @@
   },
   {
     "inputs": [],
-    "name": "InvalidAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
     "name": "InvalidAsset",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "feed",
-        "type": "address"
-      }
-    ],
-    "name": "InvalidFeed",
+    "inputs": [],
+    "name": "InvalidInput",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
+    "name": "InvalidOracle",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InvalidProposal",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidState",
+    "name": "InvalidSetting",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "LengthMismatch",
+    "name": "InvalidTick",
     "type": "error"
   },
   {
@@ -146,13 +97,12 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
+    "name": "TooEarly",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "TransferFailed",
     "type": "error"
   },
@@ -162,12 +112,17 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "ZeroNAV",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "account",
         "type": "address"
       },
       {
@@ -184,6 +139,25 @@
       }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum BaskTypes.Action",
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "name": "AssetChanged",
     "type": "event"
   },
   {
@@ -216,15 +190,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "minAnswer",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "maxAnswer",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
       }
     ],
     "name": "AssetListed",
@@ -240,7 +208,7 @@
         "type": "address"
       }
     ],
-    "name": "AssetReopened",
+    "name": "AssetRemoved",
     "type": "event"
   },
   {
@@ -249,57 +217,19 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "AssetRetired",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "minAnswer",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "maxAnswer",
-        "type": "uint256"
-      }
-    ],
-    "name": "BandChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
+        "name": "caller",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
         "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
         "type": "address"
       },
       {
@@ -310,19 +240,6 @@
       }
     ],
     "name": "Claimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "DeficitCleared",
     "type": "event"
   },
   {
@@ -366,15 +283,9 @@
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       },
       {
@@ -416,38 +327,12 @@
         "type": "address"
       }
     ],
-    "name": "FeeRecipientSet",
+    "name": "FeeRecipientChanged",
     "type": "event"
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "feed",
-        "type": "address"
-      }
-    ],
-    "name": "FeedChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "depositsOpenAt",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "GenesisFinalized",
     "type": "event"
   },
@@ -462,56 +347,6 @@
       }
     ],
     "name": "GuardianChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "LegOwed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "LegPaid",
     "type": "event"
   },
   {
@@ -558,7 +393,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "pendingOwner",
+        "name": "nextOwner",
         "type": "address"
       }
     ],
@@ -571,7 +406,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "oldOwner",
+        "name": "previousOwner",
         "type": "address"
       },
       {
@@ -605,43 +440,6 @@
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum BaskVault.Kind",
-        "name": "kind",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "target",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "ProposalCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
       }
     ],
     "name": "ProposalExecuted",
@@ -652,8 +450,51 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum BaskTypes.Action",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "readyAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "Proposed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "receiver",
         "type": "address"
       },
       {
@@ -670,6 +511,44 @@
       }
     ],
     "name": "Redeem",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Resynced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "enum BaskTypes.Setting",
+        "name": "setting",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "SettingChanged",
     "type": "event"
   },
   {
@@ -699,33 +578,20 @@
   },
   {
     "inputs": [],
-    "name": "LOCKED_SHARES",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MAX_ASSETS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "MAX_NAV_CAP",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MINIMUM_SHARES",
     "outputs": [
       {
         "internalType": "uint256",
@@ -751,58 +617,6 @@
   },
   {
     "inputs": [],
-    "name": "PRICE_AGE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "PROPOSAL_DELAY",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "PROPOSAL_LIFETIME",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "STOCK_FACTORY",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "acceptOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -815,19 +629,86 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
+            "components": [
+              {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "feed",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "pool",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "quoteFeed",
+                "type": "address"
+              },
+              {
+                "internalType": "uint128",
+                "name": "minLiquidity",
+                "type": "uint128"
+              },
+              {
+                "internalType": "bool",
+                "name": "open",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "retired",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "hasPause",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint8",
+                "name": "tokenDecimals",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint8",
+                "name": "feedDecimals",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint8",
+                "name": "quoteDecimals",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint8",
+                "name": "quoteFeedDecimals",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bool",
+                "name": "tokenIs0",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint256",
+                "name": "centre",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct BaskTypes.Asset",
+            "name": "config",
+            "type": "tuple"
           },
           {
-            "internalType": "address",
-            "name": "feed",
-            "type": "address"
-          },
-          {
-            "internalType": "int256",
+            "internalType": "uint256",
             "name": "answer",
-            "type": "int256"
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -836,23 +717,8 @@
           },
           {
             "internalType": "uint256",
-            "name": "minAnswer",
+            "name": "poolPrice",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxAnswer",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "open",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "retired",
-            "type": "bool"
           },
           {
             "internalType": "uint256",
@@ -865,22 +731,22 @@
             "type": "bool"
           },
           {
+            "internalType": "bool",
+            "name": "readable",
+            "type": "bool"
+          },
+          {
             "internalType": "uint256",
             "name": "totalOwed",
             "type": "uint256"
           },
           {
-            "internalType": "bool",
-            "name": "balanceReadable",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "feedReadable",
-            "type": "bool"
+            "internalType": "enum BaskTypes.Reason",
+            "name": "reason",
+            "type": "uint8"
           }
         ],
-        "internalType": "struct BaskVault.AssetView[]",
+        "internalType": "struct BaskTypes.AssetView[]",
         "name": "result",
         "type": "tuple[]"
       }
@@ -937,6 +803,97 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "asset",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "feed",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "pool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quoteFeed",
+            "type": "address"
+          },
+          {
+            "internalType": "uint128",
+            "name": "minLiquidity",
+            "type": "uint128"
+          },
+          {
+            "internalType": "bool",
+            "name": "open",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "retired",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasPause",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint8",
+            "name": "tokenDecimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "feedDecimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "quoteDecimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "quoteFeedDecimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "tokenIs0",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "centre",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct BaskTypes.Asset",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "assetCount",
     "outputs": [
@@ -952,61 +909,17 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "assetIndexPlusOne",
-    "outputs": [
-      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "assets",
+    "name": "assetTokens",
     "outputs": [
       {
         "internalType": "address",
-        "name": "token",
+        "name": "",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "feed",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "open",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "retired",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "minAnswer",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxAnswer",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1032,32 +945,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "bucket",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "bucketUpdatedAt",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1065,30 +952,17 @@
         "type": "uint256"
       }
     ],
-    "name": "cancelProposal",
+    "name": "cancel",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "capEpoch",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
       },
       {
         "internalType": "address",
@@ -1097,13 +971,7 @@
       }
     ],
     "name": "claim",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1115,41 +983,9 @@
         "type": "address"
       }
     ],
-    "name": "closeAsset",
+    "name": "close",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "closeEpoch",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "decayedBucket",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1192,14 +1028,14 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
       },
       {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
       },
       {
         "internalType": "address",
@@ -1221,7 +1057,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "shares",
+        "name": "received",
         "type": "uint256"
       }
     ],
@@ -1231,35 +1067,22 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
       }
     ],
     "name": "depositStatus",
     "outputs": [
       {
-        "internalType": "enum BaskVault.Reason",
+        "internalType": "enum BaskTypes.Reason",
         "name": "reason",
         "type": "uint8"
       },
       {
         "internalType": "address",
-        "name": "asset",
+        "name": "fault",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "depositsOpenAt",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1286,7 +1109,7 @@
         "type": "uint256"
       }
     ],
-    "name": "executeProposal",
+    "name": "execute",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1335,6 +1158,39 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "feed",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "quoteFeed",
+        "type": "address"
+      },
+      {
+        "internalType": "uint128",
+        "name": "minLiquidity",
+        "type": "uint128"
+      }
+    ],
+    "name": "genesisList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1390,19 +1246,6 @@
         "internalType": "string",
         "name": "",
         "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "nextAssetChangeAt",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1470,7 +1313,7 @@
         "type": "uint256"
       }
     ],
-    "name": "payLeg",
+    "name": "pay",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1497,7 +1340,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "count",
+        "name": "limit",
         "type": "uint256"
       }
     ],
@@ -1507,6 +1350,48 @@
         "internalType": "uint256[]",
         "name": "ids",
         "type": "uint256[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "enum BaskTypes.Action",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "readyAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epoch",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "done",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct BaskTypes.Proposal[]",
+        "name": "items",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -1515,14 +1400,14 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
       },
       {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
       }
     ],
     "name": "previewDeposit",
@@ -1539,7 +1424,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "locked",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -1571,6 +1456,62 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "proposal",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum BaskTypes.Action",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "readyAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epoch",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "version",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "done",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct BaskTypes.Proposal",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "proposalCount",
     "outputs": [
@@ -1591,65 +1532,11 @@
         "type": "uint256"
       }
     ],
-    "name": "proposalState",
+    "name": "proposalValid",
     "outputs": [
       {
-        "internalType": "enum BaskVault.ProposalState",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "proposals",
-    "outputs": [
-      {
-        "internalType": "enum BaskVault.Kind",
-        "name": "kind",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "target",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "createdAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "epoch",
-        "type": "uint256"
-      },
-      {
         "internalType": "bool",
-        "name": "cancelled",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "executed",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -1659,164 +1546,26 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "internalType": "enum BaskTypes.Action",
+        "name": "action",
+        "type": "uint8"
       },
-      {
-        "internalType": "address",
-        "name": "feed",
-        "type": "address"
-      }
-    ],
-    "name": "proposeAsset",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "tokens",
-        "type": "address[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "feeds",
-        "type": "address[]"
-      }
-    ],
-    "name": "proposeAssets",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "ids",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "proposeBand",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       {
         "internalType": "address",
         "name": "token",
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "feed",
-        "type": "address"
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
       }
     ],
-    "name": "proposeFeed",
+    "name": "propose",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "next",
-        "type": "address"
-      }
-    ],
-    "name": "proposeGuardian",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "cap",
-        "type": "uint256"
-      }
-    ],
-    "name": "proposeNavCap",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "proposeReopen",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "proposeRetire",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -1844,6 +1593,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
         "internalType": "uint256[]",
         "name": "minAmountsOut",
         "type": "uint256[]"
@@ -1869,13 +1623,108 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "recipient",
+        "name": "token",
         "type": "address"
       }
     ],
-    "name": "setFeeRecipient",
+    "name": "removeRetired",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "settings",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "band",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxAge",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "noPoolAge",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "freshCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "freshHours",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "hoursFrom",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "hoursTo",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "poolWindow",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "poolDeviation",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "feedGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "pauseGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "poolGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "balanceGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "payGas",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxAssets",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "directLimit",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct BaskTypes.Settings",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1980,7 +1829,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "next",
+        "name": "nextOwner",
         "type": "address"
       }
     ],

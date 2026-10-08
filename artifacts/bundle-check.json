@@ -1,29 +1,51 @@
 {
-  "fileCount": 128,
-  "submissionFileBytesExcludingThisReport": 5006715,
   "limitBytes": 8388608,
-  "conservativeReportAllowanceBytes": 65536,
-  "underLimit": true,
-  "tarGzipTransportEstimateBytes": 3260571,
-  "distBytes": 637297,
-  "artifactsBytes": 2971810,
-  "protectedFilesChanged": [],
-  "submodules": [],
-  "generatedDependenciesOrCaches": [],
-  "relativeHtmlReferences": [
-    "./favicon.svg",
-    "./assets/index-pqKNbyyG.js",
-    "./assets/index-ZiW_H0iq.css"
-  ],
-  "artworkReview": "Original SVG primitives only; no text/image/foreignObject/external references or currency glyphs in new artwork. CSS decoration reviewed visually and with SVG text checks. Package labels have no brands, prices or film references.",
-  "exportSha256": {
-    "dist/assets/Damion-Regular-BmrwnGAX.ttf": "a51fd6c3c517feb9924b98139c2e902a7317caee52c22a2ec9682973969562bf",
-    "dist/assets/ccip-FpXhomlt.js": "4d5596804e4e48ac87c8aeed52bd93b40be96272a0165c33b0521670099bb92f",
-    "dist/assets/index-ZiW_H0iq.css": "a7426592166efc85b761de06d607d3efb33c101d657b5511f4ca054c55a7bfe6",
-    "dist/assets/index-pqKNbyyG.js": "78bf1ce18dfdb833536307edbc586a31598001e66746d9b53a9e401cee2646f4",
-    "dist/favicon.svg": "b2ac94046e05ef2a477ed1304f3bad254aba6a244db069f7caa73aa4760740b8",
-    "dist/fonts/OFL.txt": "cf28b0c2cd8dea6aaec899baf5d050ef1f578daeaf51e931a934d100b4de9ecc",
-    "dist/index.html": "fe7b1b8130c74266f7fb3e904e16712615a444128aebba915b963ee1fc0fc4f1"
+  "uncompressedDeliveryBytes": 6726363,
+  "fileCount": 124,
+  "productionExportBytes": 586414,
+  "productionFiles": {
+    "dist/assets/Anton-Byf51wtH.woff2": {
+      "bytes": 18612,
+      "sha256": "d0fa07ff63dd60cbc0e2f58e29c802dca2a5ae0276c999f59c6111ab7bbaec3b"
+    },
+    "dist/assets/VT323-wDgJuOC9.woff2": {
+      "bytes": 17936,
+      "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
+    },
+    "dist/assets/ccip-ByIQlb3t.js": {
+      "bytes": 2610,
+      "sha256": "a285296519b377ebbfb4679cea0f4d8a2c41cdc6214e084bab4ad09d6aeff424"
+    },
+    "dist/assets/index-8r7Ag5om.css": {
+      "bytes": 14100,
+      "sha256": "16591ee1a5b712c2263d64dcc839abe5f2936a6d8ad962653e26099e2ef74f01"
+    },
+    "dist/assets/index-BekU4f3E.js": {
+      "bytes": 523375,
+      "sha256": "0ed35c36ec94bbb5040af575ca3facc49339f5d2af53622dcf18ddeb2a3b96f2"
+    },
+    "dist/favicon.svg": {
+      "bytes": 268,
+      "sha256": "802592cc56d38167dfa30066140f4e24775d650c35132bfbefb3f6ca11573d23"
+    },
+    "dist/fonts/Anton-OFL.txt": {
+      "bytes": 4484,
+      "sha256": "ee67e6ee22790b7929f1a3769ca2801d565c64b5a9096942c1adf5596de9c9e4"
+    },
+    "dist/fonts/VT323-OFL.txt": {
+      "bytes": 4367,
+      "sha256": "27d9af34210253e7ca1251fbace86c6f65b40031d6ce1a75493a1b2093631298"
+    },
+    "dist/index.html": {
+      "bytes": 662,
+      "sha256": "3750b668cf7340f94101bd5cef0d0b86356abf979459f068e2bac848f3bb2d39"
+    }
   },
-  "note": "Read-only Git inventory of existing and new submission files. No commit or Git metadata changes; publishing/commit is owned by the contributor submission process. Source, unchanged manifest/lockfile, complete static export and screenshots included."
+  "accounting": "Complete candidate file contents, including tracked lib sources. Excludes Git metadata, task inputs and disposable scratch, which are not delivery content. This conservative uncompressed total leaves room below the Git submission limit. No repository Git metadata was modified.",
+  "checks": [
+    "No nested dependency/cache directories or dependency archives in candidate files",
+    "No abandoned vault address fragments in website, export, documentation or artifacts",
+    "No git submodules",
+    "Protected configuration and dependency files unchanged"
+  ]
 }

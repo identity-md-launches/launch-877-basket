@@ -1,205 +1,168 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { keccak256, toHex, decodeFunctionData, type Address } from "viem";
-import { ABI_HASH } from "../src/deployment";
+import {
+  decodeFunctionData,
+  encodeErrorResult,
+  keccak256,
+  toHex,
+  type Address,
+} from "viem";
+import { ABI_HASH, RUNTIME_HASH } from "../src/deployment";
 import {
   client,
   verifyNetwork,
-  vaultAbi,
   read,
   vault,
-  simulate,
-  explain,
+  vaultAbi,
   encode,
+  explain,
   GAS,
   reasons,
   zeroAddress,
   VAULT,
 } from "../src/chain";
 import {
-  fmt,
-  navOf,
   amount,
-  address,
+  recipient,
+  navOf,
   parseLaunch,
   depositArgs,
   redeemArgs,
-  loadSnapshot,
   cleanFeedDescription,
   pairingMatches,
-  depositLimits,
+  loadSnapshot,
   type Asset,
 } from "../src/model";
-const canonical = (o: any): any =>
-  Array.isArray(o)
-    ? o.map(canonical)
-    : o && typeof o === "object"
+import { proposalSpec, proposalWords, parseTime } from "../src/governance";
+const canonical = (v: any): any =>
+  Array.isArray(v)
+    ? v.map(canonical)
+    : v && typeof v === "object"
       ? Object.fromEntries(
-          Object.keys(o)
+          Object.keys(v)
             .sort()
-            .map((k) => [k, canonical(o[k])]),
+            .map((k) => [k, canonical(v[k])]),
         )
-      : o;
+      : v;
 assert.equal(keccak256(toHex(JSON.stringify(canonical(vaultAbi)))), ABI_HASH);
-assert.equal(
-  ABI_HASH,
-  "0xfb215ccf6f418f03f9bbd7b7a68b806d6fb3f4dd64fe47063dc84eac2f254d89",
-);
-assert.equal(fmt(-10_000_000n,8,4), "-0.1");
-try { amount("1e18"); } catch(e) { assert.match(explain(e,undefined,true), /Enter a decimal amount/); }
+assert.equal(GAS, 30_000_000n);
+assert.equal(reasons.length, 14);
 assert.equal(client.ccipRead, false);
-assert.equal(GAS, 10_000_000n);
-assert.equal(reasons.length, 20);
-assert.equal(amount("1000000"), 1_000_000n * 10n ** 18n);
-assert.equal(amount("0", true), 0n);
-for (const invalid of ["-1", "1e18", "0", "1.0000000000000000001"])
-  assert.throws(() => amount(invalid));
-assert.throws(() => address(zeroAddress));
-assert.throws(() => parseLaunch("BASK bad address"));
-const w = address(VAULT);
-const d = depositArgs(w, 10n, w, 1000n);
-assert.equal(d[3], 995n);
-assert.ok(
-  Number(d[4]) - Date.now() / 1000 > 598 &&
-    Number(d[4]) - Date.now() / 1000 <= 600,
-);
-assert.deepEqual(redeemArgs(1000n, [1000n, 3333n])[1], [999n, 3329n]);
-const base = {
-  managed: 10n ** 18n,
-  answer: 100n * 10n ** 8n,
-  feedReadable: true,
-  updatedAt: 1000n,
+assert.equal(amount("1.25", false, 6), 1250000n);
+assert.throws(() => amount("1.0000001", false, 6));
+assert.throws(() => amount("1e18"));
+assert.throws(() => recipient(zeroAddress));
+assert.throws(() => recipient(VAULT));
+const asset = {
+  managed: 2n * 10n ** 6n,
+  answer: 125n * 10n ** 10n,
+  tokenDecimals: 6,
+  feedDecimals: 10,
   retired: false,
+  reason: 0,
 } as Asset;
-assert.equal(navOf([base], true, 1001).nav, 100n * 10n ** 18n);
-assert.equal(navOf([{ ...base, retired: true }], true, 1001).nav, 0n);
-assert.equal(
-  navOf([{ ...base, feedReadable: false }], true, 1001).nav,
-  undefined,
-);
-assert.equal(navOf([base], true, 1000 + 26 * 3600 + 1).stale, true);
-assert.equal(navOf([base], true, 1000 + 26 * 3600).stale, false);
-assert.equal(
-  navOf([{ ...base, managed: 0n, feedReadable: false }], true, 1001).nav,
-  0n,
-);
-assert.equal(navOf([base], false, 1001).nav, undefined);
-console.log(
-  "PASS: canonical ABI; input/address validation; 18-decimal USD caps; minimums/deadlines; NAV, retirement and stale boundaries.",
-);
-assert.equal(cleanFeedDescription("Robinhood AAPL / USD", "AAPL"), "AAPL / USD");
-assert.equal(cleanFeedDescription("RHSPY / USD", "SPY"), "SPY / USD");
-assert.equal(cleanFeedDescription("Robinhood SGOV-USD", "SGOV"), "SGOV-USD");
-assert.equal(cleanFeedDescription("RHOTHER / USD", "SPY"), "RHOTHER / USD");
-assert.equal(pairingMatches("AAPL", "AAPLX / USD"), false);
-assert.equal(pairingMatches("AAPL", "AAPL / USD"), true);
-assert.equal(pairingMatches("AAPL", "AAPL"), false);
-const E = 10n ** 18n;
-for (const nav of [0n, 200_000n * E, 600_000n * E, 1_100_000n * E]) {
-  for (const bucket of [0n, 10_000n * E, 100_000n * E, 200_000n * E]) {
-    const limits = depositLimits(nav, 1_000_000n * E, bucket, 0n);
-    if (limits.fits > 0n) {
-      const at = depositLimits(nav, 1_000_000n * E, bucket, limits.fits);
-      const above = depositLimits(nav, 1_000_000n * E, bucket, limits.fits + 1n);
-      assert.ok(!at.overSize && !at.overDaily);
-      assert.ok(above.overSize || above.overDaily);
-    }
-  }
-}
-console.log("PASS: feed prefix/pairing boundaries and exact size/daily headroom boundaries.");
-const network = await verifyNetwork();
-const block = await client.getBlockNumber();
-assert.ok(block > 82708976n);
+assert.equal(navOf([asset]).nav, 250n * 10n ** 18n);
+assert.equal(navOf([{ ...asset, reason: 12 }]).indicative, true);
+assert.equal(navOf([{ ...asset, reason: 0 }]).indicative, false);
+assert.equal(navOf([{ ...asset, retired: true }]).nav, 0n);
+assert.equal(navOf([{ ...asset, retired: true, reason: 12 }]).indicative, true);
+assert.equal(navOf([{ ...asset, answer: 0n }]).nav, undefined);
+assert.equal(navOf([{ ...asset, answer: undefined }]).nav, undefined);
+assert.equal(navOf([asset], false).nav, undefined);
+assert.equal(cleanFeedDescription("Robinhood FIG / USD"), "FIG / USD");
+assert.equal(cleanFeedDescription("RHFIG / USD"), "FIG / USD");
+assert.equal(pairingMatches("FIG", "FIG / USD"), true);
+assert.equal(pairingMatches("FIG", "FIGS / USD"), false);
+assert.equal(parseTime("24:00:00"), 86400n);
+assert.throws(() => parseTime("24:01"));
+const network = await verifyNetwork(),
+  block = await client.getBlockNumber();
+assert.ok(block > 83448310n);
 const snapshot = await loadSnapshot();
-assert.equal(snapshot.errors.length, 0);
-const owner = snapshot.globals.owner as Address;
-const guardian = snapshot.globals.guardian as Address;
-console.log(
-  "PASS: live chain 4663, exact vault runtime, Multicall3:",
-  network.multicall,
+assert.deepEqual(snapshot.errors, []);
+const owner = snapshot.globals.owner as Address,
+  guardian = snapshot.globals.guardian as Address;
+const deposit = depositArgs([VAULT], [100n], owner, 1000n);
+assert.equal(deposit[3], 995n);
+assert.equal(redeemArgs(100n, owner, [0n, 1000n, 3333n])[2][2], 3329n);
+const values = {
+  token: VAULT,
+  feed: guardian,
+  pool: zeroAddress,
+  quoteFeed: zeroAddress,
+  minLiquidity: "0",
+  next: guardian,
+  cap: "2000000",
+  recipient: owner,
+  setting: "5",
+  from: "09:30",
+  to: "16:00",
+};
+const actions = [];
+for (let i = 0; i < 11; i++) {
+  const spec = proposalSpec(i, values);
+  const d = decodeFunctionData({ abi: vaultAbi, data: encode(spec) });
+  assert.equal(d.functionName, "propose");
+  assert.equal(d.args?.[0], i);
+  assert.equal(String(d.args?.[1]).toLowerCase(), i >= 7 ? zeroAddress : VAULT);
+  actions.push({
+    action: i,
+    dataWords: proposalWords(i, spec.args![2] as `0x${string}`),
+  });
+}
+assert.throws(() => parseLaunch(`FIG ${VAULT} ${guardian}`));
+assert.equal(
+  parseLaunch(`FIG ${VAULT} ${guardian} ${zeroAddress} ${zeroAddress} 0`)
+    .length,
+  1,
 );
-const calls: [string, readonly unknown[], Address][] = [
-  ["proposeAssets", [[], []], owner],
-  ["proposeAsset", [VAULT, VAULT], owner],
-  ["finalizeGenesis", [], owner],
-  ["proposeFeed", [VAULT, VAULT], owner],
-  ["proposeBand", [VAULT], owner],
-  ["proposeReopen", [VAULT], owner],
-  ["proposeRetire", [VAULT], owner],
-  ["proposeGuardian", [VAULT], owner],
-  ["proposeNavCap", [2_000_000n * 10n ** 18n], owner],
-  ["executeProposal", [1n], owner],
-  ["cancelProposal", [1n], owner],
-  ["closeAsset", [VAULT], guardian],
-  ["pauseDeposits", [], guardian],
-  ["unpauseDeposits", [], owner],
-  ["lowerNavCap", [500000n * 10n ** 18n], owner],
-  ["setFeeRecipient", [guardian], owner],
-  ["transferOwnership", [VAULT], owner],
-  ["acceptOwnership", [], owner],
-  ["deposit", depositArgs(VAULT, 10n ** 18n, owner, 1000n), owner],
-  ["redeem", redeemArgs(0n, []), owner],
-  ["claim", [VAULT, owner], owner],
-  ["flagDeficit", [VAULT], owner],
-  ["recognizeLoss", [VAULT], owner],
-];
-const results = [];
-for (const [name, args, account] of calls) {
-  const spec = vault(name, args);
-  const decoded = decodeFunctionData({ abi: vaultAbi, data: encode(spec) });
-  assert.equal(decoded.functionName, name);
-  assert.equal(
-    JSON.stringify(decoded.args ?? [], (_, v) =>
-      typeof v === "bigint"
-        ? v.toString()
-        : typeof v === "string"
-          ? v.toLowerCase()
-          : v,
-    ),
-    JSON.stringify(args, (_, v) =>
-      typeof v === "bigint"
-        ? v.toString()
-        : typeof v === "string"
-          ? v.toLowerCase()
-          : v,
-    ),
-  );
-  let result = "success (read-only simulation)";
-  try {
-    await simulate(spec, account);
-  } catch (e) {
-    result = explain(e);
-    assert.ok(
-      !/HTTP|network|fetch|timed out|invalid params/i.test(result),
-      result,
-    );
-  }
-  results.push({ function: name, args: args.map((x) => String(x)), result });
-  console.log(name + ": " + result);
-}
-// Deposit preview must surface the deployed custom error, including a zero fault address.
-try {
-  await read(vault("previewDeposit", [VAULT, 10n ** 18n]));
-} catch (e) {
-  assert.match(explain(e, undefined, true), /(Genesis|Stock is not listed|The 72-hour opening delay has not ended|Outside deposit hours|Not enough fresh stock feeds).*Stock at fault:/);
-}
+assert.match(
+  explain({
+    data: encodeErrorResult({ abi: vaultAbi, errorName: "CapExceeded" }),
+  }),
+  /size limit/,
+);
+assert.match(
+  explain({
+    data: encodeErrorResult({
+      abi: vaultAbi,
+      errorName: "DepositUnavailable",
+      args: [12, zeroAddress],
+    }),
+  }),
+  /pool check failed.*none/,
+);
+const status = await read(vault("depositStatus", [[]]));
+fs.mkdirSync("../artifacts", { recursive: true });
 fs.writeFileSync(
   "../artifacts/live-validation.json",
   JSON.stringify(
     {
-      checkedAt: new Date().toISOString(),
-      network,
-      vault: VAULT,
+      at: new Date().toISOString(),
       block,
+      vault: VAULT,
+      runtimeHash: RUNTIME_HASH,
+      abiHash: ABI_HASH,
+      network,
       globals: snapshot.globals,
-      results,
+      assetCount: snapshot.assets.length,
+      status,
+      actions,
+      checks: [
+        "Decimal-normalized NAV and indicative flags",
+        "All 11 proposal payloads decoded",
+        "Exact deposit and redemption minimums",
+        "Input, receiver, hours and listing validation",
+        "Live chain, runtime hash, aggregate snapshot and status",
+      ],
       limitations:
-        "Invalid stock/proposal cases intentionally reach deployed custom errors; read-only calls do not predict successful transactions. Successful populated flows are separately checked on a local fork; no live transaction is sent.",
+        "Read-only live checks. Successful wallet flows run separately on an isolated fork.",
     },
-    (_, v) => (typeof v === "bigint" ? v.toString() : v),
+    (_, v) => (typeof v === "bigint" ? String(v) : v),
     2,
   ) + "\n",
 );
 console.log(
-  "PASS: all 23 vault action encodings and live eth_call simulations; no transaction broadcast.",
+  "PASS: unit checks, canonical ABI, live code hash, snapshot, status, all 11 proposal payloads; block " +
+    block,
 );

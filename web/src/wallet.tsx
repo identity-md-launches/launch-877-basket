@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Address, Hex } from "viem";
 import {
   chain,
@@ -22,12 +22,16 @@ declare global {
   }
 }
 export function useWallet(refresh: () => void) {
+  const sending = useRef(false);
   const [account, setAccount] = useState<Address>();
   const [chainId, setChainId] = useState<number>();
   const [message, setMessage] = useState("");
   const [hash, setHash] = useState<Hex>();
   const [busy, setBusy] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ hash: Hex; functionName: string }>();
+  const [confirmed, setConfirmed] = useState<{
+    hash: Hex;
+    functionName: string;
+  }>();
   useEffect(() => {
     const p = window.ethereum;
     if (!p) return;
@@ -94,7 +98,9 @@ export function useWallet(refresh: () => void) {
     }
   }
   async function send(s: Spec) {
-    if (busy) return;
+    if (sending.current)
+      throw new InputError("A transaction is already in progress.");
+    sending.current = true;
     setBusy(true);
     setHash(undefined);
     setMessage("Checking transaction…");
@@ -114,13 +120,33 @@ export function useWallet(refresh: () => void) {
         throw new Error("The wallet account changed. Please retry.");
       await verifyNetwork();
       await simulate(s, account);
+      const gas = ["redeem", "claim"].includes(s.functionName)
+        ? ((await client.estimateGas({
+            account,
+            to: s.address,
+            data: encode(s),
+          })) *
+            130n +
+            99n) /
+          100n
+        : undefined;
       // Recheck immediately before requesting a signature; never switch chains implicitly.
       if (Number(await p.request({ method: "eth_chainId" })) !== 4663)
         throw new Error("The wallet chain changed. Please retry.");
+      const freshAccounts = await p.request({ method: "eth_accounts" });
+      if (freshAccounts[0]?.toLowerCase() !== account.toLowerCase())
+        throw new Error("The wallet account changed. Please retry.");
       setMessage("Confirm the transaction in your wallet.");
       const tx = (await p.request({
         method: "eth_sendTransaction",
-        params: [{ from: account, to: s.address, data: encode(s) }],
+        params: [
+          {
+            from: account,
+            to: s.address,
+            data: encode(s),
+            ...(gas ? { gas: `0x${gas.toString(16)}` } : {}),
+          },
+        ],
       })) as Hex;
       setHash(tx);
       setMessage("Transaction submitted. Waiting for confirmation…");
@@ -134,13 +160,18 @@ export function useWallet(refresh: () => void) {
           "The transaction reverted. Refresh the data before retrying.",
         );
       setConfirmed({ hash: tx, functionName: s.functionName });
-      setMessage(s.functionName === "deposit" ? "Deposit confirmed" : "Transaction confirmed. Vault data refreshed.");
+      setMessage(
+        s.functionName === "deposit"
+          ? "Deposit confirmed"
+          : "Transaction confirmed. Vault data refreshed.",
+      );
       refresh();
     } catch (e) {
       const message = await explainAction(e, s);
       setMessage(message);
       throw new InputError(message);
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   }

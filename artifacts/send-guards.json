@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Account changes block the send",
+    "Mismatched runtime blocks the send",
+    "Simulation rejection blocks the send and decodes the error",
+    "Wrong chain disables send; explicit switch targets chain 4663"
+  ],
+  "walletSends": 0,
+  "scope": "Production export. Failure responses injected; public-chain reads only; no transaction is broadcast."
+}

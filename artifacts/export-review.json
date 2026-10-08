@@ -1,0 +1,196 @@
+{
+  "results": [
+    {
+      "page": "Vault",
+      "width": 1440,
+      "heading": "A BASKET OF STOCKS."
+    },
+    {
+      "page": "Deposit",
+      "width": 1440,
+      "heading": "DEPOSIT STOCK TOKENS"
+    },
+    {
+      "page": "Redeem",
+      "width": 1440,
+      "heading": "REDEEM BASK"
+    },
+    {
+      "page": "Docs",
+      "width": 1440,
+      "heading": "DOCS"
+    },
+    {
+      "page": "Owner",
+      "width": 1440,
+      "heading": "OWNER"
+    },
+    {
+      "page": "Losses",
+      "width": 1440,
+      "heading": "LOSSES"
+    },
+    {
+      "page": "Vault",
+      "width": 375,
+      "heading": "A BASKET OF STOCKS."
+    },
+    {
+      "page": "Deposit",
+      "width": 375,
+      "heading": "DEPOSIT STOCK TOKENS"
+    },
+    {
+      "page": "Redeem",
+      "width": 375,
+      "heading": "REDEEM BASK"
+    },
+    {
+      "page": "Docs",
+      "width": 375,
+      "heading": "DOCS"
+    },
+    {
+      "page": "Owner",
+      "width": 375,
+      "heading": "OWNER"
+    },
+    {
+      "page": "Losses",
+      "width": 375,
+      "heading": "LOSSES"
+    },
+    {
+      "page": "Vault",
+      "width": 320,
+      "heading": "A BASKET OF STOCKS."
+    },
+    {
+      "page": "Deposit",
+      "width": 320,
+      "heading": "DEPOSIT STOCK TOKENS"
+    },
+    {
+      "page": "Redeem",
+      "width": 320,
+      "heading": "REDEEM BASK"
+    },
+    {
+      "page": "Docs",
+      "width": 320,
+      "heading": "DOCS"
+    },
+    {
+      "page": "Owner",
+      "width": 320,
+      "heading": "OWNER"
+    },
+    {
+      "page": "Losses",
+      "width": 320,
+      "heading": "LOSSES"
+    },
+    {
+      "page": "Vault",
+      "width": 800,
+      "heading": "A BASKET OF STOCKS."
+    },
+    {
+      "page": "Deposit",
+      "width": 800,
+      "heading": "DEPOSIT STOCK TOKENS"
+    },
+    {
+      "page": "Redeem",
+      "width": 800,
+      "heading": "REDEEM BASK"
+    },
+    {
+      "page": "Docs",
+      "width": 800,
+      "heading": "DOCS"
+    },
+    {
+      "page": "Owner",
+      "width": 800,
+      "heading": "OWNER"
+    },
+    {
+      "page": "Losses",
+      "width": 800,
+      "heading": "LOSSES"
+    }
+  ],
+  "style": {
+    "fonts": [
+      {
+        "family": "Flyer",
+        "status": "loaded"
+      },
+      {
+        "family": "Pixel",
+        "status": "loaded"
+      }
+    ],
+    "inputSize": "16px",
+    "marquee": "none",
+    "focus": "4px"
+  },
+  "contrast": [
+    {
+      "name": "ink / paper",
+      "fg": "#142c54",
+      "bg": "#ffffff",
+      "ratio": 13.83366410740973
+    },
+    {
+      "name": "white / royal",
+      "fg": "#ffffff",
+      "bg": "#174bc1",
+      "ratio": 7.46556877982114
+    },
+    {
+      "name": "white / red",
+      "fg": "#ffffff",
+      "bg": "#df2029",
+      "ratio": 4.798663079806478
+    },
+    {
+      "name": "ink / sun",
+      "fg": "#142c54",
+      "bg": "#ffdb29",
+      "ratio": 10.155639483130702
+    },
+    {
+      "name": "error / paper",
+      "fg": "#a01520",
+      "bg": "#ffffff",
+      "ratio": 8.006589262602782
+    },
+    {
+      "name": "error / warning",
+      "fg": "#a01520",
+      "bg": "#fff5c4",
+      "ratio": 7.286021994567922
+    },
+    {
+      "name": "disabled text / surface",
+      "fg": "#53617a",
+      "bg": "#e4e9f0",
+      "ratio": 5.124776226236504
+    }
+  ],
+  "issues": [],
+  "checks": [
+    "Production subpath navigation",
+    "No overflow at 320,375,800,1440 on all six pages",
+    "Local fonts loaded",
+    "Keyboard skip link reaches main",
+    "No-wallet recovery message",
+    "Reduced motion disables marquee"
+  ],
+  "limitations": [
+    "No screen reader, native zoom or physical device session",
+    "Contrast checks cover named solid-color pairs, not every anti-aliased pixel"
+  ]
+}

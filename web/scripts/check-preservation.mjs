@@ -1,48 +1,92 @@
-// Compare the submitted website against the initial checkout. Read-only Git access.
-import fs from 'node:fs';
-import path from 'node:path';
-import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
-import ts from 'typescript';
-const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
-const baseline=process.env.BASKET_BASELINE||'HEAD';
-const old=name=>execFileSync('git',['show',`${baseline}:${name}`],{cwd:root,encoding:'utf8'});
-const current=name=>fs.readFileSync(path.join(root,name),'utf8');
-const hash=s=>createHash('sha256').update(s).digest('hex');
-const printer=ts.createPrinter({removeComments:true});
-const results=[];
-for(const name of ['chain.ts','model.ts','wallet.tsx','components.tsx','Flows.tsx','Owner.tsx','Losses.tsx','Vault.tsx','main.tsx']){
- const filename='web/src/'+name;
- const calls=source=>{
-   const file=ts.createSourceFile(name,source,ts.ScriptTarget.Latest,true,name.endsWith('tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS),out=[];
-   const walk=node=>{
-     if(ts.isCallExpression(node)){
-       const n=node.expression.getText(file);
-       if(/^(vault|token|feed|read|safe|many|simulate|depositArgs|redeemArgs|loadSnapshot|verifyNetwork|encode)$/.test(n)||/\.(send|request|waitForTransactionReceipt|getCode|getChainId|readContract|call)$/.test(n))out.push(printer.printNode(ts.EmitHint.Unspecified,node,file));
-     }
-     ts.forEachChild(node,walk);
-   };walk(file);return out;
- };
- const a=calls(old(filename)),b=calls(current(filename));assert.deepEqual(b,a,`${filename}: RPC or transaction expressions changed`);
- results.push({file:filename,unchangedCalls:a.length,sha256:hash(JSON.stringify(a))});
+// Vault 5 invariants replace the obsolete expression-equality check.
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+const root = process.env.BASKET_SOURCE_ROOT || path.resolve("..");
+const get = (p) => fs.readFileSync(path.join(root, p), "utf8");
+const protectedFiles = [
+  "foundry.toml",
+  "remappings.txt",
+  "web/package.json",
+  "web/package-lock.json",
+  "src/BaskVault.sol",
+  "src/BaskMath.sol",
+];
+for (const p of protectedFiles)
+  assert.equal(
+    get(p),
+    execFileSync("git", ["show", "HEAD:" + p], { cwd: root, encoding: "utf8" }),
+    p + " changed",
+  );
+const chain = get("web/src/chain.ts"),
+  wallet = get("web/src/wallet.tsx"),
+  model = get("web/src/model.ts"),
+  main = get("web/src/main.tsx");
+assert.match(chain, /GAS = 30_000_000n/);
+assert.match(chain, /keccak256\(code\) !== RUNTIME_HASH/);
+for (const x of [
+  "await verifyNetwork()",
+  "await simulate(s, account)",
+  "eth_accounts",
+  "eth_chainId",
+  "estimateGas",
+  "130n",
+  "eth_sendTransaction",
+])
+  assert.ok(wallet.includes(x), x);
+assert.match(model, /tokenDecimals\s*\+\s*a.feedDecimals/);
+assert.match(model, /995n/);
+assert.match(model, /999n/);
+for (const x of [
+  "Not for US persons. Stock Tokens are not offered in the United States",
+  "Basket Protocol is not",
+  "affiliated with the issuer of Stock Tokens.",
+  "Owner controls",
+  "Losses",
+])
+  assert.ok(main.includes(x), x);
+const forbidden = [
+  "d77a" + "5f93",
+  "518a" + "a023",
+  "decayed" + "Bucket",
+  "deposits" + "OpenAt",
+  "assetIndex" + "PlusOne",
+  "setFee" + "Recipient",
+  "proposal" + "State",
+];
+const files = [];
+function walk(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if ([".git", ".imd", "node_modules", "lib", "scratch"].includes(entry.name))
+      continue;
+    const p = path.join(dir, entry.name);
+    if (entry.isDirectory()) walk(p);
+    else files.push(p);
+  }
 }
-const identical=['web/src/chain.ts','web/src/model.ts','web/src/deployment.ts','web/src/vault.abi.json','web/src/Docs.tsx','web/src/Losses.tsx','web/src/components.tsx','web/package.json','web/package-lock.json','web/vite.config.ts','web/tsconfig.json','foundry.toml','remappings.txt','src/BaskVault.sol','src/BaskMath.sol'];
-for(const file of identical)assert.equal(current(file),old(file),`${file} must remain byte-identical`);
-// JSX text content is preserved, apart from the removed decorative aisle numbers.
-const texts=source=>{
- const file=ts.createSourceFile('source.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),out=[];
- const walk=n=>{if(ts.isJsxText(n)){const t=n.text.replace(/\s+/g,' ').trim();if(t)out.push(t);}ts.forEachChild(n,walk);};walk(file);return out;
-};
-const copy=[];
-for(const name of ['main','Vault','Flows','Owner','Docs','Losses','components']){
- const file=`web/src/${name}.tsx`,a=texts(old(file)),b=texts(current(file));
- const removed=[...new Set(a)].filter(t=>!b.includes(t)&&!(name==='main'&&t==='0'));
- const added=[...new Set(b)].filter(t=>!a.includes(t));
- assert.deepEqual(removed,[],`${file}: removed copy`);
- assert.ok(added.every(t=>['Owner controls','Losses','Stock Token','Feed description','Current price'].includes(t)),`${file}: unexpected new copy ${added}`);
- copy.push({file,removed,added});
+walk(root);
+for (const p of files) {
+  if (p.includes("/src/") && !p.includes("/web/")) continue;
+  const b = fs.readFileSync(p);
+  if (b.includes(0)) continue;
+  const s = b.toString();
+  const scope = path.relative(root, p);
+  const words =
+    /^(web|dist|artifacts)\//.test(scope) ||
+    ["README.md", "DESIGN.md"].includes(scope)
+      ? forbidden
+      : forbidden.slice(0, 2);
+  for (const word of words)
+    assert.ok(
+      !s.toLowerCase().includes(word.toLowerCase()),
+      path.relative(root, p) + " contains abandoned integration",
+    );
 }
-const report={baseline,checkedAt:new Date().toISOString(),calls:results,byteIdentical:identical,copy,notes:['All contract-spec, RPC, send, simulation, minimum and deadline call expressions match the original checkout.','Only wallet success presentation and preview invalidation state change. Docs and warnings retain original copy.','Runtime and ABI checked independently by live validation. No new RPC endpoints or reads.']};
-fs.writeFileSync(path.join(root,'artifacts/preservation.json'),JSON.stringify(report,null,2)+'\n');
-console.log(`PASS: ${results.reduce((n,r)=>n+r.unchangedCalls,0)} unchanged call expressions; ${identical.length} byte-identical core/configuration files; JSX copy preserved.`);
+const bytes = files
+  .filter((p) => !p.includes("/test/scratch/"))
+  .reduce((n, p) => n + fs.statSync(p).size, 0);
+assert.ok(bytes < 8388608, `Submission bytes ${bytes}`);
+console.log(
+  `PASS: protected source/configuration, send checks, current ABI invariants, wording, obsolete integration scan; ${bytes} bytes excluding vendored contract library and Git metadata. Final bundle accounting also includes tracked lib files.`,
+);

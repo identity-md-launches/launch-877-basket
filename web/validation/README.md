@@ -1,16 +1,15 @@
-# Website validation
+# Website checks
 
-Run commands from `web/`. The repository README describes install/build and the exact pinned source. The root contract source is historical and is never compiled by these website checks.
+Run from `web/` after the production build. `../artifacts/validation.md` is the actual final evidence and limitation record.
 
-- `npm run validate`: canonical ABI, input/math/pairing assertions, chain/code checks and public read-only action simulations.
-- `SOLC=/path/to/solc-0.8.26 bash scripts/run-fork.sh`: prepare only launch-929 source in disposable scratch, then run `WebsiteFork.t.sol` against the deployed vault on a recent live-chain fork. Mock stocks and feed state are local only. The live vault has finalized genesis; the harness requires zero supply and locally resets the genesis flag and asset-array length to retain its original launch scenarios, after checking chain and code hash. The deployed bytecode is never replaced. `BASKET_FORK_BLOCK` can pin the block. Time-warp tests use `vm.getBlockTimestamp()` to avoid optimizer caching across cheatcode calls.
-- `tsx scripts/make-browser-fixture.ts` and `tsx scripts/assemble-browser-check.ts` (using `node_modules/.bin/tsx`): generate disposable fixtures and the browser scenario function.
-- `PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/optional/chromium node scripts/run-browser.mjs`: run the bounded browser/server check against `dist/` at a relative subpath, then save screenshots and results. `CHROMIUM_PATH` is optional when Playwright's matching browser is installed.
-- `node scripts/check-preservation.mjs`: compare RPC/transaction call expressions and protected core files with the original checkout (optional `BASKET_BASELINE`, `BASKET_SOURCE_ROOT`).
-- `tsx scripts/check-browser-transactions.ts`: decode captured wallet requests and assert target, functions, arguments, minimums and deadlines.
+- `npm run validate`: ABI, decimal arithmetic, reason/error wording, inputs, encodings and live read-only verification.
+- `node scripts/check-preservation.mjs`: protected files, current integration invariants, obsolete integration scan and file budget. This supersedes the obsolete call-expression equality check.
+- `npx tsx scripts/run-browser.mjs`: bounded isolated Anvil fork plus Playwright browser. It creates only disposable fork fixtures, runs actual production UI sends against the original vault bytecode and records screenshots and decoded arguments. Requires an empty, unfinalized fork state. `BASKET_RPC`, `BASKET_FORK_BLOCK`, `SOLC` and `PLAYWRIGHT_MODULE` can select local verification tools/endpoints.
+- `node scripts/inspect-export.mjs`: subpath export, all pages at four widths, fonts, overflow, keyboard and reduced-motion checks.
+- `node scripts/check-guards.mjs`: injected account/chain/code/simulation failures; no transaction broadcast.
 
-`browser-setup.js` intercepts only the fixture page's public RPC reads and injects a capture-only wallet. `browser-flows.js` and `browser-owner.js` cover all action mappings. `browser-redesign.js` covers successful receipt resets, four-item navigation, footer routes, all-page screenshots, 44px targets, stacked cards and measured contrast. `browser-regressions.js` covers deposit and pairing guards, receipt timeout, runtime mismatch and responsive public routes. The runner also opens a separate browser context using live public reads with no wallet. No real signature or network broadcast occurs.
+Playwright and Chromium are external verification tools, not runtime dependencies. Install them outside the repository if absent and point `PLAYWRIGHT_MODULE` at Playwright's `index.mjs`. This worker used the provided Playwright `1.64.0-alpha-1789764292000` and its Chromium. Tests own their server/browser/fork lifecycle and close them on completion.
 
-Actual run evidence and six-domain review: `artifacts/validation.md`. Sources here are not bundled into the website. No node_modules, package cache, dependency archive or compiler build output is needed in the submitted bundle.
+`Fixtures.sol` is test-only; it is not imported by the website and is never deployed to a public chain. Its sample symbols do not describe the live vault. No generated dependency/cache directory or state dump belongs in Git.
 
-Attribution: Better Interface by Jakub Krehel, commit `267330e1adfc66a718fb65fa6918c1f06d0a689e` (MIT); documentation guidance adapted from Paul Bakaus's Impeccable, commit `9d715cc4f5564a990ca8345abfdd5df6dc9b41c8` (Apache-2.0), https://github.com/pbakaus/impeccable/blob/9d715cc4f5564a990ca8345abfdd5df6dc9b41c8/skill/reference/document.md. Both licenses remain in `DESIGN-GUIDANCE-LICENSE`.
+Design review uses the pinned Better Interface guide (Jakub Krehel, MIT) and Impeccable documentation method (Paul Bakaus, Apache-2.0). Both copyright notices and license texts are in `DESIGN-GUIDANCE-LICENSE`; review coverage and source locations are in the artifact report.
