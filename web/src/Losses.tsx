@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { many, token, vault, VAULT } from "./chain";
 import { date, fmt, type Snapshot } from "./model";
-import { PageTitle, Empty, Note, TxButton, RoleInfo } from "./components";
+import {
+  PageTitle,
+  Empty,
+  Note,
+  TxButton,
+  RoleInfo,
+  ActionStatus,
+} from "./components";
 import type { Wallet } from "./wallet";
 export function LossesPage({
   snapshot: s,
@@ -14,9 +21,11 @@ export function LossesPage({
   const [details, setDetails] = useState<
     Record<string, { shortfall?: bigint; amount?: bigint; flaggedAt?: bigint }>
   >({});
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     let active = true;
     setDetails({});
+    setLoading(true);
     many(
       shorts.flatMap((a) => [
         token(a.token, "balanceOf", [VAULT]),
@@ -46,6 +55,7 @@ export function LossesPage({
         };
       });
       setDetails(data);
+      setLoading(false);
     });
     return () => {
       active = false;
@@ -64,9 +74,11 @@ export function LossesPage({
       {!shorts.length && (
         <Empty
           title={
-            s.complete
-              ? "No readable stock shortfalls"
-              : "Stock shortfalls are unreadable"
+            s.loading
+              ? "Reading..."
+              : s.complete
+                ? "No readable stock shortfalls"
+                : "Stock shortfalls are unreadable"
           }
         >
           Shortfalls appear here when a readable stock balance is below the
@@ -95,18 +107,26 @@ export function LossesPage({
               <dl>
                 <div>
                   <dt>Current shortfall</dt>
-                  <dd>{fmt(d?.shortfall, a.tokenDecimals)}</dd>
+                  <dd>
+                    {loading
+                      ? "Reading..."
+                      : fmt(d?.shortfall, a.tokenDecimals)}
+                  </dd>
                 </div>
                 <div>
                   <dt>Recorded shortfall</dt>
-                  <dd>{fmt(d?.amount, a.tokenDecimals)}</dd>
+                  <dd>
+                    {loading ? "Reading..." : fmt(d?.amount, a.tokenDecimals)}
+                  </dd>
                 </div>
                 <div>
                   <dt>Recognition available</dt>
                   <dd>
-                    {d?.amount === 0n
-                      ? "Not flagged; seven days after flagging"
-                      : date(ready)}
+                    {loading
+                      ? "Reading..."
+                      : d?.amount === 0n
+                        ? "Not flagged; seven days after flagging"
+                        : date(ready)}
                   </dd>
                 </div>
               </dl>
@@ -116,15 +136,24 @@ export function LossesPage({
                   wallet={w}
                   snapshot={s}
                   label="Flag shortfall"
+                  scope={`Loss flag: ${a.symbol} · ${a.token}`}
                   getSpec={() => vault("flagDeficit", [a.token])}
                 />
                 <TxButton
                   wallet={w}
                   snapshot={s}
                   label="Recognise loss"
+                  scope={`Loss recognition: ${a.symbol} · ${a.token}`}
                   disabled={
                     ready === undefined ||
                     BigInt(Math.floor(Date.now() / 1000)) < ready
+                  }
+                  disabledReason={
+                    loading
+                      ? "Reading..."
+                      : ready === undefined
+                        ? "No readable flag yet. Flag the shortfall first, or retry vault if unreadable."
+                        : `Wait until ${date(ready)} to recognise this loss.`
                   }
                   getSpec={() => vault("recognizeLoss", [a.token])}
                 />
@@ -133,6 +162,11 @@ export function LossesPage({
           );
         })}
       </div>
+      {Object.keys(w.progress)
+        .filter((key) => key.startsWith("Loss "))
+        .map((key) => (
+          <ActionStatus key={key} wallet={w} scope={key} />
+        ))}
       {s.assets
         .filter((a) => !a.balanceReadable)
         .map((a) => (

@@ -1,18 +1,23 @@
 {
-  "forkBlock": "83496825",
+  "forkBlock": "83597609",
   "vault": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
   "runtimeHash": "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe",
   "checks": [
+    "Pool liquidity below minLiquidity blocks listing",
+    "Pool/feed gap above poolDeviation blocks listing",
     "Marked genesis pairing blocks listing",
-    "Ordered genesisList: one send per row, listed rows skipped",
+    "25-row listing: decline, resume, receipt timeout retains hash, pending nonce blocks reload, mine and resume without duplicate calldata",
     "finalizeGenesis",
+    "Exact full stock balance and chosen amount retained while searching",
     "CapExceeded explained before approvals",
+    "Primary button label remains readable on hover",
     "deposit",
     "Multi-stock deposit, exact approvals, preview invalidated after success",
     "redeem",
     "claim",
     "redeem",
     "claim",
+    "Owner stock begins unselected; jump scrolls and focuses without routing",
     "close",
     "close",
     "pauseDeposits",
@@ -57,8 +62,8 @@
       "args": [
         "0x8EDfB20f468e266581448357df2440B5125369F4",
         "0x475b9d4Ab36d9A5BC1802eEC63ad713E8909B093",
-        "0x31bdB3f18Db044F82C8CC903D1f9CBB4F664a1Cb",
-        "0xb831Cde733006D0E33E465E044F394B7467877bd",
+        "0x3c473038bF80877e490Be834B33566277b28fac1",
+        "0xA7636D9297eCc6aCE5Ab4fd844dE11946a405a95",
         "1"
       ]
     },
@@ -79,6 +84,248 @@
       "args": [
         "0x4838F72239af18352dabf2386957492A6B914951",
         "0x2Ba78a1C5E011865B22e86AAB528427435FA2843",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x4c0A418fF96f5F1B4d1b57740E7339dc3Fb512Ad",
+        "0xb831Cde733006D0E33E465E044F394B7467877bd",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x29218556D4Abc389fE8B46F5515c6F2E6D292066",
+        "0xAD26bAc40d9327407CE9802da4F1d9BDC5fB3950",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xcfe352dA500cB77AB11DFA92Ee529f5D10a12285",
+        "0x111D33202Eb78A325265693F42705FC671F6271D",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xa11bAcdF9b5ADdaD05f45CeFAA96Da05e992d87B",
+        "0x0BC26E445890A5C47Ebff1A0Bf602eF2C3f92e5B",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x9F14ACEfE3d37563892f8bE28FAf9f39c6285B94",
+        "0xd63b6D6b1dA22f97786C7a89250431411Be2DB3e",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xAC09644Dc6D87EC6e4fa36d51f4b17C2e7114d54",
+        "0x2f3823c713386dB7996363dc12A72bB1645098D9",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xc1e4E218b645CDE90C56a2226c7F80cFF49556be",
+        "0xe4b2d246e047fF0858B72C69b8b793FE7d660a0f",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xeD8BE1BC646FB85f28B50ebD1E19a181E29A49be",
+        "0x43666424e329D47f66f8b290E18C624496DdFD4D",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xb7993C155BB31CaA823574C6419FF4a1dF8fB09e",
+        "0xF1F05230b760dF8859Aa60c2b966523d677c1B10",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x833AF4a01873EDc37Bcd42e0AB354d911ECb5731",
+        "0x9128940C56b7356A69Fd782ffE7DAebC167a1813",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x8688b5cE6c8a1d0f993482DA2763FE581D974486",
+        "0xc9ae68C37Bd158271438f1f5C3D15bBFa54d363a",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x96DC8aaec2a5cf62136781F06271D2eCF5A3f04C",
+        "0x8CAd7E513446F9AcDc394059ebE3750fD28E5f25",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xc4f76b228B37e2eD280a67aB0D9C375d205339f4",
+        "0x3f20483841eA67eD064A2051899dE6e9a0D00c27",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x45BD671790cddcAB3c653e4e3D6e01C429B8f70c",
+        "0x30E97da5bF6EC252056aD04f973b78E72E03E9d6",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xbA2F326E4c6dB2247b999aeBeEB75e236B190ED5",
+        "0x879d2345eb3B47E25645a6e1C461098e5A8b2d2D",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x843B7995FC8f2eF8A9432c35E8Fcb828AE6C72B6",
+        "0xcd272292C9485588BdcfDd621352d1C2f928e734",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xF08a482B384f0db6683B0910f24Dc297b35f4333",
+        "0x39988A54A5EE4645Ab778894c096dD3b5B5F0248",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x735576820cf731ff29fcc3DFaa81CddD7CfbCD65",
+        "0x1293a4f6B1D224929683c4b5456A525Bc1c7CF46",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x5aEbDA084c15d0080e9e48b34EE9253DCD411623",
+        "0x2De25961921395528F296de3fb52Cd44B7708550",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xcDBd01FA166125aBd49ACFA358d5bcc55e97d1Ab",
+        "0x0F3eBC9A54b5356cFFdA29fA9CD0CaF263AdB9bF",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0xC3cC1bFaf0D2d90Fd4A447ef59cEed5b777F57f3",
+        "0x9677004d1230f55140e0ACC558fB276827A8062A",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0"
+      ]
+    },
+    {
+      "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
+      "functionName": "genesisList",
+      "args": [
+        "0x9151Be56d9C0be2160502764450855aaCBB07beF",
+        "0x2A18BeC26439873d5Fa70f4FBcE566bd5915037C",
         "0x0000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000",
         "0"
@@ -118,7 +365,7 @@
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "2984999005000000000000",
-        "1791481930"
+        "1791492214"
       ]
     },
     {
@@ -130,11 +377,33 @@
         [
           "33299999999999999",
           "66599",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
           "0"
         ],
-        "1791481931"
+        "1791492217"
       ],
-      "gas": "0x31673"
+      "gas": "0x3419a"
     },
     {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
@@ -156,11 +425,33 @@
         [
           "33299999999999999",
           "66599",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
           "0"
         ],
-        "1791481932"
+        "1791492220"
       ],
-      "gas": "0x3be21"
+      "gas": "0x3e948"
     },
     {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
@@ -207,7 +498,7 @@
       "args": [
         1,
         "0x4d6d84eE2EC470830F738af2F78B5F5faffeA21E",
-        "0x00000000000000000000000029218556d4abc389fe8b46f5515c6f2e6d292066"
+        "0x000000000000000000000000c7de89e1e41fa4e849a93c42e731521c22b866b5"
       ]
     },
     {
@@ -243,7 +534,7 @@
       "args": [
         5,
         "0x8EDfB20f468e266581448357df2440B5125369F4",
-        "0x00000000000000000000000031bdb3f18db044f82c8cc903d1f9cbb4f664a1cb000000000000000000000000b831cde733006d0e33e465e044f394b7467877bd0000000000000000000000000000000000000000000000000000000000000001"
+        "0x0000000000000000000000003c473038bf80877e490be834b33566277b28fac1000000000000000000000000a7636d9297ecc6ace5ab4fd844de11946a405a950000000000000000000000000000000000000000000000000000000000000001"
       ]
     },
     {
@@ -429,24 +720,36 @@
     }
   ],
   "shots": [
-    "vault-1440.jpg",
-    "deposit-1440.jpg",
-    "redeem-1440.jpg",
-    "docs-1440.jpg",
-    "owner-1440.jpg",
-    "losses-1440.jpg",
-    "vault-375.jpg",
-    "deposit-375.jpg",
-    "redeem-375.jpg",
-    "docs-375.jpg",
-    "owner-375.jpg",
-    "losses-375.jpg"
+    "empty-vault-1440.jpg",
+    "empty-deposit-1440.jpg",
+    "empty-redeem-1440.jpg",
+    "empty-docs-1440.jpg",
+    "empty-owner-1440.jpg",
+    "empty-losses-1440.jpg",
+    "empty-vault-375.jpg",
+    "empty-deposit-375.jpg",
+    "empty-redeem-375.jpg",
+    "empty-docs-375.jpg",
+    "empty-owner-375.jpg",
+    "empty-losses-375.jpg",
+    "stocks25-vault-1440.jpg",
+    "stocks25-deposit-1440.jpg",
+    "stocks25-redeem-1440.jpg",
+    "stocks25-docs-1440.jpg",
+    "stocks25-owner-1440.jpg",
+    "stocks25-losses-1440.jpg",
+    "stocks25-vault-375.jpg",
+    "stocks25-deposit-375.jpg",
+    "stocks25-redeem-375.jpg",
+    "stocks25-docs-375.jpg",
+    "stocks25-owner-375.jpg",
+    "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 924,
+  "rpcCalls": 3022,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",
     "No physical device or screen-reader session",
-    "Claim all batching exercised with two owed tokens; groups of ten covered by source/unit assertions"
+    "Windows Chrome/Edge native display scaling is unavailable in this Linux worker; Chromium DPR emulation is separate evidence."
   ]
 }

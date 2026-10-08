@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "checks": [
+    "line-numbered parser refusals including blank lines and checksum",
+    "exact balances with no rounding or commas",
+    "plain setting units and hours semantics",
+    "TickMath boundaries and harmonic liquidity formula",
+    "unchanged deposit/redeem minimum arithmetic"
+  ]
+}

@@ -54,6 +54,8 @@ export type Snapshot = {
   aggregate: boolean;
   status?: ReadResult;
   loadedAt: number;
+  loading?: boolean;
+  retry?: () => void;
 };
 export const initial: Snapshot = {
   assets: [],
@@ -224,43 +226,72 @@ export function uint(v: string, bits = 256) {
 export function parseLaunch(input: string) {
   if (!input.trim())
     throw new InputError(
-      "Enter at least one TICKER token feed pool quoteFeed minLiquidity line.",
+      "Line 1: enter at least one TICKER token feed pool quoteFeed minLiquidity line.",
     );
-  const rows = input
-    .trim()
-    .split(/\n/)
-    .filter((x) => x.trim())
-    .map((line, i) => {
+  const rows: {
+    ticker: string;
+    token: Address;
+    feed: Address;
+    pool: Address;
+    quoteFeed: Address;
+    minLiquidity: bigint;
+    line: number;
+  }[] = [];
+  for (const [i, line] of input.split(/\n/).entries()) {
+    if (!line.trim()) continue;
+    try {
       const p = line.trim().split(/\s+/);
       if (p.length !== 6)
         throw new InputError(
-          `Line ${i + 1}: use TICKER token feed pool quoteFeed minLiquidity.`,
+          "Use TICKER token feed pool quoteFeed minLiquidity.",
         );
-      const pool = address(p[3], true),
-        quoteFeed = address(p[4], true),
+      const parseAddress = (value: string, field: string, zero = false) => {
+        try {
+          return address(value, zero);
+        } catch {
+          throw new InputError(
+            `${field}: invalid address or checksum${zero ? "" : " (nonzero required)"}.`,
+          );
+        }
+      };
+      const pool = parseAddress(p[3], "pool", true),
+        quoteFeed = parseAddress(p[4], "quoteFeed", true);
+      let minLiquidity: bigint;
+      try {
         minLiquidity = uint(p[5], 128);
+      } catch {
+        throw new InputError(
+          "minLiquidity: enter an unsigned 128-bit whole number.",
+        );
+      }
       if (
         same(pool, zeroAddress) &&
         (!same(quoteFeed, zeroAddress) || minLiquidity !== 0n)
       )
         throw new InputError(
-          `Line ${i + 1}: no pool requires zero quote feed and zero liquidity.`,
+          "No pool requires zero quote feed and zero liquidity.",
         );
       if (!same(pool, zeroAddress) && same(quoteFeed, zeroAddress))
-        throw new InputError(`Line ${i + 1}: a pool requires a quote feed.`);
-      return {
+        throw new InputError("A pool requires a quote feed.");
+      const token = parseAddress(p[1], "token"),
+        feed = parseAddress(p[2], "feed");
+      if (rows.some((r) => same(r.token, token)))
+        throw new InputError("Each stock must appear only once.");
+      if (rows.some((r) => same(r.feed, feed)))
+        throw new InputError("Each stock feed must be unique.");
+      rows.push({
         ticker: p[0],
-        token: address(p[1]),
-        feed: address(p[2]),
+        token,
+        feed,
         pool,
         quoteFeed,
         minLiquidity,
-      };
-    });
-  if (new Set(rows.map((r) => r.token.toLowerCase())).size !== rows.length)
-    throw new InputError("Each stock must appear only once.");
-  if (new Set(rows.map((r) => r.feed.toLowerCase())).size !== rows.length)
-    throw new InputError("Each stock feed must be unique.");
+        line: i + 1,
+      });
+    } catch (e) {
+      throw new InputError(`Line ${i + 1}: ${(e as Error).message}`);
+    }
+  }
   return rows;
 }
 export function fmt(n: bigint | undefined, decimals = 18, digits = 4): string {

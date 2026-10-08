@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 6726363,
-  "fileCount": 124,
-  "productionExportBytes": 586414,
+  "uncompressedDeliveryBytes": 7708907,
+  "fileCount": 143,
+  "productionExportBytes": 613281,
   "productionFiles": {
     "dist/assets/Anton-Byf51wtH.woff2": {
       "bytes": 18612,
@@ -12,17 +12,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-ByIQlb3t.js": {
+    "dist/assets/ccip-CaR86u5S.js": {
       "bytes": 2610,
-      "sha256": "a285296519b377ebbfb4679cea0f4d8a2c41cdc6214e084bab4ad09d6aeff424"
+      "sha256": "a958858a85a86c37357db2634e41011c164ea69095bfc68e4849dce350150cae"
     },
-    "dist/assets/index-8r7Ag5om.css": {
-      "bytes": 14100,
-      "sha256": "16591ee1a5b712c2263d64dcc839abe5f2936a6d8ad962653e26099e2ef74f01"
+    "dist/assets/index-D54XlxQ-.js": {
+      "bytes": 547571,
+      "sha256": "99e8c4e77f9578a583feb2809ce8ed79f44a148149327398fd60398de03d7e5f"
     },
-    "dist/assets/index-BekU4f3E.js": {
-      "bytes": 523375,
-      "sha256": "0ed35c36ec94bbb5040af575ca3facc49339f5d2af53622dcf18ddeb2a3b96f2"
+    "dist/assets/index-DRkoMwvl.css": {
+      "bytes": 16771,
+      "sha256": "ce221d64864c2fdc86981f74c182a17632bb77f9333f66872a4ae0640587de2a"
     },
     "dist/favicon.svg": {
       "bytes": 268,
@@ -38,14 +38,14 @@
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "3750b668cf7340f94101bd5cef0d0b86356abf979459f068e2bac848f3bb2d39"
+      "sha256": "fefb2052313ffc22337abb1329e07dc0234ff468c198729a2eb94430a7252caa"
     }
   },
-  "accounting": "Complete candidate file contents, including tracked lib sources. Excludes Git metadata, task inputs and disposable scratch, which are not delivery content. This conservative uncompressed total leaves room below the Git submission limit. No repository Git metadata was modified.",
+  "accounting": "Complete candidate file contents, including tracked lib sources and this report. Excludes Git metadata, task inputs and disposable scratch. Conservative uncompressed accounting; no Git metadata was modified.",
   "checks": [
     "No nested dependency/cache directories or dependency archives in candidate files",
-    "No abandoned vault address fragments in website, export, documentation or artifacts",
     "No git submodules",
-    "Protected configuration and dependency files unchanged"
+    "Existing contracts, build configuration, dependency manifests/lockfiles unchanged",
+    "24 required empty/25-stock screenshots retained"
   ]
 }

@@ -71,7 +71,7 @@ try {
     },
   );
   for (const width of [1440, 375, 320, 800]) {
-    await p.setViewportSize({ width, height: 1000 });
+    await p.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
     for (const name of [
       "Vault",
       "Deposit",
@@ -111,8 +111,11 @@ try {
   assert.equal(await p.locator(":focus").innerText(), "Skip to content");
   await p.keyboard.press("Enter");
   assert.equal(await p.locator(":focus").getAttribute("id"), "main-content");
-  await p.getByRole("button", { name: "Connect wallet" }).click();
-  await p.getByText(/No browser wallet found/).waitFor();
+  await p.getByRole("button", { name: "Connect wallet" }).first().click();
+  await p
+    .getByText(/Open this page in your wallet app/)
+    .first()
+    .waitFor();
   await p.goto(url + "#owner");
   const style = await p.evaluate(() => ({
     fonts: [...document.fonts].map((f) => ({
@@ -120,7 +123,7 @@ try {
       status: f.status,
     })),
     inputSize: getComputedStyle(document.querySelector("input")).fontSize,
-    marquee: getComputedStyle(document.querySelector(".marquee span"))
+    marquee: getComputedStyle(document.querySelector(".marquee-track"))
       .animationName,
     focus: getComputedStyle(document.querySelector("a")).outlineOffset,
   }));

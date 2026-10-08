@@ -16,11 +16,22 @@ import {
   depositArgs,
   redeemArgs,
   fmt,
+  exact,
   usd,
   same,
   type Snapshot,
 } from "./model";
-import { PageTitle, Note, Empty, TxButton, Addr } from "./components";
+import {
+  PageTitle,
+  Note,
+  Empty,
+  TxButton,
+  Addr,
+  ActionStatus,
+  DisabledReason,
+  actionReason,
+  Receiver,
+} from "./components";
 import { DepositState } from "./Vault";
 import { Checkout } from "./Scenery";
 import type { Wallet } from "./wallet";
@@ -28,6 +39,8 @@ type Props = { snapshot: Snapshot; wallet: Wallet };
 export function DepositPage({ snapshot: s, wallet: w }: Props) {
   const open = s.assets.filter((a) => a.open && !a.retired);
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [reading, setReading] = useState(false);
   const [quote, setQuote] = useState<{
     tokens: Address[];
     amounts: bigint[];
@@ -64,6 +77,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
     let live = true;
     setBalances({});
     setAllowances({});
+    setReading(!!w.account);
     if (w.account)
       many(
         open.flatMap((a) => [
@@ -82,6 +96,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
         });
         setBalances(b);
         setAllowances(al);
+        setReading(false);
       });
     return () => {
       live = false;
@@ -131,7 +146,10 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
     lock.current = true;
     setWorking(true);
     const seq = sequence.current;
+    setError("");
+    w.report("approvals", { message: "Checking approvals..." });
     try {
+      let approval = 0;
       for (let i = 0; i < quote.tokens.length; i++) {
         if (sequence.current !== seq)
           throw new InputError("Deposit changed. Preview again.");
@@ -145,11 +163,20 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
           throw new InputError(
             "Your stock balance is too low. Reduce the amount.",
           );
-        if (al < n) await w.send(token(t, "approve", [VAULT, n]));
+        if (al < n) {
+          approval++;
+          await w.send(
+            token(t, "approve", [VAULT, n]),
+            "approvals",
+            `Approval ${approval} of ${approvals.length}: ${s.assets.find((a) => same(a.token, t))?.symbol ?? t}`,
+          );
+        }
       }
       setRetry((x) => x + 1);
+      w.report("approvals", { message: "Approvals done: press Deposit" });
     } catch (e) {
       setError(explain(e));
+      w.fail("approvals", explain(e));
     } finally {
       lock.current = false;
       setWorking(false);
@@ -163,15 +190,30 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       </PageTitle>
       <div className="flow-layout">
         <section className="panel">
+          <DepositState snapshot={s} />
+          <p className="flow-steps">
+            Choose amounts, preview, approve each stock, press Deposit.
+          </p>
           <h2>Make a deposit</h2>
           {!open.length ? (
             <Empty
               title={
-                s.complete ? "No open stocks yet" : "Open stocks unreadable"
+                s.loading
+                  ? "Reading..."
+                  : !s.complete
+                    ? "Open stocks unreadable"
+                    : s.globals.genesisFinalized
+                      ? "Every stock is closed"
+                      : "No Stock Tokens are listed yet."
               }
             >
-              The owner must list stocks and finalize genesis. Retry the vault
-              to check again.
+              {s.loading
+                ? "Please wait for current vault data."
+                : !s.complete
+                  ? "Retry the vault to read stocks."
+                  : s.globals.genesisFinalized
+                    ? "Deposits need an open, unretired stock. The owner can propose reopening a stock."
+                    : "Deposits start after the owner finishes setup."}
             </Empty>
           ) : (
             <>
@@ -212,33 +254,110 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                   }
                 }}
               >
-                {open.map((a) => (
-                  <label key={a.token}>
-                    <span>
-                      <bdi>{a.symbol}</bdi> amount
-                    </span>
-                    <input
-                      aria-label={`${a.symbol} amount`}
-                      aria-describedby={`balance-${a.token}`}
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={inputs[a.token] ?? ""}
-                      disabled={working || w.busy}
-                      onChange={(e) =>
-                        setInputs({ ...inputs, [a.token]: e.target.value })
-                      }
-                    />
-                    <small id={`balance-${a.token}`}>
-                      Wallet balance:{" "}
-                      {w.account
-                        ? fmt(balances[a.token], a.tokenDecimals)
-                        : "Connect wallet"}
-                    </small>
-                  </label>
-                ))}
+                {open.length > 6 && (
+                  <>
+                    <label className="stock-search">
+                      Search to add stocks
+                      <input
+                        type="search"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </label>
+                    <div className="add-stocks">
+                      {open
+                        .filter(
+                          (a) =>
+                            inputs[a.token] === undefined &&
+                            (a.symbol
+                              .toLowerCase()
+                              .includes(search.toLowerCase()) ||
+                              a.token
+                                .toLowerCase()
+                                .includes(search.toLowerCase())),
+                        )
+                        .map((a) => (
+                          <button
+                            type="button"
+                            key={a.token}
+                            disabled={working || w.busy}
+                            onClick={() =>
+                              setInputs((old) => ({ ...old, [a.token]: "" }))
+                            }
+                          >
+                            Add {a.symbol}
+                          </button>
+                        ))}
+                    </div>
+                  </>
+                )}
+                {open
+                  .filter(
+                    (a) => open.length <= 6 || inputs[a.token] !== undefined,
+                  )
+                  .map((a) => (
+                    <div className="amount-row" key={a.token}>
+                      <label>
+                        <span>
+                          <bdi>{a.symbol}</bdi> amount
+                        </span>
+                        <input
+                          aria-label={`${a.symbol} amount`}
+                          aria-describedby={`balance-${a.token}`}
+                          inputMode="decimal"
+                          autoComplete="off"
+                          value={inputs[a.token] ?? ""}
+                          disabled={working || w.busy}
+                          onChange={(e) =>
+                            setInputs({ ...inputs, [a.token]: e.target.value })
+                          }
+                        />
+                        <small id={`balance-${a.token}`}>
+                          Wallet balance:{" "}
+                          {w.account
+                            ? reading
+                              ? "Reading..."
+                              : fmt(balances[a.token], a.tokenDecimals)
+                            : "Connect wallet"}
+                        </small>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={
+                          working || w.busy || balances[a.token] === undefined
+                        }
+                        onClick={() =>
+                          setInputs((old) => ({
+                            ...old,
+                            [a.token]: exact(
+                              balances[a.token]!,
+                              a.tokenDecimals,
+                            ),
+                          }))
+                        }
+                      >
+                        Use full balance
+                      </button>
+                      {balances[a.token] === undefined && (
+                        <p className="disabled-reason">
+                          {!w.account
+                            ? "Connect wallet to read your balance."
+                            : reading
+                              ? "Reading..."
+                              : "Balance unreadable. Retry balances below."}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 <button className="primary" disabled={working || w.busy}>
-                  Preview deposit
+                  {working ? "Checking..." : "Preview deposit"}
                 </button>
+                {(working || w.busy) && (
+                  <p className="disabled-reason">
+                    Checking or waiting for the current transaction. Finish it
+                    before previewing again.
+                  </p>
+                )}
               </form>
               {quote && (
                 <div className="receipt">
@@ -262,27 +381,43 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                     {fmt((quote.shares * 995n) / 1000n)} BASK (0.5% below
                     preview).
                   </p>
-                  {short && (
+                  {!reading && short && (
                     <Note warning>
                       Wallet balance unreadable or too low. Retry balances or
                       reduce the amount.
                     </Note>
                   )}
-                  {quote.tokens.some((t) => allowances[t] === undefined) && (
-                    <Note warning>
-                      Allowance unreadable. Retry balances before continuing.
-                    </Note>
-                  )}
+                  {!reading &&
+                    quote.tokens.some((t) => allowances[t] === undefined) && (
+                      <Note warning>
+                        Allowance unreadable. Retry balances before continuing.
+                      </Note>
+                    )}
                   {approvals.length > 0 && (
-                    <button
-                      disabled={
-                        working || w.busy || short || w.chainId !== 4663
-                      }
-                      onClick={approveAll}
-                    >
-                      Approve exact amounts
-                    </button>
+                    <>
+                      <button
+                        disabled={
+                          working || w.busy || short || w.chainId !== 4663
+                        }
+                        onClick={approveAll}
+                      >
+                        Approve exact amounts
+                      </button>
+                      <DisabledReason
+                        wallet={w}
+                        snapshot={s}
+                        reason={
+                          actionReason(w, s) ||
+                          (working
+                            ? "Approval pending. Finish each wallet prompt."
+                            : short
+                              ? "Balance too low or unreadable. Reduce amounts or retry balances."
+                              : "")
+                        }
+                      />
+                    </>
                   )}
+                  <ActionStatus wallet={w} scope="approvals" />
                   <p role="status">
                     {simulated
                       ? "Deposit simulation passed. Prices and limits can change before confirmation."
@@ -294,6 +429,13 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                     label="Deposit"
                     primary
                     disabled={!simulated || working || short}
+                    disabledReason={
+                      short
+                        ? "Balance too low or unreadable. Reduce amounts or retry balances."
+                        : working || approvals.length
+                          ? "Approval pending. Approve each stock above, then press Deposit."
+                          : "Checking deposit simulation. If it fails, correct the error and preview again."
+                    }
                     getSpec={async () => {
                       const revision = sequence.current;
                       for (let i = 0; i < quote.tokens.length; i++) {
@@ -320,14 +462,20 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                   />
                 </div>
               )}
-              <button
-                disabled={working || w.busy}
-                onClick={() => setRetry((x) => x + 1)}
-              >
-                Retry balances
-              </button>
+              {w.account &&
+                !reading &&
+                open.some(
+                  (a) =>
+                    balances[a.token] === undefined ||
+                    allowances[a.token] === undefined,
+                ) && (
+                  <button onClick={() => setRetry((x) => x + 1)}>
+                    Retry balances
+                  </button>
+                )}
             </>
           )}
+          <ActionStatus wallet={w} scope="Deposit" />
           <p className="error" role="alert">
             {error}
           </p>
@@ -335,21 +483,23 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
         <aside className="panel">
           <Checkout />
           <h2>Before you deposit</h2>
-          <DepositState snapshot={s} />
           <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>
           <p>
             First deposit: 0.001 BASK is locked forever. The preview already
             subtracts this lock and any fee.
           </p>
-          <p>
-            Each short allowance is set to exactly that stock’s amount.
-            Approvals are separate wallet prompts; the deposit follows after
-            simulation.
-          </p>
-          <p>
-            The deadline is ten minutes from preparation. Your wallet receives
-            the BASK.
-          </p>
+          <details>
+            <summary>Transaction details</summary>
+            <p>
+              Each short allowance is set to exactly that stock’s amount.
+              Approvals are separate wallet prompts; the deposit follows after
+              simulation.
+            </p>
+            <p>
+              The deadline is ten minutes from preparation. Your wallet receives
+              the BASK.
+            </p>
+          </details>
           <Note warning>
             Feeds lag the market. Issuer restrictions and pool checks can stop
             deposits.
@@ -372,6 +522,7 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
     [working, setWorking] = useState(false),
     [retry, setRetry] = useState(0);
   const seq = useRef(0);
+  const [reading, setReading] = useState(false);
   useEffect(() => {
     setTo(w.account ?? "");
   }, [w.account]);
@@ -383,12 +534,16 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
   useEffect(() => {
     let live = true;
     setBalance(undefined);
+    setReading(!!w.account);
     if (w.account)
       read(vault("balanceOf", [w.account]))
         .then((v) => {
           if (live) setBalance(v);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          if (live) setReading(false);
+        });
     return () => {
       live = false;
     };
@@ -401,6 +556,11 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
       <div className="flow-layout">
         <section className="panel">
           <h2>Redeem shares</h2>
+          <p>
+            Choose BASK and a receiver, preview, then press Redeem. The estimate
+            is read again just before sending. Minimums are 0.1% under it;
+            stocks not sent stay owed to the receiver.
+          </p>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -432,9 +592,30 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                 onChange={(e) => setInput(e.target.value)}
               />
               <small id="bask-balance">
-                Wallet balance: {w.account ? fmt(balance) : "Connect wallet"}
+                Wallet balance:{" "}
+                {w.account
+                  ? reading
+                    ? "Reading..."
+                    : fmt(balance)
+                  : "Connect wallet"}
               </small>
             </label>
+            <button
+              type="button"
+              disabled={w.busy || reading || balance === undefined}
+              onClick={() => setInput(exact(balance!))}
+            >
+              Use full balance
+            </button>
+            {balance === undefined && (
+              <p className="disabled-reason">
+                {!w.account
+                  ? "Connect wallet to read BASK balance."
+                  : reading
+                    ? "Reading..."
+                    : "BASK balance unreadable. Retry balance below."}
+              </p>
+            )}
             <label>
               Receiver
               <input
@@ -445,9 +626,25 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                 spellCheck={false}
               />
             </label>
-            <button disabled={working || w.busy}>Preview redemption</button>
+            <Note warning>
+              Unsent stocks are owed to the receiver. Only that wallet can claim
+              them. Choose a wallet you control that can call this vault.
+            </Note>
+            <button disabled={working || w.busy}>
+              {working ? "Checking..." : "Preview redemption"}
+            </button>
+            {(working || w.busy) && (
+              <p className="disabled-reason">
+                Checking or waiting for the current transaction before
+                previewing again.
+              </p>
+            )}
           </form>
-          <button onClick={() => setRetry((x) => x + 1)}>Retry balance</button>
+          {w.account && !reading && balance === undefined && (
+            <button onClick={() => setRetry((x) => x + 1)}>
+              Retry balance
+            </button>
+          )}
           {quote && (
             <div className="receipt">
               <h3>Redemption preview</h3>
@@ -458,6 +655,7 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                   {fmt(quote.amounts[i], a.tokenDecimals)}
                 </p>
               ))}
+              <Receiver value={to} wallet={w} />
               <TxButton
                 snapshot={s}
                 wallet={w}
@@ -465,6 +663,11 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                 primary
                 disabled={
                   balance === undefined || balance < quote.shares || !s.complete
+                }
+                disabledReason={
+                  balance === undefined || !s.complete
+                    ? "Data missing or balance unreadable. Retry balance and vault."
+                    : "BASK balance too low. Reduce the amount or use full balance."
                 }
                 getSpec={async () => {
                   const revision = seq.current;
@@ -485,26 +688,30 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
               />
             </div>
           )}
+          <ActionStatus wallet={w} scope="Redeem" />
           <p role="alert" className="error">
             {error}
           </p>
         </section>
         <aside className="panel">
-          <Checkout />
-          <h2>Know your receiver</h2>
-          <Note warning>
-            Unsent stocks are owed to the receiver. Only that wallet can claim
-            them. Choose a wallet you control that can call this vault.
-          </Note>
-          <p>
-            Minimum amounts are 0.1% below a fresh preview taken just before
-            sending, with zero kept as zero. They follow assetTokens order.
-          </p>
-          <p>
-            Removal of an empty retired stock can change that order before
-            execution. Minimums protect entitlements, not immediate payment.
-          </p>
-          <p>Redemption and claim gas is estimated, then increased by 30%.</p>
+          <Checkout redeem />
+          <h2>Take your basket home</h2>
+          <details>
+            <summary>Transaction details</summary>
+            <Note warning>
+              Unsent stocks are owed to the receiver. Only that wallet can claim
+              them. Choose a wallet you control that can call this vault.
+            </Note>
+            <p>
+              Minimum amounts are 0.1% below a fresh preview taken just before
+              sending, with zero kept as zero. They follow assetTokens order.
+            </p>
+            <p>
+              Removal of an empty retired stock can change that order before
+              execution. Minimums protect entitlements, not immediate payment.
+            </p>
+            <p>Redemption and claim gas is estimated, then increased by 30%.</p>
+          </details>
         </aside>
       </div>
     </>
@@ -517,14 +724,17 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
     [error, setError] = useState(""),
     [working, setWorking] = useState(false);
   const lock = useRef(false);
+  const [reading, setReading] = useState(false);
   useEffect(() => setTo(w.account ?? ""), [w.account]);
   useEffect(() => {
     let live = true;
     setOwed({});
+    setReading(!!w.account);
     if (w.account)
       many(s.assets.map((a) => vault("owed", [w.account, a.token]))).then(
         (rs) => {
-          if (live)
+          if (live) {
+            setReading(false);
             setOwed(
               Object.fromEntries(
                 s.assets.map((a, i) => {
@@ -533,18 +743,31 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
                 }),
               ),
             );
+          }
         },
       );
     return () => {
       live = false;
     };
   }, [w.account, s.loadedAt, retry]);
-  const claimable = s.assets.filter((a) => (owed[a.token] ?? 0n) > 0n);
+  const claimable = s.assets.filter(
+    (a) => owed[a.token] !== undefined && owed[a.token]! > 0n,
+  );
+  const zeros = s.assets.filter((a) => owed[a.token] === 0n);
+  const visible = [
+    ...claimable,
+    ...s.assets.filter((a) => owed[a.token] === undefined),
+  ];
   return (
     <section className="panel claims">
       <h2>Claim owed stocks</h2>
       <p>
-        Claims belong to the connected wallet: <Addr value={w.account} />
+        Claims belong to the connected wallet:{" "}
+        {w.account ? (
+          <Addr value={w.account} />
+        ) : (
+          "Connect wallet to read claims."
+        )}
       </p>
       <label>
         Send claimed stocks to
@@ -555,37 +778,16 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
           spellCheck={false}
         />
       </label>
-      <button onClick={() => setRetry((x) => x + 1)}>Retry claims</button>
+      {w.account &&
+        !reading &&
+        s.assets.some((a) => owed[a.token] === undefined) && (
+          <button onClick={() => setRetry((x) => x + 1)}>Retry claims</button>
+        )}
       {!w.account ? (
         <p>Connect the receiver wallet to read and claim its owed stocks.</p>
       ) : (
         <>
-          <div className="claim-grid">
-            {s.assets.map((a) => (
-              <div className="receipt" key={a.token}>
-                <bdi>{a.symbol}</bdi>
-                <p>Owed: {fmt(owed[a.token], a.tokenDecimals)}</p>
-                <TxButton
-                  snapshot={s}
-                  wallet={w}
-                  label={`Claim ${a.symbol}`}
-                  disabled={
-                    working ||
-                    owed[a.token] === undefined ||
-                    owed[a.token] === 0n
-                  }
-                  getSpec={() => vault("claim", [[a.token], recipient(to)])}
-                />
-              </div>
-            ))}
-          </div>
-          {!s.assets.length && (
-            <p>
-              {s.complete
-                ? "No listed stocks."
-                : "Listed stocks unreadable. Retry the vault."}
-            </p>
-          )}
+          <Receiver value={to} wallet={w} claim />
           <button
             disabled={
               working || w.busy || w.chainId !== 4663 || !claimable.length
@@ -603,6 +805,11 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
                       claimable.slice(i, i + 10).map((a) => a.token),
                       receiver,
                     ]),
+                    "claim-all",
+                    `Claim batch ${Math.floor(i / 10) + 1} of ${Math.ceil(claimable.length / 10)}: ${claimable
+                      .slice(i, i + 10)
+                      .map((a) => a.symbol)
+                      .join(", ")}`,
                   );
                 setRetry((x) => x + 1);
               } catch (e) {
@@ -615,12 +822,80 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
           >
             Claim all
           </button>
+          <DisabledReason
+            wallet={w}
+            snapshot={s}
+            reason={
+              actionReason(w, s) ||
+              (working
+                ? "Claim batch pending. Wait for its receipt."
+                : reading
+                  ? "Reading..."
+                  : !claimable.length
+                    ? visible.length
+                      ? "Owed balances are unreadable. Retry claims above."
+                      : "Nothing is owed to your connected wallet."
+                    : "")
+            }
+          />
+          <ActionStatus wallet={w} scope="claim-all" />
+          <div className="claim-grid">
+            {visible.map((a) => (
+              <div className="receipt" key={a.token}>
+                <bdi>{a.symbol}</bdi>
+                <p>
+                  Still owed:{" "}
+                  {reading ? "Reading..." : fmt(owed[a.token], a.tokenDecimals)}
+                </p>
+                <Receiver value={to} wallet={w} claim />
+                <TxButton
+                  snapshot={s}
+                  wallet={w}
+                  label={`Claim ${a.symbol}`}
+                  scope={`Claim ${a.symbol} · ${a.token}`}
+                  disabled={
+                    working ||
+                    owed[a.token] === undefined ||
+                    owed[a.token] === 0n
+                  }
+                  disabledReason={
+                    reading
+                      ? "Reading... Wait for owed balances."
+                      : owed[a.token] === undefined
+                        ? "Owed balance unreadable. Retry claims above."
+                        : "Nothing owed for this stock."
+                  }
+                  getSpec={() => vault("claim", [[a.token], recipient(to)])}
+                />
+              </div>
+            ))}
+          </div>
+          {zeros.length > 0 && (
+            <details>
+              <summary>Nothing owed for {zeros.length} other stocks</summary>
+              <p>{zeros.map((a) => a.symbol).join(", ")}</p>
+            </details>
+          )}
+          {!s.assets.length && (
+            <p>
+              {s.loading
+                ? "Reading..."
+                : s.complete
+                  ? "No listed stocks."
+                  : "Listed stocks unreadable. Retry the vault."}
+            </p>
+          )}
           <p>
             Batches of up to 10 stocks, with one wallet prompt per batch. Failed
             payments remain owed and can be retried individually.
           </p>
         </>
       )}
+      {Object.keys(w.progress)
+        .filter((key) => key.startsWith("Claim "))
+        .map((key) => (
+          <ActionStatus key={key} wallet={w} scope={key} />
+        ))}
       <p role="alert" className="error">
         {error}
       </p>

@@ -1,3 +1,4 @@
+import { poolMetrics } from "./poolMath";
 import {
   encodeAbiParameters,
   decodeAbiParameters,
@@ -7,6 +8,7 @@ import {
 } from "viem";
 import {
   read,
+  client,
   vault,
   token,
   feed,
@@ -194,8 +196,8 @@ export function proposalWords(action: number, data: Hex) {
         const k = Number(v[0]),
           n = v[1] as bigint;
         return k === 5
-          ? `hoursFrom ${utcTime(n >> 32n)}, hoursTo ${utcTime(n & 0xffffffffn)} UTC`
-          : `${settingFields[k]} = ${n}`;
+          ? `hoursFrom / hoursTo = ${n} (encoded); ${settingWords(k, n)}`
+          : `${settingFields[k]} = ${n}; ${settingWords(k, n)}`;
       }
       default:
         return "Unknown action. Retry.";
@@ -207,18 +209,23 @@ export function proposalWords(action: number, data: Hex) {
 const poolAbi = parseAbi([
   "function token0() view returns (address)",
   "function token1() view returns (address)",
+  "function observe(uint32[]) view returns (int56[], uint160[])",
 ]);
 export type Listing = ReturnType<typeof parseLaunch>[number];
 export type Pairing = Listing & {
   symbol: string;
   description: string;
-  price: bigint;
+  price?: bigint;
   feedDecimals: number;
   poolSymbols: string;
   quoteName: string;
   listed: boolean;
   marked: boolean;
   error?: string;
+  liquidity?: bigint;
+  gapBps?: bigint;
+  poolPrice?: bigint;
+  warning?: string;
 };
 export async function inspectListing(row: Listing): Promise<Pairing> {
   const [symbol, description, price, decimals, config] = await Promise.all([
@@ -228,6 +235,11 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
     read(feed(row.feed, "decimals")),
     read(vault("asset", [row.token])),
   ]);
+  let liquidity: bigint | undefined,
+    gapBps: bigint | undefined,
+    poolPrice: bigint | undefined,
+    error: string | undefined,
+    warning: string | undefined;
   let poolSymbols = "No pool",
     quoteName = "No quote feed";
   if (!same(row.pool, zeroAddress)) {
@@ -244,11 +256,71 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
     ]);
     poolSymbols = symbols.join(" / ");
     quoteName = cleanFeedDescription(qd);
+    const [observations, td, quoteDecimals, qfd, qround, settings] =
+      await Promise.all([
+        read({
+          address: row.pool,
+          abi: poolAbi,
+          functionName: "observe",
+          args: [[1800, 0]],
+        }),
+        read(token(row.token, "decimals")),
+        read(token(same(t0, row.token) ? t1 : t0, "decimals")),
+        read(feed(row.quoteFeed, "decimals")),
+        read(feed(row.quoteFeed, "latestRoundData")),
+        read(vault("settings")),
+      ]);
+    if (price[1] <= 0n || qround[1] <= 0n)
+      throw new InputError("Stock or quote feed answer is invalid.");
+    const block = await client.getBlock({ blockTag: "latest" });
+    if (
+      qround[3] > block.timestamp ||
+      block.timestamp - qround[3] > BigInt(settings.maxAge)
+    )
+      throw new InputError("Quote feed is stale or has a future timestamp.");
+    const metric = poolMetrics(
+      observations[0],
+      observations[1],
+      1800n,
+      same(t0, row.token),
+      Number(td),
+      Number(quoteDecimals),
+      qround[1],
+      Number(qfd),
+    );
+    liquidity = metric.liquidity;
+    poolPrice = metric.price;
+    const feedPrice = (price[1] * 10n ** 18n) / 10n ** BigInt(decimals);
+    if (!feedPrice) throw new InputError("Feed price normalizes to zero.");
+    const difference =
+      poolPrice > feedPrice ? poolPrice - feedPrice : feedPrice - poolPrice;
+    gapBps = (difference * 10000n) / feedPrice;
+    if (liquidity < row.minLiquidity)
+      error = "30-minute pool liquidity is under minLiquidity.";
+    if (difference > (feedPrice * BigInt(settings.poolDeviation)) / 10000n)
+      error =
+        (error ? error + " " : "") + "Pool-vs-feed gap is over poolDeviation.";
+    if (liquidity * 2n < row.minLiquidity * 3n)
+      warning = "Liquidity is under 1.5× minLiquidity.";
   }
   const cleaned = cleanFeedDescription(description, symbol);
+  if (!same(config.token, zeroAddress)) {
+    const differences = ["feed", "pool", "quoteFeed"].filter(
+      (k) => !same(config[k], row[k as "feed" | "pool" | "quoteFeed"]),
+    );
+    if (config.minLiquidity !== row.minLiquidity)
+      differences.push("minLiquidity");
+    if (differences.length)
+      error = `Already-listed row differs: ${differences.join(", ")}. Correct the pasted line.`;
+  }
   return {
     ...row,
     symbol,
+    liquidity,
+    gapBps,
+    poolPrice,
+    error,
+    warning,
     description: cleaned,
     price: price[1],
     feedDecimals: Number(decimals),
@@ -259,3 +331,19 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
   };
 }
 export { proposalKinds };
+
+export function settingWords(key: number, n: bigint) {
+  if (key === 0) return `centre /${n} to ×${n}`;
+  if ([1, 2, 6].includes(key)) return `${Number(n) / 3600} hours (${n} s)`;
+  if (key === 7) return `${Number(n) / 100}% (${n} basis points)`;
+  if (key === 5) {
+    const from = n >> 32n,
+      to = n & 0xffffffffn;
+    return `${utcTime(from)} to ${utcTime(to)} UTC; ${from === 0n && to === 0n ? "always open" : "Monday to Friday only"}`;
+  }
+  if (key === 14)
+    return `${n} stocks: maximum direct payment attempts during redeem; remaining stocks stay owed for claims. Zero disables direct attempts.`;
+  if (key === 4) return `${n} hours`;
+  if (key >= 8 && key <= 12) return `${n} gas`;
+  return `${n} stocks`;
+}

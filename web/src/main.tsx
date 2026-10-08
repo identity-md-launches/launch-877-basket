@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { chain, verifyNetwork, VAULT } from "./chain";
 import { initial, loadSnapshot } from "./model";
@@ -22,9 +22,32 @@ function App() {
   const [snapshot, setSnapshot] = useState(initial);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
-  const refresh = useCallback(() => setRevision((x) => x + 1), []);
+  const revision = useRef(0);
+  const refresh = useCallback(async () => {
+    const id = ++revision.current;
+    setLoading(true);
+    setError("");
+    try {
+      try {
+        await verifyNetwork();
+      } catch (e) {
+        if (id === revision.current) setError((e as Error).message);
+      }
+      const s = await loadSnapshot();
+      if (id === revision.current) setSnapshot(s);
+      return s;
+    } catch (e) {
+      if (id === revision.current)
+        setError("Vault data: unreadable. Retry vault.");
+      throw e;
+    } finally {
+      if (id === revision.current) setLoading(false);
+    }
+  }, []);
   const wallet = useWallet(refresh);
+  useEffect(() => {
+    void refresh().catch(() => {});
+  }, [refresh]);
   useEffect(() => {
     const handler = () => {
       setPage(currentPage());
@@ -36,29 +59,13 @@ function App() {
     window.addEventListener("hashchange", handler);
     return () => window.removeEventListener("hashchange", handler);
   }, []);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError("");
-    (async () => {
-      try {
-        await verifyNetwork();
-      } catch (e) {
-        if (active) setError((e as Error).message);
-      }
-      try {
-        const s = await loadSnapshot();
-        if (active) setSnapshot(s);
-      } catch {
-        if (active) setError("Vault data: unreadable. Refresh to retry.");
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [revision]);
+  const data = {
+    ...snapshot,
+    loading,
+    retry: () => {
+      void refresh().catch(() => {});
+    },
+  };
   // Age/stale labels update locally without adding RPC traffic.
   const [, tick] = useState(0);
   useEffect(() => {
@@ -112,8 +119,9 @@ function App() {
                 )}
               </>
             ) : (
-              <button onClick={wallet.connect}>
-                Connect wallet <span aria-hidden="true">↗</span>
+              <button onClick={wallet.connect} disabled={wallet.connecting}>
+                {wallet.connecting ? "Connecting..." : "Connect wallet"}{" "}
+                <span aria-hidden="true">↗</span>
               </button>
             )}
           </div>
@@ -148,10 +156,38 @@ function App() {
                   " UTC"
                 : "Vault data unreadable"}
           </span>
-          <button className="refresh" disabled={loading} onClick={refresh}>
-            Retry vault <span aria-hidden="true">↻</span>
+          <button
+            className="refresh"
+            disabled={loading}
+            onClick={() => {
+              void refresh().catch(() => {});
+            }}
+          >
+            {loading
+              ? "Reading..."
+              : error || snapshot.errors.length
+                ? "Retry vault"
+                : "Refresh vault"}{" "}
+            <span aria-hidden="true">↻</span>
           </button>
         </div>
+        {!window.ethereum && (
+          <div className="note wallet-help">
+            Open this page in your wallet app's browser
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(location.href);
+                  wallet.setMessage("Site link copied.");
+                } catch {
+                  wallet.setMessage(`Copy this site link: ${location.href}`);
+                }
+              }}
+            >
+              Copy site link
+            </button>
+          </div>
+        )}
         {error && (
           <div className="note warning" role="alert">
             {error}
@@ -169,7 +205,17 @@ function App() {
             ))}
           </details>
         )}
-        <div className="wallet-status" role="status">
+        <div
+          className={
+            "wallet-status" +
+            (Object.values(wallet.progress).some(
+              (p) => p.message === wallet.message,
+            )
+              ? " transaction-summary"
+              : "")
+          }
+          role="status"
+        >
           {wallet.message}
           {wallet.hash && (
             <>
@@ -191,19 +237,19 @@ function App() {
           </div>
         )}
         {page === "Vault" ? (
-          <VaultPage snapshot={snapshot} />
+          <VaultPage snapshot={data} />
         ) : page === "Deposit" ? (
-          <DepositPage snapshot={snapshot} wallet={wallet} />
+          <DepositPage snapshot={data} wallet={wallet} />
         ) : page === "Redeem" ? (
-          <RedeemPage snapshot={snapshot} wallet={wallet} />
+          <RedeemPage snapshot={data} wallet={wallet} />
         ) : page === "Owner" ? (
-          <OwnerPage snapshot={snapshot} wallet={wallet} />
+          <OwnerPage snapshot={data} wallet={wallet} />
         ) : page === "Docs" ? (
           <DocsPage />
         ) : (
-          <LossesPage snapshot={snapshot} wallet={wallet} />
+          <LossesPage snapshot={data} wallet={wallet} />
         )}
-        {page === "Redeem" && <Claims snapshot={snapshot} wallet={wallet} />}
+        {page === "Redeem" && <Claims snapshot={data} wallet={wallet} />}
       </main>
       <div className="floor-strip" aria-hidden="true" />
       <footer>

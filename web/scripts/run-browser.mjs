@@ -20,6 +20,7 @@ import {
 } from "viem";
 import { VAULT, RUNTIME_HASH } from "../src/deployment.ts";
 import { chain, vaultAbi, GAS } from "../src/chain.ts";
+import { mainnet } from "viem/chains";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE ||
     "/opt/imd-mcp/node_modules/playwright/index.mjs"
@@ -118,15 +119,18 @@ try {
   // Cache genuine reads from the pinned fresh block before the public RPC prunes it.
   // These are reads only; vault storage and runtime are never overwritten.
   const startNonce = await pc.getTransactionCount({ address: owner });
-  const anticipated = Array.from({ length: 16 }, (_, i) =>
-    getContractAddress({ from: owner, nonce: BigInt(startNonce + i) }),
-  );
+  const anticipated = Array.from({ length: 84 }, (_, i) => i)
+    .filter((i) => i >= 78 || i % 3 !== 2)
+    .map((i) =>
+      getContractAddress({ from: owner, nonce: BigInt(startNonce + i) }),
+    );
   const keys = [
     owner,
     guardian,
     receiver,
     nextOwner,
     VAULT,
+    mainnet.contracts.multicall3.address,
     zeroAddress,
     toHex(0xdeadn, { size: 20 }),
     ...anticipated,
@@ -139,6 +143,23 @@ try {
       ),
     );
   console.log("Cached account records");
+  // Anvil also reads the chain's block-history ring while mining. Its deployed
+  // bytecode uses (block number - 1) % 0x05ffd0. Warm the next bounded run's
+  // genuine slots before upstream pruning; do not replace its code or storage.
+  const history = "0x0000F90827F1C53a10cb7A02335B175320002935";
+  const historyCode = await raw("eth_getCode", [history, "latest"]);
+  assert.ok(historyCode.includes("6205ffd0"), "Unexpected block-history ring");
+  for (let i = 0; i < 512; i += 64)
+    await Promise.all(
+      Array.from({ length: 64 }, (_, j) =>
+        raw("eth_getStorageAt", [
+          history,
+          toHex((forkBlock + BigInt(i + j)) % 0x05ffd0n, { size: 32 }),
+          "latest",
+        ]),
+      ),
+    );
+  console.log("Cached block-history ring for 512 fork blocks");
   const mapSlot = (type, key, slot) =>
     BigInt(
       keccak256(
@@ -152,7 +173,7 @@ try {
   const add = (base, n) => {
     for (let i = 0; i < n; i++) slots.add(base + BigInt(i));
   };
-  add(BigInt(keccak256(toHex(25n, { size: 32 }))), 8);
+  add(BigInt(keccak256(toHex(25n, { size: 32 }))), 64);
   for (const key of keys) {
     for (const slot of [1, 26, 27, 28, 29, 33, 34, 37, 38])
       add(mapSlot("address", key, slot), slot === 26 ? 8 : slot === 34 ? 2 : 1);
@@ -188,6 +209,17 @@ try {
     chain,
     transport: transport(rpc),
   });
+  async function fixtureReceipt(hash) {
+    // Setup sends mine automatically; poll receipts directly without block-watch caching.
+    const until = Date.now() + 90000;
+    while (Date.now() < until) {
+      try {
+        return await pc.getTransactionReceipt({ hash });
+      } catch {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    throw new Error(`Fork fixture receipt unavailable: ${hash}`);
+  }
   async function tx(address, abi, name, args = []) {
     const hash = await wc.writeContract({
       address,
@@ -196,10 +228,7 @@ try {
       args,
       gas: 30000000n,
     });
-    const receipt = await pc.waitForTransactionReceipt({
-      hash,
-      pollingInterval: 30,
-    });
+    const receipt = await fixtureReceipt(hash);
     assert.equal(receipt.status, "success", name);
     return receipt;
   }
@@ -233,18 +262,24 @@ try {
         args,
         gas: 5000000n,
       });
-    const receipt = await pc.waitForTransactionReceipt({
-      hash,
-      pollingInterval: 30,
-    });
+    const receipt = await fixtureReceipt(hash);
     assert.equal(receipt.status, "success");
     console.log("Fixture", name, receipt.contractAddress);
     return receipt.contractAddress;
   }
-  const symbols = ["FIG", "OAT", "PEA", "RYE"];
+  const symbols = [
+    "FIG",
+    "OAT",
+    "PEA",
+    "RYE",
+    ...Array.from(
+      { length: 22 },
+      (_, i) => `S${String(i + 1).padStart(2, "0")}`,
+    ),
+  ];
   const stocks = [],
     feeds = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < symbols.length; i++) {
     stocks.push(await deploy("TestStock", [symbols[i], i === 1 ? 6 : 18]));
     feeds.push(
       await deploy("TestFeed", [
@@ -306,6 +341,8 @@ try {
     reducedMotion: "reduce",
   });
   page = await context.newPage();
+  page.setDefaultTimeout(45000);
+  page.setDefaultNavigationTimeout(45000);
   page.on("pageerror", (e) => issues.push(e.message));
   page.on("response", (r) => {
     if (r.status() >= 400) issues.push(`${r.status()} ${r.url()}`);
@@ -313,7 +350,9 @@ try {
   let currentAccount = owner,
     currentChain = "0x1237",
     now = Number((await pc.getBlock()).timestamp) * 1000,
-    failAggregate = false;
+    failAggregate = false,
+    declineNext = false,
+    pendingNext = false;
   await page.exposeFunction("testWallet", async ({ method, params }) => {
     if (method === "eth_accounts" || method === "eth_requestAccounts")
       return [currentAccount];
@@ -323,6 +362,16 @@ try {
       return null;
     }
     if (method === "eth_sendTransaction") {
+      if (declineNext) {
+        declineNext = false;
+        throw Object.assign(new Error("User rejected the request."), {
+          code: 4001,
+        });
+      }
+      if (pendingNext) {
+        pendingNext = false;
+        await raw("evm_setAutomine", [false]);
+      }
       const t = params[0];
       assert.equal(t.from.toLowerCase(), currentAccount.toLowerCase());
       const abi =
@@ -345,6 +394,13 @@ try {
         },
       });
       Date.now = () => window.__clock;
+      const timer = window.setTimeout.bind(window);
+      window.setTimeout = (fn, delay, ...args) =>
+        timer(
+          fn,
+          window.__fastReceipt && delay === 180000 ? 500 : delay,
+          ...args,
+        );
       window.ethereum = {
         request: (a) => window.testWallet(a),
         on() {},
@@ -393,8 +449,8 @@ try {
     },
   );
   const refresh = async () => {
-    await page.getByRole("button", { name: "Retry vault" }).click();
-    await page.getByRole("button", { name: "Retry vault" }).toBeEnabled?.();
+    await page.locator("button.refresh").click();
+    await page.locator("button.refresh").toBeEnabled?.();
     await page.waitForFunction(
       () => !document.querySelector("button.refresh")?.disabled,
     );
@@ -410,9 +466,11 @@ try {
     );
   };
   const action = (title) =>
-    page
-      .locator(".action-panel")
-      .filter({ has: page.getByRole("heading", { name: title, exact: true }) });
+    page.locator(".action-panel").filter({
+      has: page
+        .locator("summary")
+        .filter({ hasText: new RegExp(`^${title}$`) }),
+    });
   async function sendClick(button, name) {
     const before = sends.length;
     const previousLink = await page
@@ -425,7 +483,7 @@ try {
         const status = document.querySelector(".wallet-status");
         const link = status?.querySelector("a")?.getAttribute("href");
         return (
-          link && link !== previous && status.textContent.includes("confirmed")
+          link && link !== previous && status.textContent.includes("Confirmed.")
         );
       },
       previousLink,
@@ -441,6 +499,8 @@ try {
   }
   async function form(title, fields, button, fn = "propose") {
     const box = action(title);
+    if (!(await box.evaluate((e) => e.open)))
+      await box.locator("summary").first().click();
     for (const [label, value] of Object.entries(fields)) {
       const f = box.getByLabel(label, { exact: true });
       if ((await f.evaluate((e) => e.tagName)) === "SELECT") {
@@ -459,14 +519,103 @@ try {
     if (await checkbox.count()) await checkbox.check();
     await sendClick(box.getByRole("button", { name: button, exact: true }), fn);
   }
+  const shots = [];
+  async function screenshots(state) {
+    for (const width of [1440, 375]) {
+      await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
+      for (const name of [
+        "Vault",
+        "Deposit",
+        "Redeem",
+        "Docs",
+        "Owner",
+        "Losses",
+      ]) {
+        await nav(name);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForFunction(
+          () =>
+            ![...document.querySelectorAll("p, small, button")].some((e) =>
+              e.textContent.includes("Reading..."),
+            ),
+        );
+        await page.waitForFunction(() => {
+          const height = document.documentElement.scrollHeight;
+          const now = performance.now();
+          if (
+            !window.__screenshotSize ||
+            window.__screenshotSize.height !== height
+          )
+            window.__screenshotSize = { height, since: now };
+          return now - window.__screenshotSize.since > 400;
+        });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+          `${state} ${name} overflow ${width}`,
+        );
+        const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
+        await page.screenshot({
+          path: path.join(artifacts, file),
+          type: "jpeg",
+          quality: 48,
+          fullPage: true,
+        });
+        shots.push(file);
+      }
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+  }
+  console.log("Taking empty screenshots");
+  await screenshots("empty");
+  console.log("Empty screenshots complete");
   await nav("Owner");
-  const lines = stocks
-    .slice(0, 3)
+  const indices = stocks.map((_, i) => i).filter((i) => i !== 3);
+  const lines = indices
     .map(
-      (t, i) =>
-        `${symbols[i]} ${t} ${feeds[i]} ${i === 0 ? pool : zeroAddress} ${i === 0 ? quoteFeed : zeroAddress} ${i === 0 ? "1" : "0"}`,
+      (i) =>
+        `${symbols[i]} ${stocks[i]} ${feeds[i]} ${i === 0 ? pool : zeroAddress} ${i === 0 ? quoteFeed : zeroAddress} ${i === 0 ? "1" : "0"}`,
     )
     .join("\n");
+  // Pool depth is an actual blocking pairing result, before any wallet prompt.
+  await page
+    .getByLabel("Listing rows")
+    .fill(lines.split("\n")[0].replace(/ 1$/, " 2000000000000"));
+  await page.getByRole("button", { name: "Check pairings / Retry" }).click();
+  await page
+    .getByText("30-minute pool liquidity is under minLiquidity.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.ok(
+    await page
+      .getByRole("button", { name: "List stocks", exact: true })
+      .isDisabled(),
+  );
+  checks.push("Pool liquidity below minLiquidity blocks listing");
+  await raw("anvil_setStorageAt", [
+    quoteFeed,
+    toHex(2n, { size: 32 }),
+    toHex(110n * 10n ** 8n, { size: 32 }),
+  ]);
+  await page.getByLabel("Listing rows").fill(lines.split("\n")[0]);
+  await page.getByRole("button", { name: "Check pairings / Retry" }).click();
+  await page
+    .getByText("Pool-vs-feed gap is over poolDeviation.", { exact: true })
+    .waitFor();
+  assert.ok(
+    await page
+      .getByRole("button", { name: "List stocks", exact: true })
+      .isDisabled(),
+  );
+  await raw("anvil_setStorageAt", [
+    quoteFeed,
+    toHex(2n, { size: 32 }),
+    toHex(100n * 10n ** 8n, { size: 32 }),
+  ]);
+  checks.push("Pool/feed gap above poolDeviation blocks listing");
   await page.getByLabel("Listing rows").fill(lines.replace("FIG ", "WRONG "));
   await page.getByRole("button", { name: "Check pairings / Retry" }).click();
   await page.getByText("check this pairing", { exact: true }).waitFor();
@@ -484,19 +633,71 @@ try {
         (b) => b.textContent === "List stocks",
       )?.disabled === false,
   );
+  console.log("Pairings checked; starting decline/recovery test");
   const genesisStart = sends.length;
+  declineNext = true;
   await page.getByRole("button", { name: "List stocks", exact: true }).click();
   await page
-    .getByText("All rows listed or already present.", { exact: true })
-    .waitFor({ timeout: 30000 });
-  assert.equal(sends.length - genesisStart, 3);
+    .getByRole("button", { name: "Resume listing", exact: true })
+    .waitFor();
+  assert.equal(
+    sends.length,
+    genesisStart,
+    "Declined prompt never counts as listed",
+  );
+  console.log("Declined prompt recovered");
+  pendingNext = true;
+  await page.evaluate(() => (window.__fastReceipt = true));
+  await page
+    .getByRole("button", { name: "Resume listing", exact: true })
+    .click();
+  await page
+    .getByText(/Receipt timed out or unreadable/)
+    .first()
+    .waitFor({ timeout: 45000 });
+  assert.equal(sends.length, genesisStart + 1);
   assert.ok(
-    sends.slice(genesisStart).every((s) => s.functionName === "genesisList"),
+    await page.evaluate(
+      () => JSON.parse(sessionStorage.getItem("basket-pending-4663")).hash,
+    ),
+  );
+  await page.reload();
+  await page
+    .getByText(/A transaction is still pending/)
+    .first()
+    .waitFor();
+  assert.equal(
+    sends.length,
+    genesisStart + 1,
+    "Reload cannot prompt pending row",
+  );
+  console.log("Pending transaction blocked after reload");
+  await raw("evm_setAutomine", [true]);
+  await raw("evm_mine");
+  console.log("Pending mined; waiting through UI");
+  await page
+    .getByRole("button", { name: "Wait for pending transaction / Retry" })
+    .click();
+  await page
+    .getByRole("button", { name: "Resume listing", exact: true })
+    .click();
+  await page
+    .getByText("All rows listed and matched against chain.", { exact: true })
+    .waitFor({ timeout: 240000 });
+  console.log("Listing complete");
+  assert.equal(sends.length - genesisStart, 25);
+  assert.deepEqual(
+    sends.slice(genesisStart).map((s) => s.args[0].toLowerCase()),
+    indices.map((i) => stocks[i].toLowerCase()),
   );
   await page.getByRole("button", { name: "List stocks", exact: true }).click();
-  await page.waitForTimeout(400);
-  assert.equal(sends.length - genesisStart, 3);
-  checks.push("Ordered genesisList: one send per row, listed rows skipped");
+  await page
+    .getByText("All rows listed and matched against chain.", { exact: true })
+    .waitFor({ timeout: 60000 });
+  assert.equal(sends.length - genesisStart, 25);
+  checks.push(
+    "25-row listing: decline, resume, receipt timeout retains hash, pending nonce blocks reload, mine and resume without duplicate calldata",
+  );
   console.log(
     "Direct aggregate reasons",
     (await rv("allAssets")).map((a) => a.reason),
@@ -504,6 +705,22 @@ try {
   await refresh();
   await form("Finalize genesis", {}, "Finalize genesis", "finalizeGenesis");
   await nav("Deposit");
+  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Use full balance", exact: true })
+    .click();
+  assert.equal(
+    await page.getByLabel("FIG amount", { exact: true }).inputValue(),
+    "1000000",
+  );
+  await page.getByLabel("Search to add stocks", { exact: true }).fill("OAT");
+  assert.equal(
+    await page.getByLabel("FIG amount", { exact: true }).inputValue(),
+    "1000000",
+  );
+  checks.push(
+    "Exact full stock balance and chosen amount retained while searching",
+  );
   await page.getByLabel("FIG amount", { exact: true }).fill("20000");
   await page
     .getByRole("button", { name: "Preview deposit", exact: true })
@@ -516,6 +733,7 @@ try {
     .waitFor();
   checks.push("CapExceeded explained before approvals");
   await page.getByLabel("FIG amount", { exact: true }).fill("10");
+  await page.getByRole("button", { name: "Add OAT", exact: true }).click();
   await page.getByLabel("OAT amount", { exact: true }).fill("20");
   await page
     .getByRole("button", { name: "Preview deposit", exact: true })
@@ -523,6 +741,19 @@ try {
   await page
     .getByRole("heading", { name: "Deposit preview", exact: true })
     .waitFor();
+  await page
+    .getByRole("button", { name: "Preview deposit", exact: true })
+    .hover();
+  assert.deepEqual(
+    await page
+      .getByRole("button", { name: "Preview deposit", exact: true })
+      .evaluate((e) => [
+        getComputedStyle(e).color,
+        getComputedStyle(e).backgroundColor,
+      ]),
+    ["rgb(255, 255, 255)", "rgb(20, 44, 84)"],
+  );
+  checks.push("Primary button label remains readable on hover");
   await page
     .getByRole("button", { name: "Approve exact amounts", exact: true })
     .click();
@@ -536,10 +767,7 @@ try {
     page.getByRole("button", { name: "Deposit", exact: true }),
     "deposit",
   );
-  assert.equal(
-    await page.getByLabel("FIG amount", { exact: true }).inputValue(),
-    "",
-  );
+  assert.equal(await page.getByLabel("FIG amount", { exact: true }).count(), 0);
   assert.equal(
     await page
       .getByRole("heading", { name: "Deposit preview", exact: true })
@@ -602,6 +830,24 @@ try {
   assert.equal(sends.at(-1).args[0].length, 2);
   // Immediate controls and each proposal form.
   await nav("Owner");
+  const closeForm = action("Close a stock");
+  await closeForm.locator("summary").click();
+  assert.equal(
+    await closeForm.getByLabel("Stock Token", { exact: true }).inputValue(),
+    "",
+  );
+  assert.ok(
+    await closeForm
+      .getByRole("button", { name: "Close stock", exact: true })
+      .isDisabled(),
+  );
+  const routeBeforeJump = new URL(page.url()).hash;
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  assert.equal(new URL(page.url()).hash, routeBeforeJump);
+  assert.equal(await page.locator(":focus").getAttribute("id"), "owner-pause");
+  checks.push(
+    "Owner stock begins unselected; jump scrolls and focuses without routing",
+  );
   await form(
     "Close a stock",
     { "Stock Token": stocks[1] },
@@ -667,7 +913,7 @@ try {
   await form(
     "Set Hours",
     {
-      "From UTC (HH:MM:SS; 00:00:00 for all hours)": "00:00:00",
+      "From UTC (HH:MM:SS)": "00:00:00",
       "To UTC (HH:MM:SS; 24:00:00 allowed)": "00:00:00",
     },
     "Propose setting",
@@ -685,33 +931,7 @@ try {
       .first()
       .isDisabled(),
   );
-  const shots = [];
-  for (const width of [1440, 375]) {
-    await page.setViewportSize({ width, height: 1000 });
-    for (const name of [
-      "Vault",
-      "Deposit",
-      "Redeem",
-      "Docs",
-      "Owner",
-      "Losses",
-    ]) {
-      await nav(name);
-      await page.evaluate(() => document.fonts.ready);
-      const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth > innerWidth,
-      );
-      assert.equal(overflow, false, `${name} overflow at ${width}`);
-      const file = `${name.toLowerCase()}-${width}.jpg`;
-      await page.screenshot({
-        path: path.join(artifacts, file),
-        type: "jpeg",
-        quality: 72,
-        fullPage: true,
-      });
-      shots.push(file);
-    }
-  }
+  await screenshots("stocks25");
   // 320px reflow and keyboard/reduced-motion checks.
   await page.setViewportSize({ width: 320, height: 900 });
   await nav("Docs");
@@ -725,7 +945,7 @@ try {
   assert.ok(await page.locator(":focus").count());
   assert.equal(
     await page
-      .locator(".marquee span")
+      .locator(".marquee-track")
       .evaluate((e) => getComputedStyle(e).animationName),
     "none",
   );
@@ -865,7 +1085,7 @@ try {
         limitations: [
           "Local fork and disposable token/feed/pool fixtures; no live transaction",
           "No physical device or screen-reader session",
-          "Claim all batching exercised with two owed tokens; groups of ten covered by source/unit assertions",
+          "Windows Chrome/Edge native display scaling is unavailable in this Linux worker; Chromium DPR emulation is separate evidence.",
         ],
       },
       (_, v) => (typeof v === "bigint" ? String(v) : v),

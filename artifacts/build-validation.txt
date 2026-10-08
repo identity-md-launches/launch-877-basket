@@ -1,25 +1,26 @@
 
-> basket-protocol-web@1.0.0 typecheck
-> tsc --noEmit
-
-
 > basket-protocol-web@1.0.0 build
 > tsc --noEmit && vite build
 
 vite v7.1.9 building for production...
 transforming...
-✓ 1098 modules transformed.
+✓ 1099 modules transformed.
 rendering chunks...
 computing gzip size...
 ../dist/index.html                     0.66 kB │ gzip:   0.39 kB
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
-../dist/assets/index-8r7Ag5om.css     14.10 kB │ gzip:   4.06 kB
-../dist/assets/ccip-ByIQlb3t.js        2.61 kB │ gzip:   1.23 kB
-../dist/assets/index-BekU4f3E.js     523.38 kB │ gzip: 159.01 kB
+../dist/assets/index-DRkoMwvl.css     16.77 kB │ gzip:   4.63 kB
+../dist/assets/ccip-CaR86u5S.js        2.61 kB │ gzip:   1.24 kB
+../dist/assets/index-D54XlxQ-.js     547.57 kB │ gzip: 166.77 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 3.63s
+✓ built in 12.28s
+npm notice
+npm notice New major version of npm available! 11.19.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

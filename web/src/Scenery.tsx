@@ -1,14 +1,23 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 export function Marquee() {
   const [paused, setPaused] = useState(false);
   return (
     <div className={"marquee " + (paused ? "paused" : "")}>
-      <div aria-hidden="true">
-        <span>
-          Basket buddies! • Take a stroll down the aisles • Give your cart a
-          twirl • Basket buddies! • Take a stroll down the aisles • Give your
-          cart a twirl •{" "}
-        </span>
+      <div aria-hidden="true" className="marquee-window">
+        <div className="marquee-track">
+          <span>
+            Basket buddies! • Take a stroll down the aisles • Give your cart a
+            twirl • Basket buddies! • Take a stroll down the aisles • Give your
+            cart a twirl •{" "}
+          </span>
+          {Array.from({ length: 7 }, (_, i) => (
+            <span className="desktop-slogans" key={i}>
+              Basket buddies! • Take a stroll down the aisles • Give your cart a
+              twirl • Basket buddies! • Take a stroll down the aisles • Give
+              your cart a twirl •{" "}
+            </span>
+          ))}
+        </div>
       </div>
       <button
         aria-label={
@@ -22,14 +31,16 @@ export function Marquee() {
   );
 }
 export function StoreShelf() {
+  const id = useId();
   return (
-    <svg className="store-shelf" viewBox="0 0 900 100" aria-hidden="true">
+    <svg className="store-shelf" height="55" aria-hidden="true">
       <defs>
         <pattern
-          id="shelf-stock"
+          id={id}
           width="150"
           height="90"
           patternUnits="userSpaceOnUse"
+          patternTransform="scale(.55)"
         >
           <rect
             x="7"
@@ -72,10 +83,10 @@ export function StoreShelf() {
           <path d="M123 40h18M123 49h18" stroke="#2857bd" strokeWidth="4" />
         </pattern>
       </defs>
-      <rect width="900" height="100" fill="#c4e7ff" />
-      <rect width="900" height="80" fill="url(#shelf-stock)" />
-      <path d="M0 80h900" stroke="#ffe029" strokeWidth="13" />
-      <path d="M0 91h900" stroke="#e5252a" strokeWidth="10" />
+      <rect width="100%" height="100%" fill="#c4e7ff" />
+      <rect width="100%" height="80%" fill={`url(#${id})`} />
+      <rect y="80%" width="100%" height="13%" fill="#ffe029" />
+      <rect y="93%" width="100%" height="7%" fill="#e5252a" />
     </svg>
   );
 }
@@ -151,16 +162,21 @@ export function Clerk() {
         strokeWidth="3"
       />
       <path
-        d="m171 201 33-49 12 13-13 49q-16 25-29 3"
-        fill="#ffc994"
-        stroke="#143a79"
-        strokeWidth="5"
-      />
-      <path
-        d="M205 157q-20-23-13-28l12 10q-10-36-1-36l13 32q-2-33 7-31l5 33q6-26 13-20l-5 30q20-11 21-3l-28 26"
+        d="M169 204 Q187 223 202 189 L214 164
+        Q228 160 232 148 L237 132 Q239 125 233 125 L226 141
+        L226 112 Q224 104 220 111 L217 137 L212 106 Q208 100 205 107
+        L207 136 L199 116 Q194 112 193 119 L199 143
+        L189 134 Q181 133 185 141 L199 162 L185 187 L174 183 Z"
         fill="#ffc994"
         stroke="#143a79"
         strokeWidth="4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M200 161 Q207 167 214 164"
+        fill="none"
+        stroke="#143a79"
+        strokeWidth="3"
       />
       <path
         d="M196 225q8-32 27-8 13-40 34-7 30-18 28 22"
@@ -180,39 +196,174 @@ export function Clerk() {
     </svg>
   );
 }
-export function Checkout() {
+// Original line art: goods rest on the belt; people stand behind the counter.
+export function Checkout({ redeem = false }: { redeem?: boolean }) {
   return (
-    <svg className="checkout" viewBox="0 0 400 120" aria-hidden="true">
-      <rect x="5" y="61" width="390" height="53" rx="20" fill="#17356b" />
-      <rect x="15" y="70" width="370" height="28" rx="14" fill="#778898" />
+    <svg
+      className="checkout"
+      viewBox="0 0 400 210"
+      role="img"
+      aria-label={
+        redeem
+          ? "A cashier handing a full grocery bag across the counter"
+          : "A shopper unloading a basket onto the checkout belt"
+      }
+    >
       <path
-        d="M56 75v20m44-20v20m44-20v20m44-20v20m44-20v20m44-20v20m44-20v20"
-        stroke="#fff"
-        strokeWidth="2"
+        d="M25 188V92q0-28 34-28h28q34 0 34 28v96"
+        fill={redeem ? "#1752c5" : "#e5252a"}
+        stroke="#17356b"
+        strokeWidth="4"
+      />
+      <ellipse
+        cx="73"
+        cy="40"
+        rx="25"
+        ry="30"
+        fill="#ffc994"
+        stroke="#17356b"
+        strokeWidth="4"
+      />
+      <path
+        d="M48 34Q40 6 69 6q33-8 33 27L83 23 65 30Z"
+        fill="#84372a"
+        stroke="#17356b"
+        strokeWidth="3"
+      />
+      <path
+        d="M64 42h1m17 0h1M66 53q8 8 16-1"
+        fill="none"
+        stroke="#17356b"
+        strokeWidth="3"
+        strokeLinecap="round"
       />
       <rect
-        x="80"
-        y="13"
-        width="41"
-        height="47"
+        x="8"
+        y="144"
+        width="384"
+        height="57"
+        rx="8"
         fill="#ffdb29"
         stroke="#17356b"
         strokeWidth="4"
       />
-      <path
-        d="M185 30V10h19v20l12 12v20h-43V42Z"
-        fill="#50ad65"
+      <rect
+        x="15"
+        y="137"
+        width="370"
+        height="22"
+        rx="11"
+        fill="#778898"
         stroke="#17356b"
         strokeWidth="4"
       />
-      <path
-        d="m262 14 16 1 15 47h58l13-34h-82m12 46h56"
-        fill="none"
-        stroke="#17356b"
-        strokeWidth="5"
-      />
-      <circle cx="300" cy="86" r="6" fill="#17356b" />
-      <circle cx="345" cy="86" r="6" fill="#17356b" />
+      {redeem ? (
+        <>
+          <path
+            d="M246 144V64q0-21 20-21h34q20 0 20 21v80"
+            fill="#53ae62"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <ellipse
+            cx="283"
+            cy="24"
+            rx="21"
+            ry="22"
+            fill="#b9794e"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M150 78h66l-5 65h-54Z"
+            fill="#efb672"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M165 82V63q18-26 34 0v19"
+            fill="none"
+            stroke="#17356b"
+            strokeWidth="5"
+          />
+          <path
+            d="M168 79l-8-37q-2-14 7-14t11 15l6 36"
+            fill="#ffdb29"
+            stroke="#17356b"
+            strokeWidth="3"
+          />
+          <path
+            d="M188 78q-18-26-2-29 4-17 14-8 22-5 16 12 10 11-9 25"
+            fill="#53ae62"
+            stroke="#17356b"
+            strokeWidth="3"
+          />
+          <path
+            d="M108 86l23 24 26 2m-49-26 27 14 22 12M253 82l-22 27-16 1"
+            fill="none"
+            stroke="#17356b"
+            strokeWidth="17"
+            strokeLinecap="round"
+          />
+          <path
+            d="M108 86l25 19 24 7M253 82l-22 27-16 1"
+            fill="none"
+            stroke="#ffc994"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+        </>
+      ) : (
+        <>
+          <path
+            d="M109 81l36 9 32 32"
+            fill="none"
+            stroke="#17356b"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
+          <path
+            d="M109 81l36 9 32 32"
+            fill="none"
+            stroke="#ffc994"
+            strokeWidth="11"
+            strokeLinecap="round"
+          />
+          <rect
+            x="164"
+            y="99"
+            width="29"
+            height="36"
+            rx="3"
+            fill="#ffdb29"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M247 100V74h16v26l9 12v23h-34v-23Z"
+            fill="#53ae62"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M292 99h83l-9 36h-66Z"
+            fill="#e5252a"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M307 99l17-27m35 27-16-27m-32 38v13m19-13v13m19-13v13"
+            stroke="#17356b"
+            strokeWidth="4"
+          />
+          <path
+            d="M315 94q-9-30 7-29 4-15 14-2 19-4 17 17"
+            fill="#53ae62"
+            stroke="#17356b"
+            strokeWidth="3"
+          />
+        </>
+      )}
     </svg>
   );
 }

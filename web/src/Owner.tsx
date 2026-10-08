@@ -32,6 +32,9 @@ import {
   permitted,
   TxButton,
   type Role,
+  ActionStatus,
+  DisabledReason,
+  actionReason,
 } from "./components";
 import {
   inspectListing,
@@ -41,6 +44,8 @@ import {
   settingNames,
   settingFields,
   settingBounds,
+  settingWords,
+  parseTime,
   type Pairing,
 } from "./governance";
 import type { Wallet } from "./wallet";
@@ -61,6 +66,9 @@ function ActionForm({
   confirmation,
   role = "owner",
   disabled = false,
+  disabledReason = "Data missing. Complete setup or retry the vault.",
+  folded = true,
+  preview,
   snapshot: s,
   wallet: w,
 }: Props & {
@@ -72,14 +80,58 @@ function ActionForm({
   confirmation?: string;
   role?: Role;
   disabled?: boolean;
+  disabledReason?: string;
+  folded?: boolean;
+  preview?: (values: Record<string, string>) => string;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
+  const lock = useRef(false);
+  const missingStock = fields.some(
+    (f) =>
+      f.type === "stock" &&
+      !f.stocks?.some((a) => same(a.token, values[f.key])),
+  );
+  const missingField = fields.some((f) => !(values[f.key] || "").trim());
+  const reason =
+    actionReason(w, s, role) ||
+    (working
+      ? "Checking... Wait for this action."
+      : missingStock
+        ? "Choose a stock. If your previous stock disappeared, choose again."
+        : missingField
+          ? "Complete the fields above."
+          : confirmation && !confirmed
+            ? "Read and confirm the consequence above."
+            : disabled
+              ? disabledReason
+              : "");
+  useEffect(() => {
+    if (s.loading) return;
+    setValues((old) => {
+      const next = { ...old };
+      let changed = false;
+      fields
+        .filter((f) => f.type === "stock")
+        .forEach((f) => {
+          if (
+            next[f.key] &&
+            !f.stocks?.some((a) => same(a.token, next[f.key]))
+          ) {
+            next[f.key] = "";
+            changed = true;
+          }
+        });
+      return changed ? next : old;
+    });
+  }, [s.loadedAt]);
   const id = title.toLowerCase().replace(/[^a-z0-9]/g, "-");
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (lock.current || reason) return;
+    lock.current = true;
     setError("");
     setWorking(true);
     try {
@@ -87,27 +139,25 @@ function ActionForm({
         throw new Error("Confirm the stated consequence before continuing.");
       await w.send(
         await build(
-          Object.fromEntries(
-            fields.map((f) => [
-              f.key,
-              values[f.key] ??
-                (f.type === "stock" ? (f.stocks?.[0]?.token ?? "") : ""),
-            ]),
-          ),
+          Object.fromEntries(fields.map((f) => [f.key, values[f.key] ?? ""])),
         ),
+        title,
+        label,
       );
     } catch (err) {
       setError(explain(err));
+      w.fail(title, explain(err));
       (e.target as HTMLFormElement)
         .querySelector<HTMLInputElement>("input, textarea, select")
         ?.focus();
     } finally {
       setWorking(false);
+      lock.current = false;
     }
   }
   return (
-    <section className="panel action-panel">
-      <h3>{title}</h3>
+    <details className="panel action-panel" open={folded ? undefined : true}>
+      <summary>{title}</summary>
       {description && <p>{description}</p>}
       <form onSubmit={submit}>
         {fields.map((f) => (
@@ -129,7 +179,11 @@ function ActionForm({
               <select
                 disabled={working || w.busy}
                 aria-label={f.label}
-                value={values[f.key] ?? f.stocks?.[0]?.token ?? ""}
+                value={
+                  f.stocks?.some((a) => same(a.token, values[f.key]))
+                    ? values[f.key]
+                    : ""
+                }
                 onChange={(e) =>
                   setValues({ ...values, [f.key]: e.target.value })
                 }
@@ -161,6 +215,14 @@ function ActionForm({
               />
             )}{" "}
             {f.hint && <small>{f.hint}</small>}
+            {f.type === "stock" &&
+              f.stocks?.some((a) => same(a.token, values[f.key])) && (
+                <span className="chosen-stock">
+                  Chosen:{" "}
+                  {f.stocks.find((a) => same(a.token, values[f.key]))?.symbol}
+                  <Addr value={values[f.key]} />
+                </span>
+              )}
           </label>
         ))}
         {confirmation && (
@@ -174,18 +236,18 @@ function ActionForm({
             {confirmation}
           </label>
         )}
+        {preview && <p className="setting-preview">{preview(values)}</p>}
         <RoleInfo role={role} snapshot={s} />
-        <button
-          type="submit"
-          disabled={disabled || working || w.busy || !permitted(role, w, s)}
-        >
+        <button type="submit" disabled={!!reason}>
           {working ? `${label}…` : label}
         </button>
+        <DisabledReason reason={reason} wallet={w} snapshot={s} />
+        <ActionStatus wallet={w} scope={title} />
         <p role="alert" className="error" id={`${id}-error`}>
           {error}
         </p>
       </form>
-    </section>
+    </details>
   );
 }
 function PairingRows({ rows }: { rows: Pairing[] }) {
@@ -196,6 +258,7 @@ function PairingRows({ rows }: { rows: Pairing[] }) {
           <h3>
             Row {i + 1}: <bdi>{r.symbol}</bdi>
           </h3>
+          <p>Input line {r.line}</p>
           <AddressLink value={r.token} />
           <p>
             Stock feed: <bdi>{r.description}</bdi>
@@ -204,74 +267,165 @@ function PairingRows({ rows }: { rows: Pairing[] }) {
           {r.marked && (
             <strong className="pairing-warning">check this pairing</strong>
           )}
-          <p>Feed price: ${fmt(r.price, r.feedDecimals)}</p>
           <p>
+            Feed price:{" "}
+            {r.price === undefined
+              ? "unreadable"
+              : "$" + fmt(r.price, r.feedDecimals)}
+          </p>
+          <p>
+            Pool: <Addr value={r.pool} />
             Pool tokens: <bdi>{r.poolSymbols}</bdi>
           </p>
           <p>
             Quote feed: <bdi>{r.quoteName}</bdi>
+            <Addr value={r.quoteFeed} />
           </p>
-          <p>{r.listed ? "Already listed; will skip" : "Ready to list"}</p>
+          <p>minLiquidity: {String(r.minLiquidity)}</p>
+          {!same(r.pool, zeroAddress) && (
+            <>
+              <p>
+                Current 30-minute liquidity:{" "}
+                {r.liquidity === undefined ? "unreadable" : String(r.liquidity)}{" "}
+                ·{" "}
+                {r.liquidity === undefined
+                  ? "unreadable"
+                  : r.minLiquidity === 0n
+                    ? "No minimum (0)"
+                    : fmt((r.liquidity * 10000n) / r.minLiquidity, 4, 4) +
+                      "× minLiquidity"}
+              </p>
+              <p>
+                Pool-vs-feed gap:{" "}
+                {r.gapBps === undefined
+                  ? "unreadable"
+                  : fmt(r.gapBps, 2, 2) + "%"}
+              </p>
+            </>
+          )}
+          <strong>
+            {r.error || r.marked
+              ? "Needs correction"
+              : r.listed
+                ? "Already listed; matches this line"
+                : "Ready to list"}
+          </strong>
+          {r.warning && <p className="note warning">{r.warning}</p>}
           {r.error && <p className="error">{r.error}</p>}
         </article>
       ))}
     </div>
   );
 }
-function LaunchListing({ snapshot: s, wallet: w }: Props) {
-  const [input, setInput] = useState(""),
-    [rows, setRows] = useState<Pairing[]>([]),
+function LaunchListing({
+  snapshot: s,
+  wallet: w,
+  input,
+  setInput,
+}: Props & { input: string; setInput: (v: string) => void }) {
+  const [rows, setRows] = useState<Pairing[]>([]),
     [checked, setChecked] = useState(""),
     [error, setError] = useState(""),
     [progress, setProgress] = useState(""),
-    [working, setWorking] = useState(false);
+    [working, setWorking] = useState(false),
+    [resume, setResume] = useState(false),
+    [pending, setPending] = useState("");
   const lock = useRef(false);
-  async function check() {
-    setWorking(true);
-    setRows([]);
+  useEffect(() => {
+    let live = true;
+    if (w.account && same(w.account, s.globals.owner))
+      w.listingPending()
+        .then(() => {
+          if (live) setPending("");
+        })
+        .catch((e) => {
+          if (live) setPending(explain(e));
+        });
+    return () => {
+      live = false;
+    };
+  }, [w.account, s.loadedAt]);
+  async function checkRows() {
     setChecked("");
     setError("");
-    try {
-      const parsed = parseLaunch(input),
-        rs: Pairing[] = [];
-      const current = await loadSnapshot();
-      if (!current.complete)
-        throw new InputError(
-          "Listed stocks unreadable. Retry the vault before checking.",
-        );
-      for (let i = 0; i < parsed.length; i++) {
-        let r: Pairing;
-        try {
-          r = await inspectListing(parsed[i]);
-          if (
-            !r.listed &&
-            current.assets.some((a) => !a.retired && same(a.feed, r.feed))
-          )
-            r.error = "Stock feed already used by an unretired stock.";
-          if (!r.listed && !r.error)
-            await simulate(
-              vault("genesisList", [
-                r.token,
-                r.feed,
-                r.pool,
-                r.quoteFeed,
-                r.minLiquidity,
-              ]),
-              s.globals.owner,
-            );
-        } catch (e) {
-          throw new InputError(`Row ${i + 1}: ${explain(e)}`);
-        }
-        rs.push(r);
+    const parsed = parseLaunch(input),
+      results: Pairing[] = [];
+    const current = await loadSnapshot();
+    if (!current.complete)
+      throw new InputError(
+        "Listed stocks unreadable. Retry vault before checking.",
+      );
+    for (let i = 0; i < parsed.length; i++) {
+      setProgress(`Checking row ${i + 1} of ${parsed.length}`);
+      let r: Pairing;
+      try {
+        r = await inspectListing(parsed[i]);
+        if (
+          !r.listed &&
+          current.assets.some((a) => !a.retired && same(a.feed, r.feed))
+        )
+          r.error = "Stock feed already used by an unretired stock.";
+        if (!r.listed && !r.error && !r.marked)
+          await simulate(
+            vault("genesisList", [
+              r.token,
+              r.feed,
+              r.pool,
+              r.quoteFeed,
+              r.minLiquidity,
+            ]),
+            s.globals.owner,
+          );
+      } catch (e) {
+        r = {
+          ...parsed[i],
+          symbol: parsed[i].ticker,
+          description: "unreadable",
+          price: undefined,
+          feedDecimals: 0,
+          poolSymbols: "unreadable",
+          quoteName: "unreadable",
+          listed: false,
+          marked: false,
+          error: `Row ${i + 1}, line ${parsed[i].line} (${parsed[i].ticker}): ${explain(e)}`,
+        };
       }
-      setRows(rs);
-      setChecked(input);
+      results.push(r);
+      setRows([...results]);
+    }
+    setChecked(input);
+    setProgress(
+      results.some((r) => r.error || r.marked)
+        ? "Checks finished. Rows marked Needs correction cannot be listed."
+        : "Checks finished. Pairings ready.",
+    );
+    return results;
+  }
+  async function check() {
+    if (lock.current) return;
+    lock.current = true;
+    setWorking(true);
+    try {
+      await checkRows();
     } catch (e) {
       setError(explain(e));
     } finally {
       setWorking(false);
+      lock.current = false;
     }
   }
+  const reason =
+    actionReason(w, s, "owner") ||
+    (working
+      ? "Checking or listing. Wait for the current row."
+      : pending ||
+        (checked !== input && !resume
+          ? "Check pairings before listing."
+          : !input.trim()
+            ? "Paste the stock rows above."
+            : rows.some((r) => r.marked || r.error)
+              ? "Needs correction. Fix the marked rows, then check pairings again."
+              : ""));
   return (
     <section className="panel">
       <h3>List initial stocks</h3>
@@ -290,42 +444,51 @@ function LaunchListing({ snapshot: s, wallet: w }: Props) {
             setInput(e.target.value);
             setChecked("");
             setRows([]);
+            setResume(false);
           }}
           spellCheck={false}
         />
       </label>
       <button
         onClick={check}
-        disabled={working || s.globals.genesisFinalized !== false}
+        disabled={working || s.loading || s.globals.genesisFinalized !== false}
       >
         Check pairings / Retry
       </button>
+      {(working || s.loading || s.globals.genesisFinalized !== false) && (
+        <p className="disabled-reason">
+          {working || s.loading
+            ? "Reading... Wait for the check."
+            : "Genesis must be readable and not finalized. Retry vault."}
+        </p>
+      )}
+      <p role="status">{progress}</p>
       <PairingRows rows={rows} />
       <RoleInfo role="owner" snapshot={s} />
       <button
-        disabled={
-          working ||
-          w.busy ||
-          !permitted("owner", w, s) ||
-          s.globals.genesisFinalized !== false ||
-          checked !== input ||
-          !rows.length ||
-          rows.some((r) => r.marked || r.error)
-        }
+        disabled={!!reason}
         onClick={async () => {
           if (lock.current) return;
           lock.current = true;
           setWorking(true);
           setError("");
+          let rowName = "Listing";
           try {
-            for (let i = 0; i < rows.length; i++) {
-              const r = rows[i];
-              setProgress(`row ${i + 1} of ${rows.length}`);
-              const before = await read(vault("asset", [r.token]));
-              if (!same(before.token, zeroAddress)) continue;
+            await w.listingPending();
+            const checkedRows = await checkRows();
+            if (checkedRows.some((r) => r.marked || r.error))
+              throw new InputError(
+                "Needs correction. Fix the marked rows before resuming.",
+              );
+            for (let i = 0; i < checkedRows.length; i++) {
+              const r = checkedRows[i];
+              rowName = `Row ${i + 1} of ${checkedRows.length}: ${r.symbol}`;
+              setProgress(rowName);
+              await w.listingPending();
               const fresh = await inspectListing(r);
-              if (fresh.marked)
-                throw new InputError(`Row ${i + 1}: check this pairing`);
+              if (fresh.marked || fresh.error)
+                throw new InputError(fresh.error || "check this pairing");
+              if (fresh.listed) continue;
               await w.send(
                 vault("genesisList", [
                   r.token,
@@ -334,31 +497,58 @@ function LaunchListing({ snapshot: s, wallet: w }: Props) {
                   r.quoteFeed,
                   r.minLiquidity,
                 ]),
+                "listing",
+                rowName,
               );
-              const after = await read(vault("asset", [r.token]));
-              if (same(after.token, zeroAddress))
+              const after = await inspectListing(r);
+              if (!after.listed || after.error)
                 throw new InputError(
-                  "Listing confirmation unreadable. Retry pairings before continuing.",
+                  after.error ||
+                    "Listing confirmation unreadable. Re-check before continuing.",
                 );
               setRows((old) =>
-                old.map((x) =>
-                  same(x.token, r.token) ? { ...x, listed: true } : x,
-                ),
+                old.map((x) => (same(x.token, r.token) ? after : x)),
               );
             }
-            setProgress("All rows listed or already present.");
+            setProgress("All rows listed and matched against chain.");
+            setResume(false);
           } catch (e) {
-            setError(explain(e));
-            setChecked("");
+            setError(`${rowName}: ${explain(e)}`);
+            setResume(true);
+            try {
+              await w.listingPending();
+            } catch (e) {
+              setPending(explain(e));
+            }
           } finally {
             setWorking(false);
             lock.current = false;
           }
         }}
       >
-        List stocks
+        {resume ? "Resume listing" : "List stocks"}
       </button>
-      <p role="status">{progress}</p>
+      <DisabledReason reason={reason} wallet={w} snapshot={s} />
+      {pending && (
+        <button
+          disabled={working || w.busy}
+          onClick={async () => {
+            setWorking(true);
+            try {
+              await w.waitPending();
+              setPending("");
+              setResume(true);
+            } catch (e) {
+              setPending(explain(e));
+            } finally {
+              setWorking(false);
+            }
+          }}
+        >
+          Wait for pending transaction / Retry
+        </button>
+      )}
+      <ActionStatus wallet={w} scope="listing" />
       <p role="alert" className="error">
         {error}
       </p>
@@ -387,13 +577,21 @@ function SettingForm(props: Props) {
       </label>
       <p>
         Current {settingFields[key]}:{" "}
-        {current
-          ? key === 5
-            ? `${current.hoursFrom} / ${current.hoursTo} seconds UTC`
-            : String(current[settingFields[key]])
-          : "unreadable — Retry vault"}
+        {props.snapshot.loading
+          ? "Reading..."
+          : current
+            ? key === 5
+              ? `${current.hoursFrom} / ${current.hoursTo} seconds UTC; ${settingWords(5, (current.hoursFrom << 32n) | current.hoursTo)}`
+              : `${current[settingFields[key]]}; ${settingWords(key, BigInt(current[settingFields[key]]))}`
+            : "unreadable — Retry vault"}
       </p>
       <p>Bounds: {settingBounds[key]}</p>
+      {key === 5 && (
+        <p>
+          00:00 to 00:00 means always open. Any other pair means Monday to
+          Friday only. 00:00 to 24:00 is Monday to Friday only.
+        </p>
+      )}
       <ActionForm
         key={key}
         {...props}
@@ -404,7 +602,7 @@ function SettingForm(props: Props) {
             ? [
                 {
                   key: "from",
-                  label: "From UTC (HH:MM:SS; 00:00:00 for all hours)",
+                  label: "From UTC (HH:MM:SS)",
                 },
                 { key: "to", label: "To UTC (HH:MM:SS; 24:00:00 allowed)" },
               ]
@@ -416,6 +614,17 @@ function SettingForm(props: Props) {
                 },
               ]
         }
+        preview={(v) => {
+          try {
+            const n =
+              key === 5
+                ? (parseTime(v.from) << 32n) | parseTime(v.to)
+                : BigInt(v.value);
+            return `Proposed raw value: ${n}; ${settingWords(key, n)}`;
+          } catch {
+            return "Enter a proposed value to see its plain units.";
+          }
+        }}
         build={(v) => proposalSpec(10, { ...v, setting: String(key) })}
       />
     </div>
@@ -426,7 +635,7 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
     [rows, setRows] = useState<any[]>([]),
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0),
-    [loading, setLoading] = useState(false);
+    [loading, setLoading] = useState(true);
   useEffect(() => {
     let live = true;
     setLoading(true);
@@ -448,11 +657,15 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
     };
   }, [start, s.loadedAt, retry]);
   return (
-    <section className="owner-section panel">
+    <section className="owner-section panel" id="owner-pending" tabIndex={-1}>
       <div className="section-heading">
         <h2>Pending proposals</h2>
         <button onClick={() => setRetry((x) => x + 1)} disabled={loading}>
-          Retry proposals
+          {loading
+            ? "Reading..."
+            : error
+              ? "Retry proposals"
+              : "Refresh proposals"}
         </button>
       </div>
       <p>
@@ -505,10 +718,18 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
                 wallet={w}
                 role="owner"
                 label="Execute"
+                scope={`Execute proposal ${p.id}`}
                 disabled={
                   !ready ||
                   expired ||
                   (paused && s.globals.depositsPaused !== true)
+                }
+                disabledReason={
+                  expired
+                    ? "Proposal expired. Propose the change again."
+                    : !ready
+                      ? `Wait until ${date(p.readyAt)}.`
+                      : "Pause deposits before executing this proposal."
                 }
                 getSpec={async () => {
                   if (paused && (await read(vault("depositsPaused"))) !== true)
@@ -523,12 +744,18 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
                 wallet={w}
                 role={Number(p.action) === 7 ? "owner" : "operator"}
                 label="Cancel proposal"
+                scope={`Cancel proposal ${p.id}`}
                 getSpec={() => vault("cancel", [p.id])}
               />
             </article>
           );
         })}
       </div>
+      {Object.keys(w.progress)
+        .filter((k) => /^(Execute|Cancel) proposal /.test(k))
+        .map((k) => (
+          <ActionStatus key={k} wallet={w} scope={k} />
+        ))}
       <div className="button-row">
         <button
           disabled={loading || start === 1n}
@@ -547,6 +774,11 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
           Next proposal page
         </button>
       </div>
+      <p className="disabled-reason">
+        {loading
+          ? "Reading..."
+          : `Pages show up to 50 proposal IDs. ${start === 1n ? "This is the first page." : ""} ${s.globals.proposalCount === undefined ? "Proposal count unreadable. Retry vault." : start + 50n > s.globals.proposalCount ? "This is the last page." : ""}`}
+      </p>
     </section>
   );
 }
@@ -570,87 +802,267 @@ export function OwnerPage(props: Props) {
   const feedField: Field = { key: "feed", label: "Stock USD feed address" };
   const failing = s.assets.filter((a) => a.reason !== 0);
   const finalized = s.globals.genesisFinalized;
+  const [listing, setListingState] = useState(() => {
+    try {
+      return sessionStorage.getItem("basket-listing") || "";
+    } catch {
+      return "";
+    }
+  });
+  const setListing = (value: string) => {
+    setListingState(value);
+    try {
+      sessionStorage.setItem("basket-listing", value);
+    } catch {
+      /* storage optional */
+    }
+  };
+  let unlisted: string[] = [],
+    listingError = "";
+  if (listing.trim())
+    try {
+      unlisted = parseLaunch(listing)
+        .filter((r) => !s.assets.some((a) => same(a.token, r.token)))
+        .map((r) => r.ticker);
+    } catch (e) {
+      listingError = explain(e);
+    }
+  const jump = (id: string) => {
+    const el = document.getElementById(`owner-${id}`);
+    el?.scrollIntoView();
+    el?.focus({ preventScroll: true });
+  };
   return (
     <>
       <PageTitle eyebrow="Behind the counter" title="Owner">
         All controls and proposals are visible to everyone. Only the wallet
         allowed by the vault can send each transaction.
       </PageTitle>
+      <div className="jump-links" aria-label="Owner sections">
+        {["Launch", "Pause", "Pending", "Immediate", "Propose"].map((label) => (
+          <button key={label} onClick={() => jump(label.toLowerCase())}>
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="roles panel">
         <div>
           <strong>Owner</strong>
-          <Addr value={s.globals.owner} />
+          {s.loading ? "Reading..." : <Addr value={s.globals.owner} />}
         </div>
         <div>
           <strong>Guardian</strong>
-          <Addr value={s.globals.guardian} />
+          {s.loading ? "Reading..." : <Addr value={s.globals.guardian} />}
         </div>
         <div>
           <strong>Pending owner</strong>
-          {same(s.globals.pendingOwner, zeroAddress) ? (
+          {s.loading ? (
+            "Reading..."
+          ) : same(s.globals.pendingOwner, zeroAddress) ? (
             <span>None</span>
           ) : (
             <Addr value={s.globals.pendingOwner} />
           )}
         </div>
       </div>
-      <section className="owner-section panel">
-        <h2>Launch</h2>
-        <p>
-          {finalized === undefined
-            ? "Genesis unreadable — Retry vault"
-            : finalized
-              ? "Genesis finalized"
-              : "Genesis not finalized"}
+      {finalized ? (
+        <p className="panel" id="owner-launch" tabIndex={-1}>
+          Launch done · Genesis finalized.
         </p>
-        <div className="two-col">
-          <LaunchListing {...props} />
-          <div>
-            <ActionForm
-              {...props}
-              title="Finalize genesis"
-              label="Finalize genesis"
-              description="At least three listed stocks must each have reason OK in allAssets()."
-              disabled={
-                finalized !== false ||
-                !s.aggregate ||
-                !s.complete ||
-                s.assets.length < 3 ||
-                !!failing.length
-              }
-              confirmation="I understand this is irreversible, deposits can start at once, and later stocks can only be added by a List proposal."
-              build={async () => {
-                const fresh = await loadSnapshot();
-                if (
-                  !fresh.aggregate ||
-                  !fresh.complete ||
-                  fresh.assets.length < 3 ||
-                  fresh.assets.some((a) => a.reason !== 0)
-                )
-                  throw new InputError(
-                    "Finalization blocked: " +
-                      (fresh.assets
-                        .filter((a) => a.reason !== 0)
-                        .map(
-                          (a) =>
-                            `${a.symbol}: ${a.reason === undefined ? "unreadable" : reasons[a.reason]}`,
-                        )
-                        .join("; ") ||
-                        "At least three readable stocks required."),
-                  );
-                return vault("finalizeGenesis");
-              }}
-            />
-            {failing.map((a) => (
-              <p className="error" key={a.token}>
-                {a.symbol}:{" "}
-                {a.reason === undefined ? "unreadable" : reasons[a.reason]}
+      ) : (
+        <section
+          className="owner-section panel"
+          id="owner-launch"
+          tabIndex={-1}
+        >
+          <h2>Launch</h2>
+          <p>
+            {s.loading
+              ? "Reading..."
+              : finalized === undefined
+                ? "Genesis unreadable — Retry vault"
+                : finalized
+                  ? "Genesis finalized"
+                  : "Genesis not finalized"}
+          </p>
+          <div className="two-col">
+            <LaunchListing {...props} input={listing} setInput={setListing} />
+            <div>
+              <ActionForm
+                {...props}
+                title="Finalize genesis"
+                folded={false}
+                disabledReason={
+                  listingError ||
+                  (unlisted.length
+                    ? `Unlisted rows: ${unlisted.join(", ")}. List them first.`
+                    : "At least three readable stocks must pass every check. Correct failed stocks and retry vault.")
+                }
+                label="Finalize genesis"
+                description="At least three listed stocks must each have reason OK in allAssets()."
+                disabled={
+                  finalized !== false ||
+                  !!listingError ||
+                  !!unlisted.length ||
+                  !s.aggregate ||
+                  !s.complete ||
+                  s.assets.length < 3 ||
+                  !!failing.length
+                }
+                confirmation="I understand this is irreversible, deposits can start at once, and later stocks can only be added by a List proposal."
+                build={async () => {
+                  await w.listingPending();
+                  const fresh = await loadSnapshot();
+                  const missing = listing.trim()
+                    ? parseLaunch(listing).filter(
+                        (r) =>
+                          !fresh.assets.some((a) => same(a.token, r.token)),
+                      )
+                    : [];
+                  if (missing.length)
+                    throw new InputError(
+                      `Unlisted rows: ${missing.map((r) => r.ticker).join(", ")}. List them first.`,
+                    );
+                  if (
+                    !fresh.aggregate ||
+                    !fresh.complete ||
+                    fresh.assets.length < 3 ||
+                    fresh.assets.some((a) => a.reason !== 0)
+                  )
+                    throw new InputError(
+                      "Finalization blocked: " +
+                        (fresh.assets
+                          .filter((a) => a.reason !== 0)
+                          .map(
+                            (a) =>
+                              `${a.symbol}: ${a.reason === undefined ? "unreadable" : reasons[a.reason]}`,
+                          )
+                          .join("; ") ||
+                          "At least three readable stocks required."),
+                    );
+                  return vault("finalizeGenesis");
+                }}
+              />
+              <p>
+                {s.loading
+                  ? "Reading..."
+                  : `${s.assets.length} stocks listed: ${s.assets.map((a) => a.symbol).join(", ") || "None"}`}
               </p>
-            ))}
+              {unlisted.length > 0 && (
+                <p className="error">Unlisted rows: {unlisted.join(", ")}</p>
+              )}
+              {listingError && <p className="error">{listingError}</p>}
+              {failing.map((a) => (
+                <p className="error" key={a.token}>
+                  {a.symbol}:{" "}
+                  {a.reason === undefined ? "unreadable" : reasons[a.reason]}
+                </p>
+              ))}
+            </div>
           </div>
+        </section>
+      )}
+      <section className="owner-section panel" id="owner-pause" tabIndex={-1}>
+        <h2>Deposit pause</h2>
+        <p>
+          {s.loading
+            ? "Reading..."
+            : s.globals.depositsPaused === undefined
+              ? "Pause state unreadable — Retry vault"
+              : s.globals.depositsPaused
+                ? "Paused"
+                : "Not paused"}
+        </p>
+        <RoleInfo role="operator" snapshot={s} />
+        <TxButton
+          {...props}
+          label="Pause deposits"
+          disabled={s.globals.depositsPaused !== false}
+          disabledReason={
+            s.globals.depositsPaused
+              ? "Deposits are already paused."
+              : "Pause state unreadable. Retry vault."
+          }
+          role="operator"
+          getSpec={() => vault("pauseDeposits")}
+        />
+        <RoleInfo role="owner" snapshot={s} />
+        <TxButton
+          {...props}
+          label="Unpause deposits"
+          disabled={s.globals.depositsPaused !== true}
+          disabledReason={
+            s.globals.depositsPaused === false
+              ? "Deposits are already unpaused."
+              : "Pause state unreadable. Retry vault."
+          }
+          role="owner"
+          getSpec={() => vault("unpauseDeposits")}
+        />
+      </section>
+      <Proposals {...props} />
+      <section
+        className="owner-section panel"
+        id="owner-immediate"
+        tabIndex={-1}
+      >
+        <h2>Immediate controls</h2>
+        <div className="two-col">
+          <ActionForm
+            {...props}
+            title="Close a stock"
+            label="Close stock"
+            role="operator"
+            fields={[stock()]}
+            build={(v) => vault("close", [address(v.token)])}
+          />
+
+          <ActionForm
+            {...props}
+            title="Lower size limit"
+            label="Lower NAV cap"
+            description="Acts at once and voids pending raises. Zero is allowed."
+            fields={[
+              { key: "cap", label: "Lower limit in dollars", type: "amount" },
+            ]}
+            build={(v) => vault("lowerNavCap", [amount(v.cap, true)])}
+          />
+          <ActionForm
+            {...props}
+            title="Remove retired stock"
+            label="Remove retired"
+            role="anyone"
+            description="Only when managed and total owed are both zero. Removal changes assetTokens order."
+            fields={[stock(s.assets.filter((a) => a.retired))]}
+            build={(v) => vault("removeRetired", [address(v.token)])}
+          />
+          <ActionForm
+            {...props}
+            title="Transfer ownership"
+            label="Start ownership transfer"
+            description="The new owner must accept from their own wallet and must not be the guardian."
+            fields={[{ key: "next", label: "New owner address" }]}
+            build={async (v) => {
+              const next = address(v.next);
+              if (same(next, await read(vault("guardian"))))
+                throw new InputError("The new owner must not be the guardian.");
+              return vault("transferOwnership", [next]);
+            }}
+          />
+          <ActionForm
+            {...props}
+            title="Accept ownership"
+            label="Accept ownership"
+            role="pending"
+            build={async () => {
+              if (same(w.account, await read(vault("guardian"))))
+                throw new InputError("The new owner must not be the guardian.");
+              return vault("acceptOwnership");
+            }}
+          />
         </div>
       </section>
-      <section className="owner-section panel">
+      <section className="owner-section panel" id="owner-propose" tabIndex={-1}>
         <h2>Propose a change</h2>
         <p>
           Changes wait two days. Only the owner can execute within the following
@@ -749,87 +1161,6 @@ export function OwnerPage(props: Props) {
             build={(v) => proposalSpec(9, v)}
           />
           <SettingForm {...props} />
-        </div>
-      </section>
-      <Proposals {...props} />
-      <section className="owner-section panel">
-        <h2>Immediate controls</h2>
-        <div className="two-col">
-          <ActionForm
-            {...props}
-            title="Close a stock"
-            label="Close stock"
-            role="operator"
-            fields={[stock()]}
-            build={(v) => vault("close", [address(v.token)])}
-          />
-          <section className="panel">
-            <h3>Deposit pause</h3>
-            <p>
-              {s.globals.depositsPaused === undefined
-                ? "Pause state unreadable — Retry vault"
-                : s.globals.depositsPaused
-                  ? "Paused"
-                  : "Not paused"}
-            </p>
-            <RoleInfo role="operator" snapshot={s} />
-            <TxButton
-              {...props}
-              label="Pause deposits"
-              role="operator"
-              getSpec={() => vault("pauseDeposits")}
-            />
-            <RoleInfo role="owner" snapshot={s} />
-            <TxButton
-              {...props}
-              label="Unpause deposits"
-              role="owner"
-              getSpec={() => vault("unpauseDeposits")}
-            />
-          </section>
-          <ActionForm
-            {...props}
-            title="Lower size limit"
-            label="Lower NAV cap"
-            description="Acts at once and voids pending raises. Zero is allowed."
-            fields={[
-              { key: "cap", label: "Lower limit in dollars", type: "amount" },
-            ]}
-            build={(v) => vault("lowerNavCap", [amount(v.cap, true)])}
-          />
-          <ActionForm
-            {...props}
-            title="Remove retired stock"
-            label="Remove retired"
-            role="anyone"
-            description="Only when managed and total owed are both zero. Removal changes assetTokens order."
-            fields={[stock(s.assets.filter((a) => a.retired))]}
-            build={(v) => vault("removeRetired", [address(v.token)])}
-          />
-          <ActionForm
-            {...props}
-            title="Transfer ownership"
-            label="Start ownership transfer"
-            description="The new owner must accept from their own wallet and must not be the guardian."
-            fields={[{ key: "next", label: "New owner address" }]}
-            build={async (v) => {
-              const next = address(v.next);
-              if (same(next, await read(vault("guardian"))))
-                throw new InputError("The new owner must not be the guardian.");
-              return vault("transferOwnership", [next]);
-            }}
-          />
-          <ActionForm
-            {...props}
-            title="Accept ownership"
-            label="Accept ownership"
-            role="pending"
-            build={async () => {
-              if (same(w.account, await read(vault("guardian"))))
-                throw new InputError("The new owner must not be the guardian.");
-              return vault("acceptOwnership");
-            }}
-          />
         </div>
       </section>
     </>

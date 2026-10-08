@@ -8,8 +8,10 @@ Run from `web/` after the production build. `../artifacts/validation.md` is the 
 - `node scripts/inspect-export.mjs`: subpath export, all pages at four widths, fonts, overflow, keyboard and reduced-motion checks.
 - `node scripts/check-guards.mjs`: injected account/chain/code/simulation failures; no transaction broadcast.
 
-Playwright and Chromium are external verification tools, not runtime dependencies. Install them outside the repository if absent and point `PLAYWRIGHT_MODULE` at Playwright's `index.mjs`. This worker used the provided Playwright `1.64.0-alpha-1789764292000` and its Chromium. Tests own their server/browser/fork lifecycle and close them on completion.
+Playwright and Chromium are external verification tools, not runtime dependencies. Install them outside the repository if absent and point `PLAYWRIGHT_MODULE` at Playwright's `index.mjs`. This worker used the provided Playwright `1.64.0-alpha-1789764292000` and its Chromium. The fork caches genuine account, vault and block-history system-contract reads before RPC pruning; it never patches vault storage or bytecode. Tests own their server/browser/fork lifecycle and close them on completion.
 
 `Fixtures.sol` is test-only; it is not imported by the website and is never deployed to a public chain. Its sample symbols do not describe the live vault. No generated dependency/cache directory or state dump belongs in Git.
 
 Design review uses the pinned Better Interface guide (Jakub Krehel, MIT) and Impeccable documentation method (Paul Bakaus, Apache-2.0). Both copyright notices and license texts are in `DESIGN-GUIDANCE-LICENSE`; review coverage and source locations are in the artifact report.
+
+Additional checks: `npx tsx scripts/check-interface.ts` verifies line-numbered refusals, exact balances and pool/setting arithmetic; `node scripts/check-motion.mjs` checks scrolling geometry and repeated-strip coverage in Linux Chromium at DPR 1/1.25/1.5. This is not native Windows display-scaling validation. The fork walkthrough covers 25 listing rows, decline/resume, an accelerated receipt timeout, pending transaction and reload, plus every transaction control. Screenshots wait for read/layout stability and use JPEG quality 48 to meet the submission budget.
