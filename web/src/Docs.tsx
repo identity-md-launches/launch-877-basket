@@ -19,7 +19,7 @@ export function DocsPage() {
         <section className="panel">
           <h2>Deposits</h2>
           <p>
-            deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US
+            Deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US
             market holidays, redemptions always open
           </p>
           <p>

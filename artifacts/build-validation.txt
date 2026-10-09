@@ -1,13 +1,25 @@
-2026-10-09: final vault 6 production build (tsc --noEmit && vite build) from the unchanged lockfile.
+
+> basket-protocol-web@1.0.0 typecheck
+> tsc --noEmit
+
+
+> basket-protocol-web@1.0.0 build
+> tsc --noEmit && vite build
+
+vite v7.1.9 building for production...
+transforming...
+✓ 1100 modules transformed.
+rendering chunks...
+computing gzip size...
 ../dist/index.html                     0.66 kB │ gzip:   0.39 kB
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
-../dist/assets/index-CtG_z5cM.css     19.53 kB │ gzip:   5.14 kB
-../dist/assets/ccip-DmZ24wUF.js        2.61 kB │ gzip:   1.23 kB
-../dist/assets/index-CFVABhOE.js     550.17 kB │ gzip: 167.43 kB
+../dist/assets/index-CizpQbvD.css     37.29 kB │ gzip:   8.86 kB
+../dist/assets/ccip-DvVxTIUX.js        2.61 kB │ gzip:   1.23 kB
+../dist/assets/index-DJaEP2OT.js     566.68 kB │ gzip: 173.25 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 3.27s
+✓ built in 3.40s

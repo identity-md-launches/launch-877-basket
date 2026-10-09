@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8101795,
+  "uncompressedDeliveryBytes": 8127785,
   "fileCount": 228,
-  "productionExportBytes": 911328,
+  "productionExportBytes": 910824,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-Dnf7aVhq.js": {
+    "dist/assets/ccip-DvVxTIUX.js": {
       "bytes": 2610,
-      "sha256": "22308acd603fb0b580a441e2d265fa635e07b8c35a34edb062cf1ea6033d045e"
+      "sha256": "e14d2da0287e6b87c16ce7b7610a96793db7d2b2bfd0e40ccc86ad268d11d6e9"
     },
-    "dist/assets/index-B0l62uGD.css": {
-      "bytes": 38056,
-      "sha256": "a9403561f24ebf9368cd5ebe46b19ce63c78a454c7aa008a53c2a1c7a93f5354"
+    "dist/assets/index-CizpQbvD.css": {
+      "bytes": 37293,
+      "sha256": "1c601e5a9a136fd523a2d22c3c1d92690fd620d25448e6c09dc053d01cd25f58"
     },
-    "dist/assets/index-CLHhkE-M.js": {
-      "bytes": 566420,
-      "sha256": "a44be771be2176f9bcd62618208d441db32f49107b169e30776969223d42e80b"
+    "dist/assets/index-DJaEP2OT.js": {
+      "bytes": 566679,
+      "sha256": "3dd75e0037c6c23adf7535fae4216a9f4b5baead3de59526ed69f68a6f33f288"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -186,12 +186,12 @@
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "80bf19938413021c9d45ad72b965a98c5c2b410dcfbfdf8b952649e00c6f2c3f"
+      "sha256": "d599527b28fdf7ecb080843470ddf46b850a0311835282f33d615020460274ca"
     }
   },
   "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
-    "Protected configuration, dependencies, root contracts, web/pinned, web/index.html, web/vite.config.ts, web/tsconfig.json and the validation fixtures unchanged; web/public unchanged except favicon.svg, which (and dist/favicon.svg) has the SHA-256 of the chosen icon; web/src changed only within the v9 scope (look: components, Vault (with the Stock shelves labels), Flows, Docs, styles, main (footer tagline removed), Scenery (slogan strip); low fixes: chain, model, newYork, governance, Owner, wallet; Losses, poolMath, deployment and the ABI frozen)",
+    "Protected configuration, dependencies, root contracts, web/pinned, web/index.html, web/vite.config.ts, web/tsconfig.json and the validation fixtures unchanged; web/public unchanged (web/public/favicon.svg and dist/favicon.svg keep the SHA-256 of the chosen icon); web/src changed only within the v10 scope (Docs: deposits sentence; Flows: 24/7 redemption tag; Vault and model: no price times on the Stock shelves; styles: the tag and the removed age rules; Scenery and styles: slogan strip fix); every other source frozen",
     "No git submodules or nested dependency/cache/archive payloads",
     "24 required empty/25-stock JPEGs retained (quality 36 since v9, 40 before); no additional artifact images",
     "Both copies of all 37 manifest assets included"

@@ -134,6 +134,14 @@
     ],
     "inputSize": "16px",
     "marquee": "none",
+    "marqueeStill": {
+      "animations": 0,
+      "cssAnimations": 0,
+      "halves": 2,
+      "start": true,
+      "sideBySide": true,
+      "full": true
+    },
     "focus": "4px"
   },
   "contrast": [
@@ -182,8 +190,7 @@
   ],
   "issues": [],
   "outsideRequests": [
-    "https://rpc.mainnet.chain.robinhood.com/",
-    "https://robinhood-rpc.publicnode.com/"
+    "https://rpc.mainnet.chain.robinhood.com/"
   ],
   "checks": [
     "Production subpath navigation",
@@ -191,7 +198,8 @@
     "Local fonts loaded",
     "Keyboard skip link reaches main",
     "No-wallet recovery message",
-    "Reduced motion disables marquee"
+    "v10: the 24/7 redemption tag first in the Deposit and Redeem forms at four widths, on no other page",
+    "Reduced motion disables marquee (v10: no Web Animation or CSS animation on the strip, the halves still and side by side from the left edge)"
   ],
   "limitations": [
     "No screen reader, native zoom or physical device session",

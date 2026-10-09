@@ -12,51 +12,29 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
-        "text": "(old Vault eyebrow, removed)",
-        "y": 652.375,
-        "bottom": 672.375,
-        "inTitle": true
-      },
-      {
-        "tag": "P",
-        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
-        "y": 730.359375,
-        "bottom": 778.359375,
+        "text": "I was hoping you would come through my aisle",
+        "y": 709.1875,
+        "bottom": 782.359375,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
-        "oldBottom": 778.359375,
-        "newBottom": 1082.359375,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [
-      {
-        "tag": "P",
-        "oldBottom": 672.375,
-        "reason": "old Vault eyebrow (tagline) removed (v9)"
-      }
-    ],
+    "hintGrowth": 0,
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -74,38 +52,29 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
-        "text": "FILL YOUR BASKET",
-        "y": 652.375,
-        "bottom": 672.375,
+        "text": "Go ahead and put it in",
+        "y": 706.78125,
+        "bottom": 761.5625,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "FILL YOUR BASKET",
-        "oldBottom": 672.375,
-        "newBottom": 871.40625,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [],
+    "hintGrowth": 0,
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -123,52 +92,29 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
-        "text": "AT THE CHECKOUT",
-        "y": 652.375,
-        "bottom": 672.375,
-        "inTitle": true
-      },
-      {
-        "tag": "P",
-        "text": "Receive your share of every stock. Redemption is always open.",
-        "y": 730.359375,
-        "bottom": 778.359375,
+        "text": "are you sure that’s all you came here for?",
+        "y": 710.375,
+        "bottom": 783.546875,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "AT THE CHECKOUT",
-        "oldBottom": 672.375,
-        "newBottom": 871.40625,
-        "reason": "pop-out character above the title words (v9 look)"
-      },
-      {
-        "tag": "P",
-        "text": "Receive your share of every stock. Redemption is always open.",
-        "oldBottom": 778.359375,
-        "newBottom": 1030.375,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [],
+    "hintGrowth": 0,
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -186,37 +132,37 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
         "text": "KNOW YOUR BASKET",
-        "y": 652.375,
-        "bottom": 672.375,
+        "y": 684.375,
+        "bottom": 704.375,
         "inTitle": true
       },
       {
         "tag": "P",
         "text": "How Basket works, what it costs and what to watch for.",
-        "y": 730.359375,
-        "bottom": 778.359375,
+        "y": 762.359375,
+        "bottom": 810.359375,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [],
-    "removed": [],
-    "checks": [],
+    "hintGrowth": 0,
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
+    ],
     "regressions": []
   },
   {
@@ -232,45 +178,30 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
         "text": "BEHIND THE COUNTER",
-        "y": 652.375,
-        "bottom": 672.375,
-        "inTitle": true
-      },
-      {
-        "tag": "P",
-        "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
-        "y": 730.359375,
-        "bottom": 802.359375,
+        "y": 684.375,
+        "bottom": 704.375,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
-        "oldBottom": 802.359375,
-        "newBottom": 834.359375,
-        "reason": "wallet hint 32 px taller (v9 look)"
-      }
+    "hintGrowth": 0,
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
     ],
-    "removed": [],
-    "checks": [],
     "regressions": []
   },
   {
@@ -286,45 +217,30 @@
       },
       {
         "tag": "DIV",
-        "text": "Open this page in your wallet app's browserCopy site link",
+        "text": "Open this page in your wallet app's browser\nCopy site link",
         "y": 515.375,
-        "bottom": 617.375,
+        "bottom": 649.375,
         "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 555.375,
-        "bottom": 601.375,
+        "y": 587.375,
+        "bottom": 633.375,
         "inTitle": false
       },
       {
         "tag": "P",
         "text": "ACCOUNTING HEALTH",
-        "y": 652.375,
-        "bottom": 672.375,
-        "inTitle": true
-      },
-      {
-        "tag": "P",
-        "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
-        "y": 730.359375,
-        "bottom": 802.359375,
+        "y": 684.375,
+        "bottom": 704.375,
         "inTitle": true
       }
     ],
-    "hintGrowth": 32,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
-        "oldBottom": 802.359375,
-        "newBottom": 834.359375,
-        "reason": "wallet hint 32 px taller (v9 look)"
-      }
+    "hintGrowth": 0,
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
     ],
-    "removed": [],
-    "checks": [],
     "regressions": []
   },
   {
@@ -340,37 +256,15 @@
       },
       {
         "tag": "P",
-        "text": "(old Vault eyebrow, removed)",
-        "y": 512.375,
-        "bottom": 532.375,
-        "inTitle": true
-      },
-      {
-        "tag": "P",
-        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
-        "y": 590.359375,
-        "bottom": 638.359375,
+        "text": "I was hoping you would come through my aisle",
+        "y": 537.1875,
+        "bottom": 610.359375,
         "inTitle": true
       }
     ],
     "hintGrowth": 0,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
-        "oldBottom": 638.359375,
-        "newBottom": 910.359375,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [
-      {
-        "tag": "P",
-        "oldBottom": 532.375,
-        "reason": "old Vault eyebrow (tagline) removed (v9)"
-      }
-    ],
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -389,30 +283,21 @@
       {
         "tag": "P",
         "text": "FILL YOUR BASKET",
-        "y": 512.375,
-        "bottom": 532.375,
+        "y": 679.40625,
+        "bottom": 699.40625,
         "inTitle": true
       },
       {
         "tag": "P",
-        "text": "Choose one or more open stocks. They go into the vault together in one deposit.",
-        "y": 634.34375,
-        "bottom": 682.34375,
+        "text": "Go ahead and put it in",
+        "y": 534.78125,
+        "bottom": 589.5625,
         "inTitle": true
       }
     ],
     "hintGrowth": 0,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "Choose one or more open stocks. They go into the vault together in one deposit.",
-        "oldBottom": 682.34375,
-        "newBottom": 858.375,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [],
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -431,30 +316,21 @@
       {
         "tag": "P",
         "text": "AT THE CHECKOUT",
-        "y": 512.375,
-        "bottom": 532.375,
+        "y": 679.40625,
+        "bottom": 699.40625,
         "inTitle": true
       },
       {
         "tag": "P",
-        "text": "Receive your share of every stock. Redemption is always open.",
-        "y": 590.359375,
-        "bottom": 638.359375,
+        "text": "are you sure that’s all you came here for?",
+        "y": 538.375,
+        "bottom": 611.546875,
         "inTitle": true
       }
     ],
     "hintGrowth": 0,
-    "moved": [
-      {
-        "tag": "P",
-        "text": "Receive your share of every stock. Redemption is always open.",
-        "oldBottom": 638.359375,
-        "newBottom": 858.375,
-        "reason": "pop-out character above the title words (v9 look)"
-      }
-    ],
-    "removed": [],
     "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
     ],
     "regressions": []
@@ -486,9 +362,9 @@
       }
     ],
     "hintGrowth": 0,
-    "moved": [],
-    "removed": [],
-    "checks": [],
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
+    ],
     "regressions": []
   },
   {
@@ -553,9 +429,9 @@
       }
     ],
     "hintGrowth": 0,
-    "moved": [],
-    "removed": [],
-    "checks": [],
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
+    ],
     "regressions": []
   },
   {
@@ -585,9 +461,9 @@
       }
     ],
     "hintGrowth": 0,
-    "moved": [],
-    "removed": [],
-    "checks": [],
+    "checks": [
+      "slogan strip in the same place and size, still and full under reduced motion"
+    ],
     "regressions": []
   }
 ]

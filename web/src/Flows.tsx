@@ -35,6 +35,16 @@ import {
 import { DepositState } from "./Vault";
 import type { Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
+// Always shown at the top of the Deposit and Redeem forms (open or closed), so
+// nobody reads the deposit hours as redemption hours.
+function HoursTag() {
+  return (
+    <p className="hours-tag">
+      <strong>Redemptions are open 24/7.</strong>{" "}
+      <span>Deposit hours apply to deposits only.</span>
+    </p>
+  );
+}
 export function DepositPage({ snapshot: s, wallet: w }: Props) {
   const open = s.assets.filter((a) => a.open && !a.retired);
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -200,6 +210,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       </PageTitle>
       <div className="flow-layout">
         <section className="panel">
+          <HoursTag />
           <DepositState snapshot={s} />
           <p className="flow-steps">
             Choose amounts, preview, approve each stock, press Deposit.
@@ -571,10 +582,11 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
           line: "are you sure that’s all you came here for?",
         }}
       >
-        Receive your share of every stock. Redemption is always open.
+        Receive your share of every stock.
       </PageTitle>
       <div className="flow-layout">
         <section className="panel">
+          <HoursTag />
           <h2>Redeem shares</h2>
           <p>
             Choose BASK and a receiver, preview, then press Redeem. The estimate

@@ -104,6 +104,29 @@ try {
         width,
         heading: await p.locator("h1").innerText(),
       });
+      // v10: the 24/7 redemption tag on Deposit and Redeem only, first in the form, whole inside the viewport.
+      const tag = await p.locator(".hours-tag").evaluateAll((ts) =>
+        ts.map((t) => ({
+          text: t.textContent,
+          first: t.parentElement.firstElementChild === t,
+          inView:
+            t.getBoundingClientRect().left >= 0 &&
+            t.getBoundingClientRect().right <= innerWidth,
+        })),
+      );
+      assert.deepEqual(
+        tag,
+        ["Deposit", "Redeem"].includes(name)
+          ? [
+              {
+                text: "Redemptions are open 24/7. Deposit hours apply to deposits only.",
+                first: true,
+                inView: true,
+              },
+            ]
+          : [],
+        `${name} ${width} 24/7 tag`,
+      );
       if (width === 1440 || width === 375)
         await p.screenshot({
           path: path.join(captures, `live-${name.toLowerCase()}-${width}.jpg`),
@@ -132,9 +155,36 @@ try {
     inputSize: getComputedStyle(document.querySelector("input")).fontSize,
     marquee: getComputedStyle(document.querySelector(".marquee-track"))
       .animationName,
+    // v10: the strip's halves move as Web Animations; under reduced motion none may exist (cancelled, not paused), no
+    // strip element has a CSS animation, and the halves stand still side by side from the window's left edge.
+    marqueeStill: (() => {
+      const m = document.querySelector(".marquee"),
+        w = m.querySelector(".marquee-window").getBoundingClientRect(),
+        h = [...m.querySelectorAll(".marquee-half")]
+          .map((e) => e.getBoundingClientRect())
+          .sort((a, b) => a.left - b.left);
+      return {
+        animations: m.getAnimations({ subtree: true }).length,
+        cssAnimations: [m, ...m.querySelectorAll("*")].filter(
+          (e) => getComputedStyle(e).animationName !== "none",
+        ).length,
+        halves: h.length,
+        start: Math.abs(h[0].left - w.left) < 0.01,
+        sideBySide: Math.abs(h[1].left - h[0].right) < 0.01,
+        full: h[1].right >= w.right - 0.01,
+      };
+    })(),
     focus: getComputedStyle(document.querySelector("a")).outlineOffset,
   }));
   assert.equal(style.marquee, "none");
+  assert.deepEqual(style.marqueeStill, {
+    animations: 0,
+    cssAnimations: 0,
+    halves: 2,
+    start: true,
+    sideBySide: true,
+    full: true,
+  });
   assert.equal(style.inputSize, "16px");
   assert.ok(style.fonts.every((f) => f.status === "loaded"));
   const pairs = [
@@ -179,7 +229,8 @@ try {
           "Local fonts loaded",
           "Keyboard skip link reaches main",
           "No-wallet recovery message",
-          "Reduced motion disables marquee",
+          "v10: the 24/7 redemption tag first in the Deposit and Redeem forms at four widths, on no other page",
+          "Reduced motion disables marquee (v10: no Web Animation or CSS animation on the strip, the halves still and side by side from the left edge)",
         ],
         limitations: [
           "No screen reader, native zoom or physical device session",

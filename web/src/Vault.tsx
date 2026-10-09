@@ -13,7 +13,6 @@ import {
   assetValue,
   fmt,
   usd,
-  age,
   pairingMatches,
   hoursWords,
   type Asset,
@@ -313,15 +312,6 @@ const staleFeed = (a: Asset) => a.reason === 9;
 // Money on the labels is the site's usd(): cut to the cent, the same rule as the
 // NAV figure above (one rule site-wide). The flyer price only prints usd()'s
 // cents in two digits ("$669.5" shows as $669 and 50 cents).
-// age() as today, but on the labels under 1 minute reads "just now" (the long
-// words wrapped and made the row taller; the drawer keeps age()'s full words)
-// and 48 hours or more reads in days ("4 days ago")
-function shelfAge(a: Asset): string {
-  const t = age(a.updatedAt);
-  if (!t.endsWith(" ago") || a.updatedAt === undefined) return t;
-  const s = Math.floor(Date.now() / 1000 - Number(a.updatedAt));
-  return s < 60 ? "just now" : s >= 2 * 86400 ? `${Math.floor(s / 86400)} days ago` : t;
-}
 function ShelfPrice({ a, stale }: { a: Asset; stale: boolean }) {
   if (!priceReadable(a)) return <p className="sa-price is-unreadable">price unreadable</p>;
   const t = usd(feedPrice18(a)),
@@ -344,26 +334,15 @@ function ShelfPrice({ a, stale }: { a: Asset; stale: boolean }) {
     </p>
   );
 }
-function PriceAge({ a, stale }: { a: Asset; stale: boolean }) {
-  const t = shelfAge(a);
-  return (
-    <p className={stale ? "sa-age is-stale" : "sa-age"}>
-      {stale && <span className="sa-old">old price</span>}
-      {stale && " "}
-      {t.endsWith(" ago") || t === "just now" ? (
-        <>
-          {/* narrower labels show a small clock (or nothing) instead of the words; still read out */}
-          <span className="sa-upd">price updated </span>
-          <span className="sa-when">
-            <span className="sa-clock" aria-hidden="true" />
-            {t.charAt(0).toLowerCase() + t.slice(1)}
-          </span>
-        </>
-      ) : (
-        `price time: ${t}`
-      )}
+// No price time on the labels or in the drawer: feeds post only on a 0.5% move
+// or every 24 hours, so an age like "17h 55m ago" looked stale when it was not.
+// Only a price the vault refuses as too old (reason 9) gets the "old price" tag.
+function OldPriceTag({ stale }: { stale: boolean }) {
+  return stale ? (
+    <p className="sa-age is-stale">
+      <span className="sa-old">old price</span>
     </p>
-  );
+  ) : null;
 }
 function shareText(value: bigint | undefined, nav: bigint | undefined) {
   return nav === undefined || value === undefined
@@ -530,7 +509,7 @@ function ShelfLabel({
             </h4>
             {stamp}
             <ShelfPrice a={a} stale={stale} />
-            <PriceAge a={a} stale={stale} />
+            <OldPriceTag stale={stale} />
           </div>
           <p className="sa-st">
             <span className="sa-stw">
@@ -644,12 +623,11 @@ function ShelfDrawer({
           </dd>
         </div>
         <div>
-          <dt>Feed price / age</dt>
+          <dt>Feed price</dt>
           <dd>
             {a.answer === undefined || a.answer <= 0n
               ? "unreadable / invalid feed"
-              : "$" + fmt(a.answer, a.feedDecimals)}{" "}
-            <small>{age(a.updatedAt)}</small>
+              : "$" + fmt(a.answer, a.feedDecimals)}
           </dd>
         </div>
         <div>

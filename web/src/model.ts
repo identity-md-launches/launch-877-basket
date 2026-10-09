@@ -338,17 +338,6 @@ export function date(n: bigint | undefined, edge: "start" | "end" = "start") {
     return "unreadable";
   }
 }
-export function age(n: bigint | undefined, now = Date.now() / 1000) {
-  if (n === undefined || n === 0n) return "unreadable";
-  const s = Math.floor(now - Number(n));
-  return s < 0
-    ? "Future timestamp"
-    : s < 60
-      ? "Less than 1 min ago"
-      : s < 3600
-        ? `${Math.floor(s / 60)} min ago`
-        : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
-}
 export const same = (a?: string, b?: string) =>
   !!a && !!b && a.toLowerCase() === b.toLowerCase();
 export const deadline = () => BigInt(Math.floor(Date.now() / 1000) + 600);

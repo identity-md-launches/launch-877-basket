@@ -37,6 +37,17 @@ const bundle = fs.readdirSync(path.join(root, "dist/assets")).filter(f => f.ends
 for (const line of Object.values(LINES)) assert.ok(bundle.includes(line), line);
 assert.ok(bundle.includes("A different receiver must connect here to claim any stocks still owed to it."), "receiver wording");
 for (const gone of ["hehe", "WOW!", "Unsent stocks are owed", "must connect to claim", "vault-hero", "clerk-panel", "picture-stage"]) assert.ok(!bundle.includes(gone), "removed from the bundle: " + gone);
+// v10: the 24/7 redemption tag and the capitalised Docs deposits sentence are in; the Stock shelves show no price time
+// (the label age words and clock, the drawer's age and age() are gone from scripts and styles); the reason-9
+// "old price" tag stays.
+const V10_TAG = "Redemptions are open 24/7. Deposit hours apply to deposits only.";
+const V10_DOCS = "Deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US market holidays, redemptions always open";
+const styles = fs.readdirSync(path.join(root, "dist/assets")).filter(f => f.endsWith(".css")).map(f => fs.readFileSync(path.join(root, "dist/assets", f), "utf8")).join("\n");
+for (const text of ["Redemptions are open 24/7.", "Deposit hours apply to deposits only.", "Deposits open Sunday 8 pm to Friday 8 pm New York time", "old price", '"sa-old"', "Feed price"]) assert.ok(bundle.includes(text), "v10 text in the bundle: " + text);
+for (const gone of ["Redemption is always open.", "deposits open Sunday", "Feed price / age", "just now", "Less than 1 min ago", " min ago", "m ago", "days ago", "price time: ", "Future timestamp", "sa-clock", "sa-upd", "sa-when"]) assert.ok(!(bundle + styles).includes(gone), "removed from the bundle (v10): " + gone);
+assert.ok(styles.includes(".hours-tag"), "v10 tag style");
+// Words on the shelves that would be a price time.
+const PRICE_TIME = /\bago\b|just now|price updated|price time|less than 1 min|future timestamp|\d+h \d+m/i;
 // v9 A4: the old tagline is gone from the whole built site (page, scripts, styles, icon), in any letter case.
 const TAGLINE = /one\s+basket/i;
 for (const f of fs.readdirSync(path.join(root, "dist"), {recursive:true}).map(String).filter(f => /\.(html|js|css|svg|json|txt)$/.test(f)))
@@ -44,39 +55,82 @@ for (const f of fs.readdirSync(path.join(root, "dist"), {recursive:true}).map(St
 // The other pages keep their eyebrow (HEAD text); the Vault title has none.
 const EYEBROWS = {vault:null, deposit:"Fill your basket", redeem:"At the checkout", docs:"Know your basket", owner:"Behind the counter", losses:"Accounting health"};
 // v9 A2 slogan strip: each half shows k whole slogan lines (one line is 720 px), k = the fewest lines that cover the
-// viewport (1 up to 720 px, 2 up to 1440 px, ... 8 from 5041 px); 45 s per line (16 px/s), 11.25 s at 660 px and
-// below (64 px/s); the moving block is at most two screens plus two lines wide and has no will-change.
+// viewport (1 up to 720 px, 2 up to 1440 px, ... 8 from 5041 px).
+// v10 strip loop: the two identical halves share one grid cell and each moves as its own Web Animation started by
+// Marquee (Scenery.tsx; no CSS animation): linear and endless from translateX(100%) to translateX(-100%) of its own
+// width, at exactly 16 px/s (64 px/s at 660 px and below; the cycle follows the measured half width L, so it lasts
+// 2 L / speed), the second half half a cycle behind the first. So the halves always sit edge to edge and cover the
+// window, each jumps back only while it is wholly off screen (wholly left of the window just before, wholly right of
+// it just after), no animationiteration event fires at a reset, the only moving blocks are the two halves (k lines
+// each, the track itself stays put) and nothing in the strip has will-change, a CSS animation or a 3D transform.
+// Under reduced motion both animations are cancelled and the halves stand still side by side from the left edge.
 const SLOGAN = "Basket buddies! • Take a stroll down the aisles • Give your cart a twirl • ";
 const stripLines = width => Math.min(8, Math.max(1, Math.ceil(width / 720)));
-// In the page: the strip's geometry, with the animation paused at `fraction` of its loop (null: leave it). `joins` are
-// the gaps from the last glyph of each shown line to the first glyph of the next one (inside a half and across the
-// seam between the halves), `wordGap` the normal gap between a bullet and the next word.
+// Loop phases sampled, as fractions of a half's cycle: twelve evenly spaced ones plus just before, at and just after
+// each half's reset (the first half jumps back at 0.5, the second at 0 = 1).
+const STRIP_PHASES = [...new Set([0, 1e-7, ...Array.from({length: 12}, (_, i) => (i + 1) / 12), 0.4999999, 0.5000001, 0.9999999])].sort((a, b) => a - b);
+// In the page: the strip's geometry, with both animations paused at `fraction` of their cycle (null: leave them).
+// The halves are taken in screen order (left to right): `joins` are the gaps from the last glyph of each shown line to
+// the first glyph of the next one (inside a half and across the seam between the halves), `wordGap` the normal gap
+// between a bullet and the next word; `positions` are the halves' left edges (DOM order) from the window's left edge.
 function stripGeometry(fraction) {
-  const track = document.querySelector(".marquee-track"), win = track.parentElement, a = track.getAnimations();
-  if (fraction !== null && a[0]) { a[0].pause(); a[0].currentTime = a[0].effect.getTiming().duration * fraction; }
+  const strip = document.querySelector(".marquee"), track = strip.querySelector(".marquee-track"), win = track.parentElement;
+  const dom = [...track.children], a = strip.getAnimations({subtree: true});
+  const clock = a.map(x => ({state: x.playState, start: x.startTime, current: x.currentTime}));
+  if (fraction !== null) for (const x of a) { x.pause(); x.currentTime = x.effect.getTiming().duration * fraction; }
   const R = e => e.getBoundingClientRect();
   const glyph = (span, i) => {
     const w = document.createTreeWalker(span, NodeFilter.SHOW_TEXT);
     for (let n, k = i; (n = w.nextNode()); k -= n.length) if (k < n.length) { const rg = document.createRange(); rg.setStart(n, k); rg.setEnd(n, k + 1); return rg.getBoundingClientRect(); }
     return null;
   };
-  const halves = [...track.children].map(h => ({text: h.textContent, width: R(h).width, minWidth: getComputedStyle(h).minWidth,
+  const halves = dom.map(h => ({text: h.textContent, width: R(h).width, minWidth: getComputedStyle(h).minWidth,
     spans: [...h.children].map(s => ({text: s.textContent, display: getComputedStyle(s).display, width: R(s).width}))}));
-  const shown = [...track.children].map(h => [...h.children].filter(s => getComputedStyle(s).display !== "none"));
+  const order = dom.map((h, i) => i).sort((i, j) => R(dom[i]).left - R(dom[j]).left);
+  const shown = order.map(i => [...dom[i].children].filter(s => getComputedStyle(s).display !== "none"));
   const run = shown.flat(), text = run[0].textContent, last = text.trimEnd().length - 1, bullet = text.indexOf("•");
   const wordGap = glyph(run[0], bullet + 2).left - glyph(run[0], bullet).right;
   const joins = run.slice(1).map((s, i) => glyph(s, 0).left - glyph(run[i], last).right);
-  const t = R(track), w = R(win), cs = getComputedStyle(track);
-  // Box edges, exact in both engines: the shown lines sit edge to edge from the track's left end to its right end,
-  // each line box as wide as its text (WebKit rounds single-glyph boxes to whole pixels, so glyph gaps get a looser bound).
-  const boxes = run.map(R), halfBoxes = [...track.children].map(R);
-  const edges = [boxes[0].left - t.left, t.right - boxes[boxes.length - 1].right, halfBoxes[0].left - t.left, halfBoxes[1].left - halfBoxes[0].right, t.right - halfBoxes[1].right,
-    ...boxes.slice(1).map((b, i) => b.left - boxes[i].right)];
+  const t = R(track), w = R(win), hb = order.map(i => R(dom[i]));
+  // Box edges, exact in both engines: the right half starts where the left one ends, and in each half the shown lines
+  // sit edge to edge from its left end to its right end, each line box as wide as its text (WebKit rounds single-glyph
+  // boxes to whole pixels, so glyph gaps get a looser bound).
+  const boxes = shown.map(s => s.map(R));
+  const edges = [hb[1].left - hb[0].right, ...boxes.flatMap((b, h) => [b[0].left - hb[h].left, hb[h].right - b[b.length - 1].right, ...b.slice(1).map((x, i) => x.left - b[i].right)])];
   const textWidths = run.map(sp => { const rg = document.createRange(); rg.selectNodeContents(sp); return R(sp).width - rg.getBoundingClientRect().width; });
-  return {halves, shownCounts: shown.map(s => s.length), track: t.width, frame: w.width, viewport: innerWidth, wordGap, joins,
-    lead: glyph(run[0], 0).left - t.left, tail: t.right - glyph(run[run.length - 1], last).right, edges, textWidths,
-    covers: t.left <= w.left + 0.01 && t.right >= w.right - 0.01, offset: t.left - w.left, running: a.filter(x => x.playState === "running").length, willChange: cs.willChange, animationName: cs.animationName,
-    transform: cs.transform, duration: a[0]?.effect.getTiming().duration, contain: getComputedStyle(win).contain, isolation: getComputedStyle(win).isolation};
+  // Every element of the strip: no CSS animation, no will-change, no 3D.
+  const parts = [strip, win, track, ...dom, ...dom.flatMap(h => [...h.children])];
+  const styles = parts.map(e => { const c = getComputedStyle(e); return {cls: e.className, animationName: c.animationName, willChange: c.willChange, transform: c.transform, transformStyle: c.transformStyle, perspective: c.perspective, backface: c.backfaceVisibility}; });
+  const animations = a.map(x => { const tm = x.effect.getTiming(); return {target: dom.indexOf(x.effect.target), css: typeof CSSAnimation !== "undefined" && x instanceof CSSAnimation,
+    transition: typeof CSSTransition !== "undefined" && x instanceof CSSTransition, delay: tm.delay, duration: tm.duration, iterations: tm.iterations, easing: tm.easing, direction: tm.direction,
+    endDelay: tm.endDelay, iterationStart: tm.iterationStart, playbackRate: x.playbackRate, composite: x.effect.composite,
+    keyframes: x.effect.getKeyframes().map(k => [k.computedOffset, k.transform, k.easing, k.composite])}; });
+  return {halves, order, shownCounts: shown.map(s => s.length), track: t.width, trackLeft: t.left - w.left, frame: w.width, viewport: innerWidth, wordGap, joins,
+    leads: shown.map((s, h) => glyph(s[0], 0).left - hb[h].left), tails: shown.map((s, h) => hb[h].right - glyph(s[s.length - 1], last).right), edges, textWidths,
+    positions: dom.map(h => R(h).left - w.left), gap: Math.max(0, hb[0].left - w.left, hb[1].left - hb[0].right, w.right - hb[1].right),
+    clock, animations, styles, endlessCss: document.getAnimations().filter(x => typeof CSSAnimation !== "undefined" && x instanceof CSSAnimation && x.effect.getTiming().iterations === Infinity).length,
+    contain: getComputedStyle(win).contain, isolation: getComputedStyle(win).isolation};
+}
+// In the page: true once both halves run and their cycle matches the current half width (Marquee re-times the loop
+// from a ResizeObserver when the viewport changes or the web font arrives); the exact values are asserted afterwards.
+function stripSettled(speed) {
+  const h = document.querySelector(".marquee-half"), a = document.querySelector(".marquee").getAnimations({subtree: true});
+  return a.length === 2 && a.every(x => x.playState === "running" && Math.abs(x.effect.getTiming().duration - 2 * h.getBoundingClientRect().width / speed * 1000) < 0.01);
+}
+// No animationiteration event can fire at a reset: that event only comes from CSS animations, and the strip has none
+// (assertStripStyles below: no animation-name on any strip element, no endless CSS animation anywhere on the page);
+// its loop is two Web Animations, which fire no iteration events.
+// The v10 strip assertions shared by the running, paused and still states: no CSS animation, will-change or 3D on any
+// strip element (a moving half may only be shifted along x), the window neither contained nor isolated.
+function assertStripStyles(g, label) {
+  for (const s of g.styles) {
+    assert.equal(s.animationName, "none", `${label}: CSS animation on .${s.cls}`);
+    assert.equal(s.willChange, "auto", `${label}: will-change on .${s.cls}`);
+    assert.ok(s.transformStyle === "flat" && s.perspective === "none" && s.backface === "visible", `${label}: 3D setting on .${s.cls} ${JSON.stringify(s)}`);
+    assert.ok(s.transform === "none" || (s.cls === "marquee-half" && /^matrix\(1, 0, 0, 1, -?[\d.e+-]+, 0\)$/.test(s.transform)), `${label}: transform ${s.transform} on .${s.cls}`);
+  }
+  assert.equal(g.contain, "none"); assert.equal(g.isolation, "auto");
+  assert.equal(g.endlessCss, 0, `${label}: an endless CSS animation on the page`);
 }
 const server = http.createServer((req,res) => {
   const parts = req.url.split("/");
@@ -222,7 +276,12 @@ try {
       await page.waitForFunction(routeShown,"deposit");
       await page.evaluate(()=>document.fonts.ready);
       assert.equal(await page.locator('.marquee button').count(),0);
-      const k=stripLines(width),per=width<=660?11250:45000,label=`${engine} strip ${width}`;
+      const k=stripLines(width),per=width<=660?11250:45000,speed=width<=660?64:16,label=`${engine} strip ${width}`;
+      // v10: Marquee re-times the loop after a viewport change or the web font's arrival (ResizeObserver): wait for the
+      // strip's font itself (document.fonts.ready can resolve before WebKit starts loading it after a reload), then give
+      // the loop up to 3 s to settle; the exact cycle and speed are asserted below either way.
+      await page.evaluate(()=>document.fonts.load('24px Pixel').then(()=>document.fonts.ready));
+      await page.waitForFunction(stripSettled,speed,{timeout:3000}).catch(()=>{});
       const g=await page.evaluate(stripGeometry,null);
       assert.equal(g.viewport,width,label);
       assert.equal(g.halves.length,2,label+': two halves');
@@ -238,39 +297,73 @@ try {
       assert.ok(Math.abs(g.halves[0].width-k*720)<0.5*k,label+': half = k lines, not '+g.halves[0].width);
       assert.ok(k*720>=width&&g.halves[0].width>=g.frame-0.01,label+': k lines cover the viewport');
       if(k>1&&width<=5760) assert.ok((k-1)*720<width,label+': the fewest lines that cover it');
-      assert.ok(g.track<=2*(width+720)+0.5,label+': moving block '+g.track+' px is over two screens plus two lines');
-      assert.equal(g.willChange,'auto',label+': no will-change');
-      assert.equal(g.contain,"none"); assert.equal(g.isolation,"auto");
-      assert.equal(g.animationName,'shop-scroll',label);
-      assert.ok(Math.abs(g.duration-k*per)<0.5,label+': loop '+g.duration+' ms');
-      assert.ok(Math.abs(g.halves[0].width/(g.duration/1000)-(width<=660?64:16))<0.05,label+': speed');
-      for (const fraction of [0,.1,.25,.5,.75,.9,.99999,1]) {
-        const s=await page.evaluate(stripGeometry,fraction);
-        assert.equal(s.covers,true,label+': strip window covered at '+fraction);
-        assert.ok(s.wordGap>0,label+': word gap');
-        // Line boxes edge to edge (no margin, padding or stretch anywhere in the track), each as wide as its text.
-        for(const e of s.edges) assert.ok(Math.abs(e)<0.01,label+': line boxes not edge to edge '+JSON.stringify(s.edges));
-        for(const e of s.textWidths) assert.ok(Math.abs(e)<1,label+': a line box wider than its text '+JSON.stringify(s.textWidths));
+      const L=g.halves[0].width,D=g.animations[0]?.duration;
+      // v10: the track stays put (one grid cell, one half wide); the only moving blocks are the two halves, each k lines
+      // (at most the viewport plus one line) wide, each with its own Web Animation, both on one clock.
+      assert.ok(Math.abs(g.track-L)<0.01&&Math.abs(g.trackLeft)<0.01,label+': the track is one half wide and stays at the left edge '+[g.track,g.trackLeft]);
+      assert.ok(L<=width+720+0.5*k,label+': moving block '+L+' px is over the viewport plus one line');
+      assert.deepEqual(g.animations.map(x=>x.target).sort(),[0,1],label+': one animation on each half and none elsewhere in the strip '+JSON.stringify(g.animations.map(x=>x.target)));
+      assertStripStyles(g,label);
+      for(const x of g.animations) {
+        assert.equal(x.css,false,label+': the loop is a Web Animation, not a CSS animation');
+        assert.equal(x.transition,false,label+': the loop is not a transition');
+        assert.equal(x.iterations,Infinity,label+': endless');
+        assert.ok(x.easing==='linear'&&x.direction==='normal'&&x.endDelay===0&&x.iterationStart===0&&x.playbackRate===1&&x.composite==='replace',label+': linear, forward, unscaled '+JSON.stringify(x));
+        assert.deepEqual(x.keyframes,[[0,'translateX(100%)','linear','auto'],[1,'translateX(-100%)','linear','auto']],label+': keyframes '+JSON.stringify(x.keyframes));
+        // Exact speed: two half widths per cycle at 16 px/s (64 px/s at 660 px and below), to a millionth of a px/s.
+        assert.ok(Math.abs(2*L/(x.duration/1000)-speed)<1e-6,label+': speed '+2*L/(x.duration/1000)+' px/s, not '+speed);
+        assert.ok(Math.abs(x.duration-2*k*per)<=k*per/720+0.5,label+': cycle '+x.duration+' ms is not two k-line halves');
+      }
+      assert.ok(g.clock.every(c=>c.state==='running')&&Math.abs(g.clock[0].start-g.clock[1].start)<0.001&&g.animations[0].duration===g.animations[1].duration,label+': both halves run on one clock '+JSON.stringify(g.clock));
+      const tol=engine==='WebKit'?2.5:0.5;
+      for (const fraction of STRIP_PHASES) {
+        const s=await page.evaluate(stripGeometry,fraction),at=`${label} at ${fraction}`;
+        // Covered: the halves sit edge to edge across the whole window, also just before, at and just after a reset.
+        assert.ok(s.gap<0.01,at+': blank stretch of '+s.gap+' px in the strip window '+JSON.stringify(s.positions));
+        // Where each half is: each runs from +L to -L, the first half half a cycle ahead of the second (exactly at a
+        // half's own reset either end is accepted: both are off screen).
+        s.positions.forEach((p,i)=>{const q=(fraction+(i===0?0.5:0))%1,exp=L-2*L*q;
+          assert.ok(Math.abs(p-exp)<0.05||(q===0&&Math.abs(p+L)<0.05),at+`: half ${i+1} at ${p} px, not ${exp}`);});
+        // Each half jumps back only while wholly off screen: just before its reset it lies wholly left of the window,
+        // just after it wholly right of it.
+        for(const [i,r] of [[0,0.5],[1,1]]) {
+          if(Math.abs(fraction-(r-1e-7))<1e-12) assert.ok(s.positions[i]+L<=0.05,at+`: half ${i+1} still on screen just before its reset (right edge ${s.positions[i]+L})`);
+          if(Math.abs(fraction-(r+1e-7)%1)<1e-12) assert.ok(s.positions[i]>=s.frame-0.05,at+`: half ${i+1} not wholly right of the window just after its reset (left edge ${s.positions[i]})`);
+        }
+        assert.ok(s.wordGap>0,at+': word gap');
+        // Line boxes and halves edge to edge (no margin, padding or stretch anywhere), each line box as wide as its text.
+        for(const e of s.edges) assert.ok(Math.abs(e)<0.01,at+': line boxes or halves not edge to edge '+JSON.stringify(s.edges));
+        for(const e of s.textWidths) assert.ok(Math.abs(e)<1,at+': a line box wider than its text '+JSON.stringify(s.textWidths));
         // Glyphs: WebKit reports single-glyph boxes rounded out to whole pixels (each edge up to 1 px off), hence 2.5 px
         // there; a blank stretch would be a whole line (720 px) or more, and the box edges above are exact.
-        const tol=engine==='WebKit'?2.5:0.5;
-        assert.ok(Math.abs(s.lead)<tol,label+': text starts at the left end of the track '+s.lead);
-        assert.ok(Math.abs(s.tail-s.wordGap)<tol,label+': the track ends one space after the last bullet '+[s.tail,s.wordGap]);
+        for(const x of s.leads) assert.ok(Math.abs(x)<tol,at+': text starts at the left end of each half '+x);
+        for(const x of s.tails) assert.ok(Math.abs(x-s.wordGap)<tol,at+': each half ends one space after its last bullet '+[x,s.wordGap]);
         assert.equal(s.joins.length,2*k-1);
-        for(const j of s.joins) assert.ok(Math.abs(j-s.wordGap)<tol,label+`: gap ${j} between lines (or across the seam) is not the word gap ${s.wordGap} at ${fraction}`);
-        if([375,1440,3440].includes(width)) await page.locator('.marquee').screenshot({path:path.join(captures,`${engine}-loop-${width}-${fraction}.png`)});
+        for(const j of s.joins) assert.ok(Math.abs(j-s.wordGap)<tol,at+`: gap ${j} between lines (or across the seam) is not the word gap ${s.wordGap}`);
+        assertStripStyles(s,at);
+        if([375,1440,3440].includes(width)&&[0,0.25,0.4999999,0.5000001,0.75,0.9999999].includes(fraction)) await page.locator('.marquee').screenshot({path:path.join(captures,`${engine}-loop-${width}-${fraction}.png`)});
       }
       await page.emulateMedia({reducedMotion:"reduce"});
       await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
       const still=await page.evaluate(stripGeometry,null);
-      assert.equal(still.animationName,"none",label+': reduced motion');
-      assert.ok(Math.abs(still.offset)<0.01&&still.running===0&&['none','matrix(1, 0, 0, 1, 0, 0)'].includes(still.transform),label+': reduced motion still '+JSON.stringify([still.offset,still.running,still.transform]));
-      assert.equal(still.covers,true,label+': still strip full');
+      await page.waitForTimeout(150);
+      const still2=await page.evaluate(stripGeometry,null);
+      // v10 reduced motion: both animations cancelled (not only paused), nothing moves, the halves side by side from the
+      // window's left edge, the strip full.
+      assert.equal(still.animations.length,0,label+': reduced motion: the loop is cancelled, not only paused');
+      assertStripStyles(still,label+' reduced motion');
+      assert.deepEqual(still2.positions,still.positions,label+': reduced motion: the strip moved');
+      const side=[...still.positions].sort((x,y)=>x-y);
+      assert.ok(Math.abs(side[0])<0.01&&Math.abs(side[1]-L)<0.01,label+': reduced motion: halves not side by side from the left edge '+JSON.stringify(still.positions));
+      assert.ok(still.gap<0.01,label+': still strip full');
       assert.deepEqual(still.shownCounts,[k,k]);
       await page.emulateMedia({reducedMotion:"no-preference"});
-      strips.push(`${width}:${k}/${Math.round(g.track)}/${g.duration / 1000}s`);
+      await page.waitForFunction(stripSettled,speed,{timeout:3000}).catch(()=>{});
+      const again=await page.evaluate(stripGeometry,null);
+      assert.ok(again.animations.length===2&&again.clock.every(c=>c.state==='running')&&again.animations.every(x=>Math.abs(2*L/(x.duration/1000)-speed)<1e-6)&&again.gap<0.01,label+': motion back when reduced motion is turned off '+JSON.stringify([again.clock,again.gap]));
+      strips.push(`${width}:${k}/${Math.round(L)}/${D / 1000}s`);
     }
-    checks.push(`${engine} slogan strip, width:lines per half/track px/loop [${strips.join(' ')}]: eight lines in the markup of each half, the first k shown (k = the fewest 720 px lines covering the viewport), identical halves, track <= 2 x (viewport + 720), no will-change, 16 px/s (64 px/s at 660 px and below); at 8 loop positions the window is covered, line boxes sit edge to edge and every line join and the seam between the halves has the normal word gap; reduced motion still and full`);
+    checks.push(`${engine} slogan strip, width:lines per half/half px/cycle [${strips.join(' ')}]: eight lines in the markup of each half, the first k shown (k = the fewest 720 px lines covering the viewport), identical halves; v10 loop: the track stays put and the only moving blocks are the two halves (k lines each, at most the viewport plus one line), each its own endless linear Web Animation translateX(100%) to translateX(-100%) on one shared clock, no CSS animation, will-change or 3D in the strip and no endless CSS animation on the page; speed exactly 16 px/s (64 px/s at 660 px and below), two half widths per cycle; at ${STRIP_PHASES.length} loop phases (just before, at and just after each half's reset among them) the halves sit edge to edge across the window at their expected places, each jumping back only while wholly off screen, line boxes edge to edge and every line join and the seam with the normal word gap; so no animationiteration event can fire (that event comes only from CSS animations); reduced motion: no animation (cancelled), a still, full strip from the left edge; motion back when it is turned off`);
     await page.emulateMedia({reducedMotion:"reduce"});
     for(const width of [1440,1000,999,960,800,720,661,660,375,360,359,320]) {
       await page.setViewportSize({width,height:width===375?812:1000});
@@ -299,11 +392,12 @@ try {
           await page.waitForFunction(()=>!document.querySelector('button.refresh')?.disabled);
           const sh=await page.evaluate(()=>{
             const sec=document.querySelectorAll('.stock-section'),s=sec[0],R=e=>e.getBoundingClientRect(),unit=s?.querySelector(':scope .sa-unit');
-            const labels=[...s.querySelectorAll('article.sa-label')].map(l=>({ticker:l.querySelector('h4')?.textContent??'',price:!!l.querySelector('.sa-price'),status:l.querySelector('.sa-st')?.textContent??'',more:l.querySelector('button.sa-more')?.getAttribute('aria-expanded'),left:R(l).left,right:R(l).right,height:R(l).height,inSlot:!!l.parentElement?.matches('li.sa-slot')&&!!l.closest('ul.sa-shelves[role="list"]')}));
+            const labels=[...s.querySelectorAll('article.sa-label')].map(l=>({ticker:l.querySelector('h4')?.textContent??'',price:!!l.querySelector('.sa-price'),status:l.querySelector('.sa-st')?.textContent??'',more:l.querySelector('button.sa-more')?.getAttribute('aria-expanded'),left:R(l).left,right:R(l).right,height:R(l).height,inSlot:!!l.parentElement?.matches('li.sa-slot')&&!!l.closest('ul.sa-shelves[role="list"]'),
+              text:l.textContent,ageLines:[...l.querySelectorAll('.sa-age')].map(e=>e.textContent),dimmed:!!l.querySelector('.sa-price.is-stale'),timeParts:l.querySelectorAll('.sa-clock, .sa-upd, .sa-when, small').length,reason9:(l.querySelector('.sa-chip')?.textContent??'').includes('feed price missing or too old')}));
             const all=s.querySelector('.sa-filters button');
             return {sections:sec.length,heading:s.querySelector(':scope > .section-heading h2')?.textContent,old:document.querySelectorAll('.stock-grid, .stock-card').length,unit:unit?{left:R(unit).left,right:R(unit).right}:null,labels,
               all:all?Number(all.querySelector('.sa-count')?.textContent):null,allName:all?.firstChild?.textContent?.trim(),controls:[...s.querySelectorAll('.sa-filters button, .sa-search input')].map(e=>R(e).height),
-              moving:document.getAnimations().filter(a=>a.effect?.target?.closest?.('.stock-section')).length};
+              moving:document.getAnimations().filter(a=>a.effect?.target?.closest?.('.stock-section')).length,sectionText:s.textContent};
           });
           assert.equal(sh.sections,1,`${engine} vault ${width}: one Stock shelves panel`);
           assert.equal(sh.heading,'Stock shelves');
@@ -317,6 +411,24 @@ try {
               assert.ok(l.ticker.length>0&&l.price&&/^(Open|Closed|Retired)/.test(l.status)&&l.more==='false'&&l.inSlot,`${engine} vault ${width}: label ${JSON.stringify(l)}`);
               assert.ok(l.left>=sh.unit.left-0.5&&l.right<=sh.unit.right+0.5,`${engine} vault ${width}: label ${l.ticker} outside the shelf unit`);
               assert.ok(l.height>=44,`${engine} vault ${width}: label ${l.ticker} tap height ${l.height}`);
+              // v10: no price time on any label; only a price refused as too old (reason 9) keeps the "old price" tag
+              // (and is dimmed when it is readable), with no time beside it.
+              assert.doesNotMatch(l.text,PRICE_TIME,`${engine} vault ${width}: price time on label ${l.ticker}`);
+              assert.equal(l.timeParts,0,`${engine} vault ${width}: label ${l.ticker} has a clock or time part`);
+              assert.deepEqual(l.ageLines,l.reason9?['old price']:[],`${engine} vault ${width}: label ${l.ticker} old price tag`);
+              if(l.dimmed) assert.equal(l.reason9,true,`${engine} vault ${width}: label ${l.ticker} dimmed without reason 9`);
+            }
+            assert.doesNotMatch(sh.sectionText,PRICE_TIME,`${engine} vault ${width}: price time on the Stock shelves`);
+            // v10: the details drawer names the row "Feed price" and shows the price only (no age).
+            if([1440,375].includes(width)&&sh.labels.length) {
+              await page.locator('.stock-section article.sa-label button.sa-more').first().click();
+              const d=await page.locator('#sa-drawer').evaluate(e=>{const row=[...e.querySelectorAll('dl > div')].find(x=>/^Feed price/.test(x.querySelector('dt')?.textContent??''));return {dt:row?.querySelector('dt').textContent,dd:row?.querySelector('dd').textContent,small:row?row.querySelectorAll('small').length:-1,text:e.textContent};});
+              assert.equal(d.dt,'Feed price',`${engine} vault ${width}: drawer row name`);
+              assert.match(d.dd,/^(\$[\d,]+(\.\d+)?|unreadable \/ invalid feed)$/,`${engine} vault ${width}: drawer price only (${d.dd})`);
+              assert.equal(d.small,0,`${engine} vault ${width}: drawer age`);
+              assert.doesNotMatch(d.text,PRICE_TIME,`${engine} vault ${width}: price time in the drawer`);
+              await page.locator('#sa-drawer button',{hasText:'Close'}).click();
+              await page.waitForFunction(()=>!document.querySelector('#sa-drawer'));
             }
             assert.equal(sh.controls.length,5);
             for(const h of sh.controls) assert.ok(h>=44,`${engine} vault ${width}: filter/search height ${h}`);
@@ -365,12 +477,42 @@ try {
           assert.equal(await page.locator('.page-title.has-character, .title-character, .character-picture, .speech-bubble').count(),0,`${engine} ${name} no character`);
         }
         if(name==='redeem') assert.equal(await page.getByText(/Unsent stocks are owed/).count(),0,`${engine} redeem receiver note`);
+        // v10: the 24/7 redemption tag is the first thing in the Deposit and Redeem forms (shown open or closed): exact
+        // words, at least 14 px, white on royal blue, inside its panel with whole words, clear of the title character
+        // and her bubble; on no other page. The Redeem title sentence no longer says it.
+        const tag=await page.evaluate(()=>{
+          const ts=[...document.querySelectorAll('.hours-tag')],t=ts[0],title=document.querySelector('.page-title > p:last-of-type')?.textContent.replace(/\s+/g,' ').trim();
+          if(!t) return {count:0,title};
+          const R=e=>e.getBoundingClientRect(),r=R(t),panel=t.parentElement,pr=R(panel),cs=getComputedStyle(t),pcs=getComputedStyle(panel),split=[];
+          const w=document.createTreeWalker(t,NodeFilter.SHOW_TEXT);
+          for(let n;(n=w.nextNode());) for(const m of n.textContent.matchAll(/\S+/g)){
+            const rg=document.createRange();rg.setStart(n,m.index);rg.setEnd(n,m.index+m[0].length);
+            if(new Set([...rg.getClientRects()].filter(x=>x.width>0).map(x=>Math.round(x.top))).size!==1) split.push(m[0]);
+            const wr=rg.getBoundingClientRect();if(wr.left<r.left||wr.right>r.right) split.push('outside: '+m[0]);
+          }
+          const hit=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
+          return {count:ts.length,title,text:t.textContent,first:panel.firstElementChild===t,inForm:panel.matches('.flow-layout > section.panel'),font:parseFloat(cs.fontSize),color:cs.color,background:cs.backgroundColor,
+            inside:r.left>=pr.left+parseFloat(pcs.borderLeftWidth)-0.5&&r.right<=pr.right-parseFloat(pcs.borderRightWidth)+0.5,split,overlap:[...document.querySelectorAll('.title-character img, .speech-bubble')].filter(e=>hit(R(e),r)).length};
+        });
+        if(['deposit','redeem'].includes(name)) {
+          assert.equal(tag.count,1,`${engine} ${name} ${width}: one 24/7 tag`);
+          assert.equal(tag.text,V10_TAG,`${engine} ${name} ${width}: tag words`);
+          assert.equal(tag.first&&tag.inForm,true,`${engine} ${name} ${width}: tag first in the form panel`);
+          assert.ok(tag.font>=14,`${engine} ${name} ${width}: tag text ${tag.font} px`);
+          assert.deepEqual([tag.color,tag.background],['rgb(255, 255, 255)','rgb(23, 75, 193)'],`${engine} ${name} ${width}: tag colours`);
+          assert.equal(tag.inside,true,`${engine} ${name} ${width}: tag outside its panel`);
+          assert.deepEqual(tag.split,[],`${engine} ${name} ${width}: tag words split or outside`);
+          assert.equal(tag.overlap,0,`${engine} ${name} ${width}: tag under the character or her bubble`);
+        } else assert.equal(tag.count,0,`${engine} ${name}: 24/7 tag`);
+        if(name==='redeem') assert.equal(tag.title,'Receive your share of every stock.',`${engine} redeem ${width}: title sentence`);
         if(name==='docs') {
           const faq=await page.locator('.docs-grid > .panel').evaluateAll(ps=>{const i=ps.findIndex(p=>p.querySelector('h2')?.textContent==='Redemption'),f=ps[i+1];return {heading:f?.querySelector(':scope > h2')?.textContent,question:f?.querySelector(':scope > h3')?.textContent,answer:f?.querySelector(':scope > p')?.textContent.replace(/\s+/g,' ').trim()};});
+          const deposits=await page.locator('.docs-grid > .panel').evaluateAll(ps=>ps.find(p=>p.querySelector('h2')?.textContent==='Deposits')?.querySelector(':scope > p')?.textContent.replace(/\s+/g,' ').trim());
+          assert.equal(deposits,V10_DOCS,`${engine} docs ${width}: deposits sentence (v10)`);
           assert.deepEqual(faq,{heading:'FAQ',question:'What if a stock can’t be sent when I redeem?',answer:'Rarely, a stock can’t be sent at that moment (for example its issuer has paused transfers). The vault then keeps it for the receiver, who collects it later with Claim on the Redeem page. Only the receiver wallet can claim, so redeem to a wallet you control, not an exchange deposit address.'});
         }
       }
-      checks.push(`${engine} ${width}: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (${shelfCounts.at(-1)?.split(':')[1]}) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links`);
+      checks.push(`${engine} ${width}: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (${shelfCounts.at(-1)?.split(':')[1]}) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; v10: the 24/7 redemption tag first in the Deposit and Redeem forms (exact words, at least 14 px, white on royal blue, inside its panel, whole words, clear of the character and her bubble), the Redeem title without it, the capitalised Docs deposits sentence, no price time on any Stock shelves label or in the drawer (reason 9 keeps only its "old price" tag); no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links`);
     }
     // Every width from 320 to 2560 px: whole bubble words inside the bubble, the strip clear of the title text, the bubble in
     // its frame and off the picture's face/hands/item boxes, no overflow and a wallet hint gap of at least 8 px.

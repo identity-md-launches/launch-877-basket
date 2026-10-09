@@ -1,1 +1,1 @@
-PASS: protected source/configuration, send checks, current ABI invariants, wording, obsolete integration scan; 7324693 bytes excluding vendored contract library and Git metadata. Final bundle accounting also includes tracked lib files.
+PASS: protected source/configuration, send checks, current ABI invariants, wording, obsolete integration scan; 7297833 bytes excluding vendored contract library and Git metadata. Final bundle accounting also includes tracked lib files.

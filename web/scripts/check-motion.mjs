@@ -160,44 +160,164 @@ try {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(url + "#deposit");
       await page.evaluate(() => document.fonts.ready);
-      const track = page.locator(".marquee-track");
-      const lengths = await track.evaluate((e) => ({
-        track: e.getBoundingClientRect().width,
-        frame: e.parentElement.getBoundingClientRect().width,
-        halves: [...e.children].map((h) => ({
-          width: h.getBoundingClientRect().width,
-          shown: [...h.children].filter(
-            (s) => getComputedStyle(s).display !== "none",
-          ).length,
-        })),
-        willChange: getComputedStyle(e).willChange,
-      }));
-      // v9 slogan strip: each half is k whole 720 px lines, k the fewest that cover the viewport; the moving block
-      // is at most two screens plus two lines wide and has no will-change.
+      const speed = width <= 660 ? 64 : 16;
+      // v10: Marquee re-times the loop after a viewport change or the web font's arrival (ResizeObserver): wait for the
+      // strip's font itself, then up to 3 s for both halves to run at a cycle that matches the half width; the exact
+      // values are asserted below.
+      await page.evaluate(() =>
+        document.fonts.load("24px Pixel").then(() => document.fonts.ready),
+      );
+      await page
+        .waitForFunction(
+          (speed) => {
+            const h = document.querySelector(".marquee-half"),
+              a = document
+                .querySelector(".marquee")
+                .getAnimations({ subtree: true });
+            return (
+              a.length === 2 &&
+              a.every(
+                (x) =>
+                  x.playState === "running" &&
+                  Math.abs(
+                    x.effect.getTiming().duration -
+                      ((2 * h.getBoundingClientRect().width) / speed) * 1000,
+                  ) < 0.01,
+              )
+            );
+          },
+          speed,
+          { timeout: 3000 },
+        )
+        .catch(() => {});
+      const strip = page.locator(".marquee");
+      const lengths = await strip.evaluate((m) => {
+        const e = m.querySelector(".marquee-track"),
+          halves = [...e.children];
+        return {
+          track: e.getBoundingClientRect().width,
+          trackTransform: getComputedStyle(e).transform,
+          frame: e.parentElement.getBoundingClientRect().width,
+          halves: halves.map((h) => ({
+            width: h.getBoundingClientRect().width,
+            shown: [...h.children].filter(
+              (s) => getComputedStyle(s).display !== "none",
+            ).length,
+          })),
+          parts: [m, e.parentElement, e, ...halves, ...m.querySelectorAll("span")].map(
+            (x) => ({
+              willChange: getComputedStyle(x).willChange,
+              animationName: getComputedStyle(x).animationName,
+              transform: getComputedStyle(x).transform,
+              flat: [
+                getComputedStyle(x).transformStyle,
+                getComputedStyle(x).perspective,
+                getComputedStyle(x).backfaceVisibility,
+              ].join(" "),
+            }),
+          ),
+          loops: m.getAnimations({ subtree: true }).map((a) => ({
+            half: halves.indexOf(a.effect.target),
+            css: typeof CSSAnimation !== "undefined" && a instanceof CSSAnimation,
+            iterations: a.effect.getTiming().iterations,
+            duration: a.effect.getTiming().duration,
+            start: a.startTime,
+            keyframes: a.effect
+              .getKeyframes()
+              .map((f) => `${f.computedOffset} ${f.transform}`)
+              .join(", "),
+          })),
+        };
+      });
+      // v9 slogan strip: each half is k whole 720 px lines, k the fewest that cover the viewport.
+      // v10: the halves share one grid cell and each moves as its own endless Web Animation (no CSS animation, no
+      // will-change, no 3D), so the moving blocks are the two halves (k lines each, at most the viewport plus one
+      // line), the track stays put; speed exactly 16 px/s (64 px/s at 660 px and below), two half widths per cycle.
       const k = Math.min(8, Math.max(1, Math.ceil(width / 720)));
       for (const h of lengths.halves) {
         assert.equal(h.shown, k, `${k} lines per half at ${width}`);
         assert.ok(Math.abs(h.width - 720 * k) < 0.5 * k, `Half width ${width}`);
       }
+      const L = lengths.halves[0].width;
       assert.ok(
-        720 * k >= width && lengths.track / 2 >= lengths.frame - 0.01,
+        720 * k >= width && L >= lengths.frame - 0.01,
         `No empty stretch ${width}`,
       );
-      assert.ok(lengths.track <= 2 * (width + 720) + 0.5, `Track ${width}`);
-      assert.equal(lengths.willChange, "auto", `No will-change ${width}`);
-      for (const position of [0, 0.25, 0.49999, 0.75, 0.99999]) {
-        const gap = await track.evaluate((e, fraction) => {
-          const a = e.getAnimations()[0];
-          a.pause();
-          a.currentTime = a.effect.getTiming().duration * fraction;
-          const r = e.getBoundingClientRect(),
-            f = e.parentElement.getBoundingClientRect();
-          return r.right < f.right || r.left > f.left;
-        }, position);
-        assert.equal(gap, false);
+      assert.ok(
+        Math.abs(lengths.track - L) < 0.01 &&
+          lengths.trackTransform === "none" &&
+          L <= width + 720 + 0.5 * k,
+        `Moving blocks ${width}`,
+      );
+      for (const p of lengths.parts) {
+        assert.equal(p.willChange, "auto", `No will-change ${width}`);
+        assert.equal(p.animationName, "none", `No CSS animation ${width}`);
+        assert.ok(
+          p.transform === "none" ||
+            /^matrix\(1, 0, 0, 1, -?[\d.e+-]+, 0\)$/.test(p.transform),
+          `No 3D ${width}: ${p.transform}`,
+        );
+        assert.equal(p.flat, "flat none visible", `No 3D ${width}`);
       }
+      assert.deepEqual(
+        lengths.loops.map((x) => [x.half, x.css, x.iterations]).sort(),
+        [
+          [0, false, Infinity],
+          [1, false, Infinity],
+        ],
+        `One endless Web Animation on each half ${width}`,
+      );
+      for (const x of lengths.loops)
+        assert.ok(
+          Math.abs((2 * L) / (x.duration / 1000) - speed) < 1e-6 &&
+            x.start === lengths.loops[0].start &&
+            x.keyframes === "0 translateX(100%), 1 translateX(-100%)",
+          `Speed ${width}: ${JSON.stringify(x)}`,
+        );
+      // Paused at loop phases (as fractions of a half's cycle, just before and after each half's reset among them),
+      // the halves sit edge to edge across the whole window.
+      for (const position of [
+        0, 1e-7, 0.25, 0.4999999, 0.5, 0.5000001, 0.75, 0.9999999,
+      ]) {
+        const gap = await strip.evaluate((m, fraction) => {
+          for (const a of m.getAnimations({ subtree: true })) {
+            a.pause();
+            a.currentTime = a.effect.getTiming().duration * fraction;
+          }
+          const f = m.querySelector(".marquee-window").getBoundingClientRect(),
+            [a, b] = [...m.querySelectorAll(".marquee-half")]
+              .map((h) => h.getBoundingClientRect())
+              .sort((x, y) => x.left - y.left);
+          return Math.max(0, a.left - f.left, b.left - a.right, f.right - b.right);
+        }, position);
+        assert.ok(gap < 0.01, `Blank of ${gap} px at ${position} ${width}`);
+      }
+      // Real playback across both resets: no animationiteration event reaches the page.
+      const wrap = await strip.evaluate(async (m) => {
+        const a = m.getAnimations({ subtree: true }),
+          d = a[0].effect.getTiming().duration,
+          crossed = [];
+        let events = 0;
+        const count = () => events++;
+        document.addEventListener("animationiteration", count, true);
+        for (const at of [d / 2, d]) {
+          for (const x of a) {
+            x.currentTime = at - 150;
+            x.play();
+          }
+          await new Promise((r) => setTimeout(r, 450));
+          crossed.push(a[0].currentTime > at);
+        }
+        document.removeEventListener("animationiteration", count, true);
+        return { events, crossed };
+      });
+      assert.deepEqual(
+        wrap,
+        { events: 0, crossed: [true, true] },
+        `Loop ends ${width}`,
+      );
       checks.push(
-        `Marquee (${k} whole lines per half, no will-change) covers ${width}px at every sampled loop position, DPR ${scale}`,
+        `Marquee (${k} whole lines per half, each half its own endless Web Animation at ${speed} px/s, no CSS animation, will-change or 3D) covers ${width}px at every sampled loop phase incl. both resets, no animationiteration event across a real reset, DPR ${scale}`,
       );
     }
     await context.close();

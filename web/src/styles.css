@@ -497,6 +497,29 @@ main {
 .deposit-state p {
   margin-block: 8px 0;
 }
+/* "Redemptions are open 24/7" at the top of the Deposit and Redeem forms: a
+   small royal-blue pill tag (white text 7.5:1), calm, never a warning; round,
+   flat and without a shadow so it does not look like a button */
+.hours-tag {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 16px;
+  padding: 5px 14px;
+  background: var(--royal);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+/* when it wraps, each sentence starts its own line */
+.hours-tag strong {
+  white-space: nowrap;
+}
+.hours-tag span {
+  display: inline-block;
+}
 .stock-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -765,9 +788,6 @@ footer strong {
   color: #485974;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .marquee-track {
-    animation: shop-scroll calc(var(--k) * var(--per)) linear infinite;
-  }
   button {
     transition:
       background-color 0.15s,
@@ -775,11 +795,6 @@ footer strong {
   }
   button:active:not(:disabled) {
     box-shadow: inset 0 0 0 2px currentColor;
-  }
-}
-@keyframes shop-scroll {
-  to {
-    transform: translateX(-50%);
   }
 }
 @media (max-width: 960px) {
@@ -996,86 +1011,58 @@ footer strong {
   margin-top: 12px;
 }
 
-/* Only the slogan track moves; overflow clipping also paints correctly on iOS. Each half shows k whole slogan
-   lines (one line is 720 px), k = the fewest lines that cover the screen, so the loop never shows a blank stretch.
-   The moving block stays small and has no will-change, so iOS keeps painting it. Same speeds as before: 16 px/s,
-   64 px/s on phones (--per is the time for one line). */
+/* Each half covers the window and moves independently; its repeat happens offscreen.
+   Keep the moving surfaces small, with no will-change/3D layer (iOS text painting).
+   Scenery.tsx supplies a shared Web Animations clock at 16 px/s, 64 px/s on phones. */
 .marquee-track {
-  display: flex;
+  display: grid;
   width: max-content;
 }
 .marquee-half {
+  grid-area: 1 / 1;
   display: flex;
-  flex: none;
+}
+.marquee-half + .marquee-half {
+  transform: translateX(100%);
 }
 .marquee-half > span {
   flex: none;
   white-space: pre;
 }
-.marquee {
-  --k: 1;
-  --per: 45s;
-}
 .marquee-half > span:nth-child(n + 2) {
   display: none;
 }
-@media (max-width: 660px) {
-  .marquee {
-    --per: 11.25s;
-  }
-}
 @media (min-width: 721px) {
-  .marquee {
-    --k: 2;
-  }
   .marquee-half > span:nth-child(2) {
     display: block;
   }
 }
 @media (min-width: 1441px) {
-  .marquee {
-    --k: 3;
-  }
   .marquee-half > span:nth-child(3) {
     display: block;
   }
 }
 @media (min-width: 2161px) {
-  .marquee {
-    --k: 4;
-  }
   .marquee-half > span:nth-child(4) {
     display: block;
   }
 }
 @media (min-width: 2881px) {
-  .marquee {
-    --k: 5;
-  }
   .marquee-half > span:nth-child(5) {
     display: block;
   }
 }
 @media (min-width: 3601px) {
-  .marquee {
-    --k: 6;
-  }
   .marquee-half > span:nth-child(6) {
     display: block;
   }
 }
 @media (min-width: 4321px) {
-  .marquee {
-    --k: 7;
-  }
   .marquee-half > span:nth-child(7) {
     display: block;
   }
 }
 @media (min-width: 5041px) {
-  .marquee {
-    --k: 8;
-  }
   .marquee-half > span:nth-child(8) {
     display: block;
   }
@@ -1638,8 +1625,7 @@ summary {
   --sa-muted: #33405a;
   --sa-stale: #525d75;
 }
-.sa-sr,
-.sa-age.is-stale .sa-upd {
+.sa-sr {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1939,12 +1925,9 @@ summary {
   text-align: end;
   color: var(--sa-muted);
 }
-/* compact labels: price on its own line under the ticker, then the time */
+/* compact labels: price on its own line under the ticker */
 .sa-label--mini:not(.sa-label--chip) .sa-price {
   flex-basis: 100%;
-}
-.sa-label--mini:not(.sa-label--chip) .sa-age {
-  text-align: start;
 }
 .sa-old {
   display: inline-block;
@@ -1957,43 +1940,6 @@ summary {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.3;
-}
-.sa-age.is-stale .sa-when {
-  color: var(--error);
-  font-weight: 700;
-  white-space: nowrap;
-}
-/* small drawn clock (no numbers) that stands for "price updated" */
-.sa-clock {
-  display: none;
-  position: relative;
-  width: 13px;
-  height: 13px;
-  margin-right: 5px;
-  vertical-align: -2px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-.sa-clock::before,
-.sa-clock::after {
-  content: "";
-  position: absolute;
-  background: currentColor;
-}
-.sa-clock::before {
-  left: 3.5px;
-  top: 1px;
-  width: 2px;
-  height: 4.5px;
-}
-.sa-clock::after {
-  left: 4.5px;
-  top: 3.5px;
-  width: 3.5px;
-  height: 2px;
-}
-.sa-age.is-stale .sa-clock {
-  display: inline-block;
 }
 .sa-narrow {
   display: none;
@@ -2301,7 +2247,7 @@ summary {
     grid-column: 1 / -1;
   }
 }
-/* narrow labels: price under the ticker, a clock instead of "price updated" */
+/* narrow labels: price under the ticker */
 @container sa-slot (max-width: 189.98px) {
   .sa-price {
     flex-basis: 100%;
@@ -2315,26 +2261,9 @@ summary {
   .sa-narrow {
     display: inline;
   }
-  .sa-clock {
-    display: inline-block;
-  }
-  .sa-upd {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
   .sa-pct {
     padding: 3px 5px 2px;
     font-size: 18px;
-  }
-}
-/* the narrowest compact labels (3 a row on phones): the time alone, no clock */
-@container sa-slot (max-width: 117.98px) {
-  .sa-age:not(.is-stale) .sa-clock {
-    display: none;
   }
 }
 /* Details drawer: opens under the shelf row of the tapped label */

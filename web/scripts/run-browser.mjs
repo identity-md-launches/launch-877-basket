@@ -861,9 +861,12 @@ try {
   // A US market holiday inside the hours: every feed three hours old.
   for (const f of feeds) await tx(f, compiled.TestFeed.abi, "setLag", [3 * 3600]);
   assert.equal(Number((await rv("depositStatus", [[]]))[0]), 14);
+  // v10: the 24/7 redemption tag is always shown on Deposit (closed here, open below) and Redeem.
+  const hoursTag = "Redemptions are open 24/7. Deposit hours apply to deposits only.";
   await nav("Deposit");
   await refresh();
   await page.getByText(/^Deposits are closed until stock prices update \(at least 1 must have updated in the last 1 hour\(s\), e\.g\. a US market holiday\); no set time\. Redemptions are always open\.$/).waitFor();
+  await page.getByText(hoursTag, { exact: true }).waitFor();
   assert.equal(await page.getByText(/Deposits reopen /).count(), 0, "no reopen time on a holiday");
   await page.getByRole("button", { name: "Add FIG", exact: true }).click();
   await page.getByLabel("FIG amount", { exact: true }).fill("10");
@@ -878,6 +881,7 @@ try {
   // Same hash: reload so the holiday attempt's chosen stock is cleared.
   await page.reload();
   await nav("Deposit");
+  await page.getByText(hoursTag, { exact: true }).waitFor();
   await page.getByRole("button", { name: "Add FIG", exact: true }).click();
   await page
     .getByRole("button", { name: "Use full balance", exact: true })
@@ -969,6 +973,7 @@ try {
   await nav("Deposit");
   await refresh();
   await page.getByText(/^Deposits reopen Sunday 8:00 pm New York time \(Sunday, .* in \d+ h \d+ min; your time .*\)\. On a US market holiday they reopen when prices update\. Redemptions are always open\.$/).waitFor();
+  await page.getByText(hoursTag, { exact: true }).waitFor();
   await page.getByRole("button", { name: "Add FIG", exact: true }).click();
   await page.getByLabel("FIG amount", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
@@ -977,6 +982,11 @@ try {
   // Force a deferred leg, then claim it from the receiver wallet.
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [true]);
   await nav("Redeem");
+  await page.getByText(hoursTag, { exact: true }).waitFor();
+  assert.equal(
+    await page.getByText("Receive your share of every stock.", { exact: true }).count(),
+    1,
+  );
   await page.getByLabel("BASK amount", { exact: true }).fill("10");
   await page.getByLabel("Receiver", { exact: true }).fill(VAULT);
   await page.getByRole("button", { name: "Preview redemption" }).click();
@@ -1156,6 +1166,27 @@ try {
       .evaluate((e) => getComputedStyle(e).animationName),
     "none",
   );
+  // v10: the strip's halves move as Web Animations; under reduced motion none exists (cancelled, not paused), no strip
+  // element has a CSS animation, and the halves stand still side by side from the window's left edge.
+  assert.equal(
+    await page.locator(".marquee").evaluate((m) => {
+      const w = m.querySelector(".marquee-window").getBoundingClientRect(),
+        h = [...m.querySelectorAll(".marquee-half")]
+          .map((e) => e.getBoundingClientRect())
+          .sort((a, b) => a.left - b.left);
+      return [
+        m.getAnimations({ subtree: true }).length,
+        [m, ...m.querySelectorAll("*")].filter(
+          (e) => getComputedStyle(e).animationName !== "none",
+        ).length,
+        h.length === 2 &&
+          Math.abs(h[0].left - w.left) < 0.01 &&
+          Math.abs(h[1].left - h[0].right) < 0.01 &&
+          h[1].right >= w.right - 0.01,
+      ].join("/");
+    }),
+    "0/0/true",
+  );
   checks.push(
     "Six pages: desktop + 375px, 320px Docs reflow, keyboard focus, reduced motion",
   );
@@ -1183,6 +1214,19 @@ try {
     await shelfLabels.locator(".sa-chip").count(),
     await shelfLabels.count(),
   );
+  // v10: no price time on the labels or in the details drawer ("Feed price": the price only).
+  const priceTime = /\bago\b|just now|price updated|price time|less than 1 min|\d+h \d+m/i;
+  assert.doesNotMatch(await page.locator(".stock-section").innerText(), priceTime);
+  await shelfLabels.first().locator("button.sa-more").click();
+  const feedRow = page
+    .locator("#sa-drawer dl > div")
+    .filter({ has: page.locator("dt", { hasText: /^Feed price$/ }) });
+  assert.match(
+    await feedRow.locator("dd").innerText(),
+    /^(\$[\d,]+(\.\d+)?|unreadable \/ invalid feed)$/,
+  );
+  assert.doesNotMatch(await page.locator("#sa-drawer").innerText(), priceTime);
+  await page.locator("#sa-drawer").getByRole("button", { name: "Close", exact: true }).click();
   failAggregate = false;
   checks.push("Aggregate failure fallback");
   await raw("evm_increaseTime", [2 * 86400 + 5]);
