@@ -182,7 +182,8 @@
   ],
   "issues": [],
   "outsideRequests": [
-    "https://rpc.mainnet.chain.robinhood.com/"
+    "https://rpc.mainnet.chain.robinhood.com/",
+    "https://robinhood-rpc.publicnode.com/"
   ],
   "checks": [
     "Production subpath navigation",

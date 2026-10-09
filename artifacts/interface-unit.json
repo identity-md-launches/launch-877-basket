@@ -7,6 +7,16 @@
     "NewYorkTime port: inside and nextOpening vectors for dst 0, 1 and 2",
     "Action struct per proposal kind; set pool refuses minLiquidity 0",
     "TickMath boundaries and harmonic liquidity formula",
-    "unchanged deposit/redeem minimum arithmetic"
+    "unchanged deposit/redeem minimum arithmetic",
+    "v9 F1: Pool/List minLiquidity limited to 128 bits; a set pool with 0 still refused",
+    "v9 F2: BalanceGas/PayGas maximum equals the vault's combined rule at max and max+1; bounds words",
+    "v9 F3/F9: Dst 1 and 2 hours in UTC-5/UTC-4 words; Vault/Deposit hours in words only",
+    "v9 F6: countdown follows the vault clock; boundary and inside-hours cases say Deposits may be open now",
+    "v9 F7: dates in words (UTC and New York, US rule), your time without seconds or a numeric date",
+    "v9 A5: a waiting window's start rounded up to the next whole minute, its end ('until just before') down",
+    "v9 F8: FreshCount words with singular and plural; 0 is off",
+    "v9 F12: reason 12 and the pairing label from settings().poolWindow and poolDeviation",
+    "v9 F15: Sunday 2:00-2:59 am Hours start refused under Dst 0 (and unreadable Dst), allowed under Dst 1 and 2",
+    "v9 F16: the vault refused as new owner, guardian and fee recipient"
   ]
 }

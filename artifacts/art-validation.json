@@ -372,25 +372,38 @@
     }
   ],
   "checks": [
-    "Chromium 375: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
-    "Chromium 2560: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
-    "Chromium 1440: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 960: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 800: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 661: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 660: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 375: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "Chromium 320: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 375: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
-    "WebKit 2560: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
-    "WebKit 1440: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 960: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 800: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 661: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 660: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 375: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "WebKit 320: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
-    "All 42 measured bubble rectangles avoid source image pixels with alpha >128 at their rendered coordinates; no face, hand or prop covered. Tails inspected visually."
+    "Chromium slogan strip, width:lines per half/track px/loop [320:1/1440/11.25s 375:1/1440/11.25s 660:1/1440/11.25s 661:1/1440/45s 720:1/1440/45s 721:2/2880/90s 1024:2/2880/90s 1440:2/2880/90s 1441:3/4320/135s 1920:3/4320/135s 2160:3/4320/135s 2161:4/5760/180s 2560:4/5760/180s 2880:4/5760/180s 2881:5/7200/225s 3440:5/7200/225s 3600:5/7200/225s 3601:6/8640/270s 4320:6/8640/270s 4321:7/10080/315s 5040:7/10080/315s 5041:8/11520/360s 5760:8/11520/360s]: eight lines in the markup of each half, the first k shown (k = the fewest 720 px lines covering the viewport), identical halves, track <= 2 x (viewport + 720), no will-change, 16 px/s (64 px/s at 660 px and below); at 8 loop positions the window is covered, line boxes sit edge to edge and every line join and the seam between the halves has the normal word gap; reduced motion still and full",
+    "Chromium 1440: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 1000: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 999: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 960: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 800: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 720: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 661: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 660: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 375: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 360: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 359: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium 320: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "Chromium vault: every width 320-2560 px keeps whole bubble words (bubble lines {\"3\":2241}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px",
+    "Chromium deposit: every width 320-2560 px keeps whole bubble words (bubble lines {\"2\":341,\"3\":1900}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px",
+    "Chromium redeem: every width 320-2560 px keeps whole bubble words (bubble lines {\"2\":1561,\"3\":680}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px",
+    "WebKit slogan strip, width:lines per half/track px/loop [320:1/1440/11.25s 375:1/1440/11.25s 660:1/1440/11.25s 661:1/1440/45s 720:1/1440/45s 721:2/2880/90s 1024:2/2880/90s 1440:2/2880/90s 1441:3/4320/135s 1920:3/4320/135s 2160:3/4320/135s 2161:4/5760/180s 2560:4/5760/180s 2880:4/5760/180s 2881:5/7200/225s 3440:5/7200/225s 3600:5/7200/225s 3601:6/8640/270s 4320:6/8640/270s 4321:7/10080/315s 5040:7/10080/315s 5041:8/11520/360s 5760:8/11520/360s]: eight lines in the markup of each half, the first k shown (k = the fewest 720 px lines covering the viewport), identical halves, track <= 2 x (viewport + 720), no will-change, 16 px/s (64 px/s at 660 px and below); at 8 loop positions the window is covered, line boxes sit edge to edge and every line join and the seam between the halves has the normal word gap; reduced motion still and full",
+    "WebKit 1440: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 1000: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 999: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 960: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 800: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 720: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 661: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 660: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 375: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 360: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 359: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit 320: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (25) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links",
+    "WebKit vault: every width 320-2560 px keeps whole bubble words (bubble lines {\"3\":2241}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px",
+    "WebKit deposit: every width 320-2560 px keeps whole bubble words (bubble lines {\"2\":341,\"3\":1900}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px",
+    "WebKit redeem: every width 320-2560 px keeps whole bubble words (bubble lines {\"2\":1561,\"3\":680}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px"
   ],
   "bubbles": [
     {
@@ -403,19 +416,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 300,
-        "src": "./art/character/vault.webp"
+        "h": 390,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.3,
-        "x": 1019.1,
-        "y": 666.1875,
+        "picture": {
+          "x": 944.94,
+          "y": 733.21,
+          "w": 236.33,
+          "h": 389.98,
+          "elementHeight": 390
+        },
         "bubble": {
-          "x": 1146,
-          "y": 610.1875,
-          "width": 140,
-          "height": 126.75
-        }
+          "x": 1095,
+          "y": 799.81,
+          "w": 170,
+          "h": 90
+        },
+        "bubbleLines": 3,
+        "textToStrip": 94.48,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -428,19 +450,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 320,
-        "src": "./art/character/deposit.webp"
+        "h": 390,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.32,
-        "x": 997.4668750000001,
-        "y": 348.1875,
+        "picture": {
+          "x": 1026.27,
+          "y": 733.21,
+          "w": 122.06,
+          "h": 389.98,
+          "elementHeight": 390
+        },
         "bubble": {
-          "x": 840.109375,
-          "y": 344.1875,
-          "width": 153.4375,
-          "height": 76.375
-        }
+          "x": 1141,
+          "y": 813.7,
+          "w": 124,
+          "h": 90
+        },
+        "bubbleLines": 3,
+        "textToStrip": 63.75,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -453,94 +484,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 320,
-        "src": "./art/character/redeem.webp"
+        "h": 390,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.32,
-        "x": 970.106875,
-        "y": 348.1875,
+        "picture": {
+          "x": 863.47,
+          "y": 720.21,
+          "w": 188.75,
+          "h": 389.98,
+          "elementHeight": 390
+        },
         "bubble": {
-          "x": 1121.546875,
-          "y": 344.1875,
-          "width": 137.4375,
-          "height": 101.5625
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "vault",
-      "width": 960,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 701.22,
-        "y": 921.59375,
-        "bubble": {
-          "x": 800,
-          "y": 865.59375,
-          "width": 126,
-          "height": 151.9375
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "deposit",
-      "width": 960,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 675.31,
-        "y": 1073.59375,
-        "bubble": {
-          "x": 537,
-          "y": 1069.59375,
-          "width": 134,
-          "height": 76.375
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "redeem",
-      "width": 960,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 653.0799999999999,
-        "y": 1049.59375,
-        "bubble": {
-          "x": 775,
-          "y": 1045.59375,
-          "width": 124,
-          "height": 126.75
-        }
+          "x": 1039,
+          "y": 805.38,
+          "w": 226,
+          "h": 66
+        },
+        "bubbleLines": 2,
+        "textToStrip": 69.25,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -553,19 +518,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
+        "h": 340,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 541.22,
-        "y": 705.59375,
+        "picture": {
+          "x": 456.17,
+          "y": 733.61,
+          "w": 206.03,
+          "h": 339.99,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 640,
-          "y": 649.59375,
-          "width": 126,
-          "height": 151.9375
-        }
+          "x": 587,
+          "y": 787.42,
+          "w": 158,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 41.5,
+        "popAboveFrame": 39.27,
+        "walletGap": 16
       }
     },
     {
@@ -578,19 +552,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
+        "h": 340,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 555.31,
-        "y": 377.59375,
+        "picture": {
+          "x": 530.97,
+          "y": 734.64,
+          "w": 106.41,
+          "h": 339.96,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 457,
-          "y": 373.59375,
-          "width": 94,
-          "height": 101.5625
-        }
+          "x": 631,
+          "y": 800.7,
+          "w": 114,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 26,
+        "popAboveFrame": 38.24,
+        "walletGap": 16
       }
     },
     {
@@ -603,325 +586,34 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
+        "h": 340,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 533.08,
-        "y": 377.59375,
+        "picture": {
+          "x": 441.97,
+          "y": 733.62,
+          "w": 164.55,
+          "h": 339.97,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 655,
-          "y": 373.59375,
-          "width": 84,
-          "height": 202.3125
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "vault",
-      "width": 661,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 402.22,
-        "y": 843.59375,
-        "bubble": {
-          "x": 501,
-          "y": 724.59375,
-          "width": 126,
-          "height": 151.9375
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "deposit",
-      "width": 661,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 451.06,
-        "y": 1145.59375,
-        "bubble": {
-          "x": 387.5,
-          "y": 1141.59375,
-          "width": 59.25,
-          "height": 227.5
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "redeem",
-      "width": 661,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 428.83,
-        "y": 1199.59375,
-        "bubble": {
-          "x": 387.5,
-          "y": 1045.59375,
-          "width": 155,
-          "height": 101.5625
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "vault",
-      "width": 660,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.2,
-        "x": 269.4,
-        "y": 885.359375,
-        "bubble": {
-          "x": 506,
-          "y": 835.359375,
-          "width": 124,
-          "height": 106
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "deposit",
-      "width": 660,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 292.44,
-        "y": 1265.109375,
-        "bubble": {
-          "x": 49,
-          "y": 1261.109375,
-          "width": 239,
-          "height": 43
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "redeem",
-      "width": 660,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 271.92,
-        "y": 1446.109375,
-        "bubble": {
-          "x": 379,
-          "y": 1442.109375,
-          "width": 236,
-          "height": 64
-        }
+          "x": 595,
+          "y": 809.78,
+          "w": 150,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 59.06,
+        "popAboveFrame": 39.25,
+        "walletGap": 16
       }
     },
     {
       "engine": "Chromium",
       "name": "vault",
       "width": 375,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.2,
-        "x": 126.9,
-        "y": 606.359375,
-        "bubble": {
-          "x": 221,
-          "y": 556.359375,
-          "width": 124,
-          "height": 106
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "deposit",
-      "width": 375,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 149.94,
-        "y": 294.09375,
-        "bubble": {
-          "x": 49,
-          "y": 290.09375,
-          "width": 96.5,
-          "height": 85
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "redeem",
-      "width": 375,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 129.42000000000002,
-        "y": 294.109375,
-        "bubble": {
-          "x": 236.5,
-          "y": 290.109375,
-          "width": 93.5,
-          "height": 127
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "vault",
-      "width": 320,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.2,
-        "x": 99.4,
-        "y": 793.84375,
-        "bubble": {
-          "x": 180,
-          "y": 743.84375,
-          "width": 110,
-          "height": 106
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "deposit",
-      "width": 320,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 122.44,
-        "y": 387.59375,
-        "bubble": {
-          "x": 49,
-          "y": 383.59375,
-          "width": 69,
-          "height": 127
-        }
-      }
-    },
-    {
-      "engine": "Chromium",
-      "name": "redeem",
-      "width": 320,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 101.92,
-        "y": 387.609375,
-        "bubble": {
-          "x": 209,
-          "y": 383.609375,
-          "width": 66,
-          "height": 169
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "vault",
-      "width": 1440,
       "picture": {
         "width": "606",
         "height": "1000",
@@ -929,18 +621,231 @@
         "position": "50% 100%",
         "display": "block",
         "h": 300,
-        "src": "./art/character/vault.webp"
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.3,
-        "x": 1019.1,
-        "y": 665.1875,
+        "picture": {
+          "x": 44.77,
+          "y": 67.38,
+          "w": 181.8,
+          "h": 299.99,
+          "elementHeight": 300
+        },
         "bubble": {
-          "x": 1146,
-          "y": 609.1875,
-          "width": 140,
-          "height": 151.9375
-        }
+          "x": 160.22,
+          "y": 111.19,
+          "w": 170,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 24,
+        "popAboveFrame": 31.59,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 375,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 300,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
+      },
+      "geometry": {
+        "picture": {
+          "x": 35,
+          "y": 150.4,
+          "w": 93.89,
+          "h": 299.97,
+          "elementHeight": 300
+        },
+        "bubble": {
+          "x": 123.27,
+          "y": 191.78,
+          "w": 150,
+          "h": 54.78
+        },
+        "bubbleLines": 2,
+        "textToStrip": 24,
+        "popAboveFrame": 31.57,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 375,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 300,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
+      },
+      "geometry": {
+        "picture": {
+          "x": 35,
+          "y": 150.4,
+          "w": 145.19,
+          "h": 299.97,
+          "elementHeight": 300
+        },
+        "bubble": {
+          "x": 170.03,
+          "y": 195.38,
+          "w": 160,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 24,
+        "popAboveFrame": 31.57,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 320,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 270,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
+      },
+      "geometry": {
+        "picture": {
+          "x": 35.05,
+          "y": 168.89,
+          "w": 163.61,
+          "h": 269.98,
+          "elementHeight": 270
+        },
+        "bubble": {
+          "x": 138.94,
+          "y": 204.41,
+          "w": 146,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 24,
+        "popAboveFrame": 23.82,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 320,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 270,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
+      },
+      "geometry": {
+        "picture": {
+          "x": 35,
+          "y": 715.91,
+          "w": 84.5,
+          "h": 269.97,
+          "elementHeight": 270
+        },
+        "bubble": {
+          "x": 114.44,
+          "y": 752.25,
+          "w": 140,
+          "h": 54.78
+        },
+        "bubbleLines": 2,
+        "textToStrip": 24,
+        "popAboveFrame": 23.81,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 320,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 270,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
+      },
+      "geometry": {
+        "picture": {
+          "x": 35,
+          "y": 715.89,
+          "w": 130.67,
+          "h": 269.98,
+          "elementHeight": 270
+        },
+        "bubble": {
+          "x": 156.53,
+          "y": 755.48,
+          "w": 138,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 24,
+        "popAboveFrame": 23.82,
+        "walletGap": 12
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 1440,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 390,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
+      },
+      "geometry": {
+        "picture": {
+          "x": 944.94,
+          "y": 733.21,
+          "w": 236.33,
+          "h": 389.98,
+          "elementHeight": 390
+        },
+        "bubble": {
+          "x": 1095,
+          "y": 799.81,
+          "w": 170,
+          "h": 90
+        },
+        "bubbleLines": 3,
+        "textToStrip": 93.98,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -953,19 +858,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 320,
-        "src": "./art/character/deposit.webp"
+        "h": 390,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.32,
-        "x": 997.4746875000001,
-        "y": 347.1875,
+        "picture": {
+          "x": 1026.27,
+          "y": 733.21,
+          "w": 122.06,
+          "h": 389.98,
+          "elementHeight": 390
+        },
         "bubble": {
-          "x": 840.109375,
-          "y": 343.1875,
-          "width": 153.4375,
-          "height": 76.375
-        }
+          "x": 1141,
+          "y": 813.7,
+          "w": 124,
+          "h": 90
+        },
+        "bubbleLines": 3,
+        "textToStrip": 63.27,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -978,94 +892,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 320,
-        "src": "./art/character/redeem.webp"
+        "h": 390,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.32,
-        "x": 970.1146875,
-        "y": 347.1875,
+        "picture": {
+          "x": 863.47,
+          "y": 720.21,
+          "w": 188.75,
+          "h": 389.98,
+          "elementHeight": 390
+        },
         "bubble": {
-          "x": 1121.5625,
-          "y": 343.1875,
-          "width": 137.4375,
-          "height": 126.75
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "vault",
-      "width": 960,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 701.22,
-        "y": 921.59375,
-        "bubble": {
-          "x": 800,
-          "y": 865.59375,
-          "width": 126,
-          "height": 151.9375
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "deposit",
-      "width": 960,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 675.31,
-        "y": 1073.59375,
-        "bubble": {
-          "x": 537,
-          "y": 1069.59375,
-          "width": 134,
-          "height": 101.5625
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "redeem",
-      "width": 960,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 653.0799999999999,
-        "y": 1049.59375,
-        "bubble": {
-          "x": 775,
-          "y": 1045.59375,
-          "width": 124,
-          "height": 177.125
-        }
+          "x": 1039,
+          "y": 805.38,
+          "w": 226,
+          "h": 66
+        },
+        "bubbleLines": 2,
+        "textToStrip": 68.75,
+        "popAboveFrame": 44.86,
+        "walletGap": 16
       }
     },
     {
@@ -1078,19 +926,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
+        "h": 340,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 541.22,
-        "y": 705.59375,
+        "picture": {
+          "x": 456.17,
+          "y": 733.61,
+          "w": 206.03,
+          "h": 339.99,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 640,
-          "y": 649.59375,
-          "width": 126,
-          "height": 151.9375
-        }
+          "x": 587,
+          "y": 787.42,
+          "w": 158,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 41,
+        "popAboveFrame": 39.27,
+        "walletGap": 16
       }
     },
     {
@@ -1103,19 +960,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
+        "h": 340,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 555.31,
-        "y": 377.59375,
+        "picture": {
+          "x": 530.97,
+          "y": 734.64,
+          "w": 106.41,
+          "h": 339.96,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 457,
-          "y": 373.59375,
-          "width": 94,
-          "height": 101.5625
-        }
+          "x": 631,
+          "y": 800.7,
+          "w": 114,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 25.5,
+        "popAboveFrame": 38.24,
+        "walletGap": 16
       }
     },
     {
@@ -1128,169 +994,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
+        "h": 340,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.26,
-        "x": 533.08,
-        "y": 377.59375,
+        "picture": {
+          "x": 441.97,
+          "y": 733.62,
+          "w": 164.55,
+          "h": 339.97,
+          "elementHeight": 340
+        },
         "bubble": {
-          "x": 655,
-          "y": 373.59375,
-          "width": 84,
-          "height": 202.3125
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "vault",
-      "width": 661,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 402.22,
-        "y": 843.59375,
-        "bubble": {
-          "x": 501,
-          "y": 724.59375,
-          "width": 126,
-          "height": 151.9375
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "deposit",
-      "width": 661,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 451.06,
-        "y": 1145.59375,
-        "bubble": {
-          "x": 387.5,
-          "y": 1141.59375,
-          "width": 59.25,
-          "height": 227.5
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "redeem",
-      "width": 661,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 260,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.26,
-        "x": 428.83,
-        "y": 1199.59375,
-        "bubble": {
-          "x": 387.5,
-          "y": 1045.59375,
-          "width": 155,
-          "height": 126.75
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "vault",
-      "width": 660,
-      "picture": {
-        "width": "606",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
-      },
-      "geometry": {
-        "scale": 0.2,
-        "x": 269.4,
-        "y": 885.359375,
-        "bubble": {
-          "x": 506,
-          "y": 835.359375,
-          "width": 124,
-          "height": 127
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "deposit",
-      "width": 660,
-      "picture": {
-        "width": "313",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 292.44,
-        "y": 1265.109375,
-        "bubble": {
-          "x": 49,
-          "y": 1261.109375,
-          "width": 239,
-          "height": 43
-        }
-      }
-    },
-    {
-      "engine": "WebKit",
-      "name": "redeem",
-      "width": 660,
-      "picture": {
-        "width": "484",
-        "height": "1000",
-        "fit": "contain",
-        "position": "50% 100%",
-        "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
-      },
-      "geometry": {
-        "scale": 0.24,
-        "x": 271.92,
-        "y": 1446.109375,
-        "bubble": {
-          "x": 379,
-          "y": 1442.109375,
-          "width": 236,
-          "height": 64
-        }
+          "x": 595,
+          "y": 809.78,
+          "w": 150,
+          "h": 82.78
+        },
+        "bubbleLines": 3,
+        "textToStrip": 58.56,
+        "popAboveFrame": 39.25,
+        "walletGap": 16
       }
     },
     {
@@ -1303,19 +1028,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
+        "h": 300,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.2,
-        "x": 126.9,
-        "y": 605.359375,
+        "picture": {
+          "x": 44.77,
+          "y": 67.38,
+          "w": 181.8,
+          "h": 299.99,
+          "elementHeight": 300
+        },
         "bubble": {
-          "x": 221,
-          "y": 555.359375,
-          "width": 124,
-          "height": 127
-        }
+          "x": 160.22,
+          "y": 111.19,
+          "w": 170,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 23.5,
+        "popAboveFrame": 31.59,
+        "walletGap": 11.5
       }
     },
     {
@@ -1328,19 +1062,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
+        "h": 300,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.24,
-        "x": 149.94,
-        "y": 293.09375,
+        "picture": {
+          "x": 35,
+          "y": 665.4,
+          "w": 93.89,
+          "h": 299.97,
+          "elementHeight": 300
+        },
         "bubble": {
-          "x": 49,
-          "y": 289.09375,
-          "width": 96.5,
-          "height": 85
-        }
+          "x": 123.27,
+          "y": 706.78,
+          "w": 150,
+          "h": 54.78
+        },
+        "bubbleLines": 2,
+        "textToStrip": 23.5,
+        "popAboveFrame": 31.57,
+        "walletGap": 11.5
       }
     },
     {
@@ -1353,19 +1096,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
+        "h": 300,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.24,
-        "x": 129.42000000000002,
-        "y": 293.109375,
+        "picture": {
+          "x": 35,
+          "y": 150.4,
+          "w": 145.19,
+          "h": 299.97,
+          "elementHeight": 300
+        },
         "bubble": {
-          "x": 236.5,
-          "y": 289.109375,
-          "width": 93.5,
-          "height": 127
-        }
+          "x": 170.03,
+          "y": 195.38,
+          "w": 160,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 23.5,
+        "popAboveFrame": 31.57,
+        "walletGap": 11.5
       }
     },
     {
@@ -1378,19 +1130,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 200,
-        "src": "./art/character/vault.webp"
+        "h": 270,
+        "src": "./art/character/vault.webp",
+        "alt": "Cheerful store worker beside a produce crate"
       },
       "geometry": {
-        "scale": 0.2,
-        "x": 99.4,
-        "y": 793.84375,
+        "picture": {
+          "x": 35.05,
+          "y": 168.89,
+          "w": 163.61,
+          "h": 269.98,
+          "elementHeight": 270
+        },
         "bubble": {
-          "x": 180,
-          "y": 743.84375,
-          "width": 110,
-          "height": 106
-        }
+          "x": 138.94,
+          "y": 204.41,
+          "w": 146,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 23.5,
+        "popAboveFrame": 23.82,
+        "walletGap": 11.5
       }
     },
     {
@@ -1403,19 +1164,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 240,
-        "src": "./art/character/deposit.webp"
+        "h": 270,
+        "src": "./art/character/deposit.webp",
+        "alt": "Store worker holding out a shopping basket"
       },
       "geometry": {
-        "scale": 0.24,
-        "x": 122.44,
-        "y": 387.59375,
+        "picture": {
+          "x": 35,
+          "y": 715.91,
+          "w": 84.5,
+          "h": 269.97,
+          "elementHeight": 270
+        },
         "bubble": {
-          "x": 49,
-          "y": 383.59375,
-          "width": 69,
-          "height": 127
-        }
+          "x": 114.44,
+          "y": 752.25,
+          "w": 140,
+          "h": 54.78
+        },
+        "bubbleLines": 2,
+        "textToStrip": 23.5,
+        "popAboveFrame": 23.81,
+        "walletGap": 11.5
       }
     },
     {
@@ -1428,19 +1198,28 @@
         "fit": "contain",
         "position": "50% 100%",
         "display": "block",
-        "h": 240,
-        "src": "./art/character/redeem.webp"
+        "h": 270,
+        "src": "./art/character/redeem.webp",
+        "alt": "Store worker handing over a full grocery bag"
       },
       "geometry": {
-        "scale": 0.24,
-        "x": 101.92,
-        "y": 387.609375,
+        "picture": {
+          "x": 35,
+          "y": 715.89,
+          "w": 130.67,
+          "h": 269.98,
+          "elementHeight": 270
+        },
         "bubble": {
-          "x": 209,
-          "y": 383.609375,
-          "width": 66,
-          "height": 190
-        }
+          "x": 156.53,
+          "y": 755.48,
+          "w": 138,
+          "h": 73.17
+        },
+        "bubbleLines": 3,
+        "textToStrip": 23.5,
+        "popAboveFrame": 23.82,
+        "walletGap": 11.5
       }
     }
   ],

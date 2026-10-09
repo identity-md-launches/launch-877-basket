@@ -256,7 +256,6 @@ function App() {
         <div>
           <BasketIcon />
           <strong>Basket Protocol</strong>
-          <span>Stock Tokens. One basket.</span>
           <span className="footer-links">
             <a
               href="#owner"

@@ -6,27 +6,58 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
-        "text": "STOCK TOKENS. ONE BASKET.",
-        "y": 644.375,
-        "bottom": 664.375
+        "text": "(old Vault eyebrow, removed)",
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
+      },
+      {
+        "tag": "P",
+        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
+        "y": 730.359375,
+        "bottom": 778.359375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 32,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
+        "oldBottom": 778.359375,
+        "newBottom": 1082.359375,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [
+      {
+        "tag": "P",
+        "oldBottom": 672.375,
+        "reason": "old Vault eyebrow (tagline) removed (v9)"
+      }
+    ],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -37,27 +68,45 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "FILL YOUR BASKET",
-        "y": 644.375,
-        "bottom": 664.375
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 32,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "FILL YOUR BASKET",
+        "oldBottom": 672.375,
+        "newBottom": 871.40625,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -68,33 +117,59 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "AT THE CHECKOUT",
-        "y": 644.375,
-        "bottom": 664.375
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Receive your share of every stock. Redemption is always open.",
-        "y": 722.359375,
-        "bottom": 770.359375
+        "y": 730.359375,
+        "bottom": 778.359375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 32,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "AT THE CHECKOUT",
+        "oldBottom": 672.375,
+        "newBottom": 871.40625,
+        "reason": "pop-out character above the title words (v9 look)"
+      },
+      {
+        "tag": "P",
+        "text": "Receive your share of every stock. Redemption is always open.",
+        "oldBottom": 778.359375,
+        "newBottom": 1030.375,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -105,34 +180,43 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "KNOW YOUR BASKET",
-        "y": 644.375,
-        "bottom": 664.375
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "How Basket works, what it costs and what to watch for.",
-        "y": 722.359375,
-        "bottom": 770.359375
+        "y": 730.359375,
+        "bottom": 778.359375,
+        "inTitle": true
       }
     ],
+    "hintGrowth": 32,
+    "moved": [],
+    "removed": [],
+    "checks": [],
     "regressions": []
   },
   {
@@ -142,34 +226,51 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "BEHIND THE COUNTER",
-        "y": 644.375,
-        "bottom": 664.375
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
-        "y": 722.359375,
-        "bottom": 794.359375
+        "y": 730.359375,
+        "bottom": 802.359375,
+        "inTitle": true
       }
     ],
+    "hintGrowth": 32,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
+        "oldBottom": 802.359375,
+        "newBottom": 834.359375,
+        "reason": "wallet hint 32 px taller (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [],
     "regressions": []
   },
   {
@@ -179,34 +280,51 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 441.375,
-        "bottom": 485.375
+        "y": 449.375,
+        "bottom": 493.375,
+        "inTitle": false
       },
       {
         "tag": "DIV",
         "text": "Open this page in your wallet app's browserCopy site link",
-        "y": 507.375,
-        "bottom": 609.375
+        "y": 515.375,
+        "bottom": 617.375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Copy site link",
-        "y": 547.375,
-        "bottom": 593.375
+        "y": 555.375,
+        "bottom": 601.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "ACCOUNTING HEALTH",
-        "y": 644.375,
-        "bottom": 664.375
+        "y": 652.375,
+        "bottom": 672.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
-        "y": 722.359375,
-        "bottom": 794.359375
+        "y": 730.359375,
+        "bottom": 802.359375,
+        "inTitle": true
       }
     ],
+    "hintGrowth": 32,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
+        "oldBottom": 802.359375,
+        "newBottom": 834.359375,
+        "reason": "wallet hint 32 px taller (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [],
     "regressions": []
   },
   {
@@ -216,21 +334,44 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
-        "text": "STOCK TOKENS. ONE BASKET.",
-        "y": 504.375,
-        "bottom": 524.375
+        "text": "(old Vault eyebrow, removed)",
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
-        "y": 626.34375,
-        "bottom": 698.34375
+        "y": 590.359375,
+        "bottom": 638.359375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 0,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
+        "oldBottom": 638.359375,
+        "newBottom": 910.359375,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [
+      {
+        "tag": "P",
+        "oldBottom": 532.375,
+        "reason": "old Vault eyebrow (tagline) removed (v9)"
+      }
+    ],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -241,21 +382,38 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "FILL YOUR BASKET",
-        "y": 504.375,
-        "bottom": 524.375
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Choose one or more open stocks. They go into the vault together in one deposit.",
-        "y": 626.34375,
-        "bottom": 674.34375
+        "y": 634.34375,
+        "bottom": 682.34375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 0,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "Choose one or more open stocks. They go into the vault together in one deposit.",
+        "oldBottom": 682.34375,
+        "newBottom": 858.375,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -266,21 +424,38 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "AT THE CHECKOUT",
-        "y": 504.375,
-        "bottom": 524.375
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Receive your share of every stock. Redemption is always open.",
-        "y": 582.359375,
-        "bottom": 630.359375
+        "y": 590.359375,
+        "bottom": 638.359375,
+        "inTitle": true
       }
+    ],
+    "hintGrowth": 0,
+    "moved": [
+      {
+        "tag": "P",
+        "text": "Receive your share of every stock. Redemption is always open.",
+        "oldBottom": 638.359375,
+        "newBottom": 858.375,
+        "reason": "pop-out character above the title words (v9 look)"
+      }
+    ],
+    "removed": [],
+    "checks": [
+      "character picture starts on the first screen"
     ],
     "regressions": []
   },
@@ -291,22 +466,29 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "KNOW YOUR BASKET",
-        "y": 504.375,
-        "bottom": 524.375
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "How Basket works, what it costs and what to watch for.",
-        "y": 582.359375,
-        "bottom": 630.359375
+        "y": 590.359375,
+        "bottom": 638.359375,
+        "inTitle": true
       }
     ],
+    "hintGrowth": 0,
+    "moved": [],
+    "removed": [],
+    "checks": [],
     "regressions": []
   },
   {
@@ -316,52 +498,64 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "BEHIND THE COUNTER",
-        "y": 504.375,
-        "bottom": 524.375
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
-        "y": 582.359375,
-        "bottom": 654.359375
+        "y": 590.359375,
+        "bottom": 662.359375,
+        "inTitle": true
       },
       {
         "tag": "BUTTON",
         "text": "Launch",
-        "y": 700.359375,
-        "bottom": 746.359375
+        "y": 708.359375,
+        "bottom": 754.359375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Pause",
-        "y": 700.359375,
-        "bottom": 746.359375
+        "y": 708.359375,
+        "bottom": 754.359375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Pending",
-        "y": 700.359375,
-        "bottom": 746.359375
+        "y": 708.359375,
+        "bottom": 754.359375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Immediate",
-        "y": 754.359375,
-        "bottom": 800.359375
+        "y": 762.359375,
+        "bottom": 808.359375,
+        "inTitle": false
       },
       {
         "tag": "BUTTON",
         "text": "Propose",
-        "y": 754.359375,
-        "bottom": 800.359375
+        "y": 762.359375,
+        "bottom": 808.359375,
+        "inTitle": false
       }
     ],
+    "hintGrowth": 0,
+    "moved": [],
+    "removed": [],
+    "checks": [],
     "regressions": []
   },
   {
@@ -371,22 +565,29 @@
       {
         "tag": "BUTTON",
         "text": "Refresh vault ↻",
-        "y": 419.375,
-        "bottom": 463.375
+        "y": 427.375,
+        "bottom": 471.375,
+        "inTitle": false
       },
       {
         "tag": "P",
         "text": "ACCOUNTING HEALTH",
-        "y": 504.375,
-        "bottom": 524.375
+        "y": 512.375,
+        "bottom": 532.375,
+        "inTitle": true
       },
       {
         "tag": "P",
         "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
-        "y": 582.359375,
-        "bottom": 654.359375
+        "y": 590.359375,
+        "bottom": 662.359375,
+        "inTitle": true
       }
     ],
+    "hintGrowth": 0,
+    "moved": [],
+    "removed": [],
+    "checks": [],
     "regressions": []
   }
 ]

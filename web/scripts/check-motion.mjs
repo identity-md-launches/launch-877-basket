@@ -49,6 +49,11 @@ try {
       "losses",
     ]) {
       await page.goto(url + "#" + name);
+      // A hash change re-renders asynchronously: wait until the requested route is the current page.
+      await page.waitForFunction(
+        (n) => !!document.querySelector(`a[aria-current="page"][href="#${n}"]`),
+        name,
+      );
       await page.evaluate(() => document.fonts.ready);
       await page.waitForFunction(
         () => !document.querySelector("button.refresh").disabled,
@@ -57,7 +62,7 @@ try {
         page.evaluate(() =>
           [
             ...document.querySelectorAll(
-              ".page-title > p, .page-title h1, .brand, .burst",
+              ".page-title > p, .page-title h1, .page-title .title-character > *, .brand, .burst",
             ),
           ].map((e) => {
             const r = e.getBoundingClientRect(),
@@ -83,14 +88,75 @@ try {
       checks.push(
         `${name}: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR ${scale}`,
       );
+      if (name === "vault") {
+        // v9 Stock shelves: the restocking swing is the panel's only motion and runs once per label: every animation
+        // there has one iteration and ends within 2 s (delay included); after scrolling through the whole page
+        // nothing in the panel is still moving, and scrolling back up starts nothing again.
+        const shelves = () =>
+          page.evaluate(() =>
+            document
+              .getAnimations()
+              .filter((a) => a.effect?.target?.closest?.(".stock-section"))
+              .map((a) => ({
+                label: a.effect.target.querySelector?.("h4")?.textContent ?? "",
+                iterations: a.effect.getComputedTiming().iterations,
+                end: a.effect.getComputedTiming().endTime,
+                running: a.playState === "running",
+              })),
+          );
+        const labels = await page.locator(".stock-section article.sa-label").count();
+        const height = await page.evaluate(() => document.documentElement.scrollHeight);
+        const seen = [];
+        for (let y = 0; y <= height; y += 200) {
+          await page.evaluate((y) => scrollTo(0, y), y);
+          await page.waitForTimeout(50);
+          seen.push(...(await shelves()));
+        }
+        assert.ok(
+          seen.every((a) => a.iterations === 1 && a.end <= 2000),
+          `Stock shelves: an endless or long animation at DPR ${scale}`,
+        );
+        const swung = new Set(seen.map((a) => a.label));
+        if (labels) assert.ok(swung.size > 0, `Stock shelves: no restocking swing at DPR ${scale}`);
+        await page.waitForTimeout(2100);
+        assert.equal(
+          (await shelves()).filter((a) => a.running).length,
+          0,
+          `Stock shelves still moving at DPR ${scale}`,
+        );
+        for (let y = height; y >= 0; y -= 400) {
+          await page.evaluate((y) => scrollTo(0, y), y);
+          await page.waitForTimeout(50);
+        }
+        assert.equal(
+          (await shelves()).length,
+          0,
+          `Stock shelves moved again on scrolling back at DPR ${scale}`,
+        );
+        checks.push(
+          `vault: Stock shelves restocking swing once per label (${swung.size} of ${labels} labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR ${scale}`,
+        );
+      }
+      // Look update: the shot covers the title panel up to the title character; her detailed picture would
+      // multiply these tracked PNGs and break the 8 MiB bundle budget (check-bundle.mjs).
       if (name === "redeem")
-        await page
-          .locator(".page-title")
-          .screenshot({
-            path: path.join(out, `redeem-title-dpr-${scale}.png`),
-          });
+        await page.screenshot({
+          path: path.join(out, `redeem-title-dpr-${scale}.png`),
+          fullPage: true,
+          clip: await page.locator(".page-title").evaluate((e) => {
+            const r = e.getBoundingClientRect(),
+              c = e.querySelector(".title-character"),
+              right = c ? c.getBoundingClientRect().left - 8 : r.right;
+            return {
+              x: r.left,
+              y: r.top + scrollY,
+              width: right - r.left,
+              height: r.height,
+            };
+          }),
+        });
     }
-    for (const width of [375, 661, 1440, 1920, 2560]) {
+    for (const width of [375, 661, 1440, 1920, 2560, 3440]) {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(url + "#deposit");
       await page.evaluate(() => document.fonts.ready);
@@ -98,11 +164,27 @@ try {
       const lengths = await track.evaluate((e) => ({
         track: e.getBoundingClientRect().width,
         frame: e.parentElement.getBoundingClientRect().width,
+        halves: [...e.children].map((h) => ({
+          width: h.getBoundingClientRect().width,
+          shown: [...h.children].filter(
+            (s) => getComputedStyle(s).display !== "none",
+          ).length,
+        })),
+        willChange: getComputedStyle(e).willChange,
       }));
+      // v9 slogan strip: each half is k whole 720 px lines, k the fewest that cover the viewport; the moving block
+      // is at most two screens plus two lines wide and has no will-change.
+      const k = Math.min(8, Math.max(1, Math.ceil(width / 720)));
+      for (const h of lengths.halves) {
+        assert.equal(h.shown, k, `${k} lines per half at ${width}`);
+        assert.ok(Math.abs(h.width - 720 * k) < 0.5 * k, `Half width ${width}`);
+      }
       assert.ok(
-        lengths.track / 2 >= lengths.frame,
+        720 * k >= width && lengths.track / 2 >= lengths.frame - 0.01,
         `No empty stretch ${width}`,
       );
+      assert.ok(lengths.track <= 2 * (width + 720) + 0.5, `Track ${width}`);
+      assert.equal(lengths.willChange, "auto", `No will-change ${width}`);
       for (const position of [0, 0.25, 0.49999, 0.75, 0.99999]) {
         const gap = await track.evaluate((e, fraction) => {
           const a = e.getAnimations()[0];
@@ -115,7 +197,7 @@ try {
         assert.equal(gap, false);
       }
       checks.push(
-        `Marquee covers ${width}px at every sampled loop position, DPR ${scale}`,
+        `Marquee (${k} whole lines per half, no will-change) covers ${width}px at every sampled loop position, DPR ${scale}`,
       );
     }
     await context.close();

@@ -75,16 +75,43 @@ export function PageTitle({
   eyebrow,
   title,
   children,
+  character,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   children: ReactNode;
+  character?: {
+    kind: "vault" | "deposit" | "redeem";
+    src: string;
+    width: number;
+    height: number;
+    alt: string;
+    line: string;
+  };
 }) {
   return (
-    <div className="page-title">
-      <p className="eyebrow">{eyebrow}</p>
+    <div
+      className={
+        character
+          ? `page-title has-character character-${character.kind}`
+          : "page-title"
+      }
+    >
+      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1 tabIndex={-1}>{title}</h1>
       <p>{children}</p>
+      {character && (
+        <div className="title-character">
+          <img
+            className="character-picture"
+            src={character.src}
+            width={character.width}
+            height={character.height}
+            alt={character.alt}
+          />
+          <p className="speech-bubble">{character.line}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -225,7 +252,7 @@ export function Receiver({
         <p>
           {claim
             ? "Existing claims belong to your connected wallet. Any stocks still owed stay with that wallet."
-            : "A different receiver must connect to claim any stocks still owed to it."}
+            : "A different receiver must connect here to claim any stocks still owed to it."}
         </p>
       )}
     </div>

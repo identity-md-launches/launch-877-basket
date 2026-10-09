@@ -9,9 +9,10 @@ import {
   VAULT,
   InputError,
   client,
+  rememberLabels,
   type ReadResult,
 } from "./chain";
-import { hoursWordsOf } from "./newYork";
+import { dateWords, hoursWordsOf } from "./newYork";
 export type Asset = {
   token: Address;
   feed: Address;
@@ -57,6 +58,8 @@ export type Snapshot = {
   status?: ReadResult;
   // Latest block timestamp, the clock the vault's hours and freshness use.
   blockTime?: bigint;
+  // Browser clock (ms) when that block arrived; countdowns add the time since.
+  blockReadAt?: number;
   loadedAt: number;
   loading?: boolean;
   retry?: () => void;
@@ -72,11 +75,18 @@ export const initial: Snapshot = {
 export async function loadSnapshot(): Promise<Snapshot> {
   const errors: string[] = [],
     globals: Globals = {};
+  let blockReadAt: number | undefined;
   const [gs, all, status, block] = await Promise.all([
     many(globalNames.map((n) => vault(n))),
     safe(vault("allAssets")),
     safe(vault("depositStatus", [[]])),
-    client.getBlock({ blockTag: "latest" }).catch(() => undefined),
+    client
+      .getBlock({ blockTag: "latest" })
+      .then((b) => {
+        blockReadAt = Date.now();
+        return b;
+      })
+      .catch(() => undefined),
   ]);
   if (!block) errors.push("latest block: unreadable");
   gs.forEach((r, i) => {
@@ -158,6 +168,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
       : "unreadable";
     if (!s.ok || !d.ok) errors.push(`${a.token}: label unreadable`);
   });
+  rememberLabels(assets, globals.settings);
   return {
     assets,
     globals,
@@ -166,6 +177,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
     aggregate: all.ok,
     status,
     blockTime: block?.timestamp,
+    blockReadAt: block ? blockReadAt : undefined,
     loadedAt: Date.now(),
   };
 }
@@ -310,14 +322,22 @@ export function fmt(n: bigint | undefined, decimals = 18, digits = 4): string {
 export const exact = (n: bigint, d = 18) => formatUnits(n, d);
 export const usd = (n: bigint | undefined) =>
   n === undefined ? "unreadable" : "$" + fmt(n, 18, 2);
-export const date = (n: bigint | undefined) =>
-  n === undefined
-    ? "unreadable"
-    : n === 0n
-      ? "Not set"
-      : new Date(Number(n) * 1000).toLocaleString("en-GB", {
-          timeZone: "UTC",
-        }) + " UTC";
+// "Sun 11 Oct 2026, 04:40 UTC (00:40 New York)"; never a numeric date. The words show whole minutes, rounded so
+// a waiting window never looks longer than it is: a start ("executable from", "Wait until", a loss's recognition
+// date) is rounded up to the next whole minute, an end ("until just before") down.
+export function date(n: bigint | undefined, edge: "start" | "end" = "start") {
+  if (n === undefined) return "unreadable";
+  if (n === 0n) return "Not set";
+  try {
+    const t = BigInt(n),
+      minute = (edge === "start" ? t + 59n : t) / 60n;
+    // Past year 9999 is no calendar date (and would stall the New York rule).
+    if (minute * 60n > 253402300799n) return "unreadable";
+    return dateWords(minute * 60n);
+  } catch {
+    return "unreadable";
+  }
+}
 export function age(n: bigint | undefined, now = Date.now() / 1000) {
   if (n === undefined || n === 0n) return "unreadable";
   const s = Math.floor(now - Number(n));
@@ -349,5 +369,7 @@ export function pairingMatches(symbol: string, description: string) {
   );
 }
 export function hoursWords(s: any) {
-  return !s ? "unreadable" : hoursWordsOf(s.hoursFrom, s.hoursTo);
+  return !s
+    ? "unreadable"
+    : hoursWordsOf(BigInt(s.hoursFrom), BigInt(s.hoursTo), BigInt(s.dst));
 }

@@ -38,25 +38,130 @@ const freePort = () =>
   });
 const port = await freePort(),
   rpc = `http://127.0.0.1:${port}`;
-const upstreamRpc =
-  process.env.BASKET_RPC || "https://rpc.mainnet.chain.robinhood.com";
-const head = await fetch(upstreamRpc, {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify({
-    jsonrpc: "2.0",
-    id: 1,
-    method: "eth_blockNumber",
-    params: [],
-  }),
-}).then((r) => r.json());
-const forkBlock = BigInt(process.env.BASKET_FORK_BLOCK || head.result);
+// The walk-through lists stocks through genesis, so vault 6 must be empty and
+// unfinalized. 83874298 is the last block where it was (same runtime hash);
+// the live vault has since been listed and may be finalized.
+const forkBlock = BigInt(process.env.BASKET_FORK_BLOCK || 83874298);
 assert.ok(forkBlock > 83448310n);
+// A pinned past block needs an archive endpoint; the public RPCs prune it.
+const upstreamRpc =
+  process.env.BASKET_RPC || "https://robinhood.api.pocket.network";
+// Anvil forks through this local read-only proxy. It forwards read methods
+// only, asks by block number where Anvil asks by block hash (archive backends
+// refuse hash-addressed historical reads), keeps at most 8 upstream requests
+// in flight (bursts get throttled) and retries transient failures.
+const readMethods = new Set([
+  "eth_chainId",
+  "net_version",
+  "web3_clientVersion",
+  "eth_blockNumber",
+  "eth_getBlockByNumber",
+  "eth_getBlockByHash",
+  "eth_getBlockReceipts",
+  "eth_getBalance",
+  "eth_getTransactionCount",
+  "eth_getCode",
+  "eth_getStorageAt",
+  "eth_getProof",
+  "eth_getAccount",
+  "eth_getAccountInfo",
+  "eth_call",
+  "eth_gasPrice",
+  "eth_maxPriorityFeePerGas",
+  "eth_feeHistory",
+  "eth_getTransactionByHash",
+  "eth_getTransactionByBlockNumberAndIndex",
+  "eth_getTransactionReceipt",
+]);
+let upstreamActive = 0;
+const upstreamQueue = [];
+async function upstream(method, params) {
+  if (upstreamActive < 8) upstreamActive++;
+  else await new Promise((r) => upstreamQueue.push(r));
+  try {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const r = await fetch(upstreamRpc, {
+          signal: AbortSignal.timeout(60000),
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+        });
+        if (r.status === 429 || r.status >= 500)
+          throw Error(`HTTP ${r.status}`);
+        const j = await r.json(); // throws on an HTML challenge page
+        const transient = /historical state|rate limit|too many|timeout/i;
+        if (j.error && transient.test(j.error.message))
+          throw Error(j.error.message);
+        return j;
+      } catch (e) {
+        if (attempt === 6) throw e;
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
+    }
+  } finally {
+    const next = upstreamQueue.shift();
+    if (next) next();
+    else upstreamActive--;
+  }
+}
+const blockNumbers = new Map();
+function byNumber(p) {
+  if (!p || typeof p !== "object" || !("blockHash" in p)) return p;
+  if (!blockNumbers.has(p.blockHash))
+    blockNumbers.set(
+      p.blockHash,
+      upstream("eth_getBlockByHash", [p.blockHash, false]).then(
+        (j) => j.result.number,
+        (e) => {
+          blockNumbers.delete(p.blockHash);
+          throw e;
+        },
+      ),
+    );
+  return blockNumbers.get(p.blockHash);
+}
+const proxy = http.createServer(async (req, res) => {
+  let body = "";
+  try {
+    for await (const chunk of req) body += chunk;
+  } catch {
+    return res.destroy(); // Anvil dropped the request
+  }
+  const one = async (q) => {
+    if (!readMethods.has(q?.method))
+      return {
+        jsonrpc: "2.0",
+        id: q?.id ?? null,
+        error: { code: -32601, message: "Read-only fork proxy" },
+      };
+    try {
+      const params = await Promise.all((q.params ?? []).map(byNumber));
+      return { ...(await upstream(q.method, params)), id: q.id };
+    } catch (e) {
+      return {
+        jsonrpc: "2.0",
+        id: q.id,
+        error: { code: -32000, message: `Upstream: ${e.message}` },
+      };
+    }
+  };
+  let q = null;
+  try {
+    q = JSON.parse(body);
+  } catch {}
+  const answer = Array.isArray(q)
+    ? await Promise.all(q.map(one))
+    : await one(q);
+  res.writeHead(200, { "content-type": "application/json" });
+  res.end(JSON.stringify(answer));
+});
+await new Promise((r) => proxy.listen(0, "127.0.0.1", r));
 const proc = spawn(
   "anvil",
   [
     "--fork-url",
-    process.env.BASKET_RPC || "https://rpc.mainnet.chain.robinhood.com",
+    `http://127.0.0.1:${proxy.address().port}`,
     "--fork-block-number",
     String(forkBlock),
     "--port",
@@ -100,6 +205,9 @@ try {
     }
   }
   console.log("Fork RPC ready", rpc);
+  // Some Anvil versions refuse eth_call on the forked head ("Excess blob gas
+  // not set"); a locally mined block carries the blob-gas fields.
+  await raw("evm_mine");
   const pc = createPublicClient({ chain, transport: transport(rpc) });
   assert.equal(keccak256(await pc.getCode({ address: VAULT })), RUNTIME_HASH);
   const rv = (name, args = []) =>
@@ -308,7 +416,7 @@ try {
       return;
     }
     const file = path.resolve(dist, p.slice(9));
-    if (!file.startsWith(dist + "/")) {
+    if (!file.startsWith(dist + path.sep)) {
       res.writeHead(403).end();
       return;
     }
@@ -589,10 +697,12 @@ try {
           `${state} ${name} overflow ${width}`,
         );
         const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
+        // Quality 36 (40 before v9): the Docs FAQ and the longer Owner texts made
+        // the quality-40 set about 163 KB larger, over the 8 MiB delivery budget.
         await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
-          quality: 40,
+          quality: 36,
           fullPage: true,
         });
         shots.push(file);
@@ -723,6 +833,17 @@ try {
     indices.map((i) => stocks[i].toLowerCase()),
   );
   await page.getByRole("button", { name: "List stocks", exact: true }).click();
+  // The earlier "All rows listed" text stays on screen while this second pass
+  // re-reads the vault; wait for the pass to end so it cannot overlap the
+  // Finalize send (its pending checks would clear that send's status link).
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll("button")].find(
+        (b) => b.textContent === "List stocks",
+      )?.disabled === false,
+    null,
+    { timeout: 60000 },
+  );
   await page
     .getByText("All rows listed and matched against chain.", { exact: true })
     .waitFor({ timeout: 60000 });
@@ -1049,10 +1170,18 @@ try {
       { exact: true },
     )
     .waitFor({ state: "attached" });
-  assert.ok(
-    (await page.locator(".stock-card").first().innerText()).includes(
-      "unreadable",
-    ),
+  // v9 Stock shelves: the stocks are shelf-edge labels; with the aggregate
+  // read failed every label says its price reason is unreadable.
+  const shelfLabels = page.locator(".stock-section article.sa-label");
+  assert.ok((await shelfLabels.first().innerText()).includes("unreadable"));
+  assert.ok((await shelfLabels.count()) > 0);
+  assert.deepEqual(
+    [...new Set(await shelfLabels.locator(".sa-chip").allInnerTexts())],
+    ["price reason: unreadable"],
+  );
+  assert.equal(
+    await shelfLabels.locator(".sa-chip").count(),
+    await shelfLabels.count(),
   );
   failAggregate = false;
   checks.push("Aggregate failure fallback");
@@ -1231,4 +1360,6 @@ try {
   await browser?.close();
   if (server) await new Promise((r) => server.close(r));
   proc.kill("SIGTERM");
+  proxy.closeAllConnections?.();
+  proxy.close();
 }

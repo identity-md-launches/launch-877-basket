@@ -183,7 +183,18 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   }
   return (
     <>
-      <PageTitle eyebrow="Fill your basket" title="Deposit Stock Tokens">
+      <PageTitle
+        eyebrow="Fill your basket"
+        title="Deposit Stock Tokens"
+        character={{
+          kind: "deposit",
+          src: "./art/character/deposit.webp",
+          width: 313,
+          height: 1000,
+          alt: "Store worker holding out a shopping basket",
+          line: "Go ahead and put it in",
+        }}
+      >
         Choose one or more open stocks. They go into the vault together in one
         deposit.
       </PageTitle>
@@ -480,10 +491,6 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
           </p>
         </section>
         <aside className="panel">
-          <div className="picture-stage deposit-picture">
-            <img className="character-picture" src="./art/character/deposit.webp" width="313" height="1000" alt="Store worker holding out a shopping basket" />
-            <p className="speech-bubble">Go ahead and put it in hehe</p>
-          </div>
           <h2>Before you deposit</h2>
           <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>
           <p>
@@ -552,7 +559,18 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
   }, [w.account, s.loadedAt, retry]);
   return (
     <>
-      <PageTitle eyebrow="At the checkout" title="Redeem BASK">
+      <PageTitle
+        eyebrow="At the checkout"
+        title="Redeem BASK"
+        character={{
+          kind: "redeem",
+          src: "./art/character/redeem.webp",
+          width: 484,
+          height: 1000,
+          alt: "Store worker handing over a full grocery bag",
+          line: "are you sure that’s all you came here for?",
+        }}
+      >
         Receive your share of every stock. Redemption is always open.
       </PageTitle>
       <div className="flow-layout">
@@ -628,10 +646,6 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                 spellCheck={false}
               />
             </label>
-            <Note warning>
-              Unsent stocks are owed to the receiver. Only that wallet can claim
-              them. Choose a wallet you control that can call this vault.
-            </Note>
             <button disabled={working || w.busy}>
               {working ? "Checking..." : "Preview redemption"}
             </button>
@@ -651,12 +665,21 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
             <div className="receipt">
               <h3>Redemption preview</h3>
               <p>Fee: {fmt(quote.fee)} BASK</p>
-              {s.assets.map((a, i) => (
-                <p key={a.token}>
-                  <bdi>{a.symbol}</bdi>:{" "}
-                  {fmt(quote.amounts[i], a.tokenDecimals)}
+              {/* Each leg by the stock's own assetTokens index, and only from a
+                  complete list of the same length as the preview. */}
+              {s.complete && quote.amounts.length === s.assets.length ? (
+                s.assets.map((a) => (
+                  <p key={a.token}>
+                    <bdi>{a.symbol}</bdi>:{" "}
+                    {fmt(quote.amounts[a.index], a.tokenDecimals)}
+                  </p>
+                ))
+              ) : (
+                <p>
+                  Amounts per stock are not shown: the stock list is unreadable
+                  or has changed. Refresh vault and preview again.
                 </p>
-              ))}
+              )}
               <Receiver value={to} wallet={w} />
               <TxButton
                 snapshot={s}
@@ -696,17 +719,9 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
           </p>
         </section>
         <aside className="panel">
-          <div className="picture-stage redeem-picture">
-            <img className="character-picture" src="./art/character/redeem.webp" width="484" height="1000" alt="Store worker handing over a full grocery bag" />
-            <p className="speech-bubble">are you sure that’s all you came here for?</p>
-          </div>
           <h2>Take your basket home</h2>
           <details>
             <summary>Transaction details</summary>
-            <Note warning>
-              Unsent stocks are owed to the receiver. Only that wallet can claim
-              them. Choose a wallet you control that can call this vault.
-            </Note>
             <p>
               Minimum amounts are 0.1% below a fresh preview taken just before
               sending, with zero kept as zero. They follow assetTokens order.

@@ -27,6 +27,14 @@ declare global {
   }
 }
 export type ActionProgress = { message: string; hash?: Hex; detail?: string };
+// A send whose nonce was used by a cancel or a different transaction in the
+// wallet: the receipt belongs to that other transaction, so nothing of this
+// action happened.
+export class TransactionCancelled extends InputError {}
+// Shown when a saved listing transaction that was reported pending is mined or
+// replaced.
+export const LISTING_FINISHED =
+  "The earlier transaction is finished (confirmed or replaced). Press Resume listing.";
 type PendingTx = {
   hash: Hex;
   account: Address;
@@ -49,16 +57,34 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   const [connecting, setConnecting] = useState(false);
   const [progress, setProgress] = useState<Record<string, ActionProgress>>({});
   const pendingRef = useRef<PendingTx | undefined>(savedPending());
+  // True while a "still pending" listing message (or a receipt timeout, or a
+  // transaction saved before a reload) may be on screen.
+  const pendingShown = useRef(!!pendingRef.current);
   function report(key: string, value: ActionProgress) {
     setProgress((old) => ({ ...old, [key]: value }));
     setMessage(value.message);
   }
+  // Replace a status everywhere (action status and the top bar), link included.
+  function notice(key: string, message: string) {
+    setProgress((old) => ({ ...old, [key]: { message } }));
+    setMessage(message);
+    setHash(undefined);
+  }
+  // A saved transaction was found mined or replaced: clear the stale pending
+  // text and its link and say so. Returns true.
+  function finished() {
+    if (pendingShown.current) notice("listing", LISTING_FINISHED);
+    pendingShown.current = false;
+    return true;
+  }
   function fail(key: string, message: string) {
     setProgress((old) => ({ ...old, [key]: { ...old[key], message } }));
   }
-  async function listingPending(waitForReceipt = false) {
-    if (!account) return;
+  // Resolves true when a saved transaction was found mined or replaced.
+  async function listingPending(waitForReceipt = false): Promise<boolean> {
+    if (!account) return false;
     const pending = pendingRef.current;
+    let done = false;
     if (pending && same(pending.account, account)) {
       try {
         const receipt = await client.getTransactionReceipt({
@@ -67,6 +93,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         if (receipt) {
           pendingRef.current = undefined;
           sessionStorage.removeItem(pendingKey);
+          done = finished();
         }
       } catch {
         // A mined Speed up/Cancel consumes the original transaction's nonce.
@@ -81,8 +108,10 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
           pendingRef.current = undefined;
           sessionStorage.removeItem(pendingKey);
           setHash(undefined);
+          done = finished();
         } else if (!waitForReceipt) {
           setHash(pending.hash);
+          pendingShown.current = true;
           report("listing", {
             message:
               "A transaction is still pending. Wait for its receipt before resuming listing.",
@@ -102,6 +131,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       throw new InputError(
         "A transaction is still pending. Wait until the owner's pending and latest nonce match, then resume listing.",
       );
+    return done;
   }
   async function waitPending() {
     // Reconcile a replacement before waiting on a hash that cannot get a receipt.
@@ -269,10 +299,16 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         message: `${label}: Submitted. Waiting for confirmation…`,
         hash: tx,
       });
+      // A Speed up (repriced) still runs this call; a cancel or a different
+      // transaction on the same nonce (cancelled/replaced) does not.
+      let replaced: string | undefined;
       const receipt = await client.waitForTransactionReceipt({
         hash: tx,
         timeout: 180_000,
         pollingInterval: 3000,
+        onReplaced: (r) => {
+          replaced = r.reason;
+        },
       });
       settled = true;
       pendingRef.current = undefined;
@@ -281,6 +317,12 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       } catch {
         /* storage unavailable */
       }
+      if (replaced === "cancelled" || replaced === "replaced")
+        throw new TransactionCancelled(
+          replaced === "cancelled"
+            ? "The transaction was cancelled in the wallet; it did not run. Refresh the vault before retrying."
+            : "The transaction was replaced in the wallet by a different one; it did not run. Refresh the vault before retrying.",
+        );
       if (receipt.status !== "success")
         throw new Error(
           "The transaction reverted. Refresh the data before retrying.",
@@ -307,7 +349,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
             .find((l) => l?.eventName === "Proposed");
           if (!event) throw new Error("Proposal event unreadable");
           const { id, executableAt, expiresAt } = event.args as any;
-          detail = `Proposal ${id}; executable from ${date(executableAt)} until ${date(expiresAt)} (exclusive), from the Proposed event.`;
+          detail = `Proposal ${id}; executable from ${date(executableAt)} until just before ${date(expiresAt, "end")}, from the Proposed event.`;
         }
         if (["redeem", "claim"].includes(s.functionName)) {
           const creditor =
@@ -338,11 +380,18 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       report(key, { message: `${label}: Confirmed.`, hash: tx, detail });
       return receipt;
     } catch (e) {
+      if (e instanceof TransactionCancelled) {
+        // No link: the submitted transaction never ran.
+        notice(key, e.message);
+        throw e;
+      }
       const message = await explainAction(e, s);
       const status =
         sent && !settled
           ? "Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying."
           : message;
+      if (sent && !settled && s.functionName === "listGenesis")
+        pendingShown.current = true;
       report(key, { message: status, hash: sent });
       throw new InputError(status);
     } finally {
@@ -356,6 +405,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     progress,
     report,
     fail,
+    notice,
     listingPending,
     waitPending,
     chainId,

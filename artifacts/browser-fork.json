@@ -1,5 +1,5 @@
 {
-  "forkBlock": "83862826",
+  "forkBlock": "83874298",
   "vault": "0x739fd5b653aa092a434534fa1ade67c1770b5a5b",
   "runtimeHash": "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048",
   "checks": [
@@ -385,7 +385,7 @@
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "5969999005000000000000",
-        "1791519332"
+        "1791520540"
       ],
       "gas": "0x17d63b"
     },
@@ -422,7 +422,7 @@
           "0",
           "0"
         ],
-        "1791677446"
+        "1791677445"
       ],
       "gas": "0x43918"
     },
@@ -470,7 +470,7 @@
           "0",
           "0"
         ],
-        "1791677447"
+        "1791677446"
       ],
       "gas": "0x4d886"
     },
@@ -873,7 +873,7 @@
     "stocks25-owner-375.jpg",
     "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 3469,
+  "rpcCalls": 3713,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",

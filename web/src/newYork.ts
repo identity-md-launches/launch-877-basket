@@ -70,10 +70,11 @@ export function weekdayWords(s: bigint): string {
   if (s === WEEK) return "Saturday 24:00";
   return `${weekdays[Number(s / DAY)]} ${clockWords(s % DAY)}`;
 }
-export function hoursWordsOf(from: bigint, to: bigint): string {
+// Under Dst 1 or 2 the vault clock is a fixed UTC-5 or UTC-4, not New York time.
+export function hoursWordsOf(from: bigint, to: bigint, dst = 0n): string {
   return from === 0n && to === 0n
     ? "always open"
-    : `${weekdayWords(from)} to ${weekdayWords(to)} New York time`;
+    : `${weekdayWords(from)} to ${weekdayWords(to)} ${zoneWords(dst)}`;
 }
 export const dstWords = [
   "US daylight saving rule",
@@ -93,6 +94,32 @@ export function nyDate(t: bigint, dst: bigint): string {
     month: "long",
     year: "numeric",
   });
+}
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const two = (n: number) => String(n).padStart(2, "0");
+// A timestamp in words, never dd/mm: "Sun 11 Oct 2026, 04:40 UTC (00:40 New
+// York)". New York follows the US rule; its weekday is added when it differs.
+export function dateWords(t: bigint): string {
+  const utc = new Date(Number(t) * 1000),
+    ny = new Date(Number(t - offset(t, 0n)) * 1000);
+  const day = (d: Date) => weekdays[d.getUTCDay()].slice(0, 3);
+  const clock = (d: Date) =>
+    `${two(d.getUTCHours())}:${two(d.getUTCMinutes())}`;
+  const nyDay = ny.getUTCDay() === utc.getUTCDay() ? "" : `${day(ny)} `;
+  return `${day(utc)} ${utc.getUTCDate()} ${months[utc.getUTCMonth()]} ${utc.getUTCFullYear()}, ${clock(utc)} UTC (${nyDay}${clock(ny)} New York)`;
 }
 export function countdown(seconds: bigint): string {
   const total = seconds < 0n ? 0n : seconds;

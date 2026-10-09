@@ -190,10 +190,41 @@ export const reasons = [
   "feed price missing or too old",
   "price outside its band",
   "paused by its issuer",
-  "pool check failed (over 3% off, unreadable, under its floor or quote feed bad)",
+  "pool check failed (pool price too far off the feed, unreadable, under its floor or quote feed bad)",
   "no pool and feed older than noPoolAge",
   "too few fresh prices",
 ];
+// Symbols and settings from the latest vault read. Used only to word errors and
+// reasons; never an input to a transaction.
+const labels: { symbols: Record<string, string>; settings?: any } = {
+  symbols: {},
+};
+export function rememberLabels(
+  assets: { token: Address; symbol: string }[],
+  settings: any,
+) {
+  labels.symbols = Object.fromEntries(
+    assets.map((a) => [a.token.toLowerCase(), a.symbol]),
+  );
+  labels.settings = settings;
+}
+export function knownSymbol(a: Address): string {
+  const s = labels.symbols[String(a).toLowerCase()];
+  return s && s !== "unreadable" ? s : a;
+}
+// poolDeviation is in basis points, poolWindow in seconds.
+export const percentOf = (bps: bigint) => `${Number(bps) / 100}%`;
+export const minutesOf = (seconds: bigint) => `${Number(seconds) / 60}-minute`;
+// Reason words; reason 12 states the vault's own pool window and deviation.
+export function reasonWords(
+  reason: number | undefined,
+  settings: any = labels.settings,
+): string {
+  if (reason === undefined) return "unreadable";
+  if (reason === 12 && settings)
+    return `pool check failed (${minutesOf(BigInt(settings.poolWindow))} pool price over ${percentOf(BigInt(settings.poolDeviation))} off the feed, unreadable, under its floor or quote feed bad)`;
+  return reasons[reason] ?? `Unknown reason ${reason}`;
+}
 // Ordinals match the pinned BaskVault.Kind exactly.
 export const proposalKinds = [
   "List",
@@ -235,9 +266,22 @@ export const errorWords: Record<string, string> = {
   ZeroNAV: "The vault has shares but zero NAV. Deposits cannot proceed.",
   InsufficientBalance: "Your balance is too low for this amount.",
   InsufficientAllowance: "The BASK allowance is too low for this transfer.",
+  MathOverflow: "This amount is outside the supported range.",
+  InvalidTick: "The pool price is outside its supported range.",
 };
-export async function explainAction(e: unknown, _spec: Spec): Promise<string> {
-  return explain(e);
+// Errors that carry the stock at fault; their words start with its symbol.
+const stockErrors = ["PaymentFailed", "BalanceUnreadable"];
+export async function explainAction(e: unknown, spec: Spec): Promise<string> {
+  const message = explain(e);
+  const parsed = revertError(e);
+  const batch =
+    spec.functionName === "claim"
+      ? ((spec.args?.[0] as Address[] | undefined) ?? [])
+      : [];
+  // One failing stock reverts a whole Claim all batch; say which one blocked it.
+  if (parsed && stockErrors.includes(parsed.errorName) && batch.length > 1)
+    return `${message} ${knownSymbol((parsed.args as [Address])[0])} blocked this batch, so nothing in it was claimed. The other stocks can be claimed with their own Claim buttons.`;
+  return message;
 }
 function revertData(e: any): Hex | undefined {
   if (!e || typeof e !== "object") return undefined;
@@ -245,24 +289,33 @@ function revertData(e: any): Hex | undefined {
     return e.data;
   return revertData(e.cause) ?? revertData(e.error) ?? revertData(e.data);
 }
+function revertError(e: unknown) {
+  const data = revertData(e);
+  if (!data) return undefined;
+  try {
+    return decodeErrorResult({ abi: vaultAbi, data });
+  } catch {
+    return undefined;
+  }
+}
 export function explain(
   e: unknown,
-  symbol: (a: Address) => string = (a) => a,
+  symbol: (a: Address) => string = knownSymbol,
   readFailure = false,
 ): string {
   if (e instanceof InputError) return e.message;
-  const data = revertData(e);
-  if (data)
-    try {
-      const parsed = decodeErrorResult({ abi: vaultAbi, data });
-      if (parsed.errorName === "DepositUnavailable") {
-        const [reason, asset] = parsed.args as [number, Address];
-        return `${reasons[reason] ?? `Unknown reason ${reason}`}. Stock at fault: ${asset === zeroAddress ? "none" : symbol(asset)}.`;
-      }
-      return errorWords[parsed.errorName] ?? parsed.errorName;
-    } catch {
-      /* Keep the rest of the page usable even for unknown revert data. */
+  const parsed = revertError(e);
+  // Keep the rest of the page usable even for unknown revert data.
+  if (parsed) {
+    if (parsed.errorName === "DepositUnavailable") {
+      const [reason, asset] = parsed.args as [number, Address];
+      return `${reasonWords(Number(reason))}. Stock at fault: ${asset === zeroAddress ? "none" : symbol(asset)}.`;
     }
+    const words = errorWords[parsed.errorName] ?? parsed.errorName;
+    return stockErrors.includes(parsed.errorName)
+      ? `${symbol((parsed.args as [Address])[0])}: ${words}`
+      : words;
+  }
   if (readFailure) return "Preview: unreadable. Retry the preview.";
   const err = e as { shortMessage?: string; message?: string; code?: number };
   if (

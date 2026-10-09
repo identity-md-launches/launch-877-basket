@@ -47,6 +47,17 @@ export function DocsPage() {
           </p>
         </section>
         <section className="panel">
+          <h2>FAQ</h2>
+          <h3>What if a stock can’t be sent when I redeem?</h3>
+          <p>
+            Rarely, a stock can’t be sent at that moment (for example its issuer
+            has paused transfers). The vault then keeps it for the receiver, who
+            collects it later with Claim on the Redeem page. Only the receiver
+            wallet can claim, so redeem to a wallet you control, not an exchange
+            deposit address.
+          </p>
+        </section>
+        <section className="panel">
           <h2>NAV</h2>
           <p>
             Each unretired stock’s managed quantity times its feed price, added

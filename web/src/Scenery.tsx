@@ -5,7 +5,7 @@ export function Marquee() {
         <div className="marquee-track">
           {[0, 1].map((half) => (
             <div className="marquee-half" key={half}>
-              {Array.from({ length: 4 }, (_, i) => (
+              {Array.from({ length: 8 }, (_, i) => (
                 <span key={i}>
                   Basket buddies! • Take a stroll down the aisles • Give your cart a twirl •{" "}
                 </span>

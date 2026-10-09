@@ -8,7 +8,8 @@ import {
   explain,
   InputError,
   zeroAddress,
-  reasons,
+  reasonWords,
+  minutesOf,
   type Spec,
 } from "./chain";
 import {
@@ -44,13 +45,15 @@ import {
   proposalKinds,
   settingNames,
   settingFields,
-  settingBounds,
+  settingBoundsWords,
+  gasMaximum,
   settingWords,
   settingValues,
+  newOwner,
   type Pairing,
 } from "./governance";
-import { dstWords, hoursWordsOf } from "./newYork";
-import type { Wallet } from "./wallet";
+import { dstWords, hoursWordsOf, zoneWords } from "./newYork";
+import { TransactionCancelled, type Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
 type Field = {
   key: string;
@@ -287,7 +290,11 @@ function PairingRows({ rows }: { rows: Pairing[] }) {
           {!same(r.pool, zeroAddress) && (
             <>
               <p>
-                Current 30-minute liquidity:{" "}
+                Current{" "}
+                {r.poolWindow === undefined
+                  ? "pool-window"
+                  : minutesOf(r.poolWindow)}{" "}
+                liquidity:{" "}
                 {r.liquidity === undefined ? "unreadable" : String(r.liquidity)}{" "}
                 ·{" "}
                 {r.liquidity === undefined
@@ -337,8 +344,14 @@ function LaunchListing({
     let live = true;
     if (w.account && same(w.account, s.globals.owner))
       w.listingPending()
-        .then(() => {
-          if (live) setPending("");
+        .then((finished) => {
+          if (!live) return;
+          setPending("");
+          // The saved transaction is mined or replaced: its timeout text is stale.
+          if (finished) {
+            setError("");
+            setResume(true);
+          }
         })
         .catch((e) => {
           if (live) setPending(explain(e));
@@ -474,7 +487,8 @@ function LaunchListing({
           lock.current = true;
           setWorking(true);
           setError("");
-          let rowName = "Listing";
+          let rowName = "Listing",
+            rowNumber = 0;
           try {
             await w.listingPending();
             const checkedRows = await checkRows();
@@ -484,6 +498,7 @@ function LaunchListing({
               );
             for (let i = 0; i < checkedRows.length; i++) {
               const r = checkedRows[i];
+              rowNumber = i + 1;
               rowName = `Row ${i + 1} of ${checkedRows.length}: ${r.symbol}`;
               setProgress(rowName);
               await w.listingPending();
@@ -503,11 +518,10 @@ function LaunchListing({
                 rowName,
               );
               const after = await inspectListing(r);
-              if (!after.listed || after.error)
-                throw new InputError(
-                  after.error ||
-                    "Listing confirmation unreadable. Re-check before continuing.",
-                );
+              // A receipt but no listing: the wallet cancelled or replaced it.
+              if (!after.listed)
+                throw new TransactionCancelled("Not listed after the receipt.");
+              if (after.error) throw new InputError(after.error);
               setRows((old) =>
                 old.map((x) => (same(x.token, r.token) ? after : x)),
               );
@@ -515,7 +529,12 @@ function LaunchListing({
             setProgress("All rows listed and matched against chain.");
             setResume(false);
           } catch (e) {
-            setError(`${rowName}: ${explain(e)}`);
+            if (e instanceof TransactionCancelled) {
+              // Never "Confirmed": say it in the listing status and the top bar too.
+              const text = `Row ${rowNumber}: the transaction was cancelled in the wallet; nothing was listed. Press Resume listing.`;
+              setError(text);
+              w.notice("listing", text);
+            } else setError(`${rowName}: ${explain(e)}`);
             setResume(true);
             try {
               await w.listingPending();
@@ -539,6 +558,7 @@ function LaunchListing({
             try {
               await w.waitPending();
               setPending("");
+              setError("");
               setResume(true);
             } catch (e) {
               setPending(explain(e));
@@ -563,10 +583,12 @@ function SettingForm(props: Props) {
   const currentWords = !current
     ? "unreadable — Retry vault"
     : key === 5
-      ? `${hoursWordsOf(current.hoursFrom, current.hoursTo)}; ${current.hoursFrom}-${current.hoursTo}`
+      ? `${hoursWordsOf(BigInt(current.hoursFrom), BigInt(current.hoursTo), BigInt(current.dst))}; ${current.hoursFrom}-${current.hoursTo}`
       : key === 6
         ? `${dstWords[Number(current.dst)] ?? "unknown"}; ${current.dst}`
-        : `${current[settingFields[key]]}; ${settingWords(key, BigInt(current[settingFields[key]]))}`;
+        : `${current[settingFields[key]]}; ${settingWords(key, BigInt(current[settingFields[key]]), 0n, current)}`;
+  const fixedZone =
+    current && BigInt(current.dst) !== 0n ? BigInt(current.dst) : undefined;
   return (
     <div className="panel setting-panel">
       <h3>Setting</h3>
@@ -588,13 +610,15 @@ function SettingForm(props: Props) {
         Current {settingFields[key]}:{" "}
         {props.snapshot.loading ? "Reading..." : currentWords}
       </p>
-      <p>Bounds: {settingBounds[key]}</p>
+      <p>Bounds: {settingBoundsWords(key, current)}</p>
       {key === 5 && (
         <p>
           Hours are seconds since Sunday 00:00 New York time. Enter From and To
           as a weekday and New York time, e.g. "Monday 9:30 am" and "Friday
           4:00 pm" (To may be "Saturday 24:00"), or "Always open" in both. The
           start is inclusive and the end exclusive.
+          {fixedZone !== undefined &&
+            ` With the current Dst ${fixedZone}, the vault reads these times as ${zoneWords(fixedZone)} all year, not New York time.`}
         </p>
       )}
       {key === 6 && (
@@ -607,7 +631,7 @@ function SettingForm(props: Props) {
         <p>
           Deposits need at least FreshCount listed stock prices updated within
           the last FreshHours hours, so they close when prices stop (US market
-          holidays) until one updates.
+          holidays) until one updates. FreshCount 0 turns this off.
         </p>
       )}
       <ActionForm
@@ -637,20 +661,29 @@ function SettingForm(props: Props) {
         }
         preview={(v) => {
           try {
-            const [, value, value2] = settingValues({
-              ...v,
-              setting: String(key),
-            });
+            const [, value, value2] = settingValues(
+              {
+                ...v,
+                setting: String(key),
+              },
+              current,
+            );
+            const max = gasMaximum(key, current);
             return key === 5
-              ? `Proposed value ${value}, value2 ${value2}; ${settingWords(key, value, value2)}`
-              : `Proposed raw value: ${value}; ${settingWords(key, value)}`;
+              ? `Proposed value ${value}, value2 ${value2}; ${settingWords(key, value, value2, current)}`
+              : `Proposed raw value: ${value}; ${settingWords(key, value, 0n, current)}` +
+                  (max !== undefined && value > max
+                    ? `. Over the current maximum ${max}: the vault would refuse it.`
+                    : "");
           } catch (e) {
             return e instanceof InputError
               ? e.message
               : "Enter a proposed value to see its plain units.";
           }
         }}
-        build={(v) => proposalSpec(10, { ...v, setting: String(key) })}
+        build={(v) =>
+          proposalSpec(10, { ...v, setting: String(key) }, current)
+        }
       />
     </div>
   );
@@ -740,10 +773,12 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
                     "unlisted / symbol unreadable")}
               </p>
               {!same(token, zeroAddress) && <Addr value={token} />}
-              <p className="chain-text">{proposalWords(p.action)}</p>
+              <p className="chain-text">
+                {proposalWords(p.action, s.globals.settings)}
+              </p>
               <p>
                 {ready
-                  ? `ready until ${date(expiresAt)} (exclusive)`
+                  ? `ready until just before ${date(expiresAt, "end")}`
                   : `waiting, executable from ${date(readyAt)}`}
               </p>
               {paused && (
@@ -818,6 +853,26 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
     </section>
   );
 }
+const listingStores = [() => sessionStorage, () => localStorage];
+const PASTE_FIRST =
+  "Paste the listing rows first so the page can check none is missing.";
+// A pasted row whose stock is listed with another feed, pool, quote feed or
+// minLiquidity (Check pairings names the field).
+function listedDiffers(
+  assets: Asset[],
+  r: ReturnType<typeof parseLaunch>[number],
+) {
+  const a = assets.find((x) => same(x.token, r.token));
+  return (
+    !!a &&
+    (!same(a.feed, r.feed) ||
+      !same(a.pool, r.pool) ||
+      !same(a.quoteFeed, r.quoteFeed) ||
+      a.minLiquidity !== r.minLiquidity)
+  );
+}
+const differWords = (tickers: string[]) =>
+  `Listed with other values than the pasted lines: ${tickers.join(", ")}. Check pairings shows which field; paste the lines that were listed.`;
 export function OwnerPage(props: Props) {
   const { snapshot: s, wallet: w } = props;
   const stock = (stocks = s.assets): Field => ({
@@ -838,27 +893,38 @@ export function OwnerPage(props: Props) {
   const feedField: Field = { key: "feed", label: "Stock USD feed address" };
   const failing = s.assets.filter((a) => a.reason !== 0);
   const finalized = s.globals.genesisFinalized;
+  // The pasted rows are kept in this tab (sessionStorage) and for new tabs
+  // (localStorage); this tab's own copy wins.
   const [listing, setListingState] = useState(() => {
-    try {
-      return sessionStorage.getItem("basket-listing") || "";
-    } catch {
-      return "";
-    }
+    for (const store of listingStores)
+      try {
+        const saved = store().getItem("basket-listing");
+        if (saved) return saved;
+      } catch {
+        /* storage optional */
+      }
+    return "";
   });
   const setListing = (value: string) => {
     setListingState(value);
-    try {
-      sessionStorage.setItem("basket-listing", value);
-    } catch {
-      /* storage optional */
-    }
+    for (const store of listingStores)
+      try {
+        store().setItem("basket-listing", value);
+      } catch {
+        /* storage optional */
+      }
   };
   let unlisted: string[] = [],
+    differing: string[] = [],
     listingError = "";
   if (listing.trim())
     try {
-      unlisted = parseLaunch(listing)
+      const pasted = parseLaunch(listing);
+      unlisted = pasted
         .filter((r) => !s.assets.some((a) => same(a.token, r.token)))
+        .map((r) => r.ticker);
+      differing = pasted
+        .filter((r) => listedDiffers(s.assets, r))
         .map((r) => r.ticker);
     } catch (e) {
       listingError = explain(e);
@@ -929,17 +995,23 @@ export function OwnerPage(props: Props) {
                 title="Finalize genesis"
                 folded={false}
                 disabledReason={
-                  listingError ||
-                  (unlisted.length
-                    ? `Unlisted rows: ${unlisted.join(", ")}. List them first.`
-                    : "At least three readable stocks must pass every check. Correct failed stocks and retry vault.")
+                  !listing.trim()
+                    ? PASTE_FIRST
+                    : listingError ||
+                      (unlisted.length
+                        ? `Unlisted rows: ${unlisted.join(", ")}. List them first.`
+                        : differing.length
+                          ? differWords(differing)
+                          : "At least three readable stocks must pass every check. Correct failed stocks and retry vault.")
                 }
                 label="Finalize genesis"
                 description="At least three listed stocks must each have reason OK in allAssets()."
                 disabled={
                   finalized !== false ||
+                  !listing.trim() ||
                   !!listingError ||
                   !!unlisted.length ||
+                  !!differing.length ||
                   !s.aggregate ||
                   !s.complete ||
                   s.assets.length < 3 ||
@@ -947,17 +1019,23 @@ export function OwnerPage(props: Props) {
                 }
                 confirmation="I understand this is irreversible, deposits can start at once, and later stocks can only be added by a List proposal."
                 build={async () => {
+                  if (!listing.trim()) throw new InputError(PASTE_FIRST);
                   await w.listingPending();
                   const fresh = await loadSnapshot();
-                  const missing = listing.trim()
-                    ? parseLaunch(listing).filter(
-                        (r) =>
-                          !fresh.assets.some((a) => same(a.token, r.token)),
-                      )
-                    : [];
+                  const pasted = parseLaunch(listing);
+                  const missing = pasted.filter(
+                    (r) => !fresh.assets.some((a) => same(a.token, r.token)),
+                  );
                   if (missing.length)
                     throw new InputError(
                       `Unlisted rows: ${missing.map((r) => r.ticker).join(", ")}. List them first.`,
+                    );
+                  const changed = pasted.filter((r) =>
+                    listedDiffers(fresh.assets, r),
+                  );
+                  if (changed.length)
+                    throw new InputError(
+                      differWords(changed.map((r) => r.ticker)),
                     );
                   if (
                     !fresh.aggregate ||
@@ -971,7 +1049,7 @@ export function OwnerPage(props: Props) {
                           .filter((a) => a.reason !== 0)
                           .map(
                             (a) =>
-                              `${a.symbol}: ${a.reason === undefined ? "unreadable" : reasons[a.reason]}`,
+                              `${a.symbol}: ${reasonWords(a.reason, fresh.globals.settings)}`,
                           )
                           .join("; ") ||
                           "At least three readable stocks required."),
@@ -982,16 +1060,20 @@ export function OwnerPage(props: Props) {
               <p>
                 {s.loading
                   ? "Reading..."
-                  : `${s.assets.length} stocks listed: ${s.assets.map((a) => a.symbol).join(", ") || "None"}`}
+                  : !s.complete
+                    ? "Listed stocks unreadable · Retry vault"
+                    : `${s.assets.length} ${s.assets.length === 1 ? "stock" : "stocks"} listed: ${s.assets.map((a) => a.symbol).join(", ") || "None"}`}
               </p>
               {unlisted.length > 0 && (
                 <p className="error">Unlisted rows: {unlisted.join(", ")}</p>
               )}
+              {differing.length > 0 && (
+                <p className="error">{differWords(differing)}</p>
+              )}
               {listingError && <p className="error">{listingError}</p>}
               {failing.map((a) => (
                 <p className="error" key={a.token}>
-                  {a.symbol}:{" "}
-                  {a.reason === undefined ? "unreadable" : reasons[a.reason]}
+                  {a.symbol}: {reasonWords(a.reason, s.globals.settings)}
                 </p>
               ))}
             </div>
@@ -1079,7 +1161,7 @@ export function OwnerPage(props: Props) {
             description="The new owner must accept from their own wallet and must not be the guardian."
             fields={[{ key: "next", label: "New owner address" }]}
             build={async (v) => {
-              const next = address(v.next);
+              const next = newOwner(v.next);
               if (same(next, await read(vault("guardian"))))
                 throw new InputError("The new owner must not be the guardian.");
               return vault("transferOwnership", [next]);
