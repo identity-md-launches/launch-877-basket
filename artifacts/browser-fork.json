@@ -1,5 +1,5 @@
 {
-  "forkBlock": "83597609",
+  "forkBlock": "83771508",
   "vault": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
   "runtimeHash": "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe",
   "checks": [
@@ -12,7 +12,7 @@
     "CapExceeded explained before approvals",
     "Primary button label remains readable on hover",
     "deposit",
-    "Multi-stock deposit, exact approvals, preview invalidated after success",
+    "Three-stock deposit succeeds with estimated gas +30%, exact approvals, preview invalidated after success",
     "redeem",
     "claim",
     "redeem",
@@ -352,21 +352,32 @@
       ]
     },
     {
+      "to": "0x4c0A418fF96f5F1B4d1b57740E7339dc3Fb512Ad",
+      "functionName": "approve",
+      "args": [
+        "0x4E19D7472E650399B06eeaa5ccC29Da9B8EFBeBd",
+        "30000000000000000000"
+      ]
+    },
+    {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
       "functionName": "deposit",
       "args": [
         [
           "0x8EDfB20f468e266581448357df2440B5125369F4",
-          "0x4d6d84eE2EC470830F738af2F78B5F5faffeA21E"
+          "0x4d6d84eE2EC470830F738af2F78B5F5faffeA21E",
+          "0x4c0A418fF96f5F1B4d1b57740E7339dc3Fb512Ad"
         ],
         [
           "10000000000000000000",
-          "20000000"
+          "20000000",
+          "30000000000000000000"
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
-        "2984999005000000000000",
-        "1791492214"
-      ]
+        "5969999005000000000000",
+        "1791509985"
+      ],
+      "gas": "0x16b4fd"
     },
     {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
@@ -375,10 +386,10 @@
         "10000000000000000000",
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         [
-          "33299999999999999",
-          "66599",
+          "16649999999999999",
+          "33299",
           "0",
-          "0",
+          "49950000000000000",
           "0",
           "0",
           "0",
@@ -401,9 +412,9 @@
           "0",
           "0"
         ],
-        "1791492217"
+        "1791509986"
       ],
-      "gas": "0x3419a"
+      "gas": "0x3de37"
     },
     {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
@@ -423,10 +434,10 @@
         "10000000000000000000",
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         [
-          "33299999999999999",
-          "66599",
+          "16649999999999999",
+          "33299",
           "0",
-          "0",
+          "49950000000000000",
           "0",
           "0",
           "0",
@@ -449,9 +460,9 @@
           "0",
           "0"
         ],
-        "1791492220"
+        "1791509987"
       ],
-      "gas": "0x3e948"
+      "gas": "0x485e5"
     },
     {
       "to": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
@@ -745,7 +756,7 @@
     "stocks25-owner-375.jpg",
     "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 3022,
+  "rpcCalls": 3031,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",

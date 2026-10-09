@@ -323,6 +323,7 @@ try {
           ".js": "application/javascript",
           ".css": "text/css",
           ".svg": "image/svg+xml",
+        ".webp": "image/webp",
           ".woff2": "font/woff2",
           ".txt": "text/plain",
         }[path.extname(file)] || "application/octet-stream",
@@ -560,7 +561,7 @@ try {
         await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
-          quality: 48,
+          quality: 40,
           fullPage: true,
         });
         shots.push(file);
@@ -735,6 +736,9 @@ try {
   await page.getByLabel("FIG amount", { exact: true }).fill("10");
   await page.getByRole("button", { name: "Add OAT", exact: true }).click();
   await page.getByLabel("OAT amount", { exact: true }).fill("20");
+  await page.getByLabel("Search to add stocks", { exact: true }).fill("S01");
+  await page.getByRole("button", { name: "Add S01", exact: true }).click();
+  await page.getByLabel("S01 amount", { exact: true }).fill("30");
   await page
     .getByRole("button", { name: "Preview deposit", exact: true })
     .click();
@@ -777,12 +781,13 @@ try {
   const dep = sends.at(-1);
   assert.deepEqual(
     dep.args[0].map((x) => x.toLowerCase()),
-    stocks.slice(0, 2).map((x) => x.toLowerCase()),
+    [stocks[0], stocks[1], stocks[4]].map((x) => x.toLowerCase()),
   );
-  assert.deepEqual(dep.args[1], [10n * 10n ** 18n, 20n * 10n ** 6n]);
+  assert.deepEqual(dep.args[1], [10n * 10n ** 18n, 20n * 10n ** 6n, 30n * 10n ** 18n]);
+  assert.ok(dep.gas, "Three-stock deposit uses explicit padded gas");
   assert.equal(dep.args[2].toLowerCase(), owner.toLowerCase());
   checks.push(
-    "Multi-stock deposit, exact approvals, preview invalidated after success",
+    "Three-stock deposit succeeds with estimated gas +30%, exact approvals, preview invalidated after success",
   );
   // Force a deferred leg, then claim it from the receiver wallet.
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [true]);
@@ -1067,7 +1072,7 @@ try {
   const tokenApprovals = sends.filter((s) => s.functionName === "approve");
   assert.deepEqual(
     tokenApprovals.map((s) => s.args[1]),
-    [10n * 10n ** 18n, 20n * 10n ** 6n],
+    [10n * 10n ** 18n, 20n * 10n ** 6n, 30n * 10n ** 18n],
   );
   assert.deepEqual(issues, []);
   fs.writeFileSync(
@@ -1104,13 +1109,15 @@ try {
 } catch (e) {
   console.error(e);
   if (page) {
+    const failure = path.resolve("../test/scratch/fork-failure");
+    fs.mkdirSync(failure, { recursive: true });
     fs.writeFileSync(
-      path.join(artifacts, "browser-failure.txt"),
+      path.join(failure, "browser-failure.txt"),
       await page.locator("body").textContent(),
     );
     await page
       .screenshot({
-        path: path.join(artifacts, "browser-failure.jpg"),
+        path: path.join(failure, "browser-failure.jpg"),
         type: "jpeg",
         quality: 65,
         fullPage: true,

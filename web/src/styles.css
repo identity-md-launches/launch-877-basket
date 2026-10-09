@@ -191,14 +191,6 @@ header {
   display: block;
   width: max-content;
 }
-.marquee button {
-  border-radius: 0;
-  border-width: 0 0 0 2px;
-  font-size: 12px;
-  min-width: 60px;
-  padding: 6px;
-  background: var(--sun);
-}
 .header-inner {
   max-width: 1200px;
   margin: auto;
@@ -327,11 +319,6 @@ nav a[aria-current="page"] {
   border: 5px solid var(--sun);
   outline: 3px solid var(--red);
 }
-.shop-window .store-shelf {
-  height: 55px;
-  object-fit: cover;
-  width: 100%;
-}
 main {
   max-width: 1200px;
   margin: auto;
@@ -400,7 +387,7 @@ main {
 }
 .vault-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 285px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 20px;
   align-items: stretch;
 }
@@ -412,9 +399,6 @@ main {
   border: 6px solid var(--red);
   margin: 28px 0;
   overflow: hidden;
-}
-.clerk {
-  width: 100%;
 }
 .burst {
   display: flex;
@@ -536,13 +520,6 @@ main {
 }
 .deposit-state p {
   margin-block: 8px 0;
-}
-.store-shelf {
-  width: 100%;
-  margin-bottom: 20px;
-}
-.shop-window .store-shelf {
-  margin: 0;
 }
 .stock-grid {
   display: grid;
@@ -762,9 +739,6 @@ input[type="checkbox"] {
   border: 0;
   padding: 0;
 }
-.checkout {
-  margin-bottom: 24px;
-}
 .floor-strip {
   height: 30px;
   background: conic-gradient(
@@ -818,9 +792,6 @@ footer strong {
   .marquee-track {
     animation: shop-scroll 180s linear infinite;
   }
-  .marquee.paused .marquee-track {
-    animation-play-state: paused;
-  }
   button {
     transition:
       background-color 0.15s,
@@ -847,7 +818,7 @@ footer strong {
     grid-template-columns: 1fr;
   }
   .vault-hero {
-    grid-template-columns: minmax(0, 1fr) 230px;
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
   .brand {
     font-size: 64px;
@@ -911,9 +882,6 @@ footer strong {
   .shop-window {
     margin: 14px 14px 0;
   }
-  .shop-window .store-shelf {
-    height: 45px;
-  }
   main {
     padding: 14px 16px 28px;
   }
@@ -951,27 +919,6 @@ footer strong {
   .vault-hero {
     display: block;
     position: relative;
-  }
-  .vault-hero .page-title {
-    padding-right: 75px;
-    min-height: 300px;
-  }
-  .vault-hero .page-title > p:last-of-type {
-    max-width: 220px;
-  }
-  .clerk-panel {
-    position: absolute;
-    right: -2px;
-    bottom: 0;
-    width: 116px;
-    height: 146px;
-    border-width: 3px;
-    margin: 0;
-  }
-  .clerk-panel .burst {
-    width: 49px;
-    height: 49px;
-    font-size: 17px;
   }
   .panel {
     padding: 18px 14px;
@@ -1047,10 +994,6 @@ footer strong {
   .footer-links {
     gap: 8px 16px;
   }
-  .store-shelf {
-    height: 58px;
-    object-fit: cover;
-  }
   .address {
     font-size: 12px;
   }
@@ -1084,16 +1027,18 @@ footer strong {
   margin-top: 12px;
 }
 
-/* The only moving layer is clipped and paint-contained; page text stays in normal flow. */
-.marquee-window {
-  contain: paint;
-  isolation: isolate;
-}
+/* Only the slogan track moves; overflow clipping also paints correctly on iOS. */
 .marquee-track {
   display: flex;
   width: max-content;
+  will-change: transform;
 }
-.marquee-track > span {
+.marquee-half {
+  display: flex;
+  flex: none;
+  min-width: 100vw;
+}
+.marquee-half > span {
   flex: none;
   white-space: pre;
 }
@@ -1108,9 +1053,6 @@ button.primary:disabled {
   background: #e4e9f0;
   color: #53617a;
   border-color: #8c98ab;
-}
-.shop-window .store-shelf {
-  height: 55px;
 }
 .stock-card dl > div {
   display: flex;
@@ -1191,9 +1133,6 @@ summary {
   }
 }
 @media (max-width: 660px) {
-  .marquee-track .desktop-slogans {
-    display: none;
-  }
   .marquee-track {
     animation-duration: 45s;
   }
@@ -1216,7 +1155,7 @@ summary {
   }
   .basket-art {
     width: 44px;
-    height: 52px;
+    height: 50px;
   }
   .wallet-area {
     margin-top: 10px;
@@ -1233,13 +1172,7 @@ summary {
     display: none;
   }
   .shop-window {
-    margin-top: 8px;
-  }
-  .shop-window .store-shelf {
-    height: 36px;
-  }
-  .shop-window .store-shelf pattern {
-    transform: scale(0.36);
+    margin-top: 4px;
   }
   main {
     padding-top: 10px;
@@ -1272,9 +1205,6 @@ summary {
     height: 8px;
     margin: 12px -14px -14px;
   }
-  .vault-hero .page-title {
-    min-height: 220px;
-  }
   .panel {
     margin-block: 16px;
     padding: 14px 12px;
@@ -1302,4 +1232,185 @@ summary {
   .wallet-status.transaction-summary {
     display: none;
   }
+}
+
+/* One shared shelf system, in both the store window and the Vault panel. */
+.store-shelf {
+  --food-size: 40px;
+  --shelf-gap: 12px;
+  --plank-size: 8px;
+  --plank-edge: 2px;
+  display: grid;
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+  background: #c4e7ff;
+  margin-bottom: 20px;
+}
+.shop-window .store-shelf { margin: 0; }
+.shelf-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--shelf-gap);
+  padding-top: 4px;
+  padding-bottom: calc(var(--plank-size) + 4px);
+  overflow: hidden;
+}
+.shelf-row:after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--plank-size);
+  background: var(--red);
+  border-block: var(--plank-edge) solid var(--ink);
+}
+.shelf-row img {
+  display: block;
+  flex: 0 0 var(--food-size);
+  width: var(--food-size);
+  height: var(--food-size);
+  object-fit: contain;
+}
+.character-picture {
+  display: block;
+  width: 100%;
+  height: 320px;
+  object-fit: contain;
+  object-position: 50% 100%;
+}
+.clerk-panel {
+  padding-top: 150px;
+}
+.clerk-panel .character-picture { height: 300px; }
+.vault-hero .page-title {
+  display: flex;
+  flex-direction: column;
+}
+.vault-hero .page-title:after { margin-top: auto; }
+.picture-stage {
+  container-type: inline-size;
+  position: relative;
+  padding-top: 16px;
+  background: var(--sun);
+  border: 4px solid var(--red);
+  margin-bottom: 24px;
+}
+.speech-bubble {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: min(155px, calc(50% - 66px));
+  margin: 0;
+  padding: 10px;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 18px/1.4 Flyer, sans-serif;
+  text-transform: none;
+  overflow-wrap: break-word;
+}
+.speech-bubble:after {
+  content: "";
+  position: absolute;
+  right: -16px;
+  top: 22px;
+  width: 18px;
+  height: 20px;
+  background: var(--paper);
+  clip-path: polygon(0 0, 100% 100%, 0 75%);
+}
+.speech-bubble:before {
+  content: "";
+  position: absolute;
+  right: -24px;
+  top: 20px;
+  width: 24px;
+  height: 28px;
+  background: var(--ink);
+  clip-path: polygon(0 0, 100% 100%, 0 85%);
+}
+.clerk-panel .speech-bubble {
+  top: 94px;
+  left: auto;
+  right: 8px;
+  width: 140px;
+}
+.clerk-panel .speech-bubble:before,
+.redeem-picture .speech-bubble:before {
+  left: -24px;
+  right: auto;
+  clip-path: polygon(100% 0, 0 100%, 100% 85%);
+}
+.clerk-panel .speech-bubble:after,
+.redeem-picture .speech-bubble:after {
+  left: -16px;
+  right: auto;
+  clip-path: polygon(100% 0, 0 100%, 100% 75%);
+}
+.redeem-picture .speech-bubble {
+  left: auto;
+  right: 8px;
+  width: min(155px, calc(50% - 82px));
+}
+.clerk-panel .speech-bubble:before { top: 68px; }
+.clerk-panel .speech-bubble:after { top: 70px; }
+@media (min-width: 661px) and (max-width: 960px) {
+  .character-picture,
+  .clerk-panel .character-picture { height: 260px; }
+  .clerk-panel { padding-top: 150px; }
+  .clerk-panel .speech-bubble { width: 126px; }
+  .clerk-panel .speech-bubble:before { top: 68px; }
+  .clerk-panel .speech-bubble:after { top: 70px; }
+  .deposit-picture .speech-bubble { width: min(155px, calc(50% - 57px)); }
+  .redeem-picture .speech-bubble { width: min(155px, calc(50% - 67px)); }
+}
+@media (max-width: 660px) {
+  .store-shelf {
+    --food-size: 22px;
+    --shelf-gap: 8px;
+    --plank-size: 3px;
+    --plank-edge: 1px;
+    height: 50px;
+  }
+  .shelf-row { padding-block: 0 var(--plank-size); }
+  .character-picture { height: 240px; }
+  .clerk-panel .character-picture { height: 200px; }
+  .speech-bubble { font-size: 15px; padding: 8px; }
+  .clerk-panel { padding-top: 144px; }
+  .clerk-panel .speech-bubble:before { top: 48px; }
+  .clerk-panel .speech-bubble:after { top: 50px; }
+  .clerk-panel .speech-bubble { width: 124px; }
+  .deposit-picture .speech-bubble { width: calc(50% - 54px); }
+  .redeem-picture .speech-bubble { width: calc(50% - 57px); }
+  .picture-stage .speech-bubble:before { top: 10px; }
+  .picture-stage .speech-bubble:after { top: 12px; }
+}
+
+/* Narrow aside frames reserve space above the bag, keeping the bubble whole. */
+@media (min-width: 661px) {
+@container (max-width: 270px) {
+  .redeem-picture .character-picture { margin-top: 150px; }
+  .redeem-picture .speech-bubble {
+    left: 12px;
+    right: auto;
+    width: 155px;
+  }
+  .redeem-picture .speech-bubble:before {
+    left: 100px;
+    top: auto;
+    bottom: -26px;
+    clip-path: polygon(0 0, 100% 100%, 100% 0);
+  }
+  .redeem-picture .speech-bubble:after {
+    left: 103px;
+    top: auto;
+    bottom: -18px;
+    clip-path: polygon(0 0, 100% 100%, 100% 0);
+  }
+}
+}
+@media (max-width: 360px) {
+  .clerk-panel .speech-bubble { width: 110px; }
 }

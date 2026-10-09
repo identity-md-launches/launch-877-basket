@@ -1,0 +1,392 @@
+[
+  {
+    "variant": "no-wallet",
+    "name": "vault",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "STOCK TOKENS. ONE BASKET.",
+        "y": 644.375,
+        "bottom": 664.375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "no-wallet",
+    "name": "deposit",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "FILL YOUR BASKET",
+        "y": 644.375,
+        "bottom": 664.375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "no-wallet",
+    "name": "redeem",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "AT THE CHECKOUT",
+        "y": 644.375,
+        "bottom": 664.375
+      },
+      {
+        "tag": "P",
+        "text": "Receive your share of every stock. Redemption is always open.",
+        "y": 722.359375,
+        "bottom": 770.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "no-wallet",
+    "name": "docs",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "KNOW YOUR BASKET",
+        "y": 644.375,
+        "bottom": 664.375
+      },
+      {
+        "tag": "P",
+        "text": "How Basket works, what it costs and what to watch for.",
+        "y": 722.359375,
+        "bottom": 770.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "no-wallet",
+    "name": "owner",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "BEHIND THE COUNTER",
+        "y": 644.375,
+        "bottom": 664.375
+      },
+      {
+        "tag": "P",
+        "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
+        "y": 722.359375,
+        "bottom": 794.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "no-wallet",
+    "name": "losses",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 441.375,
+        "bottom": 485.375
+      },
+      {
+        "tag": "DIV",
+        "text": "Open this page in your wallet app's browserCopy site link",
+        "y": 507.375,
+        "bottom": 609.375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy site link",
+        "y": 547.375,
+        "bottom": 593.375
+      },
+      {
+        "tag": "P",
+        "text": "ACCOUNTING HEALTH",
+        "y": 644.375,
+        "bottom": 664.375
+      },
+      {
+        "tag": "P",
+        "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
+        "y": 722.359375,
+        "bottom": 794.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "vault",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "STOCK TOKENS. ONE BASKET.",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "Meet Basket (BASK): your share of the Stock Tokens in this vault.",
+        "y": 626.34375,
+        "bottom": 698.34375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "deposit",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "FILL YOUR BASKET",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "Choose one or more open stocks. They go into the vault together in one deposit.",
+        "y": 626.34375,
+        "bottom": 674.34375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "redeem",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "AT THE CHECKOUT",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "Receive your share of every stock. Redemption is always open.",
+        "y": 582.359375,
+        "bottom": 630.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "docs",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "KNOW YOUR BASKET",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "How Basket works, what it costs and what to watch for.",
+        "y": 582.359375,
+        "bottom": 630.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "owner",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "BEHIND THE COUNTER",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "All controls and proposals are visible to everyone. Only the wallet allowed by the vault can send each transaction.",
+        "y": 582.359375,
+        "bottom": 654.359375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Launch",
+        "y": 700.359375,
+        "bottom": 746.359375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Pause",
+        "y": 700.359375,
+        "bottom": 746.359375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Pending",
+        "y": 700.359375,
+        "bottom": 746.359375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Immediate",
+        "y": 754.359375,
+        "bottom": 800.359375
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Propose",
+        "y": 754.359375,
+        "bottom": 800.359375
+      }
+    ],
+    "regressions": []
+  },
+  {
+    "variant": "connected",
+    "name": "losses",
+    "prior": [
+      {
+        "tag": "BUTTON",
+        "text": "Refresh vault ↻",
+        "y": 419.375,
+        "bottom": 463.375
+      },
+      {
+        "tag": "P",
+        "text": "ACCOUNTING HEALTH",
+        "y": 504.375,
+        "bottom": 524.375
+      },
+      {
+        "tag": "P",
+        "text": "Anyone can flag a shortfall and recognise a recorded loss after seven days. Retired stocks are included.",
+        "y": 582.359375,
+        "bottom": 654.359375
+      }
+    ],
+    "regressions": []
+  }
+]

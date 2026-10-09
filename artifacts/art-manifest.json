@@ -1,0 +1,232 @@
+{
+ "files": [
+  {
+   "path": "art/character/vault.webp",
+   "url": "https://gateway.pinata.cloud/ipfs/bafkreid2bo42rqj67jhmbnifpty45tgu2hw2s4emxzlyf5gbwauoqnn5ey",
+   "sha256": "7a0bb9a8c13efa4ec0b5057cf1ceccd4d1eda9708cbe5782f4c1b028e835bd26",
+   "bytes": 72014,
+   "width": 606,
+   "height": 1000
+  },
+  {
+   "path": "art/character/deposit.webp",
+   "url": "https://gateway.pinata.cloud/ipfs/bafkreiey2qv7nll56bq7wey75jyuu6jqvxz5wotdhdprlwincnvo2jldoq",
+   "sha256": "98d42bf6ad7df061fb131fea714a7930adf3db3a6338df15d90d136aed256374",
+   "bytes": 61194,
+   "width": 313,
+   "height": 1000
+  },
+  {
+   "path": "art/character/redeem.webp",
+   "url": "https://gateway.pinata.cloud/ipfs/bafkreib2sn6j3bj432uyfaugiirf5fxdyfhchc6zig5w5nlszb4ncqavta",
+   "sha256": "3a937c9d853cdea982828642225e96e3c14e238bd941bb6eb572c878d1401598",
+   "bytes": 61992,
+   "width": 484,
+   "height": 1000
+  },
+  {
+   "path": "art/food/bread.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bread/Flat/bread_flat.svg",
+   "sha256": "ef08e033f63a4f215744a3067a9c0693411ebcfe57b36bf9d197495ecbccf156",
+   "bytes": 3105
+  },
+  {
+   "path": "art/food/baguette.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Baguette%20bread/Flat/baguette_bread_flat.svg",
+   "sha256": "f65ae926257cfc775bfc0239d7bf4404b75fc6765a24747044f60f4227053f91",
+   "bytes": 1019
+  },
+  {
+   "path": "art/food/cheese.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cheese%20wedge/Flat/cheese_wedge_flat.svg",
+   "sha256": "f239293bf0d152a15326a186166168f8da7ad8d6c7127a4ecfa2ace4005aff7a",
+   "bytes": 1380
+  },
+  {
+   "path": "art/food/milk.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Glass%20of%20milk/Flat/glass_of_milk_flat.svg",
+   "sha256": "3b60194616354c508ba142fce6e396fea3140abf09df99a31024336fbba384e4",
+   "bytes": 768
+  },
+  {
+   "path": "art/food/canned-food.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Canned%20food/Flat/canned_food_flat.svg",
+   "sha256": "4ea41ac2c82bec24344580a0bba49047186537f91dee30c4ddd3b0ffc2e391b1",
+   "bytes": 1338
+  },
+  {
+   "path": "art/food/egg.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Egg/Flat/egg_flat.svg",
+   "sha256": "1c7146a519276e93c0f939756e80beb5b0edb4e9a350dbe58ab63c7d0bcc5204",
+   "bytes": 412
+  },
+  {
+   "path": "art/food/honey-pot.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Honey%20pot/Flat/honey_pot_flat.svg",
+   "sha256": "20fdbe3a68d2e017899372e32874fad9c08ee35a8f1509e7be1497b448db5fc6",
+   "bytes": 1767
+  },
+  {
+   "path": "art/food/jar.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Jar/Flat/jar_flat.svg",
+   "sha256": "1a619c120858851ed4956bb54beca416c39ac8bc31a87530870e4ab2493a6795",
+   "bytes": 804
+  },
+  {
+   "path": "art/food/beverage-box.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Beverage%20box/Flat/beverage_box_flat.svg",
+   "sha256": "135e7cf6dd378e8ee10bed849ee8452bc4e24ca799a0bf225f8c565669c220da",
+   "bytes": 1997
+  },
+  {
+   "path": "art/food/croissant.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Croissant/Flat/croissant_flat.svg",
+   "sha256": "ae35174ffabb5610fd7ed0320f48c7bd759e18d4c9d1a06ff67f7597470fb9fd",
+   "bytes": 2280
+  },
+  {
+   "path": "art/food/butter.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Butter/Flat/butter_flat.svg",
+   "sha256": "0b901e32d4e898f1ee910934b4afc635bdac48791d21a9d6c7775ac6128d17c3",
+   "bytes": 2620
+  },
+  {
+   "path": "art/food/cookie.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Cookie/Flat/cookie_flat.svg",
+   "sha256": "d02b9e85fa0394a4c59fd74654244c069eddb9aaf72abbcba8d0d3060262d6af",
+   "bytes": 2020
+  },
+  {
+   "path": "art/food/pie.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pie/Flat/pie_flat.svg",
+   "sha256": "e9c5e76220606191921017d96e247ec1b2c5f02291a75fbfcd815e00190eacca",
+   "bytes": 2539
+  },
+  {
+   "path": "art/food/bagel.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bagel/Flat/bagel_flat.svg",
+   "sha256": "00b049b844d946392edc9133ed583ef41d8f05b5e0cc1c74b3417e90adaf3bfb",
+   "bytes": 6347
+  },
+  {
+   "path": "art/food/apple.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20apple/Flat/red_apple_flat.svg",
+   "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073",
+   "bytes": 563
+  },
+  {
+   "path": "art/food/banana.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Banana/Flat/banana_flat.svg",
+   "sha256": "40047ed9d10462ba41457b0c55beb05b6fde4ce590e6c1f88577539e46c2f20d",
+   "bytes": 1909
+  },
+  {
+   "path": "art/food/carrot.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Carrot/Flat/carrot_flat.svg",
+   "sha256": "99521ccf4753d9b5312707541eafc41f00b35f616bb6e96cada9acfc7bf1d396",
+   "bytes": 1448
+  },
+  {
+   "path": "art/food/broccoli.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Broccoli/Flat/broccoli_flat.svg",
+   "sha256": "53e9899f7e5ee6da63c0357a1152d7da413bbab029bbf53beb5255999c2823df",
+   "bytes": 1257
+  },
+  {
+   "path": "art/food/tomato.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Tomato/Flat/tomato_flat.svg",
+   "sha256": "3b3326c731fce0fe697656d33bb092613eb261d827b6ca319b5cd6df08212add",
+   "bytes": 924
+  },
+  {
+   "path": "art/food/pineapple.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pineapple/Flat/pineapple_flat.svg",
+   "sha256": "9d064d8f8796b53a9eeb18b642e6e16628848ad2fa944576b597e7c7f36a95be",
+   "bytes": 4821
+  },
+  {
+   "path": "art/food/corn.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Ear%20of%20corn/Flat/ear_of_corn_flat.svg",
+   "sha256": "98badfb85ed658177c2d2002fa6ab9fe619b0330147838d76e95739e73d879e8",
+   "bytes": 4009
+  },
+  {
+   "path": "art/food/bell-pepper.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bell%20pepper/Flat/bell_pepper_flat.svg",
+   "sha256": "e6327c805e2df2e6c1d18b0d66bfe54e41e14393bc21f4b8f6b4b3be5cecdbe4",
+   "bytes": 1195
+  },
+  {
+   "path": "art/food/leafy-green.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Leafy%20green/Flat/leafy_green_flat.svg",
+   "sha256": "4df9bb2eb271ac221b75e16bce9c63ae4e54780159bf4cca83adea4604ea4fec",
+   "bytes": 2841
+  },
+  {
+   "path": "art/food/watermelon.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Watermelon/Flat/watermelon_flat.svg",
+   "sha256": "33ce86d2784776504191684fd34495c68ac54be7b98e100ef18c3a19297c735e",
+   "bytes": 2024
+  },
+  {
+   "path": "art/food/grapes.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grapes/Flat/grapes_flat.svg",
+   "sha256": "e959e27685f84cead6cc230c719c75feaf3a3cfde878cf00819473036005edd0",
+   "bytes": 1971
+  },
+  {
+   "path": "art/food/lemon.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Lemon/Flat/lemon_flat.svg",
+   "sha256": "f3a924a7031fc0dd7c57a90e5f9794cf72859d860151dec321c4adc38605e4cc",
+   "bytes": 713
+  },
+  {
+   "path": "art/food/pear.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pear/Flat/pear_flat.svg",
+   "sha256": "ddab6102c0ab2fef2dee700b7bb3d427187df8bfa010b23c4e2516e15c226551",
+   "bytes": 636
+  },
+  {
+   "path": "art/food/strawberry.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Strawberry/Flat/strawberry_flat.svg",
+   "sha256": "d8522f848f305fc81040dd9c5467f97df483fde5e2568429046e7f1ae1a23d91",
+   "bytes": 2048
+  },
+  {
+   "path": "art/food/eggplant.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Eggplant/Flat/eggplant_flat.svg",
+   "sha256": "a4f479a1476608d8a69bb84a85e83471a09f6cd030c1614c4dca1e5a6796a0d4",
+   "bytes": 896
+  },
+  {
+   "path": "art/food/avocado.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Avocado/Flat/avocado_flat.svg",
+   "sha256": "81e6bdde887deddceedbd538ecc14876ab0f3873406632bcd3fd365741efe434",
+   "bytes": 1663
+  },
+  {
+   "path": "art/food/onion.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Onion/Flat/onion_flat.svg",
+   "sha256": "16ef144c9b55823bfe1d6099fdbf884cdc715b74c4cdfaa09e5bb2cc7b970ad9",
+   "bytes": 1984
+  },
+  {
+   "path": "art/food/potato.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Potato/Flat/potato_flat.svg",
+   "sha256": "630cf5cd73f353d09805ff72c9eeab5bf0caa65c65a8c615f6a4658a6993f6dc",
+   "bytes": 1551
+  },
+  {
+   "path": "art/food/green-apple.svg",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Green%20apple/Flat/green_apple_flat.svg",
+   "sha256": "8d16350d03ee8c98f1d58985453b4c7fbe4d69da3fde37cbf8b5c70ecb80bbd4",
+   "bytes": 575
+  },
+  {
+   "path": "art/food/Fluent-Emoji-MIT.txt",
+   "url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/LICENSE",
+   "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+   "bytes": 1141
+  }
+ ]
+}

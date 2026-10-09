@@ -20,6 +20,7 @@ const server = http.createServer((req, res) => {
         ".html": "text/html",
         ".woff2": "font/woff2",
         ".svg": "image/svg+xml",
+        ".webp": "image/webp",
       }[path.extname(file)] || "text/plain",
     );
     res.end(fs.readFileSync(file));

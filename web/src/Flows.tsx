@@ -33,7 +33,6 @@ import {
   Receiver,
 } from "./components";
 import { DepositState } from "./Vault";
-import { Checkout } from "./Scenery";
 import type { Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
 export function DepositPage({ snapshot: s, wallet: w }: Props) {
@@ -481,7 +480,10 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
           </p>
         </section>
         <aside className="panel">
-          <Checkout />
+          <div className="picture-stage deposit-picture">
+            <img className="character-picture" src="./art/character/deposit.webp" width="313" height="1000" alt="Store worker holding out a shopping basket" />
+            <p className="speech-bubble">Go ahead and put it in hehe</p>
+          </div>
           <h2>Before you deposit</h2>
           <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>
           <p>
@@ -694,7 +696,10 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
           </p>
         </section>
         <aside className="panel">
-          <Checkout redeem />
+          <div className="picture-stage redeem-picture">
+            <img className="character-picture" src="./art/character/redeem.webp" width="484" height="1000" alt="Store worker handing over a full grocery bag" />
+            <p className="speech-bubble">are you sure that’s all you came here for?</p>
+          </div>
           <h2>Take your basket home</h2>
           <details>
             <summary>Transaction details</summary>
@@ -710,7 +715,7 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
               Removal of an empty retired stock can change that order before
               execution. Minimums protect entitlements, not immediate payment.
             </p>
-            <p>Redemption and claim gas is estimated, then increased by 30%.</p>
+            <p>Deposit, redemption and claim gas is estimated, then increased by 30%.</p>
           </details>
         </aside>
       </div>
@@ -827,15 +832,17 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
             snapshot={s}
             reason={
               actionReason(w, s) ||
-              (working
-                ? "Claim batch pending. Wait for its receipt."
-                : reading
-                  ? "Reading..."
-                  : !claimable.length
-                    ? visible.length
-                      ? "Owed balances are unreadable. Retry claims above."
-                      : "Nothing is owed to your connected wallet."
-                    : "")
+              (!s.complete
+                ? "Owed balances unreadable. Retry vault."
+                : working
+                  ? "Claim batch pending. Wait for its receipt."
+                  : reading
+                    ? "Reading..."
+                    : !claimable.length
+                      ? visible.length
+                        ? "Owed balances are unreadable. Retry claims above."
+                        : "Nothing is owed to your connected wallet."
+                      : "")
             }
           />
           <ActionStatus wallet={w} scope="claim-all" />

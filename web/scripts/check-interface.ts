@@ -32,6 +32,7 @@ assert.equal(amount(exact(value)), value);
 assert.equal(exact(1000001n, 6), "1.000001");
 assert.equal(settingWords(7, 300n), "3% (300 basis points)");
 assert.match(settingWords(2, 93600n), /26 hours/);
+assert.equal(settingWords(14, 3n), "With at most 3 held stocks, every leg is tried now; with more, every leg is owed for claims. Zero disables direct attempts.");
 assert.match(settingWords(0, 4n), /centre \/4 to ×4/);
 assert.match(settingWords(5, 0n), /always open/);
 assert.match(settingWords(5, parseTime("24:00")), /Monday to Friday only/);

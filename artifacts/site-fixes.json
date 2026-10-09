@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "replaced: nonce/receipt recovery and fail-closed pending guard",
+    "legacy: nonce/receipt recovery and fail-closed pending guard",
+    "receipt: nonce/receipt recovery and fail-closed pending guard",
+    "pending: nonce/receipt recovery and fail-closed pending guard",
+    "unknown: nonce/receipt recovery and fail-closed pending guard",
+    "queue: nonce/receipt recovery and fail-closed pending guard",
+    "Wait reconciles replaced hash without waiting for impossible receipt",
+    "Incomplete stock read says unreadable, offers functioning Retry vault, never says nothing owed",
+    "Complete empty stock read retains nothing-owed message"
+  ],
+  "scope": "Actual wallet hook and Claims component, mocked reads only; fork sends tested separately."
+}

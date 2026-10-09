@@ -11,7 +11,7 @@ import {
   type Snapshot,
 } from "./model";
 import { PageTitle, AddressLink, Note, Empty } from "./components";
-import { Clerk, StoreShelf } from "./Scenery";
+import { StoreShelf } from "./Scenery";
 export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
   const r = s.status;
   return (
@@ -62,7 +62,8 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
         </PageTitle>
         <div className="clerk-panel">
           <span className="burst">WOW!</span>
-          <Clerk />
+          <img className="character-picture" src="./art/character/vault.webp" width="606" height="1000" alt="Cheerful store worker beside a produce crate" />
+          <p className="speech-bubble">I was hoping you would come through my aisle</p>
         </div>
       </div>
       <section className="panel">

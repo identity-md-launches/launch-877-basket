@@ -46,6 +46,7 @@ const server = http.createServer((req, res) => {
         ".css": "text/css",
         ".woff2": "font/woff2",
         ".svg": "image/svg+xml",
+        ".webp": "image/webp",
       }[path.extname(p)] || "text/plain",
     );
     res.end(fs.readFileSync(p));

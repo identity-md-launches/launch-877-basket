@@ -1,3 +1,4 @@
+2026-10-09: final production build, disposable copy from unchanged lockfile.
 
 > basket-protocol-web@1.0.0 build
 > tsc --noEmit && vite build
@@ -10,17 +11,12 @@ computing gzip size...
 ../dist/index.html                     0.66 kB │ gzip:   0.39 kB
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
-../dist/assets/index-DRkoMwvl.css     16.77 kB │ gzip:   4.63 kB
-../dist/assets/ccip-CaR86u5S.js        2.61 kB │ gzip:   1.24 kB
-../dist/assets/index-D54XlxQ-.js     547.57 kB │ gzip: 166.77 kB
+../dist/assets/index-CtG_z5cM.css     19.53 kB │ gzip:   5.14 kB
+../dist/assets/ccip-BwwaKiFG.js        2.61 kB │ gzip:   1.23 kB
+../dist/assets/index-BKZt6pdK.js     543.47 kB │ gzip: 165.41 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 12.28s
-npm notice
-npm notice New major version of npm available! 11.19.0 -> 12.2.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
-npm notice To update run: npm install -g npm@12.2.0
-npm notice
+✓ built in 6.15s

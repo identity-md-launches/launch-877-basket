@@ -1,9 +1,157 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 7708907,
-  "fileCount": 143,
-  "productionExportBytes": 613281,
+  "uncompressedDeliveryBytes": 8013710,
+  "fileCount": 226,
+  "productionExportBytes": 869700,
   "productionFiles": {
+    "dist/art/character/deposit.webp": {
+      "bytes": 61194,
+      "sha256": "98d42bf6ad7df061fb131fea714a7930adf3db3a6338df15d90d136aed256374"
+    },
+    "dist/art/character/redeem.webp": {
+      "bytes": 61992,
+      "sha256": "3a937c9d853cdea982828642225e96e3c14e238bd941bb6eb572c878d1401598"
+    },
+    "dist/art/character/vault.webp": {
+      "bytes": 72014,
+      "sha256": "7a0bb9a8c13efa4ec0b5057cf1ceccd4d1eda9708cbe5782f4c1b028e835bd26"
+    },
+    "dist/art/food/Fluent-Emoji-MIT.txt": {
+      "bytes": 1141,
+      "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+    },
+    "dist/art/food/apple.svg": {
+      "bytes": 563,
+      "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073"
+    },
+    "dist/art/food/avocado.svg": {
+      "bytes": 1663,
+      "sha256": "81e6bdde887deddceedbd538ecc14876ab0f3873406632bcd3fd365741efe434"
+    },
+    "dist/art/food/bagel.svg": {
+      "bytes": 6347,
+      "sha256": "00b049b844d946392edc9133ed583ef41d8f05b5e0cc1c74b3417e90adaf3bfb"
+    },
+    "dist/art/food/baguette.svg": {
+      "bytes": 1019,
+      "sha256": "f65ae926257cfc775bfc0239d7bf4404b75fc6765a24747044f60f4227053f91"
+    },
+    "dist/art/food/banana.svg": {
+      "bytes": 1909,
+      "sha256": "40047ed9d10462ba41457b0c55beb05b6fde4ce590e6c1f88577539e46c2f20d"
+    },
+    "dist/art/food/bell-pepper.svg": {
+      "bytes": 1195,
+      "sha256": "e6327c805e2df2e6c1d18b0d66bfe54e41e14393bc21f4b8f6b4b3be5cecdbe4"
+    },
+    "dist/art/food/beverage-box.svg": {
+      "bytes": 1997,
+      "sha256": "135e7cf6dd378e8ee10bed849ee8452bc4e24ca799a0bf225f8c565669c220da"
+    },
+    "dist/art/food/bread.svg": {
+      "bytes": 3105,
+      "sha256": "ef08e033f63a4f215744a3067a9c0693411ebcfe57b36bf9d197495ecbccf156"
+    },
+    "dist/art/food/broccoli.svg": {
+      "bytes": 1257,
+      "sha256": "53e9899f7e5ee6da63c0357a1152d7da413bbab029bbf53beb5255999c2823df"
+    },
+    "dist/art/food/butter.svg": {
+      "bytes": 2620,
+      "sha256": "0b901e32d4e898f1ee910934b4afc635bdac48791d21a9d6c7775ac6128d17c3"
+    },
+    "dist/art/food/canned-food.svg": {
+      "bytes": 1338,
+      "sha256": "4ea41ac2c82bec24344580a0bba49047186537f91dee30c4ddd3b0ffc2e391b1"
+    },
+    "dist/art/food/carrot.svg": {
+      "bytes": 1448,
+      "sha256": "99521ccf4753d9b5312707541eafc41f00b35f616bb6e96cada9acfc7bf1d396"
+    },
+    "dist/art/food/cheese.svg": {
+      "bytes": 1380,
+      "sha256": "f239293bf0d152a15326a186166168f8da7ad8d6c7127a4ecfa2ace4005aff7a"
+    },
+    "dist/art/food/cookie.svg": {
+      "bytes": 2020,
+      "sha256": "d02b9e85fa0394a4c59fd74654244c069eddb9aaf72abbcba8d0d3060262d6af"
+    },
+    "dist/art/food/corn.svg": {
+      "bytes": 4009,
+      "sha256": "98badfb85ed658177c2d2002fa6ab9fe619b0330147838d76e95739e73d879e8"
+    },
+    "dist/art/food/croissant.svg": {
+      "bytes": 2280,
+      "sha256": "ae35174ffabb5610fd7ed0320f48c7bd759e18d4c9d1a06ff67f7597470fb9fd"
+    },
+    "dist/art/food/egg.svg": {
+      "bytes": 412,
+      "sha256": "1c7146a519276e93c0f939756e80beb5b0edb4e9a350dbe58ab63c7d0bcc5204"
+    },
+    "dist/art/food/eggplant.svg": {
+      "bytes": 896,
+      "sha256": "a4f479a1476608d8a69bb84a85e83471a09f6cd030c1614c4dca1e5a6796a0d4"
+    },
+    "dist/art/food/grapes.svg": {
+      "bytes": 1971,
+      "sha256": "e959e27685f84cead6cc230c719c75feaf3a3cfde878cf00819473036005edd0"
+    },
+    "dist/art/food/green-apple.svg": {
+      "bytes": 575,
+      "sha256": "8d16350d03ee8c98f1d58985453b4c7fbe4d69da3fde37cbf8b5c70ecb80bbd4"
+    },
+    "dist/art/food/honey-pot.svg": {
+      "bytes": 1767,
+      "sha256": "20fdbe3a68d2e017899372e32874fad9c08ee35a8f1509e7be1497b448db5fc6"
+    },
+    "dist/art/food/jar.svg": {
+      "bytes": 804,
+      "sha256": "1a619c120858851ed4956bb54beca416c39ac8bc31a87530870e4ab2493a6795"
+    },
+    "dist/art/food/leafy-green.svg": {
+      "bytes": 2841,
+      "sha256": "4df9bb2eb271ac221b75e16bce9c63ae4e54780159bf4cca83adea4604ea4fec"
+    },
+    "dist/art/food/lemon.svg": {
+      "bytes": 713,
+      "sha256": "f3a924a7031fc0dd7c57a90e5f9794cf72859d860151dec321c4adc38605e4cc"
+    },
+    "dist/art/food/milk.svg": {
+      "bytes": 768,
+      "sha256": "3b60194616354c508ba142fce6e396fea3140abf09df99a31024336fbba384e4"
+    },
+    "dist/art/food/onion.svg": {
+      "bytes": 1984,
+      "sha256": "16ef144c9b55823bfe1d6099fdbf884cdc715b74c4cdfaa09e5bb2cc7b970ad9"
+    },
+    "dist/art/food/pear.svg": {
+      "bytes": 636,
+      "sha256": "ddab6102c0ab2fef2dee700b7bb3d427187df8bfa010b23c4e2516e15c226551"
+    },
+    "dist/art/food/pie.svg": {
+      "bytes": 2539,
+      "sha256": "e9c5e76220606191921017d96e247ec1b2c5f02291a75fbfcd815e00190eacca"
+    },
+    "dist/art/food/pineapple.svg": {
+      "bytes": 4821,
+      "sha256": "9d064d8f8796b53a9eeb18b642e6e16628848ad2fa944576b597e7c7f36a95be"
+    },
+    "dist/art/food/potato.svg": {
+      "bytes": 1551,
+      "sha256": "630cf5cd73f353d09805ff72c9eeab5bf0caa65c65a8c615f6a4658a6993f6dc"
+    },
+    "dist/art/food/strawberry.svg": {
+      "bytes": 2048,
+      "sha256": "d8522f848f305fc81040dd9c5467f97df483fde5e2568429046e7f1ae1a23d91"
+    },
+    "dist/art/food/tomato.svg": {
+      "bytes": 924,
+      "sha256": "3b3326c731fce0fe697656d33bb092613eb261d827b6ca319b5cd6df08212add"
+    },
+    "dist/art/food/watermelon.svg": {
+      "bytes": 2024,
+      "sha256": "33ce86d2784776504191684fd34495c68ac54be7b98e100ef18c3a19297c735e"
+    },
     "dist/assets/Anton-Byf51wtH.woff2": {
       "bytes": 18612,
       "sha256": "d0fa07ff63dd60cbc0e2f58e29c802dca2a5ae0276c999f59c6111ab7bbaec3b"
@@ -12,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-CaR86u5S.js": {
+    "dist/assets/ccip-BwwaKiFG.js": {
       "bytes": 2610,
-      "sha256": "a958858a85a86c37357db2634e41011c164ea69095bfc68e4849dce350150cae"
+      "sha256": "6ed7962e32130da6af3547ba6cdae8e6226e8b79a060a4bc9eec215308dc699c"
     },
-    "dist/assets/index-D54XlxQ-.js": {
-      "bytes": 547571,
-      "sha256": "99e8c4e77f9578a583feb2809ce8ed79f44a148149327398fd60398de03d7e5f"
+    "dist/assets/index-BKZt6pdK.js": {
+      "bytes": 543465,
+      "sha256": "84b1dc8a587577daab53a093f90d075aa37f7449a5bcdac57944a0d141d742ab"
     },
-    "dist/assets/index-DRkoMwvl.css": {
-      "bytes": 16771,
-      "sha256": "ce221d64864c2fdc86981f74c182a17632bb77f9333f66872a4ae0640587de2a"
+    "dist/assets/index-CtG_z5cM.css": {
+      "bytes": 19531,
+      "sha256": "cb25150e8e3bbc1bff28b52a8b97e86e03eb136621d750b306bcdb6703c537e1"
     },
     "dist/favicon.svg": {
       "bytes": 268,
@@ -38,14 +186,14 @@
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "fefb2052313ffc22337abb1329e07dc0234ff468c198729a2eb94430a7252caa"
+      "sha256": "e64c87e2e5b4406a735b250b163f5ebe296079fdfc8db4662d2b19b207c27bd5"
     }
   },
-  "accounting": "Complete candidate file contents, including tracked lib sources and this report. Excludes Git metadata, task inputs and disposable scratch. Conservative uncompressed accounting; no Git metadata was modified.",
+  "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
-    "No nested dependency/cache directories or dependency archives in candidate files",
-    "No git submodules",
-    "Existing contracts, build configuration, dependency manifests/lockfiles unchanged",
-    "24 required empty/25-stock screenshots retained"
+    "Protected configuration, dependencies, contracts and other source paths unchanged",
+    "No git submodules or nested dependency/cache/archive payloads",
+    "24 required empty/25-stock JPEGs retained at quality 40; no additional artifact images",
+    "Both copies of all 37 manifest assets included"
   ]
 }

@@ -28,7 +28,12 @@ declare global {
   }
 }
 export type ActionProgress = { message: string; hash?: Hex; detail?: string };
-type PendingTx = { hash: Hex; account: Address; functionName: string };
+type PendingTx = {
+  hash: Hex;
+  account: Address;
+  functionName: string;
+  nonce?: number;
+};
 const pendingKey = "basket-pending-4663";
 function savedPending(): PendingTx | undefined {
   try {
@@ -52,7 +57,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   function fail(key: string, message: string) {
     setProgress((old) => ({ ...old, [key]: { ...old[key], message } }));
   }
-  async function listingPending() {
+  async function listingPending(waitForReceipt = false) {
     if (!account) return;
     const pending = pendingRef.current;
     if (pending && same(pending.account, account)) {
@@ -65,27 +70,41 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
           sessionStorage.removeItem(pendingKey);
         }
       } catch {
-        setHash(pending.hash);
-        report("listing", {
-          message:
-            "A transaction is still pending. Wait for its receipt before resuming listing.",
-          hash: pending.hash,
-        });
-        throw new InputError(
-          "A transaction is still pending. Wait for its receipt, then resume listing.",
-        );
+        // A mined Speed up/Cancel consumes the original transaction's nonce.
+        const [transaction, latest] = await Promise.all([
+          client.getTransaction({ hash: pending.hash }).catch(() => undefined),
+          client.getTransactionCount({ address: account, blockTag: "latest" }),
+        ]);
+        const nonce = pending.nonce ?? transaction?.nonce;
+        if (nonce !== undefined && latest > nonce) {
+          pendingRef.current = undefined;
+          sessionStorage.removeItem(pendingKey);
+          setHash(undefined);
+        } else if (!waitForReceipt) {
+          setHash(pending.hash);
+          report("listing", {
+            message:
+              "A transaction is still pending. Wait for its receipt before resuming listing.",
+            hash: pending.hash,
+          });
+          throw new InputError(
+            "A transaction is still pending. Wait for its receipt, then resume listing.",
+          );
+        }
       }
     }
     const [latest, queued] = await Promise.all([
       client.getTransactionCount({ address: account, blockTag: "latest" }),
       client.getTransactionCount({ address: account, blockTag: "pending" }),
     ]);
-    if (latest !== queued)
+    if (!waitForReceipt && latest !== queued)
       throw new InputError(
         "A transaction is still pending. Wait until the owner's pending and latest nonce match, then resume listing.",
       );
   }
   async function waitPending() {
+    // Reconcile a replacement before waiting on a hash that cannot get a receipt.
+    await listingPending(true);
     const p = pendingRef.current;
     if (p && same(p.account, account)) {
       report("listing", {
@@ -205,7 +224,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       if (s.functionName === "genesisList") await listingPending();
       await verifyNetwork();
       await simulate(s, account);
-      const gas = ["redeem", "claim"].includes(s.functionName)
+      const gas = ["deposit", "redeem", "claim"].includes(s.functionName)
         ? ((await client.estimateGas({
             account,
             to: s.address,
@@ -215,6 +234,10 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
             99n) /
           100n
         : undefined;
+      const nonce = await client.getTransactionCount({
+        address: account,
+        blockTag: "pending",
+      });
       // Recheck immediately before requesting a signature; never switch chains implicitly.
       if (Number(await p.request({ method: "eth_chainId" })) !== 4663)
         throw new Error("The wallet chain changed. Please retry.");
@@ -235,7 +258,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       })) as Hex;
       sent = tx;
       setHash(tx);
-      pendingRef.current = { hash: tx, account, functionName: s.functionName };
+      pendingRef.current = { hash: tx, account, functionName: s.functionName, nonce };
       try {
         sessionStorage.setItem(pendingKey, JSON.stringify(pendingRef.current));
       } catch {

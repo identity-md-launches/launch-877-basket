@@ -1,0 +1,1450 @@
+{
+  "hashes": [
+    {
+      "path": "web/public/art/character/vault.webp",
+      "bytes": 72014,
+      "sha256": "7a0bb9a8c13efa4ec0b5057cf1ceccd4d1eda9708cbe5782f4c1b028e835bd26"
+    },
+    {
+      "path": "web/public/art/character/deposit.webp",
+      "bytes": 61194,
+      "sha256": "98d42bf6ad7df061fb131fea714a7930adf3db3a6338df15d90d136aed256374"
+    },
+    {
+      "path": "web/public/art/character/redeem.webp",
+      "bytes": 61992,
+      "sha256": "3a937c9d853cdea982828642225e96e3c14e238bd941bb6eb572c878d1401598"
+    },
+    {
+      "path": "web/public/art/food/bread.svg",
+      "bytes": 3105,
+      "sha256": "ef08e033f63a4f215744a3067a9c0693411ebcfe57b36bf9d197495ecbccf156"
+    },
+    {
+      "path": "web/public/art/food/baguette.svg",
+      "bytes": 1019,
+      "sha256": "f65ae926257cfc775bfc0239d7bf4404b75fc6765a24747044f60f4227053f91"
+    },
+    {
+      "path": "web/public/art/food/cheese.svg",
+      "bytes": 1380,
+      "sha256": "f239293bf0d152a15326a186166168f8da7ad8d6c7127a4ecfa2ace4005aff7a"
+    },
+    {
+      "path": "web/public/art/food/milk.svg",
+      "bytes": 768,
+      "sha256": "3b60194616354c508ba142fce6e396fea3140abf09df99a31024336fbba384e4"
+    },
+    {
+      "path": "web/public/art/food/canned-food.svg",
+      "bytes": 1338,
+      "sha256": "4ea41ac2c82bec24344580a0bba49047186537f91dee30c4ddd3b0ffc2e391b1"
+    },
+    {
+      "path": "web/public/art/food/egg.svg",
+      "bytes": 412,
+      "sha256": "1c7146a519276e93c0f939756e80beb5b0edb4e9a350dbe58ab63c7d0bcc5204"
+    },
+    {
+      "path": "web/public/art/food/honey-pot.svg",
+      "bytes": 1767,
+      "sha256": "20fdbe3a68d2e017899372e32874fad9c08ee35a8f1509e7be1497b448db5fc6"
+    },
+    {
+      "path": "web/public/art/food/jar.svg",
+      "bytes": 804,
+      "sha256": "1a619c120858851ed4956bb54beca416c39ac8bc31a87530870e4ab2493a6795"
+    },
+    {
+      "path": "web/public/art/food/beverage-box.svg",
+      "bytes": 1997,
+      "sha256": "135e7cf6dd378e8ee10bed849ee8452bc4e24ca799a0bf225f8c565669c220da"
+    },
+    {
+      "path": "web/public/art/food/croissant.svg",
+      "bytes": 2280,
+      "sha256": "ae35174ffabb5610fd7ed0320f48c7bd759e18d4c9d1a06ff67f7597470fb9fd"
+    },
+    {
+      "path": "web/public/art/food/butter.svg",
+      "bytes": 2620,
+      "sha256": "0b901e32d4e898f1ee910934b4afc635bdac48791d21a9d6c7775ac6128d17c3"
+    },
+    {
+      "path": "web/public/art/food/cookie.svg",
+      "bytes": 2020,
+      "sha256": "d02b9e85fa0394a4c59fd74654244c069eddb9aaf72abbcba8d0d3060262d6af"
+    },
+    {
+      "path": "web/public/art/food/pie.svg",
+      "bytes": 2539,
+      "sha256": "e9c5e76220606191921017d96e247ec1b2c5f02291a75fbfcd815e00190eacca"
+    },
+    {
+      "path": "web/public/art/food/bagel.svg",
+      "bytes": 6347,
+      "sha256": "00b049b844d946392edc9133ed583ef41d8f05b5e0cc1c74b3417e90adaf3bfb"
+    },
+    {
+      "path": "web/public/art/food/apple.svg",
+      "bytes": 563,
+      "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073"
+    },
+    {
+      "path": "web/public/art/food/banana.svg",
+      "bytes": 1909,
+      "sha256": "40047ed9d10462ba41457b0c55beb05b6fde4ce590e6c1f88577539e46c2f20d"
+    },
+    {
+      "path": "web/public/art/food/carrot.svg",
+      "bytes": 1448,
+      "sha256": "99521ccf4753d9b5312707541eafc41f00b35f616bb6e96cada9acfc7bf1d396"
+    },
+    {
+      "path": "web/public/art/food/broccoli.svg",
+      "bytes": 1257,
+      "sha256": "53e9899f7e5ee6da63c0357a1152d7da413bbab029bbf53beb5255999c2823df"
+    },
+    {
+      "path": "web/public/art/food/tomato.svg",
+      "bytes": 924,
+      "sha256": "3b3326c731fce0fe697656d33bb092613eb261d827b6ca319b5cd6df08212add"
+    },
+    {
+      "path": "web/public/art/food/pineapple.svg",
+      "bytes": 4821,
+      "sha256": "9d064d8f8796b53a9eeb18b642e6e16628848ad2fa944576b597e7c7f36a95be"
+    },
+    {
+      "path": "web/public/art/food/corn.svg",
+      "bytes": 4009,
+      "sha256": "98badfb85ed658177c2d2002fa6ab9fe619b0330147838d76e95739e73d879e8"
+    },
+    {
+      "path": "web/public/art/food/bell-pepper.svg",
+      "bytes": 1195,
+      "sha256": "e6327c805e2df2e6c1d18b0d66bfe54e41e14393bc21f4b8f6b4b3be5cecdbe4"
+    },
+    {
+      "path": "web/public/art/food/leafy-green.svg",
+      "bytes": 2841,
+      "sha256": "4df9bb2eb271ac221b75e16bce9c63ae4e54780159bf4cca83adea4604ea4fec"
+    },
+    {
+      "path": "web/public/art/food/watermelon.svg",
+      "bytes": 2024,
+      "sha256": "33ce86d2784776504191684fd34495c68ac54be7b98e100ef18c3a19297c735e"
+    },
+    {
+      "path": "web/public/art/food/grapes.svg",
+      "bytes": 1971,
+      "sha256": "e959e27685f84cead6cc230c719c75feaf3a3cfde878cf00819473036005edd0"
+    },
+    {
+      "path": "web/public/art/food/lemon.svg",
+      "bytes": 713,
+      "sha256": "f3a924a7031fc0dd7c57a90e5f9794cf72859d860151dec321c4adc38605e4cc"
+    },
+    {
+      "path": "web/public/art/food/pear.svg",
+      "bytes": 636,
+      "sha256": "ddab6102c0ab2fef2dee700b7bb3d427187df8bfa010b23c4e2516e15c226551"
+    },
+    {
+      "path": "web/public/art/food/strawberry.svg",
+      "bytes": 2048,
+      "sha256": "d8522f848f305fc81040dd9c5467f97df483fde5e2568429046e7f1ae1a23d91"
+    },
+    {
+      "path": "web/public/art/food/eggplant.svg",
+      "bytes": 896,
+      "sha256": "a4f479a1476608d8a69bb84a85e83471a09f6cd030c1614c4dca1e5a6796a0d4"
+    },
+    {
+      "path": "web/public/art/food/avocado.svg",
+      "bytes": 1663,
+      "sha256": "81e6bdde887deddceedbd538ecc14876ab0f3873406632bcd3fd365741efe434"
+    },
+    {
+      "path": "web/public/art/food/onion.svg",
+      "bytes": 1984,
+      "sha256": "16ef144c9b55823bfe1d6099fdbf884cdc715b74c4cdfaa09e5bb2cc7b970ad9"
+    },
+    {
+      "path": "web/public/art/food/potato.svg",
+      "bytes": 1551,
+      "sha256": "630cf5cd73f353d09805ff72c9eeab5bf0caa65c65a8c615f6a4658a6993f6dc"
+    },
+    {
+      "path": "web/public/art/food/green-apple.svg",
+      "bytes": 575,
+      "sha256": "8d16350d03ee8c98f1d58985453b4c7fbe4d69da3fde37cbf8b5c70ecb80bbd4"
+    },
+    {
+      "path": "web/public/art/food/Fluent-Emoji-MIT.txt",
+      "bytes": 1141,
+      "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+    },
+    {
+      "path": "dist/art/character/vault.webp",
+      "bytes": 72014,
+      "sha256": "7a0bb9a8c13efa4ec0b5057cf1ceccd4d1eda9708cbe5782f4c1b028e835bd26"
+    },
+    {
+      "path": "dist/art/character/deposit.webp",
+      "bytes": 61194,
+      "sha256": "98d42bf6ad7df061fb131fea714a7930adf3db3a6338df15d90d136aed256374"
+    },
+    {
+      "path": "dist/art/character/redeem.webp",
+      "bytes": 61992,
+      "sha256": "3a937c9d853cdea982828642225e96e3c14e238bd941bb6eb572c878d1401598"
+    },
+    {
+      "path": "dist/art/food/bread.svg",
+      "bytes": 3105,
+      "sha256": "ef08e033f63a4f215744a3067a9c0693411ebcfe57b36bf9d197495ecbccf156"
+    },
+    {
+      "path": "dist/art/food/baguette.svg",
+      "bytes": 1019,
+      "sha256": "f65ae926257cfc775bfc0239d7bf4404b75fc6765a24747044f60f4227053f91"
+    },
+    {
+      "path": "dist/art/food/cheese.svg",
+      "bytes": 1380,
+      "sha256": "f239293bf0d152a15326a186166168f8da7ad8d6c7127a4ecfa2ace4005aff7a"
+    },
+    {
+      "path": "dist/art/food/milk.svg",
+      "bytes": 768,
+      "sha256": "3b60194616354c508ba142fce6e396fea3140abf09df99a31024336fbba384e4"
+    },
+    {
+      "path": "dist/art/food/canned-food.svg",
+      "bytes": 1338,
+      "sha256": "4ea41ac2c82bec24344580a0bba49047186537f91dee30c4ddd3b0ffc2e391b1"
+    },
+    {
+      "path": "dist/art/food/egg.svg",
+      "bytes": 412,
+      "sha256": "1c7146a519276e93c0f939756e80beb5b0edb4e9a350dbe58ab63c7d0bcc5204"
+    },
+    {
+      "path": "dist/art/food/honey-pot.svg",
+      "bytes": 1767,
+      "sha256": "20fdbe3a68d2e017899372e32874fad9c08ee35a8f1509e7be1497b448db5fc6"
+    },
+    {
+      "path": "dist/art/food/jar.svg",
+      "bytes": 804,
+      "sha256": "1a619c120858851ed4956bb54beca416c39ac8bc31a87530870e4ab2493a6795"
+    },
+    {
+      "path": "dist/art/food/beverage-box.svg",
+      "bytes": 1997,
+      "sha256": "135e7cf6dd378e8ee10bed849ee8452bc4e24ca799a0bf225f8c565669c220da"
+    },
+    {
+      "path": "dist/art/food/croissant.svg",
+      "bytes": 2280,
+      "sha256": "ae35174ffabb5610fd7ed0320f48c7bd759e18d4c9d1a06ff67f7597470fb9fd"
+    },
+    {
+      "path": "dist/art/food/butter.svg",
+      "bytes": 2620,
+      "sha256": "0b901e32d4e898f1ee910934b4afc635bdac48791d21a9d6c7775ac6128d17c3"
+    },
+    {
+      "path": "dist/art/food/cookie.svg",
+      "bytes": 2020,
+      "sha256": "d02b9e85fa0394a4c59fd74654244c069eddb9aaf72abbcba8d0d3060262d6af"
+    },
+    {
+      "path": "dist/art/food/pie.svg",
+      "bytes": 2539,
+      "sha256": "e9c5e76220606191921017d96e247ec1b2c5f02291a75fbfcd815e00190eacca"
+    },
+    {
+      "path": "dist/art/food/bagel.svg",
+      "bytes": 6347,
+      "sha256": "00b049b844d946392edc9133ed583ef41d8f05b5e0cc1c74b3417e90adaf3bfb"
+    },
+    {
+      "path": "dist/art/food/apple.svg",
+      "bytes": 563,
+      "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073"
+    },
+    {
+      "path": "dist/art/food/banana.svg",
+      "bytes": 1909,
+      "sha256": "40047ed9d10462ba41457b0c55beb05b6fde4ce590e6c1f88577539e46c2f20d"
+    },
+    {
+      "path": "dist/art/food/carrot.svg",
+      "bytes": 1448,
+      "sha256": "99521ccf4753d9b5312707541eafc41f00b35f616bb6e96cada9acfc7bf1d396"
+    },
+    {
+      "path": "dist/art/food/broccoli.svg",
+      "bytes": 1257,
+      "sha256": "53e9899f7e5ee6da63c0357a1152d7da413bbab029bbf53beb5255999c2823df"
+    },
+    {
+      "path": "dist/art/food/tomato.svg",
+      "bytes": 924,
+      "sha256": "3b3326c731fce0fe697656d33bb092613eb261d827b6ca319b5cd6df08212add"
+    },
+    {
+      "path": "dist/art/food/pineapple.svg",
+      "bytes": 4821,
+      "sha256": "9d064d8f8796b53a9eeb18b642e6e16628848ad2fa944576b597e7c7f36a95be"
+    },
+    {
+      "path": "dist/art/food/corn.svg",
+      "bytes": 4009,
+      "sha256": "98badfb85ed658177c2d2002fa6ab9fe619b0330147838d76e95739e73d879e8"
+    },
+    {
+      "path": "dist/art/food/bell-pepper.svg",
+      "bytes": 1195,
+      "sha256": "e6327c805e2df2e6c1d18b0d66bfe54e41e14393bc21f4b8f6b4b3be5cecdbe4"
+    },
+    {
+      "path": "dist/art/food/leafy-green.svg",
+      "bytes": 2841,
+      "sha256": "4df9bb2eb271ac221b75e16bce9c63ae4e54780159bf4cca83adea4604ea4fec"
+    },
+    {
+      "path": "dist/art/food/watermelon.svg",
+      "bytes": 2024,
+      "sha256": "33ce86d2784776504191684fd34495c68ac54be7b98e100ef18c3a19297c735e"
+    },
+    {
+      "path": "dist/art/food/grapes.svg",
+      "bytes": 1971,
+      "sha256": "e959e27685f84cead6cc230c719c75feaf3a3cfde878cf00819473036005edd0"
+    },
+    {
+      "path": "dist/art/food/lemon.svg",
+      "bytes": 713,
+      "sha256": "f3a924a7031fc0dd7c57a90e5f9794cf72859d860151dec321c4adc38605e4cc"
+    },
+    {
+      "path": "dist/art/food/pear.svg",
+      "bytes": 636,
+      "sha256": "ddab6102c0ab2fef2dee700b7bb3d427187df8bfa010b23c4e2516e15c226551"
+    },
+    {
+      "path": "dist/art/food/strawberry.svg",
+      "bytes": 2048,
+      "sha256": "d8522f848f305fc81040dd9c5467f97df483fde5e2568429046e7f1ae1a23d91"
+    },
+    {
+      "path": "dist/art/food/eggplant.svg",
+      "bytes": 896,
+      "sha256": "a4f479a1476608d8a69bb84a85e83471a09f6cd030c1614c4dca1e5a6796a0d4"
+    },
+    {
+      "path": "dist/art/food/avocado.svg",
+      "bytes": 1663,
+      "sha256": "81e6bdde887deddceedbd538ecc14876ab0f3873406632bcd3fd365741efe434"
+    },
+    {
+      "path": "dist/art/food/onion.svg",
+      "bytes": 1984,
+      "sha256": "16ef144c9b55823bfe1d6099fdbf884cdc715b74c4cdfaa09e5bb2cc7b970ad9"
+    },
+    {
+      "path": "dist/art/food/potato.svg",
+      "bytes": 1551,
+      "sha256": "630cf5cd73f353d09805ff72c9eeab5bf0caa65c65a8c615f6a4658a6993f6dc"
+    },
+    {
+      "path": "dist/art/food/green-apple.svg",
+      "bytes": 575,
+      "sha256": "8d16350d03ee8c98f1d58985453b4c7fbe4d69da3fde37cbf8b5c70ecb80bbd4"
+    },
+    {
+      "path": "dist/art/food/Fluent-Emoji-MIT.txt",
+      "bytes": 1141,
+      "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+    }
+  ],
+  "checks": [
+    "Chromium 375: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
+    "Chromium 2560: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
+    "Chromium 1440: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 960: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 800: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 661: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 660: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 375: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "Chromium 320: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 375: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
+    "WebKit 2560: equal full-width halves, sampled complete loop, 45/180s, overflow only, no pause, reduced motion still",
+    "WebKit 1440: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 960: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 800: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 661: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 660: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 375: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "WebKit 320: six routes without overflow; both shelf rows filled with ordered square images, Vault copy included; picture geometry and exact speech",
+    "All 42 measured bubble rectangles avoid source image pixels with alpha >128 at their rendered coordinates; no face, hand or prop covered. Tails inspected visually."
+  ],
+  "bubbles": [
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 1440,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 300,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.3,
+        "x": 1019.1,
+        "y": 666.1875,
+        "bubble": {
+          "x": 1146,
+          "y": 610.1875,
+          "width": 140,
+          "height": 126.75
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 1440,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 320,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.32,
+        "x": 997.4668750000001,
+        "y": 348.1875,
+        "bubble": {
+          "x": 840.109375,
+          "y": 344.1875,
+          "width": 153.4375,
+          "height": 76.375
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 1440,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 320,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.32,
+        "x": 970.106875,
+        "y": 348.1875,
+        "bubble": {
+          "x": 1121.546875,
+          "y": 344.1875,
+          "width": 137.4375,
+          "height": 101.5625
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 960,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 701.22,
+        "y": 921.59375,
+        "bubble": {
+          "x": 800,
+          "y": 865.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 960,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 675.31,
+        "y": 1073.59375,
+        "bubble": {
+          "x": 537,
+          "y": 1069.59375,
+          "width": 134,
+          "height": 76.375
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 960,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 653.0799999999999,
+        "y": 1049.59375,
+        "bubble": {
+          "x": 775,
+          "y": 1045.59375,
+          "width": 124,
+          "height": 126.75
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 800,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 541.22,
+        "y": 705.59375,
+        "bubble": {
+          "x": 640,
+          "y": 649.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 800,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 555.31,
+        "y": 377.59375,
+        "bubble": {
+          "x": 457,
+          "y": 373.59375,
+          "width": 94,
+          "height": 101.5625
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 800,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 533.08,
+        "y": 377.59375,
+        "bubble": {
+          "x": 655,
+          "y": 373.59375,
+          "width": 84,
+          "height": 202.3125
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 661,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 402.22,
+        "y": 843.59375,
+        "bubble": {
+          "x": 501,
+          "y": 724.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 661,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 451.06,
+        "y": 1145.59375,
+        "bubble": {
+          "x": 387.5,
+          "y": 1141.59375,
+          "width": 59.25,
+          "height": 227.5
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 661,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 428.83,
+        "y": 1199.59375,
+        "bubble": {
+          "x": 387.5,
+          "y": 1045.59375,
+          "width": 155,
+          "height": 101.5625
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 660,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 269.4,
+        "y": 885.359375,
+        "bubble": {
+          "x": 506,
+          "y": 835.359375,
+          "width": 124,
+          "height": 106
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 660,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 292.44,
+        "y": 1265.109375,
+        "bubble": {
+          "x": 49,
+          "y": 1261.109375,
+          "width": 239,
+          "height": 43
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 660,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 271.92,
+        "y": 1446.109375,
+        "bubble": {
+          "x": 379,
+          "y": 1442.109375,
+          "width": 236,
+          "height": 64
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 375,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 126.9,
+        "y": 606.359375,
+        "bubble": {
+          "x": 221,
+          "y": 556.359375,
+          "width": 124,
+          "height": 106
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 375,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 149.94,
+        "y": 294.09375,
+        "bubble": {
+          "x": 49,
+          "y": 290.09375,
+          "width": 96.5,
+          "height": 85
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 375,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 129.42000000000002,
+        "y": 294.109375,
+        "bubble": {
+          "x": 236.5,
+          "y": 290.109375,
+          "width": 93.5,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "vault",
+      "width": 320,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 99.4,
+        "y": 793.84375,
+        "bubble": {
+          "x": 180,
+          "y": 743.84375,
+          "width": 110,
+          "height": 106
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "deposit",
+      "width": 320,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 122.44,
+        "y": 387.59375,
+        "bubble": {
+          "x": 49,
+          "y": 383.59375,
+          "width": 69,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "Chromium",
+      "name": "redeem",
+      "width": 320,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 101.92,
+        "y": 387.609375,
+        "bubble": {
+          "x": 209,
+          "y": 383.609375,
+          "width": 66,
+          "height": 169
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 1440,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 300,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.3,
+        "x": 1019.1,
+        "y": 665.1875,
+        "bubble": {
+          "x": 1146,
+          "y": 609.1875,
+          "width": 140,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 1440,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 320,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.32,
+        "x": 997.4746875000001,
+        "y": 347.1875,
+        "bubble": {
+          "x": 840.109375,
+          "y": 343.1875,
+          "width": 153.4375,
+          "height": 76.375
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 1440,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 320,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.32,
+        "x": 970.1146875,
+        "y": 347.1875,
+        "bubble": {
+          "x": 1121.5625,
+          "y": 343.1875,
+          "width": 137.4375,
+          "height": 126.75
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 960,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 701.22,
+        "y": 921.59375,
+        "bubble": {
+          "x": 800,
+          "y": 865.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 960,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 675.31,
+        "y": 1073.59375,
+        "bubble": {
+          "x": 537,
+          "y": 1069.59375,
+          "width": 134,
+          "height": 101.5625
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 960,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 653.0799999999999,
+        "y": 1049.59375,
+        "bubble": {
+          "x": 775,
+          "y": 1045.59375,
+          "width": 124,
+          "height": 177.125
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 800,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 541.22,
+        "y": 705.59375,
+        "bubble": {
+          "x": 640,
+          "y": 649.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 800,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 555.31,
+        "y": 377.59375,
+        "bubble": {
+          "x": 457,
+          "y": 373.59375,
+          "width": 94,
+          "height": 101.5625
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 800,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 533.08,
+        "y": 377.59375,
+        "bubble": {
+          "x": 655,
+          "y": 373.59375,
+          "width": 84,
+          "height": 202.3125
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 661,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 402.22,
+        "y": 843.59375,
+        "bubble": {
+          "x": 501,
+          "y": 724.59375,
+          "width": 126,
+          "height": 151.9375
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 661,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 451.06,
+        "y": 1145.59375,
+        "bubble": {
+          "x": 387.5,
+          "y": 1141.59375,
+          "width": 59.25,
+          "height": 227.5
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 661,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 260,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.26,
+        "x": 428.83,
+        "y": 1199.59375,
+        "bubble": {
+          "x": 387.5,
+          "y": 1045.59375,
+          "width": 155,
+          "height": 126.75
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 660,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 269.4,
+        "y": 885.359375,
+        "bubble": {
+          "x": 506,
+          "y": 835.359375,
+          "width": 124,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 660,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 292.44,
+        "y": 1265.109375,
+        "bubble": {
+          "x": 49,
+          "y": 1261.109375,
+          "width": 239,
+          "height": 43
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 660,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 271.92,
+        "y": 1446.109375,
+        "bubble": {
+          "x": 379,
+          "y": 1442.109375,
+          "width": 236,
+          "height": 64
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 375,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 126.9,
+        "y": 605.359375,
+        "bubble": {
+          "x": 221,
+          "y": 555.359375,
+          "width": 124,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 375,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 149.94,
+        "y": 293.09375,
+        "bubble": {
+          "x": 49,
+          "y": 289.09375,
+          "width": 96.5,
+          "height": 85
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 375,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 129.42000000000002,
+        "y": 293.109375,
+        "bubble": {
+          "x": 236.5,
+          "y": 289.109375,
+          "width": 93.5,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "vault",
+      "width": 320,
+      "picture": {
+        "width": "606",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 200,
+        "src": "./art/character/vault.webp"
+      },
+      "geometry": {
+        "scale": 0.2,
+        "x": 99.4,
+        "y": 793.84375,
+        "bubble": {
+          "x": 180,
+          "y": 743.84375,
+          "width": 110,
+          "height": 106
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "deposit",
+      "width": 320,
+      "picture": {
+        "width": "313",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/deposit.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 122.44,
+        "y": 387.59375,
+        "bubble": {
+          "x": 49,
+          "y": 383.59375,
+          "width": 69,
+          "height": 127
+        }
+      }
+    },
+    {
+      "engine": "WebKit",
+      "name": "redeem",
+      "width": 320,
+      "picture": {
+        "width": "484",
+        "height": "1000",
+        "fit": "contain",
+        "position": "50% 100%",
+        "display": "block",
+        "h": 240,
+        "src": "./art/character/redeem.webp"
+      },
+      "geometry": {
+        "scale": 0.24,
+        "x": 101.92,
+        "y": 387.609375,
+        "bubble": {
+          "x": 209,
+          "y": 383.609375,
+          "width": 66,
+          "height": 190
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Linux browser engines; physical iPhone not tested. Rendered screenshots reviewed separately."
+  ]
+}

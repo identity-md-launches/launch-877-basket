@@ -9,6 +9,8 @@ const { chromium } = await import(
 const dist = path.resolve("../dist"),
   out = path.resolve("../artifacts");
 fs.mkdirSync(out, { recursive: true });
+const captures = path.resolve("../test/scratch/export-review");
+fs.mkdirSync(captures, { recursive: true });
 const server = http.createServer((req, res) => {
   const p = path.resolve(
     dist,
@@ -28,6 +30,7 @@ const server = http.createServer((req, res) => {
         ".css": "text/css",
         ".woff2": "font/woff2",
         ".svg": "image/svg+xml",
+        ".webp": "image/webp",
         ".txt": "text/plain",
       }[path.extname(p)] || "application/octet-stream",
     );
@@ -45,7 +48,11 @@ try {
       reducedMotion: "reduce",
     }),
     issues = [],
-    results = [];
+    results = [],
+    outsideRequests = new Set();
+  p.on("request", (r) => {
+    if (!r.url().startsWith("http://127.0.0.1:")) outsideRequests.add(r.url());
+  });
   p.on("pageerror", (e) => issues.push(e.message));
   p.on("response", (r) => {
     if (r.status() >= 400) issues.push(r.status() + " " + r.url());
@@ -99,7 +106,7 @@ try {
       });
       if (width === 1440 || width === 375)
         await p.screenshot({
-          path: path.join(out, `live-${name.toLowerCase()}-${width}.jpg`),
+          path: path.join(captures, `live-${name.toLowerCase()}-${width}.jpg`),
           type: "jpeg",
           quality: 68,
           fullPage: true,
@@ -156,6 +163,7 @@ try {
   }));
   assert.ok(contrast.every((x) => x.ratio >= 4.5));
   assert.deepEqual(issues, []);
+  assert.ok([...outsideRequests].every((url) => /^https:\/\/(rpc\.mainnet\.chain\.robinhood\.com|robinhood-rpc\.publicnode\.com)\/?$/.test(url)), "Only chain RPC may be requested outside the export");
   fs.writeFileSync(
     path.join(out, "export-review.json"),
     JSON.stringify(
@@ -164,6 +172,7 @@ try {
         style,
         contrast,
         issues,
+        outsideRequests: [...outsideRequests],
         checks: [
           "Production subpath navigation",
           "No overflow at 320,375,800,1440 on all six pages",

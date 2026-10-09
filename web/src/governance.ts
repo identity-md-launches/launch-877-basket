@@ -342,7 +342,7 @@ export function settingWords(key: number, n: bigint) {
     return `${utcTime(from)} to ${utcTime(to)} UTC; ${from === 0n && to === 0n ? "always open" : "Monday to Friday only"}`;
   }
   if (key === 14)
-    return `${n} stocks: maximum direct payment attempts during redeem; remaining stocks stay owed for claims. Zero disables direct attempts.`;
+    return `With at most ${n} held stocks, every leg is tried now; with more, every leg is owed for claims. Zero disables direct attempts.`;
   if (key === 4) return `${n} hours`;
   if (key >= 8 && key <= 12) return `${n} gas`;
   return `${n} stocks`;
