@@ -1,4 +1,4 @@
-2026-10-09: SOLC=/home/imd14/.svm/0.8.26/solc-0.8.26 npx tsx scripts/regenerate-abi.ts — PASS in disposable copy.
-Canonical ABI: 0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25
-Runtime: 0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe
-Runtime bytes: 23736
+2026-10-09: SOLC=<solc-0.8.26+commit.8a97fa7a> npx tsx scripts/regenerate-abi.ts — PASS (vault 6, launch-1110-basket@50acd7248c2ce59907a963a648115900d629f352).
+Canonical ABI: 0x47d59929b6c6dd2b66c9d85d22a70b349f0c70496f2e2d06bc35369baa2d3eca
+Runtime: 0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048 (equals live code at 0x739fd5b653aa092a434534fa1ade67c1770b5a5b)
+Runtime bytes: 23913; immutableReferences: none

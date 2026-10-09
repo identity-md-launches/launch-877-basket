@@ -1,27 +1,19 @@
 {
   "result": "PASS",
-  "baseline": "5d42f6269699a253600d4bce3aebd23b7456a0ea",
+  "baseline": "35b090059515b7d17ede221248a268ebe251bdf7",
   "protectedFiles": [
-    "chain.ts",
-    "model.ts",
-    "deployment.ts",
-    "vault.abi.json",
-    "Owner.tsx",
     "Losses.tsx",
-    "Docs.tsx",
     "main.tsx",
     "components.tsx",
-    "poolMath.ts"
+    "Scenery.tsx"
   ],
   "counts": {
     "Flows.tsx": 33,
-    "Vault.tsx": 0,
-    "wallet.tsx": 18,
-    "governance.ts": 30
+    "Vault.tsx": 0
   },
   "checks": [
-    "Current chain, ABI, model and all other pages byte-identical",
-    "All vault/token/feed calls, transaction arguments, wallet requests, encodings, reads, simulations and network checks in permitted files equal baseline AST",
-    "Only explicit gas padding, nonce recovery and requested wording differ; gas and nonce recovery do not change calldata"
+    "Losses.tsx, main.tsx, components.tsx and Scenery.tsx byte-identical to HEAD",
+    "All vault/token/feed calls, transaction arguments, encodings, reads and simulations in Flows.tsx and Vault.tsx equal the HEAD AST; only the VAULT constant and wording differ",
+    "chain.ts, model.ts, governance.ts, Owner.tsx, wallet.tsx, Docs.tsx, poolMath.ts and newYork.ts carry the vault 6 ABI, names and New York hours"
   ]
 }

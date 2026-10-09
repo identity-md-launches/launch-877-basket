@@ -1,6 +1,4 @@
-// Generated from launch-1020-basket at 0a88bde525aed4557b375cf60ee503d707570ac0; transferTopic immutable filled.
-export const VAULT = "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd" as const;
-export const RUNTIME_HASH =
-  "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe" as const;
-export const ABI_HASH =
-  "0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25" as const;
+// Generated from launch-1110-basket at 50acd7248c2ce59907a963a648115900d629f352
+export const VAULT = "0x739fd5b653aa092a434534fa1ade67c1770b5a5b" as const;
+export const RUNTIME_HASH = "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048" as const;
+export const ABI_HASH = "0x47d59929b6c6dd2b66c9d85d22a70b349f0c70496f2e2d06bc35369baa2d3eca" as const;

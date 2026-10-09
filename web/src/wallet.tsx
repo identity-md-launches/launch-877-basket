@@ -12,7 +12,6 @@ import {
   verifyNetwork,
   type Spec,
   vault,
-  read,
   many,
   VAULT,
   vaultAbi,
@@ -71,11 +70,13 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         }
       } catch {
         // A mined Speed up/Cancel consumes the original transaction's nonce.
+        // The node's own record of the transaction beats the pending count
+        // saved before the wallet prompt (another send may have slipped in).
         const [transaction, latest] = await Promise.all([
           client.getTransaction({ hash: pending.hash }).catch(() => undefined),
           client.getTransactionCount({ address: account, blockTag: "latest" }),
         ]);
-        const nonce = pending.nonce ?? transaction?.nonce;
+        const nonce = transaction?.nonce ?? pending.nonce;
         if (nonce !== undefined && latest > nonce) {
           pendingRef.current = undefined;
           sessionStorage.removeItem(pendingKey);
@@ -221,7 +222,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         );
       if (accounts[0]?.toLowerCase() !== account.toLowerCase())
         throw new Error("The wallet account changed. Please retry.");
-      if (s.functionName === "genesisList") await listingPending();
+      if (s.functionName === "listGenesis") await listingPending();
       await verifyNetwork();
       await simulate(s, account);
       const gas = ["deposit", "redeem", "claim"].includes(s.functionName)
@@ -305,9 +306,8 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
             })
             .find((l) => l?.eventName === "Proposed");
           if (!event) throw new Error("Proposal event unreadable");
-          const id = (event.args as any).id;
-          const proposal = await read(vault("proposal", [id]));
-          detail = `Proposal ${id}; ready ${date(proposal.readyAt)} (read from chain).`;
+          const { id, executableAt, expiresAt } = event.args as any;
+          detail = `Proposal ${id}; executable from ${date(executableAt)} until ${date(expiresAt)} (exclusive), from the Proposed event.`;
         }
         if (["redeem", "claim"].includes(s.functionName)) {
           const creditor =

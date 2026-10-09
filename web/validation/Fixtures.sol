@@ -13,9 +13,10 @@ contract TestStock {
  function transferFrom(address from,address to,uint256 n) external returns(bool){require(!fail);allowance[from][msg.sender]-=n;balanceOf[from]-=n;balanceOf[to]+=n;return true;}
 }
 contract TestFeed {
- string public description; uint8 public decimals; int256 public answer;
+ string public description; uint8 public decimals; int256 public answer; uint256 public lag;
  constructor(string memory s,uint8 d,int256 a){description=s;decimals=d;answer=a;}
- function latestRoundData() external view returns(uint80,int256,uint256,uint256,uint80){return(1,answer,block.timestamp,block.timestamp,1);}
+ function setLag(uint256 l) external {lag=l;}
+ function latestRoundData() external view returns(uint80,int256,uint256,uint256,uint80){uint256 t=block.timestamp-lag;return(1,answer,t,t,1);}
 }
 contract TestPool {
  address public token0;address public token1;

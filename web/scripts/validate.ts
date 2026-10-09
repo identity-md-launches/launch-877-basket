@@ -33,7 +33,8 @@ import {
   loadSnapshot,
   type Asset,
 } from "../src/model";
-import { proposalSpec, proposalWords, parseTime } from "../src/governance";
+import { proposalSpec, proposalWords, type Action } from "../src/governance";
+import { parseHours } from "../src/newYork";
 const canonical = (v: any): any =>
   Array.isArray(v)
     ? v.map(canonical)
@@ -46,7 +47,7 @@ const canonical = (v: any): any =>
       : v;
 assert.equal(keccak256(toHex(JSON.stringify(canonical(vaultAbi)))), ABI_HASH);
 assert.equal(GAS, 30_000_000n);
-assert.equal(reasons.length, 14);
+assert.equal(reasons.length, 15);
 assert.equal(client.ccipRead, false);
 assert.equal(amount("1.25", false, 6), 1250000n);
 assert.throws(() => amount("1.0000001", false, 6));
@@ -73,8 +74,8 @@ assert.equal(cleanFeedDescription("Robinhood FIG / USD"), "FIG / USD");
 assert.equal(cleanFeedDescription("RHFIG / USD"), "FIG / USD");
 assert.equal(pairingMatches("FIG", "FIG / USD"), true);
 assert.equal(pairingMatches("FIG", "FIGS / USD"), false);
-assert.equal(parseTime("24:00:00"), 86400n);
-assert.throws(() => parseTime("24:01"));
+assert.deepEqual(parseHours("Sunday 8:00 pm", "Saturday 24:00"), [72000n, 604800n]);
+assert.throws(() => parseHours("Monday 24:01", "Friday 4:00 pm"));
 const network = await verifyNetwork(),
   block = await client.getBlockNumber();
 assert.ok(block > 83448310n);
@@ -95,21 +96,34 @@ const values = {
   cap: "2000000",
   recipient: owner,
   setting: "5",
-  from: "09:30",
-  to: "16:00",
+  from: "Monday 9:30 am",
+  to: "Friday 4:00 pm",
 };
 const actions = [];
 for (let i = 0; i < 11; i++) {
   const spec = proposalSpec(i, values);
   const d = decodeFunctionData({ abi: vaultAbi, data: encode(spec) });
   assert.equal(d.functionName, "propose");
-  assert.equal(d.args?.[0], i);
-  assert.equal(String(d.args?.[1]).toLowerCase(), i >= 7 ? zeroAddress : VAULT);
-  actions.push({
-    action: i,
-    dataWords: proposalWords(i, spec.args![2] as `0x${string}`),
-  });
+  const a = d.args?.[0] as Action;
+  assert.equal(Number(a.kind), i);
+  assert.equal(
+    String(a.token).toLowerCase(),
+    i <= 6 ? VAULT : zeroAddress,
+  );
+  if (i === 10) assert.deepEqual([a.setting, a.value, a.value2], [5, 120600n, 489600n]);
+  actions.push({ kind: i, action: a, words: proposalWords(a) });
 }
+const dstSpec = proposalSpec(10, { ...values, setting: "6", value: "1" });
+const dstAction = decodeFunctionData({ abi: vaultAbi, data: encode(dstSpec) })
+  .args?.[0] as Action;
+assert.deepEqual([dstAction.setting, dstAction.value, dstAction.value2], [6, 1n, 0n]);
+assert.match(proposalWords(dstAction), /never daylight saving/);
+assert.throws(() => proposalSpec(10, { ...values, setting: "6", value: "3" }));
+const always = decodeFunctionData({
+  abi: vaultAbi,
+  data: encode(proposalSpec(10, { ...values, from: "Always open", to: "Always open" })),
+}).args?.[0] as Action;
+assert.deepEqual([always.value, always.value2], [0n, 0n]);
 assert.throws(() => parseLaunch(`FIG ${VAULT} ${guardian}`));
 assert.equal(
   parseLaunch(`FIG ${VAULT} ${guardian} ${zeroAddress} ${zeroAddress} 0`)
@@ -150,7 +164,7 @@ fs.writeFileSync(
       actions,
       checks: [
         "Decimal-normalized NAV and indicative flags",
-        "All 11 proposal payloads decoded",
+        "All 11 proposal kinds encoded as the BaskVault.Action struct and decoded; Hours and Dst cases",
         "Exact deposit and redemption minimums",
         "Input, receiver, hours and listing validation",
         "Live chain, runtime hash, aggregate snapshot and status",
@@ -163,6 +177,6 @@ fs.writeFileSync(
   ) + "\n",
 );
 console.log(
-  "PASS: unit checks, canonical ABI, live code hash, snapshot, status, all 11 proposal payloads; block " +
+  "PASS: unit checks, canonical ABI, live code hash, snapshot, status, all 11 proposal kinds as Action; block " +
     block,
 );

@@ -16,14 +16,30 @@
     "type": "constructor"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "BalanceUnreadable",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "CapExceeded",
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "Deadline",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
-        "internalType": "enum BaskTypes.Reason",
+        "internalType": "enum BaskVault.Reason",
         "name": "reason",
         "type": "uint8"
       },
@@ -38,7 +54,7 @@
   },
   {
     "inputs": [],
-    "name": "Expired",
+    "name": "InsufficientAllowance",
     "type": "error"
   },
   {
@@ -58,12 +74,17 @@
   },
   {
     "inputs": [],
+    "name": "InvalidFeed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InvalidInput",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidOracle",
+    "name": "InvalidPool",
     "type": "error"
   },
   {
@@ -87,8 +108,19 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "PaymentFailed",
+    "type": "error"
+  },
+  {
     "inputs": [],
-    "name": "Reentrancy",
+    "name": "Reentrant",
     "type": "error"
   },
   {
@@ -98,12 +130,7 @@
   },
   {
     "inputs": [],
-    "name": "TooEarly",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TransferFailed",
+    "name": "Timelock",
     "type": "error"
   },
   {
@@ -134,7 +161,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -151,9 +178,9 @@
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "enum BaskTypes.Action",
-        "name": "action",
+        "indexed": true,
+        "internalType": "enum BaskVault.Kind",
+        "name": "kind",
         "type": "uint8"
       }
     ],
@@ -187,12 +214,6 @@
         "internalType": "address",
         "name": "feed",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "pool",
-        "type": "address"
       }
     ],
     "name": "AssetListed",
@@ -209,6 +230,19 @@
       }
     ],
     "name": "AssetRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cap",
+        "type": "uint256"
+      }
+    ],
+    "name": "CapChanged",
     "type": "event"
   },
   {
@@ -372,19 +406,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cap",
-        "type": "uint256"
-      }
-    ],
-    "name": "NavCapChanged",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "owner",
@@ -393,11 +414,11 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "nextOwner",
+        "name": "pendingOwner",
         "type": "address"
       }
     ],
-    "name": "OwnershipTransferStarted",
+    "name": "OwnershipStarted",
     "type": "event"
   },
   {
@@ -406,7 +427,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousOwner",
+        "name": "oldOwner",
         "type": "address"
       },
       {
@@ -417,6 +438,31 @@
       }
     ],
     "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Paid",
     "type": "event"
   },
   {
@@ -455,27 +501,63 @@
         "type": "uint256"
       },
       {
+        "components": [
+          {
+            "internalType": "enum BaskVault.Kind",
+            "name": "kind",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "pool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quoteFeed",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "value",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "value2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum BaskVault.Setting",
+            "name": "setting",
+            "type": "uint8"
+          }
+        ],
         "indexed": false,
-        "internalType": "enum BaskTypes.Action",
+        "internalType": "struct BaskVault.Action",
         "name": "action",
-        "type": "uint8"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
+        "type": "tuple"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "readyAt",
+        "name": "executableAt",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "expiresAt",
         "type": "uint256"
       }
     ],
@@ -506,8 +588,20 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "net",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "fee",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "amounts",
+        "type": "uint256[]"
       }
     ],
     "name": "Redeem",
@@ -536,8 +630,8 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "enum BaskTypes.Setting",
+        "indexed": true,
+        "internalType": "enum BaskVault.Setting",
         "name": "setting",
         "type": "uint8"
       },
@@ -545,6 +639,12 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "value",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value2",
         "type": "uint256"
       }
     ],
@@ -569,38 +669,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       }
     ],
     "name": "Transfer",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "MAX_NAV_CAP",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MINIMUM_SHARES",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -651,24 +725,14 @@
                 "type": "address"
               },
               {
-                "internalType": "uint128",
+                "internalType": "uint256",
                 "name": "minLiquidity",
-                "type": "uint128"
+                "type": "uint256"
               },
               {
-                "internalType": "bool",
-                "name": "open",
-                "type": "bool"
-              },
-              {
-                "internalType": "bool",
-                "name": "retired",
-                "type": "bool"
-              },
-              {
-                "internalType": "bool",
-                "name": "hasPause",
-                "type": "bool"
+                "internalType": "uint256",
+                "name": "centre",
+                "type": "uint256"
               },
               {
                 "internalType": "uint8",
@@ -692,16 +756,26 @@
               },
               {
                 "internalType": "bool",
-                "name": "tokenIs0",
+                "name": "open",
                 "type": "bool"
               },
               {
-                "internalType": "uint256",
-                "name": "centre",
-                "type": "uint256"
+                "internalType": "bool",
+                "name": "retired",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "hasPause",
+                "type": "bool"
+              },
+              {
+                "internalType": "bool",
+                "name": "baseIsToken0",
+                "type": "bool"
               }
             ],
-            "internalType": "struct BaskTypes.Asset",
+            "internalType": "struct BaskVault.Asset",
             "name": "config",
             "type": "tuple"
           },
@@ -722,31 +796,31 @@
           },
           {
             "internalType": "uint256",
-            "name": "managed",
+            "name": "managedBalance",
             "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "short",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "readable",
-            "type": "bool"
           },
           {
             "internalType": "uint256",
-            "name": "totalOwed",
+            "name": "shortfall",
             "type": "uint256"
           },
           {
-            "internalType": "enum BaskTypes.Reason",
+            "internalType": "uint256",
+            "name": "owedBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "balanceReadable",
+            "type": "bool"
+          },
+          {
+            "internalType": "enum BaskVault.Reason",
             "name": "reason",
             "type": "uint8"
           }
         ],
-        "internalType": "struct BaskTypes.AssetView[]",
+        "internalType": "struct BaskVault.AssetView[]",
         "name": "result",
         "type": "tuple[]"
       }
@@ -835,24 +909,14 @@
             "type": "address"
           },
           {
-            "internalType": "uint128",
+            "internalType": "uint256",
             "name": "minLiquidity",
-            "type": "uint128"
+            "type": "uint256"
           },
           {
-            "internalType": "bool",
-            "name": "open",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "retired",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "hasPause",
-            "type": "bool"
+            "internalType": "uint256",
+            "name": "centre",
+            "type": "uint256"
           },
           {
             "internalType": "uint8",
@@ -876,16 +940,26 @@
           },
           {
             "internalType": "bool",
-            "name": "tokenIs0",
+            "name": "open",
             "type": "bool"
           },
           {
-            "internalType": "uint256",
-            "name": "centre",
-            "type": "uint256"
+            "internalType": "bool",
+            "name": "retired",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasPause",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "baseIsToken0",
+            "type": "bool"
           }
         ],
-        "internalType": "struct BaskTypes.Asset",
+        "internalType": "struct BaskVault.Asset",
         "name": "",
         "type": "tuple"
       }
@@ -907,19 +981,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "assetTokens",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "address[]",
         "name": "",
-        "type": "address"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -961,7 +1029,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "tokens",
+        "name": "claimTokens",
         "type": "address[]"
       },
       {
@@ -1029,7 +1097,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "tokens",
+        "name": "inputTokens",
         "type": "address[]"
       },
       {
@@ -1057,7 +1125,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "received",
+        "name": "shares",
         "type": "uint256"
       }
     ],
@@ -1068,14 +1136,14 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "tokens",
+        "name": "inputTokens",
         "type": "address[]"
       }
     ],
     "name": "depositStatus",
     "outputs": [
       {
-        "internalType": "enum BaskTypes.Reason",
+        "internalType": "enum BaskVault.Reason",
         "name": "reason",
         "type": "uint8"
       },
@@ -1128,6 +1196,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "feedAsset",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "finalizeGenesis",
     "outputs": [],
@@ -1161,6 +1248,32 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "guardian",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "insideHours",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -1183,27 +1296,14 @@
         "type": "address"
       },
       {
-        "internalType": "uint128",
+        "internalType": "uint256",
         "name": "minLiquidity",
-        "type": "uint128"
+        "type": "uint256"
       }
     ],
-    "name": "genesisList",
+    "name": "listGenesis",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "guardian",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1214,7 +1314,7 @@
         "type": "uint256"
       }
     ],
-    "name": "lowerNavCap",
+    "name": "lowerNAVCap",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1335,12 +1435,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "start",
+        "name": "first",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "limit",
+        "name": "last",
         "type": "uint256"
       }
     ],
@@ -1350,48 +1450,6 @@
         "internalType": "uint256[]",
         "name": "ids",
         "type": "uint256[]"
-      },
-      {
-        "components": [
-          {
-            "internalType": "enum BaskTypes.Action",
-            "name": "action",
-            "type": "uint8"
-          },
-          {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "data",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256",
-            "name": "readyAt",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "epoch",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "version",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "done",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct BaskTypes.Proposal[]",
-        "name": "items",
-        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -1401,7 +1459,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "tokens",
+        "name": "inputTokens",
         "type": "address[]"
       },
       {
@@ -1425,6 +1483,11 @@
       {
         "internalType": "uint256",
         "name": "value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nav",
         "type": "uint256"
       }
     ],
@@ -1450,6 +1513,11 @@
         "internalType": "uint256",
         "name": "fee",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "direct",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -1468,33 +1536,70 @@
       {
         "components": [
           {
-            "internalType": "enum BaskTypes.Action",
+            "components": [
+              {
+                "internalType": "enum BaskVault.Kind",
+                "name": "kind",
+                "type": "uint8"
+              },
+              {
+                "internalType": "address",
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "pool",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "quoteFeed",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value2",
+                "type": "uint256"
+              },
+              {
+                "internalType": "enum BaskVault.Setting",
+                "name": "setting",
+                "type": "uint8"
+              }
+            ],
+            "internalType": "struct BaskVault.Action",
             "name": "action",
-            "type": "uint8"
-          },
-          {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "data",
-            "type": "bytes"
+            "type": "tuple"
           },
           {
             "internalType": "uint256",
-            "name": "readyAt",
+            "name": "createdAt",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "epoch",
+            "name": "assetEpoch",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "version",
+            "name": "closeEpoch",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "capEpoch",
             "type": "uint256"
           },
           {
@@ -1503,9 +1608,14 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct BaskTypes.Proposal",
-        "name": "",
+        "internalType": "struct BaskVault.Proposal",
+        "name": "data",
         "type": "tuple"
+      },
+      {
+        "internalType": "bool",
+        "name": "pending",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -1527,38 +1637,51 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "proposalValid",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "enum BaskTypes.Action",
+        "components": [
+          {
+            "internalType": "enum BaskVault.Kind",
+            "name": "kind",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "pool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quoteFeed",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "value",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "value2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum BaskVault.Setting",
+            "name": "setting",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct BaskVault.Action",
         "name": "action",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
+        "type": "tuple"
       }
     ],
     "name": "propose",
@@ -1675,6 +1798,11 @@
           },
           {
             "internalType": "uint256",
+            "name": "dst",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
             "name": "poolWindow",
             "type": "uint256"
           },
@@ -1719,7 +1847,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct BaskTypes.Settings",
+        "internalType": "struct BaskVault.Settings",
         "name": "",
         "type": "tuple"
       }
@@ -1829,7 +1957,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "nextOwner",
+        "name": "next",
         "type": "address"
       }
     ],

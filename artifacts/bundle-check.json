@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8013710,
-  "fileCount": 226,
-  "productionExportBytes": 869700,
+  "uncompressedDeliveryBytes": 8154645,
+  "fileCount": 228,
+  "productionExportBytes": 876407,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,13 +160,13 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-BwwaKiFG.js": {
+    "dist/assets/ccip-DmZ24wUF.js": {
       "bytes": 2610,
-      "sha256": "6ed7962e32130da6af3547ba6cdae8e6226e8b79a060a4bc9eec215308dc699c"
+      "sha256": "80b8a88be3534c969f1792629a3355376e94a2733f74837615b32d50414a371f"
     },
-    "dist/assets/index-BKZt6pdK.js": {
-      "bytes": 543465,
-      "sha256": "84b1dc8a587577daab53a093f90d075aa37f7449a5bcdac57944a0d141d742ab"
+    "dist/assets/index-CFVABhOE.js": {
+      "bytes": 550172,
+      "sha256": "ca73966cdcb502b6b997b56a58cf58d35c71f9bc9f08c6abbd7c018fc05e23b5"
     },
     "dist/assets/index-CtG_z5cM.css": {
       "bytes": 19531,
@@ -186,12 +186,12 @@
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "e64c87e2e5b4406a735b250b163f5ebe296079fdfc8db4662d2b19b207c27bd5"
+      "sha256": "119930cc98ea5d78e52be5f8c8b0df5215b7ffd5fca950af20ed646627c66ac3"
     }
   },
   "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
-    "Protected configuration, dependencies, contracts and other source paths unchanged",
+    "Protected configuration, dependencies and root contracts unchanged; web/pinned and web/src changed only within the vault 6 scope",
     "No git submodules or nested dependency/cache/archive payloads",
     "24 required empty/25-stock JPEGs retained at quality 40; no additional artifact images",
     "Both copies of all 37 manifest assets included"

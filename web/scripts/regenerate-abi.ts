@@ -2,12 +2,13 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { keccak256, toHex } from "viem";
-const commit = "0a88bde525aed4557b375cf60ee503d707570ac0";
+const commit = "50acd7248c2ce59907a963a648115900d629f352";
 const names = [
   "BaskVault.sol",
-  "BaskTypes.sol",
-  "libraries/BaskOracle.sol",
+  "libraries/BoundedCall.sol",
   "libraries/FullMath.sol",
+  "libraries/NewYorkTime.sol",
+  "libraries/PoolOracle.sol",
   "libraries/TickMath.sol",
 ];
 const sources = Object.fromEntries(
@@ -48,24 +49,14 @@ const output = JSON.parse(
 if (output.errors?.some((e: any) => e.severity === "error"))
   throw Error(JSON.stringify(output.errors));
 const c = output.contracts["src/BaskVault.sol"].BaskVault;
-let runtime = c.evm.deployedBytecode.object;
-const transferTopic = keccak256(
-  toHex("Transfer(address,address,uint256)"),
-).slice(2);
-for (const refs of Object.values(
-  c.evm.deployedBytecode.immutableReferences,
-) as any[])
-  for (const r of refs) {
-    if (r.length !== 32) throw Error("Unexpected immutable");
-    runtime =
-      runtime.slice(0, r.start * 2) +
-      transferTopic +
-      runtime.slice((r.start + r.length) * 2);
-  }
+const runtime = c.evm.deployedBytecode.object;
+// Vault 6 has no immutables: its runtime is byte-for-byte the compiler output.
+if (Object.keys(c.evm.deployedBytecode.immutableReferences ?? {}).length !== 0)
+  throw Error("Unexpected immutable references");
 const runtimeHash = keccak256(`0x${runtime}`);
 if (
   runtimeHash !==
-  "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe"
+  "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048"
 )
   throw Error("Runtime mismatch " + runtimeHash);
 const canonical = (o: any): any =>
@@ -82,12 +73,11 @@ const abiHash = keccak256(toHex(JSON.stringify(canonical(c.abi))));
 fs.writeFileSync("src/vault.abi.json", JSON.stringify(c.abi, null, 2) + "\n");
 fs.writeFileSync(
   "src/deployment.ts",
-  `// Generated from launch-1020-basket at ${commit}; transferTopic immutable filled.\nexport const VAULT = "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd" as const;\nexport const RUNTIME_HASH = "${runtimeHash}" as const;\nexport const ABI_HASH = "${abiHash}" as const;\n`,
+  `// Generated from launch-1110-basket at ${commit}\nexport const VAULT = "0x739fd5b653aa092a434534fa1ade67c1770b5a5b" as const;\nexport const RUNTIME_HASH = "${runtimeHash}" as const;\nexport const ABI_HASH = "${abiHash}" as const;\n`,
 );
 console.log({
   commit,
   abiHash,
   runtimeHash,
   runtimeBytes: runtime.length / 2,
-  transferTopic: "0x" + transferTopic,
 });

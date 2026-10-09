@@ -1,6 +1,51 @@
+# 2026-10-09 — vault 6 re-point (BaskVault 0x739fd5b653aa092a434534fa1ade67c1770b5a5b)
+
+This dated entry records the re-pointing of the website to vault 6 on Robinhood Chain (4663), source launch-1110-basket at `50acd7248c2ce59907a963a648115900d629f352`. No contract was changed or deployed. The previous entries are retained below as history; where they name an earlier vault they describe that earlier delivery only.
+
+## Implementation and integrity
+
+- `web/pinned/` now holds launch-1110-basket@50acd72: README, foundry.toml, LICENSE, THIRD_PARTY.md, `BaskVault.sol` and the five libraries; the old types, oracle and two licence files are removed. `regenerate-abi.ts` compiles that source with solc 0.8.26+commit.8a97fa7a (`--standard-json`, optimizer 200, viaIR, cancun, bytecodeHash none, no constantOptimizer override), throws unless `immutableReferences` is empty, and wrote `vault.abi.json` and `deployment.ts` (VAULT `0x739fd5b653aa092a434534fa1ade67c1770b5a5b`, header "Generated from launch-1110-basket at 50acd72…"). Runtime keccak256 `0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048` (23,913 bytes) equals the brief's value and the live code at the address (`cast code | cast keccak`); canonical sorted-key ABI hash `0x47d59929b6c6dd2b66c9d85d22a70b349f0c70496f2e2d06bc35369baa2d3eca`.
+- `chain.ts`: 15 reasons in `BaskVault.Reason` order (13 "no pool and feed older than noPoolAge", 14 "too few fresh prices"), kinds Recentre and RaiseCap, error words keyed by the vault 6 error names. `model.ts`: `AssetView` fields `managedBalance`, `owedBalance`, `balanceReadable`, `shortfall`; fallback reads `assetTokens()` then `asset(token)`; the latest block timestamp joins every snapshot; the listing parser refuses a set pool with minLiquidity 0. `governance.ts`: settings in vault 6 order with Dst at 6, `propose(Action)` with fields per kind, `proposalWords(Action)`, listing decided from `assetTokens()`, `poolValues` with the audit L2 rule, pool checks at the vault's `poolWindow`. `poolMath.ts` follows `PoolOracle.consult/quote` and `_value`. `newYork.ts` ports `NewYorkTime.sol` (daylight, weekSecond, inside, nextOpening) and the weekday/time parser and words.
+- `Owner.tsx`: `listGenesis`, `lowerNAVCap`, proposals from `pendingProposals(start, start+49)` ids and `proposal(id)`, executable from createdAt + 2 days until createdAt + 9 days (exclusive), Hours form as weekday + New York time or "Always open" with raw/words preview, Dst and FreshCount/FreshHours explanations. `wallet.tsx`: pending-listing guard on `listGenesis`, node nonce preferred over the saved pending count, Proposed event's `executableAt` shown. `Flows.tsx` Claims: a failing stock reverts the whole batch, nothing is lost, per-stock Claim buttons. `Vault.tsx` `DepositState`: New York hours line, reason 3 reopening sentence, reason 14 freshness sentence. Docs Deposits panel carries the exact published schedule; the UTC, weekdays-only and weekend sentences are removed.
+- Checks: `check-interface.ts` (bad checksum built from VAULT, `settingWords(8, 300n)`, hours, Dst, parser, `inside`/`nextOpening` vectors and the boundary on both sides for all three dst modes), `validate.ts` (15 reasons, Action per kind, Hours and Dst), `check-preservation.mjs` (all five abandoned address fragments forbidden in every file), `check-calldata.mjs` and `check-bundle.mjs` re-scoped (Flows/Vault call expressions equal HEAD; Losses, main, components and Scenery byte-identical; web/pinned and other web/src allowed; root src, lib, package files, 24 JPEGs and 8 MiB kept). `Fixtures.sol` `TestFeed` has a settable lag. `run-browser.mjs` warms the vault 6 storage layout, decodes `args[0].kind`, uses the new names and labels, and warps to the next opening before deposits when the fork is outside the hours.
+- Calldata comparison: Flows.tsx keeps its 33 call expressions byte-for-byte against HEAD; Vault.tsx has none; the four frozen files are identical. Every send's function, arguments, allowances, minimums, deadlines, gas rule, listing and Finalize rules are unchanged. No package, service, tracker or cookie was added.
+
+## Actual verification (2026-10-09, this workspace)
+
+- `npm ci` in `web/` from the unchanged lockfile (node_modules excluded by .gitignore). `npm run typecheck` and `npm run build`: **PASS**; dist rebuilt with relative asset URLs; Vite's existing >500 kB chunk advisory remains (550.17 kB main JS).
+- `SOLC=… npx tsx scripts/regenerate-abi.ts`: **PASS**; outputs written by the script, never hand-edited; runtime hash equals the brief and the live chain code.
+- `npm run validate` (live, final run at block 83867179): **PASS**; vault 6 code hash, canonical ABI, aggregate snapshot without errors, `depositStatus([])` = 1 (genesis not finished: the live vault is empty and unfinalized), all eleven kinds as the Action struct plus Hours, Dst and Always open cases.
+- `npx tsx scripts/check-interface.ts`: **PASS** (all seven brief vectors: inside(1791507677); 1791648000→1791763200, 1793404800→1793581200, 1804899600→1805068800 for dst 0; dst 1 1791648000→1791766800; dst 2 1793404800→1793577600; dst 1 120600-489600 1791648000→1791815400).
+- `node scripts/check-preservation.mjs`, `check-calldata.mjs`, `check-bundle.mjs`: **PASS** (see `preservation.txt`, `calldata-comparison.json`, `bundle-check.json`); no file in source, dist or artifacts holds an abandoned address fragment.
+- `npx tsx scripts/run-browser.mjs` on a vault 6 fork (publicnode RPC, block 83862826; Anvil, Chromium 1246, solc 0.8.26): **PASS, 61 checks, 70 wallet sends, 24 screenshots**. Walk-through: 25-row listing with decline/timeout/pending recovery, Finalize; a US market holiday inside the hours (every fixture feed three hours old) refused with reason 14 and the no-set-time sentence, then one feed update restores status 0; a three-stock deposit inside the hours; a Saturday 8:00 pm New York deposit refused (Hours) with "Deposits reopen Sunday 8:00 pm New York time (Sunday, … in 24 h 0 min; your time …)"; redeem, one claim and Claim all on that Saturday; the hours form refusing "09:30" without a weekday; proposals Hours Monday 9:30 am–Friday 4:00 pm (120600, 489600) and Dst 1 sent as Action structs with the Proposed event's executableAt shown; all twelve proposals executed after two days; `settings()` read back 120600/489600/1; a Saturday then showing "Deposits reopen Monday 9:30 am UTC-5 (Monday, …"; remove retired, lower cap, unpause, cancel, deficit/loss, ownership transfer. The fork was already inside the hours before the first deposit, so the runner's warp-to-next-opening branch did not execute there; the boundary flip is covered by the unit vectors and by the two Saturday warps.
+- `node scripts/inspect-export.mjs` (24 page/viewport checks), `check-guards.mjs` (four send guards, zero sends), `check-motion.mjs` (33 checks), `check-fixes.mjs` (9 regressions): **PASS**.
+- `check-art.mjs`: the manifest/hash part was repeated with a scratch script (manifest SHA-256 `2d22583b…`, 74 copies of 37 assets match bytes and hashes; the art files are unchanged from HEAD). Its WebKit render part is **unperformed**: no WebKit build is installed on this worker. `check-visibility.mjs` (needs a saved baseline export) was not run.
+- Screenshots `empty-*` and `stocks25-*` were regenerated on the vault 6 fork and inspected at 375 and 1440 px: the Deposit status shows the New York hours line and the Owner page shows twelve pending proposals including the Hours words and the Dst rule.
+
+## Better Interface coverage
+
+The pinned guide's workflow, six domain cores and document-web-design section were applied to the changed surfaces (deposit status, Docs Deposits panel, Owner hours/Dst/fresh settings, proposal cards, claims copy). Root DESIGN.md documents the final source.
+
+| Domain | Coverage |
+| --- | --- |
+| Accessibility — Checked | Native inputs with visible labels for From/To; parser errors and previews as text; status sentences in the existing live regions; existing 44 px controls, skip link, reduced motion retained (inspect-export, check-motion). No screen-reader session. |
+| Layout — Checked | Six routes at 1440 and 375 px in the fork screenshots and at 320/375/800/1440 in inspect-export, no horizontal overflow. |
+| Writing — Checked | Exact published schedule in Docs; reopening/freshness sentences in plain words with the raw values beside the words; "Stock Tokens", no Robinhood name beyond the chain; error words for every vault 6 error name. |
+| Typography — Checked | Existing faces and sizes unchanged; long New York sentences wrap in the status panel. |
+| Colors — Checked | Palette unchanged; new text uses existing ink/paper pairs measured earlier (13.83:1). |
+| UI — Checked | Proposal cards show kind, stock, words, ready/expiry window; hours form previews value, value2 and words before sending. |
+
+Findings and fixes during this task: `web/scripts/run-browser.mjs` navigation to the same hash did not reload state, so the holiday and Saturday attempts now reload before re-adding a stock; the second Saturday check moved after unpausing because reason 2 (paused) precedes reason 3 (hours). No source-level defects in the shipped pages were found by the review beyond the requested changes.
+
+## Limitations
+
+Fork evidence is local testing with disposable fixtures, not a live transaction. The live vault 6 is empty and unfinalized, so only reads were verified against it. WebKit, native Windows scaling and physical phones were not available.
+
+## Previous entry (historical)
+
 # 2026-10-09 — manifest art, slogan loop and bounded site fixes
 
-This dated entry supersedes the earlier artwork/marquee descriptions and records the current delivery. The previous review is retained below as history. Scope: the six existing routes, current vault `0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd`, chain 4663. No deployment or live transaction was performed. The supplied historical deployment input describes an older vault; this task explicitly preserves the current website integration, which was verified against its unchanged runtime and ABI.
+This dated entry supersedes the earlier artwork/marquee descriptions and records the current delivery. The previous review is retained below as history. Scope: the six existing routes, current vault the previous vault 5 address (abandoned; removed from this record), chain 4663. No deployment or live transaction was performed. The supplied historical deployment input describes an older vault; this task explicitly preserves the current website integration, which was verified against its unchanged runtime and ABI.
 
 ## Implementation and integrity
 
@@ -56,7 +101,7 @@ Limitations: Linux Chromium/WebKit automation is not physical iPhone Safari or n
 
 # Basket Protocol interface validation
 
-This is a worker's evidence record, not independent certification. Scope: the six existing website pages and the original vault 5 integration at `0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd`, chain 4663. No contract source, ABI, deployment constant, existing build configuration, dependency manifest or lockfile was changed. The supplied historical deployment manifest describes an earlier vault; the explicit assignment and existing verified vault 5 integration remain authoritative.
+This is a worker's evidence record, not independent certification. Scope: the six existing website pages and the original vault 5 integration at the previous vault 5 address (abandoned; removed from this record), chain 4663. No contract source, ABI, deployment constant, existing build configuration, dependency manifest or lockfile was changed. The supplied historical deployment manifest describes an earlier vault; the explicit assignment and existing verified vault 5 integration remain authoritative.
 
 ## Coverage and limitations
 

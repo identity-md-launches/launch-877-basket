@@ -893,8 +893,10 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
             </p>
           )}
           <p>
-            Batches of up to 10 stocks, with one wallet prompt per batch. Failed
-            payments remain owed and can be retried individually.
+            Batches of up to 10 stocks, with one wallet prompt per batch. If one
+            stock’s payment fails, the vault reverts that whole batch: nothing is
+            lost and every stock in it stays owed. Use each stock’s own Claim
+            button to collect the others.
           </p>
         </>
       )}

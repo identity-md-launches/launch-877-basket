@@ -1,8 +1,8 @@
 # Basket Protocol
 
-An immutable index vault for **Stock Tokens** on Robinhood Chain, chain id **4663**. `BaskVault` is both the custodian and the **Basket (BASK)** ERC-20 share, with 18 decimals. Supply starts at zero, has no configured cap, increases only through deposits, and decreases through redemption burns.
+Basket is an index vault for **Stock Tokens** on Robinhood Chain. `BaskVault` is also the ERC-20 share: **Basket / BASK / 18 decimals**. It starts with zero supply. Deposits mint shares and redemptions burn shares; there is no supply cap, separate launch token, pool, website, proxy, upgrade path, rescue, or sweep.
 
-## Build and checks
+## Build and test
 
 ```sh
 forge build
@@ -10,142 +10,125 @@ forge test
 forge fmt --check
 ```
 
-`foundry.toml` pins Solidity 0.8.26, optimizer with 200 runs, IR compilation, Cancun, and no bytecode metadata hash. All imports are ordinary vendored source files. Builds and tests require no network, RPC, environment variables, filesystem cheatcodes, or FFI. The compiler itself is supplied by the Foundry environment.
+`foundry.toml` pins Solidity **0.8.26**, optimizer **200 runs**, **via IR**, **Cancun**, and `bytecode_hash = "none"`. The compiler must be installed in the execution environment. All Solidity dependencies are ordinary vendored files. Builds and tests need no network, fork, environment variables, FFI, or filesystem cheatcode permissions.
 
-The test suite covers accounting, decimal normalization, fee rounding, first-deposit locking, token transfer failures, claims, reentrancy, loss recognition, every governance action, price freshness and pool observations, and cold-storage redemption gas at the permitted settings boundaries. Gas tests explicitly give the redemption call 28,000,000 gas; fixture construction is outside that measurement. See [SECURITY.md](SECURITY.md) for the attack review and its limits.
+The application fits within the 24,576-byte runtime limit, so its views remain in `BaskVault`; no `BaskLens` is needed. The deployment test also scans runtime bytes for forbidden opcodes. See [REVIEW.md](REVIEW.md) for local adversarial checks and their limits.
 
-## Deployment parameters
+## Deployment
 
-`launch.json` contains one application and these literal constructor arguments:
+`launch.json` deploys only `BaskVault(address owner_, address guardian_)` with these literal arguments:
 
-| Parameter | Value |
+| Argument | Address |
 | --- | --- |
-| Contract | `BaskVault` |
 | `owner_` | `0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3` |
 | `guardian_` | `0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68` |
-| Chain id | `4663` |
 
-The constructor rejects zero or equal role addresses, uses explicit arguments rather than the deployer's identity, and calls no other contract. There is no deployment transaction or signing script in this project. All views currently fit in the vault below the brief's 24,000-byte runtime threshold, so no `BaskLens` is required.
+Zero or equal roles revert. Ownership does not depend on the factory or constructor caller. No transactions, keys, or broadcasts are part of this project.
 
 ## After launch
 
-The initial asset list is empty, genesis is unfinished, the fee recipient is unset, and deposits cannot run. No asset, feed, pool, quote-feed, or beneficiary address is guessed in the implementation.
+The brief supplies no Stock Token, feed, pool, quote-feed, liquidity threshold, or fee-recipient addresses. These are intentionally configured by the owner using the specified genesis and proposal flows; none is guessed or fixed to a substitute contract.
 
-1. The owner obtains the actual Stock Token and USD feed addresses for chain 4663 from their issuers/operators. Verify the feed answers in USD per **whole raw token**, including decimal units. Feed/token correctness is an explicit owner responsibility.
-2. The owner calls `genesisList(token, feed, pool, quoteFeed, minLiquidity)` for at least three assets. A pool is configured in that same call. For an explicitly pool-free asset, use `(pool, quoteFeed, minLiquidity) = (address(0), address(0), 0)`; this is the specified absence of a pool, not a placeholder deployment dependency.
-3. For a configured pool, verify its genuine Uniswap v3 observation interface, sorted token addresses, actual quote token, and the quote token's USD feed. Choose `minLiquidity` in the pool's raw harmonic-mean liquidity units. Supply live observations spanning `poolWindow`. The vault stores the token and feed decimals when configured; each must be at most 18, including quote dependencies.
-4. The owner calls `finalizeGenesis()` once. Three listed assets are required. Deposits can then run when their checks pass. There is no minimum holding allocation for any asset.
-5. If fees are desired, the owner proposes `FeeRecipient` with the intended actual beneficiary, waits two days, and executes. Fees are absent until this executes. The beneficiary cannot be zero or the vault. Once configured, there is no action to unset it; subsequent changes use the same timelock. The fee rate cannot change.
-6. Monitor token/feed upgrades, pause capability, balances versus accounting and claims, observation availability, price ages, governance proposals, and gas costs. Close an affected asset or pause deposits as appropriate. Token/feed/pool changes after genesis use proposals. No listed asset configuration is needed to redeem shares or retry claims already recorded.
-
-Neither this repository nor the vault verifies legal entitlements or the economic identity of an issuer's instrument. BASK represents the vault's raw Stock Token holdings. Chain execution and token issuer restrictions remain external dependencies.
+1. Verify each intended Stock Token and its actual USD feed on the launch chain. Verify token and feed decimals, feed units, freshness, the optional `oraclePaused()` interface, and the pool's pair and observation history. The owner is responsible for pairing assets with their true feeds and pools.
+2. Call `listGenesis(token, feed, pool, quoteFeed, minLiquidity)` for at least three assets. This is immediate and owner-only until genesis is finalized. A pool-less listing explicitly uses `(pool, quoteFeed, minLiquidity) = (address(0), address(0), 0)`. With a pool, supply its other token's USD feed and the chosen minimum harmonic mean liquidity in the pool's raw liquidity units.
+3. Call `finalizeGenesis()` once. Deposits then become available subject to hours, pause, prices, freshness, balances, and the NAV cap. `finalizeGenesis` does not undo an existing deposit pause.
+4. If fees are wanted, propose `Kind.FeeRecipient` with the actual recipient in `target`, then execute after the delay. Fees remain off while unset. Once set, the recipient can be changed but cannot be cleared or be the vault. The fee rate is fixed at 50 basis points.
+5. Monitor oracle freshness, pool observations and liquidity, token implementation changes, custody deficits, pending proposals, and queued claims. Use `close` or `pauseDeposits` when necessary; these affect deposits only. Monitor New York trading hours and use the timelocked `Dst` setting if the applicable daylight rule changes.
 
 ## Accounting and user calls
 
-`managed[token]` is the accounting quantity. NAV uses only managed quantities for unretired assets, never raw balances or pending claims. Direct donations change neither NAV nor shares until an owner `Resync` proposal executes. Resync only adds positive excess over managed quantities and total claims.
+`managed[token]` is the accounting balance. NAV never values `balanceOf(vault)`: unsolicited transfers do not buy shares or change NAV. A timelocked resync can add only surplus above both managed balances and outstanding claims.
 
-Balance-increasing corporate actions, such as a split or an in-kind dividend, also leave managed quantities unchanged until Resync. A split can lower the feed price before the additional units enter accounting, understating NAV and letting new deposits dilute existing holders. Depositors before Resync can likewise share donated value that was absent from their entry price. The two-day proposal delay leaves this exposure open until execution. Operators should pause all deposits across the adjustment until Resync executes; closing only the affected asset still allows deposits of other assets at the understated NAV.
+`deposit(tokens, amounts, receiver, minSharesOut, deadline)` checks the entire unretired basket for readable balances and deficits, and validates prices for every held asset and every input. Input tokens must be unique, open and listed, amounts positive, and the receiver neither zero nor the vault. Every pull must increase custody by exactly its requested amount. Multi-token deposits are atomic.
 
-`deposit(tokens, amounts, receiver, minSharesOut, deadline)`:
+USD values use 18 decimals and round down: `amount * answer * 1e18 / 10^(tokenDecimals + feedDecimals)`. Gross shares are the deposit value at zero supply, otherwise `value * totalSupply / NAV`, rounded down. Nonzero supply with zero NAV reverts. The fixed deposit fee is rounded up and minted to the configured fee recipient. The first deposit also locks `1e15` shares at `address(0xdEaD)`; `minSharesOut` is compared to the receiver's actual shares after both deductions. NAV plus deposit value must fit the cap, initially USD 1,000,000.
 
-- Uses matching, nonempty arrays of positive amounts with each open, listed token appearing once. The receiver cannot be zero or the vault. The deadline is inclusive.
-- Requires finalized genesis, unpaused deposits, and the configured trading hours. Every unretired asset must have a readable balance and be free of a managed shortfall: `max(balance - totalOwed, 0) >= managed`. Each input token additionally requires `balance >= totalOwed`. Thus an idle asset with no managed quantity does not block deposits of other assets merely because its claims exceed its balance. Retired assets are skipped entirely.
-- Validates prices for every input and every unretired nonzero holding. Closed holdings still count in NAV and its price checks. `freshCount` counts unretired assets with a positive, readable feed answer updated within `freshHours`; closed and zero-held assets can count.
-- Requires each token pull to increase the vault balance by exactly the amount. A false/malformed return or nonexact increase reverts the whole deposit; empty return data is supported.
-- Values amounts as `floor(amount * answer * 1e18 / 10^(tokenDecimals + feedDecimals))`. Gross shares equal deposit value at zero supply, otherwise `floor(value * supply / NAV)`; positive supply with zero NAV cannot accept a deposit.
-- Mints `ceil(gross / 200)` shares to a configured fee recipient and the remainder to the receiver. On the first deposit, exactly `1e15` of that remainder instead goes to `address(0xdEaD)`, as specified by the brief. Receiver shares must be positive and meet the requested minimum. NAV after deposit must not exceed `NAV_CAP`.
-
-`redeem(shares, receiver, minAmountsOut, deadline)` takes the caller's shares. It requires a positive share amount, sufficient shares, a nonzero receiver, and an unexpired inclusive deadline. It reads no oracle and ignores all deposit controls and retirement status. A configured fee of `ceil(shares / 200)` is transferred in BASK to the recipient; only the remainder burns. A one-wei redemption with fees enabled can therefore burn zero net shares.
-
-Choose a receiver that can call `claim` if a payment is deferred. The vault itself is accepted as a nonzero redemption receiver, but an ordinary token self-transfer fails the exact-debit check and creates a claim owned by the vault. The vault cannot call `claim` for itself, so those claims remain locked and prevent removal of the affected assets.
-
-For each asset, the entitlement is `floor(min(managed, available) * netShares / supplyBeforeBurn)`. Available is the nonnegative balance less total claims; an unreadable bounded balance call uses managed as the fallback. Managed is reduced only by the entitlement. Missing minimum entries mean zero. **Minimum arrays and returned amounts follow `assetTokens` order**, which changes by swap-and-pop when an asset is removed. Fetching that order when preparing a redemption does not bind execution to it: permissionless removal, including removal followed by listing, can change which asset a positional minimum constrains before the transaction executes. A minimum beyond the current asset count is ignored. The specified redemption interface has no expected-order argument, so it cannot guarantee token-specific minima across that ordering race.
-
-At most `directLimit` nonzero holdings enables direct payment attempts, each with `payGas`. Otherwise all legs become claims. Each payment runs through a self-only external function so a failed balance check, malformed/false return, revert, or gas exhaustion rolls back that token's transfer. The measured vault balance must fall by exactly the leg. Failure records `owed[receiver][token]` and `totalOwed[token]`; it does not block the redemption. Minimum outputs constrain entitlements, not whether they are paid immediately. Recipient-side transfer taxes are not separately measured; sender-side extra deductions fail the exact-debit check.
-
-`claim(tokens, to)` acts on the caller's claims and permits any nonzero destination. For each token, it attempts the smaller of the claim and the current vault balance. Claims are reserved ahead of managed assets. A successful exact-debit payment reduces both claim counters; a failed payment preserves them and processing continues when gas remains. Claim reads and payment attempts have no vault-imposed gas limit, so a user can retry an expensive upgraded token with enough transaction gas and can isolate a troublesome token in its own call. Pause settings, roles, and retirement do not control claims. No contract can make a permanently blocked token transfer succeed.
-
-The ERC-20 share exposes standard `approve`, `transfer`, and `transferFrom`. Infinite allowance is supported. Every public user mutation is guarded against reentrancy and emits events. The self-only `pay` helper runs within the calling redemption/claim guard and cannot be invoked by a user or token.
-
-## Prices
-
-The positive primary answer must be current, not future-dated, and within the inclusive `[centre / band, centre * band]` interval. The lower endpoint uses integer division. Its call has `feedGas`. If `oraclePaused()` returned a valid bool at listing, every deposit price check requires that method to read as false within `pauseGas`. Missing or malformed pause reads after detection fail that price check. An absent/malformed method at listing leaves `hasPause` false.
-
-An asset without a pool also needs the tighter `noPoolAge`. With a pool, a `poolGas`-bounded `observe([poolWindow, 0])` must succeed. Mean tick rounds toward negative infinity, cumulative differences wrap at their interface widths, and harmonic mean liquidity follows [Uniswap OracleLibrary.consult](https://github.com/Uniswap/v3-periphery/blob/v1.3.0/contracts/libraries/OracleLibrary.sol). The mean-tick quote is normalized into whole quote tokens with 18 decimal places before multiplying by the positive, current quote-feed answer. Fractional quote tokens are preserved even for low-decimal quote assets. Pool USD price must differ from primary USD price by at most `poolDeviation` basis points of the primary price, inclusively. Fixed return buffers avoid copying arbitrary returndata.
-
-## Roles and proposals
-
-The owner can immediately list during genesis, finalize genesis, close assets, pause/unpause deposits, and lower `NAV_CAP`. Lowering the cap invalidates all pending cap raises. Owner transfer is two-step (`transferOwnership`, `acceptOwnership`), cannot target zero or the current guardian, and has no renounce operation. Acceptance rechecks that the pending owner has not since become guardian.
-
-The guardian can pause deposits, close assets, and cancel proposals except its own replacement. The owner can cancel any proposal. A later close invalidates every earlier reopen proposal for that asset, even if it was already closed.
-
-`propose(action, token, data)` is owner-only and returns a monotonically increasing id. `execute(id)` is owner-only from `readyAt = proposedAt + 2 days` through `readyAt + 7 days`, inclusive. Proposals are checked again when executed. Configuration and bounds can change while a proposal waits, making its execution fail. There is no execution by third parties.
-
-Use ABI encoding for payloads:
-
-| `T.Action` (ordinal) | `token` | `data = abi.encode(...)` |
-| --- | --- | --- |
-| List (0) | new asset | `address feed, address pool, address quoteFeed, uint128 minLiquidity` |
-| Feed (1) | asset | `address newFeed` |
-| Centre (2) | asset | empty bytes |
-| Reopen (3) | asset | empty bytes |
-| Retire (4) | asset | empty bytes |
-| Pool (5) | asset | `address pool, address quoteFeed, uint128 minLiquidity` |
-| Resync (6) | asset | empty bytes |
-| Guardian (7) | zero (global action) | `address newGuardian` |
-| NavCap (8) | zero (global action) | `uint256 cap` |
-| FeeRecipient (9) | zero (global action) | `address recipient` |
-| Setting (10) | zero (global action) | `T.Setting key, uint256 value` |
-
-Listing checks capacity, unlisted status, token/feed decimals, feed uniqueness among unretired assets, and a positive current answer at both proposal and execution. Feed changes also check uniqueness and take the new answer as centre. Centre proposals read their actual centre at execution and require a current positive answer then; a stale asset can have a centre proposal queued.
-
-Retirement requires the asset closed at both proposal and execution. It is permanent, excludes the asset from all deposit checks and NAV, and invalidates every outstanding proposal associated with that asset, including older resyncs. Only new resync proposals are then accepted for it. Retired holdings and claims remain redeemable. Anyone can `removeRetired(token)` only after both managed and total owed are zero. A removed token can be listed afresh.
-
-Retirement does not guarantee eventual removal. The permanently locked first-deposit shares and rounding leave managed dust after all accessible shares are redeemed; an asset previously held can therefore continue occupying a listing slot indefinitely. For example, a sole deposit of `10e18` units priced at $100 leaves `1e13` managed units after its depositor redeems all received shares without fees. Loss recognition can clear that remainder only when a real balance shortfall exists; there is no dust sweep or administrative write-off.
-
-## Settings
-
-`settings()` returns the full configuration. `Setting` ordinals follow the table; `Hours` changes the pair atomically with `(from << 32) | to`.
-
-| Setting (ordinal) | Initial | Bounds / units |
-| --- | --- | --- |
-| Band (0) | 4 | 2–100 |
-| MaxAge (1) | 80 hours | 1 hour–30 days, seconds |
-| NoPoolAge (2) | 26 hours | 1 hour–30 days, seconds |
-| FreshCount (3) | 0 | 0–10 |
-| FreshHours (4) | 4 | 1–48, hours |
-| Hours (5) | 0–0 | Always open when both zero; otherwise Mon–Fri UTC, `0 <= from < to <= 86400`, start inclusive/end exclusive |
-| PoolWindow (6) | 1,800 | 300–86,400 seconds |
-| PoolDeviation (7) | 300 | 50–2,000 basis points |
-| FeedGas (8) | 100,000 | 20,000–500,000 |
-| PauseGas (9) | 100,000 | 20,000–500,000 |
-| PoolGas (10) | 150,000 | 20,000–500,000 |
-| BalanceGas (11) | 50,000 | 20,000–500,000 |
-| PayGas (12) | 250,000 | 20,000–500,000 |
-| MaxAssets (13) | 250 | At least current asset count, subject to gas inequality |
-| DirectLimit (14) | 50 | Subject to gas inequality; zero disables direct attempts |
-
-Every setting proposal and execution preserves both inequalities:
+`redeem(shares, receiver, minAmountsOut, deadline)` reads no prices and ignores deposit pauses, hours, asset closure, retirement, and all feed/pool conditions. The rounded-up share fee is transferred to the fee recipient; net shares are burned. A tiny redemption can consist entirely of fee shares. Each leg is:
 
 ```text
-maxAssets * (balanceGas + 60,000) <= 28,000,000
-directLimit * (balanceGas + payGas + 70,000) <= 28,000,000
+available = max(balance - totalOwed, 0), or managed if balance is unreadable
+leg = min(managed, available) * netShares / totalSupplyBeforeBurn
 ```
 
-Consequently the maximum possible asset count is 350 at a 20,000 balance allowance. There is no extra fixed 250-asset ceiling. A proposal changing a limit can fail if another setting changes first.
+The balance read uses `balanceGas`, copies only 32 bytes, and cannot make redemption fail through token revert data or unreadability. No automatic write-down changes the residual managed amount. If the number of assets with managed balances is at most `directLimit`, each nonzero leg gets an isolated external self-call with `payGas`. That call requires a successful transfer returning nothing or `true`, and an exact vault balance decrease. A failed call rolls back that entire payment and records debt. Above `directLimit`, all nonzero legs become debt. Retired assets participate equally in redemption.
 
-`NAV_CAP` initially equals `1_000_000e18` USD units and can never rise above `10_000_000_000e18`. Decreases are immediate, including below current NAV or to zero, and affect only future deposits.
+The returned leg array and `minAmountsOut` use **the full current `assetTokens()` order**, including zero and retired legs. Missing minimum entries mean zero; extra entries beyond the asset list are ignored. Removal swaps the last asset into the removed position, so re-read the ordering before preparing a transaction. `Redeem` logs all amounts; `Paid` identifies successfully delivered legs, and the remaining nonzero legs were added to `owed[receiver][token]` and `totalOwed[token]`.
 
-## Losses and views
+`claim(tokens, to)` spends only the caller's debt and can redirect delivery to any nonzero address. Each payment is `min(callerDebt, actualVaultBalance)`. Both the balance reads and the isolated payment use caller-supplied gas without `balanceGas` or `payGas` caps. A failed claim transaction preserves debt. Callers can choose individual assets to avoid an unavailable token in a batch. Claims have priority over managed backing when custody is short and are paid in transaction order, not proportionally among creditors.
 
-`flagDeficit(token)` is permissionless and requires a readable balance. If available is below managed, it records the shortfall and time only when the shortfall exceeds the recorded amount. An unchanged/smaller deficit does not restart the clock; a healthy balance clears the record. `recognizeLoss(token)` is permissionless at least seven days after the record, reduces managed by the smaller of recorded and current shortfall, and clears it. An unreadable balance cannot create, clear, or recognize a loss. Successful deposits clear unretired deficit records. No automatic loss write-down occurs during redemption.
+All user-facing mutations are reentrancy guarded and emit events. `pay` is a vault-only implementation entry point under the enclosing operation's lock. Token callbacks cannot enter it or another mutation. A blocked or changed token may make delivery impossible, but redemption still creates the accounting claim; it cannot force the issuer to transfer.
 
-Views: `allAssets()` returns each config, raw primary answer, update time, validated pool USD price, managed amount, short/readable flags, total owed, and price reason. A failed check can leave the pool price zero. `asset(token)`, `assetTokens(i)`, and `assetCount()` expose the configuration and order individually. `previewDeposit` performs deposit eligibility/valuation checks and returns receiver shares after fees and the initial lock; it does not simulate allowance or token transfers. `previewRedeem` returns proportional entitlements and fee without price reads or simulating transfer success. A deposit preview can revert with the same deposit errors.
+## Prices and hours
 
-`depositStatus(tokens)` returns `T.Reason` and the first asset at fault. Global failures use no asset address. It checks configuration, hours, duplicate/input-token eligibility, balance solvency, prices and freshness; amount, receiver, deadline, allowance, cap and slippage checks need the full deposit arguments. The enum is defined in `src/BaskTypes.sol`.
+The main feed must succeed within `feedGas`, return a positive answer, have a nonfuture update within `maxAge`, and stay in `[centre / band, centre * band]`. If the listing probe decoded a boolean `oraclePaused()`, each price check requires a successful false result within `pauseGas`.
 
-`proposal(id)` exposes the stored proposal, `proposalValid(id)` checks cancellation/expiry/version invalidation, and `pendingProposals(start, limit)` filters a bounded **range of ids** for pending proposals. Validity here does not promise current execution eligibility: the timelock and configuration checks still apply. `proposalCount()` is the last allocated id.
+Without a pool, `noPoolAge` also applies. With a pool, the bounded `observe([poolWindow, 0])` read uses Uniswap v3 arithmetic: negative ticks round toward negative infinity and cumulative differences wrap at their specified widths. Harmonic mean liquidity must meet the threshold. The mean-tick quote for one whole Stock Token is converted from raw quote units to USD using the positive, nonfuture, sufficiently recent quote feed. The absolute difference from the main USD price must be at most `poolDeviation` basis points of the main price. Quote-at-tick and USD conversions round down.
 
-## Dependencies
+Freshness counts positive, successfully read, unretired main feeds with nonfuture updates within both `maxAge` and `freshHours`. A zero-managed, unselected asset needs no other price check, but its balance must still be readable. A retired asset is excluded from **every deposit health, freshness and NAV check**, even when it still has managed balances. An explicitly supplied retired input is closed and rejected.
 
-`lib/forge-std/src` is vendored from forge-std **v1.9.7**, with its MIT/Apache licenses. Production math is adapted from Uniswap v3-core **v1.0.0**: `FullMath` retains MIT attribution; `TickMath` and the observation/quote formulas use GPL-2.0-or-later. Changes pin Solidity, use custom errors, mark safe assembly, preserve required unchecked modular arithmetic, and retain only the required tick-to-price routine. See [THIRD_PARTY.md](THIRD_PARTY.md) and `src/libraries/UNISWAP-LICENSE`.
+Hours are an inclusive start and exclusive end measured from Sunday 00:00 New York local time. Defaults run Sunday 20:00 through Friday 20:00. `(0, 0)` is always open. `Dst = 0` implements the US second-Sunday-in-March / first-Sunday-in-November rule, including transition instants; `1` fixes UTC−5 and `2` fixes UTC−4. Only `block.timestamp` is used.
+
+## Administration
+
+The owner can immediately list genesis assets, finalize genesis, close assets, pause/unpause deposits, and lower `NAV_CAP`. Lowering the cap invalidates all pending raises. The guardian can pause deposits, close assets, and cancel proposals except its own replacement. Closing always invalidates older reopen proposals, even if the asset was already closed.
+
+Ownership transfer is `transferOwnership(next)` followed by `acceptOwnership()` from the nominee. There is no renunciation. The guardian cannot become owner; a guardian proposal is checked again at execution so the roles cannot become equal through a pending ownership transfer.
+
+All other changes use `propose(Action)` and owner-only `execute(id)`. Execution opens at creation plus **2 days** and closes at creation plus **9 days** (exclusive). Validation runs at proposal and execution. Owner or guardian cancellation makes the proposal unusable; the guardian cannot cancel any `Kind.Guardian` proposal.
+
+| `Kind` | Relevant `Action` fields and execution behavior |
+| --- | --- |
+| `List` | `token`, `target = feed`, `pool`, `quoteFeed`, `value = minLiquidity`; lists open, detects pause interface, sets centre from execution answer |
+| `Feed` | `token`, `target = new feed`; checks feed uniqueness and decimals, resets centre to execution answer |
+| `Recentre` | `token`; sets centre to fresh execution answer |
+| `Reopen` | `token`; valid only if no later close invalidated it |
+| `Retire` | `token`; requires closed at both proposal and execution; permanently closes, frees the feed, invalidates all older asset proposals |
+| `Pool` | `token`, `pool`, `quoteFeed`, `value = minLiquidity`; the all-zero pool tuple explicitly removes the pool |
+| `Resync` | `token`; adds positive custody surplus after managed and owed balances |
+| `Guardian` | `target = new guardian`; nonzero and distinct from owner |
+| `RaiseCap` | `value = new USD18 cap`; strictly raises, at most `10_000_000_000e18` |
+| `FeeRecipient` | `target = recipient`; nonzero and not the vault |
+| `Setting` | `setting`, `value`; `Hours` uses `value2` for its end |
+
+Unused action fields have no effect. Retired assets accept only new resync proposals. Anyone can `removeRetired(token)` once managed and total owed are both zero; it may then be listed again. Removal also invalidates remaining proposals for that listing incarnation. Retirement never removes custody and never excludes its tokens from redemption: **depositors after retirement share those tokens**.
+
+| Setting | Initial value | Bounds |
+| --- | --- | --- |
+| `Band` | 4 | 2–100 |
+| `MaxAge` | 80 hours | 1 hour–30 days, supplied in seconds |
+| `NoPoolAge` | 26 hours | 1 hour–30 days, supplied in seconds |
+| `FreshCount` | 1 | 0–10 |
+| `FreshHours` | 1 | 1–48, supplied in hours |
+| `Hours` | 72000, 504000 | start < end ≤ 604800, or 0, 0 |
+| `Dst` | 0 | 0–2 |
+| `PoolWindow` | 1800 seconds | 300–86400 |
+| `PoolDeviation` | 300 bps | 50–2000 |
+| `FeedGas`, `PauseGas` | 100000 each | 20000–500000 each |
+| `PoolGas` | 150000 | 20000–500000 |
+| `BalanceGas` | 50000 | 20000–500000 |
+| `PayGas` | 250000 | 20000–500000 |
+| `MaxAssets` | 250 | at least the current asset count, and the gas constraint below |
+| `DirectLimit` | 50 | the gas constraint below; zero queues every nonzero leg |
+
+Every setting change must preserve:
+
+```text
+maxAssets * (balanceGas + 60_000) <= 28_000_000
+directLimit * (balanceGas + payGas + 70_000) <= 28_000_000
+```
+
+No admin path moves custody, creates shares, changes the fee rate, upgrades code, or pauses redemption or claims. Lower call budgets can cause redemption to queue payments, but claims do not use those budgets.
+
+## Deficits and views
+
+Anyone can `flagDeficit(token)`. A larger observed shortfall records a new amount and timestamp; a smaller still-positive shortfall leaves the record unchanged; full recovery clears it. After seven days, anyone can `recognizeLoss(token)`, reducing managed by the lesser of the recorded and current shortfall, then clearing the record. Unreadable balances cannot establish or clear a deficit. Successful deposits clear all unretired records.
+
+`allAssets()` returns configuration, main answer and update time, USD18 pool price when available, managed, owed, readable-balance status, shortfall, and price reason. `settings()`, `assetTokens()`, `asset(token)`, and `assetCount()` expose configuration and ordering. `previewDeposit` applies deposit health/cap checks and returns receiver shares, fee, input value and pre-deposit NAV. `previewRedeem` returns legs, share fee and whether direct payments will be attempted, without prices; actual delivery can still become debt. `depositStatus(tokens)` returns the first health reason and asset at fault; it cannot check amounts, receiver, deadline, or slippage absent from its arguments.
+
+`proposal(id)` includes action data and whether it is still pending. `pendingProposals(first, last)` returns pending IDs in an inclusive bounded range, including those still waiting for their delay. Expiry and epoch invalidation are reflected without an unbounded state-changing cleanup loop.
+
+## Trust assumptions
+
+The requested design accepts profit from feed lag within the pool deviation tolerance, owner responsibility for correct feed/pool pairings, no per-asset concentration cap, thin-pool manipulation stopping deposits, and later depositors sharing retired custody. There is no automatic portfolio rebalance or trading. Token issuers and chain operation remain external dependencies; the vault cannot bypass issuer transfer restrictions or chain censorship. Asset/feed decimals are captured when configured.
+
+This implementation has local success, failure, fuzz, calendar, opcode and adversarial gas tests. It has not received an independent security audit. An independent contributor should review the final contracts and actual launch configuration before release with funds.

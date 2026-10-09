@@ -20,10 +20,11 @@ import {
 } from "viem";
 import { VAULT, RUNTIME_HASH } from "../src/deployment.ts";
 import { chain, vaultAbi, GAS } from "../src/chain.ts";
+import { inside, nextOpening, weekSecond, WEEK } from "../src/newYork.ts";
 import { mainnet } from "viem/chains";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE ||
-    "/opt/imd-mcp/node_modules/playwright/index.mjs"
+    "/opt/imd-mcp/node/node_modules/playwright/index.mjs"
 );
 const artifacts = path.resolve("../artifacts");
 fs.mkdirSync(artifacts, { recursive: true });
@@ -169,26 +170,23 @@ try {
         ),
       ),
     );
-  const slots = new Set(Array.from({ length: 40 }, (_, i) => BigInt(i)));
+  // Vault 6 layout: words 0-41; tokens array at 26 (data at keccak(26));
+  // mappings 1, 2 (nested), 27-30, 34-36, 38-40 (34 nested); assets 7 slots,
+  // deficits 2, proposals 12 and no bytes fields.
+  const slots = new Set(Array.from({ length: 42 }, (_, i) => BigInt(i)));
   const add = (base, n) => {
     for (let i = 0; i < n; i++) slots.add(base + BigInt(i));
   };
-  add(BigInt(keccak256(toHex(25n, { size: 32 }))), 64);
+  add(BigInt(keccak256(toHex(26n, { size: 32 }))), 64);
   for (const key of keys) {
-    for (const slot of [1, 26, 27, 28, 29, 33, 34, 37, 38])
-      add(mapSlot("address", key, slot), slot === 26 ? 8 : slot === 34 ? 2 : 1);
+    for (const slot of [1, 27, 28, 29, 30, 35, 36, 39, 40])
+      add(mapSlot("address", key, slot), slot === 27 ? 7 : slot === 36 ? 2 : 1);
     for (const outer of [owner, receiver, nextOwner, VAULT]) {
-      add(mapSlot("address", key, mapSlot("address", outer, 32)), 1);
+      add(mapSlot("address", key, mapSlot("address", outer, 34)), 1);
       add(mapSlot("address", key, mapSlot("address", outer, 2)), 1);
     }
   }
-  for (let id = 0; id < 25; id++) {
-    const base = mapSlot("uint256", BigInt(id), 35);
-    add(base, 8);
-    for (let j = 0; j < 3; j++)
-      add(BigInt(keccak256(toHex(base + BigInt(j), { size: 32 }))), 5);
-  }
-  add(mapSlot("uint256", 0n, 31), 1);
+  for (let id = 0; id < 25; id++) add(mapSlot("uint256", BigInt(id), 38), 12);
   const allSlots = [...slots];
   for (let i = 0; i < allSlots.length; i += 60)
     await Promise.all(
@@ -466,6 +464,39 @@ try {
       () => !document.querySelector("button.refresh")?.disabled,
     );
   };
+  // Mine one block at an exact timestamp and sync the page clock to it.
+  async function warpTo(timestamp) {
+    await raw("evm_setNextBlockTimestamp", [Number(timestamp)]);
+    await raw("evm_mine");
+    now = Number(timestamp) * 1000;
+    await page.evaluate((n) => (window.__clock = n), now);
+  }
+  const blockTime = async () =>
+    BigInt((await raw("eth_getBlockByNumber", ["latest", false])).timestamp);
+  // Before a deposit: if the vault is outside its hours, warp to the next
+  // opening computed like the contract, checking the boundary on both sides.
+  async function ensureOpen() {
+    if (await rv("insideHours")) return;
+    const cfg = await rv("settings");
+    const t = nextOpening(await blockTime(), cfg.hoursFrom, cfg.dst);
+    assert.equal(inside(t - 1n, cfg.hoursFrom, cfg.hoursTo, cfg.dst), false);
+    assert.equal(inside(t, cfg.hoursFrom, cfg.hoursTo, cfg.dst), true);
+    await warpTo(t - 1n);
+    assert.equal(await rv("insideHours"), false, "closed one second before");
+    await warpTo(t);
+    assert.equal(await rv("insideHours"), true, "open at the next opening");
+    checks.push("Warped to the next opening; insideHours flips exactly there");
+  }
+  // The next Saturday 8:00 pm New York time, which is outside every tested schedule.
+  async function saturday() {
+    const cfg = await rv("settings"),
+      b = await blockTime(),
+      target = 6n * 86400n + 72000n;
+    let t = b + ((((target - weekSecond(b, cfg.dst)) % WEEK) + WEEK) % WEEK);
+    if (t <= b) t += WEEK;
+    assert.equal(inside(t, cfg.hoursFrom, cfg.hoursTo, cfg.dst), false);
+    return t;
+  }
   const action = (title) =>
     page.locator(".action-panel").filter({
       has: page
@@ -705,6 +736,26 @@ try {
   );
   await refresh();
   await form("Finalize genesis", {}, "Finalize genesis", "finalizeGenesis");
+  await ensureOpen();
+  // A US market holiday inside the hours: every feed three hours old.
+  for (const f of feeds) await tx(f, compiled.TestFeed.abi, "setLag", [3 * 3600]);
+  assert.equal(Number((await rv("depositStatus", [[]]))[0]), 14);
+  await nav("Deposit");
+  await refresh();
+  await page.getByText(/^Deposits are closed until stock prices update \(at least 1 must have updated in the last 1 hour\(s\), e\.g\. a US market holiday\); no set time\. Redemptions are always open\.$/).waitFor();
+  assert.equal(await page.getByText(/Deposits reopen /).count(), 0, "no reopen time on a holiday");
+  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
+  await page.getByLabel("FIG amount", { exact: true }).fill("10");
+  await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
+  await page.getByText(/too few fresh prices/).first().waitFor();
+  checks.push("US market holiday: Freshness refusal (reason 14) with no set time");
+  // One feed updates and deposits pass again.
+  await tx(feeds[1], compiled.TestFeed.abi, "setLag", [0]);
+  assert.equal(Number((await rv("depositStatus", [[]]))[0]), 0);
+  await refresh();
+  checks.push("One updated feed reopens deposits after the holiday");
+  // Same hash: reload so the holiday attempt's chosen stock is cleared.
+  await page.reload();
   await nav("Deposit");
   await page.getByRole("button", { name: "Add FIG", exact: true }).click();
   await page
@@ -789,6 +840,19 @@ try {
   checks.push(
     "Three-stock deposit succeeds with estimated gas +30%, exact approvals, preview invalidated after success",
   );
+  // A Saturday: deposits refused (Hours) with the reopen time; redeem and claim still work.
+  await warpTo(await saturday());
+  assert.equal(await rv("insideHours"), false);
+  assert.equal(Number((await rv("depositStatus", [[]]))[0]), 3);
+  await page.reload();
+  await nav("Deposit");
+  await refresh();
+  await page.getByText(/^Deposits reopen Sunday 8:00 pm New York time \(Sunday, .* in \d+ h \d+ min; your time .*\)\. On a US market holiday they reopen when prices update\. Redemptions are always open\.$/).waitFor();
+  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
+  await page.getByLabel("FIG amount", { exact: true }).fill("1");
+  await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
+  await page.getByText(/outside deposit hours/).first().waitFor();
+  checks.push("Saturday deposit refused (Hours) with the Sunday 8:00 pm reopening shown");
   // Force a deferred leg, then claim it from the receiver wallet.
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [true]);
   await nav("Redeem");
@@ -833,6 +897,7 @@ try {
     "claim",
   );
   assert.equal(sends.at(-1).args[0].length, 2);
+  checks.push("Saturday redeem, single claim and Claim all succeed outside deposit hours");
   // Immediate controls and each proposal form.
   await nav("Owner");
   const closeForm = action("Close a stock");
@@ -885,7 +950,7 @@ try {
     { "Stock Token": stocks[1], "Stock USD feed address": replacementFeed },
     "Propose Feed",
   );
-  await form("Centre", { "Stock Token": stocks[0] }, "Propose Centre");
+  await form("Recentre", { "Stock Token": stocks[0] }, "Propose Recentre");
   await form("Reopen", { "Stock Token": stocks[1] }, "Propose Reopen");
   await form("Retire", { "Stock Token": stocks[2] }, "Propose Retire");
   await form(
@@ -905,9 +970,9 @@ try {
     "Propose Guardian",
   );
   await form(
-    "NavCap",
+    "RaiseCap",
     { "New size limit in dollars": "2000000" },
-    "Propose NavCap",
+    "Propose RaiseCap",
   );
   await form(
     "FeeRecipient",
@@ -915,20 +980,36 @@ try {
     "Propose FeeRecipient",
   );
   await page.getByLabel("Setting name", { exact: true }).selectOption("5");
+  const hoursBox = action("Set Hours");
+  await hoursBox.locator("summary").first().click();
+  await hoursBox.getByLabel("From (weekday and New York time, or Always open)", { exact: true }).fill("09:30");
+  await hoursBox.getByLabel("To (weekday and New York time; Saturday 24:00 allowed)", { exact: true }).fill("Friday 4:00 pm");
+  await hoursBox.getByText(/Use a weekday and New York time/).waitFor();
+  checks.push("Hours form refuses a time without a weekday");
   await form(
     "Set Hours",
     {
-      "From UTC (HH:MM:SS)": "00:00:00",
-      "To UTC (HH:MM:SS; 24:00:00 allowed)": "00:00:00",
+      "From (weekday and New York time, or Always open)": "Monday 9:30 am",
+      "To (weekday and New York time; Saturday 24:00 allowed)": "Friday 4:00 pm",
     },
     "Propose setting",
   );
+  const hoursSend = sends.at(-1).args[0];
+  assert.deepEqual([Number(hoursSend.setting), hoursSend.value, hoursSend.value2], [5, 120600n, 489600n]);
+  await page.getByLabel("Setting name", { exact: true }).selectOption("6");
+  await form("Set Dst", { "New dst value": "1" }, "Propose setting");
+  assert.deepEqual([Number(sends.at(-1).args[0].setting), sends.at(-1).args[0].value], [6, 1n]);
   assert.deepEqual(
     sends
       .filter((s) => s.functionName === "propose")
-      .map((s) => Number(s.args[0])),
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      .map((s) => Number(s.args[0].kind)),
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10],
   );
+  assert.match(
+    await page.locator("body").textContent(),
+    /executable from .* until .*Proposed event/,
+  );
+  checks.push("Proposals send the BaskVault.Action struct; executableAt shown from the Proposed event");
   // Waiting proposals cannot execute. Capture all pages with populated real fork reads.
   assert.ok(
     await page
@@ -984,20 +1065,23 @@ try {
   await nav("Owner");
   await page.evaluate((n) => (window.__clock = n), now);
   await refresh();
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 12; i++) {
     const card = page.locator("article.receipt").filter({
       has: page.getByRole("heading", {
         name: new RegExp(
-          `^${["List", "Feed", "Centre", "Reopen", "Retire", "Pool", "Resync", "Guardian", "NavCap", "FeeRecipient", "Setting"][i]} · Proposal`,
+          `^${["List", "Feed", "Recentre", "Reopen", "Retire", "Pool", "Resync", "Guardian", "RaiseCap", "FeeRecipient", "Setting", "Setting"][i]} · Proposal`,
         ),
       }),
-    });
+    }).first();
     await sendClick(
       card.getByRole("button", { name: "Execute", exact: true }),
       "execute",
     );
   }
   assert.equal(await rv("feeRecipient"), owner);
+  const after = await rv("settings");
+  assert.deepEqual([after.hoursFrom, after.hoursTo, after.dst], [120600n, 489600n, 1n]);
+  checks.push("Hours (120600-489600) and Dst 1 executed and read back from settings()");
   assert.equal(await rv("NAV_CAP"), 2000000n * 10n ** 18n);
   await form(
     "Remove retired stock",
@@ -1009,14 +1093,23 @@ try {
     "Lower size limit",
     { "Lower limit in dollars": "1000000" },
     "Lower NAV cap",
-    "lowerNavCap",
+    "lowerNAVCap",
   );
   await sendClick(
     page.getByRole("button", { name: "Unpause deposits", exact: true }),
     "unpauseDeposits",
   );
+  // A Saturday under the new hours (deposits unpaused) shows the Monday 9:30 am reopening (UTC-5).
+  await warpTo(await saturday());
+  assert.equal(Number((await rv("depositStatus", [[]]))[0]), 3);
+  await page.reload();
+  await nav("Deposit");
+  await refresh();
+  await page.getByText(/^Deposits reopen Monday 9:30 am UTC-5 \(Monday, /).waitFor();
+  checks.push("Saturday after the Hours change shows Deposits reopen Monday 9:30 am");
+  await nav("Owner");
   // Cancel owner and guardian proposal boundaries, without changing the deployed roles.
-  await form("Centre", { "Stock Token": stocks[0] }, "Propose Centre");
+  await form("Recentre", { "Stock Token": stocks[0] }, "Propose Recentre");
   await sendClick(
     page.getByRole("button", { name: "Cancel proposal", exact: true }).first(),
     "cancel",

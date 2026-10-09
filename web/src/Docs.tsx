@@ -19,15 +19,19 @@ export function DocsPage() {
         <section className="panel">
           <h2>Deposits</h2>
           <p>
-            Open at all hours unless the owner sets hours. Each stock’s price
-            comes from its on-chain feed, which updates on weekdays only.
+            deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US
+            market holidays, redemptions always open
+          </p>
+          <p>
+            Each stock’s price comes from its on-chain feed. Deposits also need
+            at least one listed stock price updated within the last hour, so
+            they close when prices stop until one updates.
           </p>
           <p>
             Every stock deposited or held must pass a pool check: a 30-minute
             pool average within 3% of the feed and enough liquidity. With no
             pool, the feed must be under 26 hours old. These are the initial
-            settings; the owner can propose changes. Deposits can stop, mostly
-            at weekends.
+            settings; the owner can propose changes.
           </p>
         </section>
         <section className="panel">

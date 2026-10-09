@@ -8,8 +8,10 @@ import {
   zeroAddress,
   VAULT,
   InputError,
+  client,
   type ReadResult,
 } from "./chain";
+import { hoursWordsOf } from "./newYork";
 export type Asset = {
   token: Address;
   feed: Address;
@@ -53,6 +55,8 @@ export type Snapshot = {
   complete: boolean;
   aggregate: boolean;
   status?: ReadResult;
+  // Latest block timestamp, the clock the vault's hours and freshness use.
+  blockTime?: bigint;
   loadedAt: number;
   loading?: boolean;
   retry?: () => void;
@@ -68,11 +72,13 @@ export const initial: Snapshot = {
 export async function loadSnapshot(): Promise<Snapshot> {
   const errors: string[] = [],
     globals: Globals = {};
-  const [gs, all, status] = await Promise.all([
+  const [gs, all, status, block] = await Promise.all([
     many(globalNames.map((n) => vault(n))),
     safe(vault("allAssets")),
     safe(vault("depositStatus", [[]])),
+    client.getBlock({ blockTag: "latest" }).catch(() => undefined),
   ]);
+  if (!block) errors.push("latest block: unreadable");
   gs.forEach((r, i) => {
     if (r.ok) globals[globalNames[i]] = r.value;
     else errors.push(r.error);
@@ -86,10 +92,10 @@ export async function loadSnapshot(): Promise<Snapshot> {
       answer: v.answer,
       updatedAt: v.updatedAt,
       poolPrice: v.poolPrice,
-      managed: v.managed,
-      totalOwed: v.totalOwed,
-      short: v.short,
-      balanceReadable: v.readable,
+      managed: v.managedBalance,
+      totalOwed: v.owedBalance,
+      short: v.balanceReadable ? v.shortfall > 0n : undefined,
+      balanceReadable: v.balanceReadable,
       reason: Number(v.reason),
       symbol: "unreadable",
       description: "unreadable",
@@ -99,19 +105,13 @@ export async function loadSnapshot(): Promise<Snapshot> {
     errors.push(
       "allAssets: unreadable. Showing individual stock reads; pool checks and price reasons are unreadable.",
     );
-    const count = await safe(vault("assetCount"));
-    if (!count.ok) {
+    const list = await safe(vault("assetTokens"));
+    if (!list.ok) {
       complete = false;
-      errors.push(count.error);
+      errors.push(list.error);
     } else
-      for (let i = 0; i < Number(count.value); i++) {
-        const t = await safe(vault("assetTokens", [BigInt(i)]));
-        if (!t.ok) {
-          complete = false;
-          errors.push(`Stock ${i + 1}: unreadable`);
-          continue;
-        }
-        const c = await safe(vault("asset", [t.value]));
+      for (let i = 0; i < list.value.length; i++) {
+        const c = await safe(vault("asset", [list.value[i]]));
         if (!c.ok) {
           complete = false;
           errors.push(c.error);
@@ -165,6 +165,7 @@ export async function loadSnapshot(): Promise<Snapshot> {
     complete,
     aggregate: all.ok,
     status,
+    blockTime: block?.timestamp,
     loadedAt: Date.now(),
   };
 }
@@ -273,6 +274,10 @@ export function parseLaunch(input: string) {
         );
       if (!same(pool, zeroAddress) && same(quoteFeed, zeroAddress))
         throw new InputError("A pool requires a quote feed.");
+      if (!same(pool, zeroAddress) && minLiquidity === 0n)
+        throw new InputError(
+          "A pool requires a minLiquidity above zero (a zero floor never rejects a drained pool).",
+        );
       const token = parseAddress(p[1], "token"),
         feed = parseAddress(p[2], "feed");
       if (rows.some((r) => same(r.token, token)))
@@ -343,12 +348,6 @@ export function pairingMatches(symbol: string, description: string) {
     [" ", "/", "-"].includes(clean.charAt(symbol.length))
   );
 }
-export const utcTime = (n: bigint) =>
-  `${String(n / 3600n).padStart(2, "0")}:${String((n % 3600n) / 60n).padStart(2, "0")}:${String(n % 60n).padStart(2, "0")}`;
 export function hoursWords(s: any) {
-  return !s
-    ? "unreadable"
-    : s.hoursFrom === 0n && s.hoursTo === 0n
-      ? "open at all hours"
-      : `Monday–Friday, ${utcTime(s.hoursFrom)}–${utcTime(s.hoursTo)} UTC`;
+  return !s ? "unreadable" : hoursWordsOf(s.hoursFrom, s.hoursTo);
 }

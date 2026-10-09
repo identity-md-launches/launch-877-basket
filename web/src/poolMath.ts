@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Tick arithmetic ported from web/pinned/src/libraries/TickMath.sol.
-// Preserve exact integer rounding used by BaskOracle; no floating-point prices.
+// Tick arithmetic ported from web/pinned/src/libraries/TickMath.sol and the
+// consult/quote arithmetic of PoolOracle.sol. Exact integer rounding, no floats.
 const factors = [
   0xfffcb933bd6fad37aa2d162d1a594001n,
   0xfff97272373d413259a46990580e213an,
@@ -32,6 +32,26 @@ export function sqrtAtTick(tick: bigint) {
   if (tick > 0n) ratio = ((1n << 256n) - 1n) / ratio;
   return (ratio >> 32n) + (ratio % (1n << 32n) ? 1n : 0n);
 }
+// PoolOracle.quote: amount of quote token for `amount` of base at `tick`.
+export function quoteAtTick(tick: bigint, amount: bigint, baseIsToken0: boolean) {
+  const sqrt = sqrtAtTick(tick);
+  if (sqrt <= (1n << 128n) - 1n) {
+    const ratio = sqrt * sqrt;
+    return baseIsToken0
+      ? (ratio * amount) / (1n << 192n)
+      : ((1n << 192n) * amount) / ratio;
+  }
+  const ratio128 = (sqrt * sqrt) / (1n << 64n);
+  return baseIsToken0
+    ? (ratio128 * amount) / (1n << 128n)
+    : ((1n << 128n) * amount) / ratio128;
+}
+// BaskVault._value: USD with 18 decimals, rounded down.
+export function usdValue(amount: bigint, answer: bigint, td: number, fd: number) {
+  const exponent = td + fd;
+  if (exponent >= 18) return (amount * answer) / 10n ** BigInt(exponent - 18);
+  return amount * answer * 10n ** BigInt(18 - exponent);
+}
 export function poolMetrics(
   ticks: bigint[],
   liquidities: bigint[],
@@ -44,20 +64,16 @@ export function poolMetrics(
 ) {
   if (ticks.length !== 2 || liquidities.length !== 2)
     throw new Error("Pool observations unreadable.");
+  // PoolOracle.consult: cumulative deltas wrap in int56 / uint160.
   const dt = BigInt.asIntN(56, ticks[1] - ticks[0]);
   const dl = BigInt.asUintN(160, liquidities[1] - liquidities[0]);
   if (!dl) throw new Error("Pool liquidity observation is zero.");
   const liquidity = (seconds * ((1n << 160n) - 1n)) / (dl << 32n);
   if (liquidity >= 1n << 128n) throw new Error("Pool liquidity out of bounds.");
   const mean = dt / seconds - (dt < 0n && dt % seconds ? 1n : 0n);
-  const sqrt = sqrtAtTick(mean);
-  const small = sqrt < 1n << 128n;
-  const ratio = small ? sqrt * sqrt : (sqrt * sqrt) / (1n << 64n);
-  const unit = 1n << (small ? 192n : 128n);
-  const base = 10n ** BigInt(18 + tokenDecimals - quoteDecimals);
-  const rawQuote = tokenIs0 ? (ratio * base) / unit : (unit * base) / ratio;
+  const quoteAmount = quoteAtTick(mean, 10n ** BigInt(tokenDecimals), tokenIs0);
   return {
     liquidity,
-    price: (rawQuote * quoteAnswer) / 10n ** BigInt(quoteFeedDecimals),
+    price: usdValue(quoteAmount, quoteAnswer, quoteDecimals, quoteFeedDecimals),
   };
 }

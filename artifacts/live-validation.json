@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-09T01:20:34.172Z",
-  "block": "83766580",
-  "vault": "0x4e19d7472e650399b06eeaa5ccc29da9b8efbebd",
-  "runtimeHash": "0x0419f8e9496a55eaafb9b3fa203d459cc7f82fdac17359c11f51c2e59a5f64fe",
-  "abiHash": "0x2ca94bfa453d0916a493f52ad214ffbc92948b7535854c9447810fbca2ff0b25",
+  "at": "2026-10-09T04:12:20.050Z",
+  "block": "83867179",
+  "vault": "0x739fd5b653aa092a434534fa1ade67c1770b5a5b",
+  "runtimeHash": "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048",
+  "abiHash": "0x47d59929b6c6dd2b66c9d85d22a70b349f0c70496f2e2d06bc35369baa2d3eca",
   "network": {
     "multicall": true
   },
@@ -21,10 +21,11 @@
       "band": "4",
       "maxAge": "288000",
       "noPoolAge": "93600",
-      "freshCount": "0",
-      "freshHours": "4",
-      "hoursFrom": "0",
-      "hoursTo": "0",
+      "freshCount": "1",
+      "freshHours": "1",
+      "hoursFrom": "72000",
+      "hoursTo": "504000",
+      "dst": "0",
       "poolWindow": "1800",
       "poolDeviation": "300",
       "feedGas": "100000",
@@ -43,53 +44,163 @@
   ],
   "actions": [
     {
-      "action": 0,
-      "dataWords": "Feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68; pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
+      "kind": 0,
+      "action": {
+        "kind": 0,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68; pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
     },
     {
-      "action": 1,
-      "dataWords": "New feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
+      "kind": 1,
+      "action": {
+        "kind": 1,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "New feed 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
     },
     {
-      "action": 2,
-      "dataWords": "Re-centre the band at the feed answer at execution."
+      "kind": 2,
+      "action": {
+        "kind": 2,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Re-centre the band at the feed answer at execution."
     },
     {
-      "action": 3,
-      "dataWords": "Reopen this stock for deposits."
+      "kind": 3,
+      "action": {
+        "kind": 3,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Reopen this stock for deposits."
     },
     {
-      "action": 4,
-      "dataWords": "Retire permanently; zero in deposit NAV, still paid on redemption."
+      "kind": 4,
+      "action": {
+        "kind": 4,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Retire permanently; zero in deposit NAV, still paid on redemption."
     },
     {
-      "action": 5,
-      "dataWords": "Pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
+      "kind": 5,
+      "action": {
+        "kind": 5,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Pool 0x0000000000000000000000000000000000000000; quote feed 0x0000000000000000000000000000000000000000; minimum liquidity 0"
     },
     {
-      "action": 6,
-      "dataWords": "Add positive excess to managed holdings. Keep deposits paused until executed and checked."
+      "kind": 6,
+      "action": {
+        "kind": 6,
+        "token": "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Add positive excess to managed holdings. Keep deposits paused until executed and checked."
     },
     {
-      "action": 7,
-      "dataWords": "New guardian 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
+      "kind": 7,
+      "action": {
+        "kind": 7,
+        "token": "0x0000000000000000000000000000000000000000",
+        "target": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "New guardian 0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68"
     },
     {
-      "action": 8,
-      "dataWords": "New size limit $2,000,000"
+      "kind": 8,
+      "action": {
+        "kind": 8,
+        "token": "0x0000000000000000000000000000000000000000",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "2000000000000000000000000",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "New size limit $2,000,000"
     },
     {
-      "action": 9,
-      "dataWords": "Fee recipient 0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3. Fees begin when executed; the recipient can never be unset."
+      "kind": 9,
+      "action": {
+        "kind": 9,
+        "token": "0x0000000000000000000000000000000000000000",
+        "target": "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "0",
+        "value2": "0",
+        "setting": 0
+      },
+      "words": "Fee recipient 0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3. Fees begin when executed; the recipient can never be unset."
     },
     {
-      "action": 10,
-      "dataWords": "hoursFrom / hoursTo = 146887881580800 (encoded); 09:30:00 to 16:00:00 UTC; Monday to Friday only"
+      "kind": 10,
+      "action": {
+        "kind": 10,
+        "token": "0x0000000000000000000000000000000000000000",
+        "target": "0x0000000000000000000000000000000000000000",
+        "pool": "0x0000000000000000000000000000000000000000",
+        "quoteFeed": "0x0000000000000000000000000000000000000000",
+        "value": "120600",
+        "value2": "489600",
+        "setting": 5
+      },
+      "words": "hoursFrom / hoursTo = 120600 / 489600; Monday 9:30 am to Friday 4:00 pm New York time"
     }
   ],
   "checks": [
     "Decimal-normalized NAV and indicative flags",
-    "All 11 proposal payloads decoded",
+    "All 11 proposal kinds encoded as the BaskVault.Action struct and decoded; Hours and Dst cases",
     "Exact deposit and redemption minimums",
     "Input, receiver, hours and listing validation",
     "Live chain, runtime hash, aggregate snapshot and status"

@@ -1,11 +1,5 @@
 import { poolMetrics } from "./poolMath";
-import {
-  encodeAbiParameters,
-  decodeAbiParameters,
-  parseAbi,
-  type Address,
-  type Hex,
-} from "viem";
+import { parseAbi, type Address } from "viem";
 import {
   read,
   client,
@@ -25,9 +19,9 @@ import {
   cleanFeedDescription,
   pairingMatches,
   parseLaunch,
-  utcTime,
   usd,
 } from "./model";
+import { dstWords, hoursWordsOf, parseHours } from "./newYork";
 export const settingNames = [
   "Band",
   "MaxAge",
@@ -35,6 +29,7 @@ export const settingNames = [
   "FreshCount",
   "FreshHours",
   "Hours",
+  "Dst",
   "PoolWindow",
   "PoolDeviation",
   "FeedGas",
@@ -52,6 +47,7 @@ export const settingFields = [
   "freshCount",
   "freshHours",
   "hoursFrom / hoursTo",
+  "dst",
   "poolWindow",
   "poolDeviation",
   "feedGas",
@@ -68,7 +64,8 @@ export const settingBounds = [
   "3,600–2,592,000 seconds",
   "0–10",
   "1–48 hours",
-  "00:00:00–24:00:00 UTC; from < to, or both zero for all hours",
+  "Seconds since Sunday 00:00 New York time; from < to ≤ 604,800, or both zero for always open",
+  "0 (US daylight saving rule), 1 (never daylight saving, UTC-5) or 2 (always daylight saving, UTC-4)",
   "300–86,400 seconds",
   "50–2,000 basis points",
   "20,000–500,000",
@@ -79,103 +76,109 @@ export const settingBounds = [
   "At least assetCount; maxAssets × (balanceGas + 60,000) ≤ 28,000,000",
   "directLimit × (balanceGas + payGas + 70,000) ≤ 28,000,000; zero disables direct attempts",
 ];
-const payloadTypes = [
-  ["address", "address", "address", "uint128"],
-  ["address"],
-  [],
-  [],
-  [],
-  ["address", "address", "uint128"],
-  [],
-  ["address"],
-  ["uint256"],
-  ["address"],
-  ["uint8", "uint256"],
-];
 export function poolValues(v: Record<string, string>) {
   const p = address(v.pool, true),
     q = address(v.quoteFeed, true),
-    l = uint(v.minLiquidity, 128);
+    l = uint(v.minLiquidity);
   if (same(p, zeroAddress) && (!same(q, zeroAddress) || l !== 0n))
     throw new InputError(
       "No pool requires zero quote feed and zero liquidity.",
     );
   if (!same(p, zeroAddress) && same(q, zeroAddress))
     throw new InputError("A pool requires its quote feed.");
+  if (!same(p, zeroAddress) && l === 0n)
+    throw new InputError(
+      "A pool requires a minLiquidity above zero (a zero floor never rejects a drained pool).",
+    );
   return [p, q, l] as const;
 }
-export function parseTime(v: string) {
-  if (
-    !/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(v) &&
-    !/^24:00(?::00)?$/.test(v)
-  )
-    throw new InputError("Use UTC HH:MM or HH:MM:SS, up to 24:00:00.");
-  const [h, m, s = 0] = v.split(":").map(Number);
-  return BigInt(h * 3600 + m * 60 + s);
-}
-export function proposalSpec(action: number, v: Record<string, string>) {
-  let values: unknown[] = [];
-  switch (action) {
-    case 0:
-      values = [address(v.feed), ...poolValues(v)];
-      break;
-    case 1:
-      values = [address(v.feed)];
-      break;
-    case 5:
-      values = [...poolValues(v)];
-      break;
-    case 7:
-      values = [address(v.next)];
-      break;
-    case 8:
-      values = [amount(v.cap)];
-      break;
-    case 9:
-      values = [recipient(v.recipient)];
-      break;
-    case 10: {
-      const key = Number(v.setting ?? "0");
-      if (!settingNames[key]) throw new InputError("Choose a setting.");
-      let value = uint(v.value || "0");
-      if (key === 5) {
-        const from = parseTime(v.from),
-          to = parseTime(v.to);
-        if ((from !== 0n || to !== 0n) && (from >= to || to > 86400n))
-          throw new InputError(
-            "Use from < to, or zero for both to open at all hours.",
-          );
-        value = (from << 32n) | to;
-      }
-      values = [key, value];
-    }
+// BaskVault.Action: kind, token, target, pool, quoteFeed, value, value2, setting.
+export type Action = {
+  kind: number;
+  token: Address;
+  target: Address;
+  pool: Address;
+  quoteFeed: Address;
+  value: bigint;
+  value2: bigint;
+  setting: number;
+};
+const empty: Action = {
+  kind: 0,
+  token: zeroAddress,
+  target: zeroAddress,
+  pool: zeroAddress,
+  quoteFeed: zeroAddress,
+  value: 0n,
+  value2: 0n,
+  setting: 0,
+};
+export function settingValues(
+  v: Record<string, string>,
+): [number, bigint, bigint] {
+  const key = Number(v.setting ?? "0");
+  if (!settingNames[key]) throw new InputError("Choose a setting.");
+  if (key === 5) {
+    const [from, to] = parseHours(v.from ?? "", v.to ?? "");
+    return [key, from, to];
   }
-  const data = values.length
-    ? encodeAbiParameters(
-        payloadTypes[action].map((type) => ({ type })),
-        values,
-      )
-    : "0x";
-  return vault("propose", [
-    action,
-    action >= 7 ? zeroAddress : address(v.token),
-    data,
-  ]);
+  const value = uint(v.value || "0");
+  if (key === 6 && value > 2n) throw new InputError("Dst is 0, 1 or 2.");
+  return [key, value, 0n];
 }
-export function proposalWords(action: number, data: Hex) {
+// Fields per kind follow the Action comment in BaskVault.sol; unused fields are zero.
+export function proposalAction(
+  kind: number,
+  v: Record<string, string>,
+): Action {
+  const a: Action = { ...empty, kind };
+  switch (kind) {
+    case 0: {
+      const [pool, quoteFeed, value] = poolValues(v);
+      return {
+        ...a,
+        token: address(v.token),
+        target: address(v.feed),
+        pool,
+        quoteFeed,
+        value,
+      };
+    }
+    case 1:
+      return { ...a, token: address(v.token), target: address(v.feed) };
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+      return { ...a, token: address(v.token) };
+    case 5: {
+      const [pool, quoteFeed, value] = poolValues(v);
+      return { ...a, token: address(v.token), pool, quoteFeed, value };
+    }
+    case 7:
+      return { ...a, target: address(v.next) };
+    case 8:
+      return { ...a, value: amount(v.cap) };
+    case 9:
+      return { ...a, target: recipient(v.recipient) };
+    case 10: {
+      const [setting, value, value2] = settingValues(v);
+      return { ...a, setting, value, value2 };
+    }
+    default:
+      throw new InputError("Choose a proposal kind.");
+  }
+}
+export function proposalSpec(kind: number, v: Record<string, string>) {
+  return vault("propose", [proposalAction(kind, v)]);
+}
+export function proposalWords(a: Action) {
   try {
-    const types = payloadTypes[action];
-    const v = types.length
-      ? decodeAbiParameters(
-          types.map((type) => ({ type })),
-          data,
-        )
-      : [];
-    switch (action) {
+    switch (Number(a.kind)) {
       case 0:
-        return `Feed ${v[0]}; pool ${v[1]}; quote feed ${v[2]}; minimum liquidity ${v[3]}`;
+        return `Feed ${a.target}; pool ${a.pool}; quote feed ${a.quoteFeed}; minimum liquidity ${a.value}`;
       case 1:
-        return `New feed ${v[0]}`;
+        return `New feed ${a.target}`;
       case 2:
         return "Re-centre the band at the feed answer at execution.";
       case 3:
@@ -183,21 +186,20 @@ export function proposalWords(action: number, data: Hex) {
       case 4:
         return "Retire permanently; zero in deposit NAV, still paid on redemption.";
       case 5:
-        return `Pool ${v[0]}; quote feed ${v[1]}; minimum liquidity ${v[2]}`;
+        return `Pool ${a.pool}; quote feed ${a.quoteFeed}; minimum liquidity ${a.value}`;
       case 6:
         return "Add positive excess to managed holdings. Keep deposits paused until executed and checked.";
       case 7:
-        return `New guardian ${v[0]}`;
+        return `New guardian ${a.target}`;
       case 8:
-        return `New size limit ${usd(v[0] as bigint)}`;
+        return `New size limit ${usd(a.value)}`;
       case 9:
-        return `Fee recipient ${v[0]}. Fees begin when executed; the recipient can never be unset.`;
+        return `Fee recipient ${a.target}. Fees begin when executed; the recipient can never be unset.`;
       case 10: {
-        const k = Number(v[0]),
-          n = v[1] as bigint;
+        const k = Number(a.setting);
         return k === 5
-          ? `hoursFrom / hoursTo = ${n} (encoded); ${settingWords(k, n)}`
-          : `${settingFields[k]} = ${n}; ${settingWords(k, n)}`;
+          ? `hoursFrom / hoursTo = ${a.value} / ${a.value2}; ${settingWords(k, a.value, a.value2)}`
+          : `${settingFields[k]} = ${a.value}; ${settingWords(k, a.value)}`;
       }
       default:
         return "Unknown action. Retry.";
@@ -228,13 +230,18 @@ export type Pairing = Listing & {
   warning?: string;
 };
 export async function inspectListing(row: Listing): Promise<Pairing> {
-  const [symbol, description, price, decimals, config] = await Promise.all([
-    read(token(row.token, "symbol")),
-    read(feed(row.feed, "description")),
-    read(feed(row.feed, "latestRoundData")),
-    read(feed(row.feed, "decimals")),
-    read(vault("asset", [row.token])),
-  ]);
+  // asset() reverts for an unlisted token: decide "listed" from assetTokens().
+  const [symbol, description, price, decimals, listedTokens, settings] =
+    await Promise.all([
+      read(token(row.token, "symbol")),
+      read(feed(row.feed, "description")),
+      read(feed(row.feed, "latestRoundData")),
+      read(feed(row.feed, "decimals")),
+      read(vault("assetTokens")),
+      read(vault("settings")),
+    ]);
+  const listed = (listedTokens as Address[]).some((t) => same(t, row.token));
+  const config = listed ? await read(vault("asset", [row.token])) : undefined;
   let liquidity: bigint | undefined,
     gapBps: bigint | undefined,
     poolPrice: bigint | undefined,
@@ -256,20 +263,19 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
     ]);
     poolSymbols = symbols.join(" / ");
     quoteName = cleanFeedDescription(qd);
-    const [observations, td, quoteDecimals, qfd, qround, settings] =
-      await Promise.all([
-        read({
-          address: row.pool,
-          abi: poolAbi,
-          functionName: "observe",
-          args: [[1800, 0]],
-        }),
-        read(token(row.token, "decimals")),
-        read(token(same(t0, row.token) ? t1 : t0, "decimals")),
-        read(feed(row.quoteFeed, "decimals")),
-        read(feed(row.quoteFeed, "latestRoundData")),
-        read(vault("settings")),
-      ]);
+    const window = BigInt(settings.poolWindow);
+    const [observations, td, quoteDecimals, qfd, qround] = await Promise.all([
+      read({
+        address: row.pool,
+        abi: poolAbi,
+        functionName: "observe",
+        args: [[Number(window), 0]],
+      }),
+      read(token(row.token, "decimals")),
+      read(token(same(t0, row.token) ? t1 : t0, "decimals")),
+      read(feed(row.quoteFeed, "decimals")),
+      read(feed(row.quoteFeed, "latestRoundData")),
+    ]);
     if (price[1] <= 0n || qround[1] <= 0n)
       throw new InputError("Stock or quote feed answer is invalid.");
     const block = await client.getBlock({ blockTag: "latest" });
@@ -281,7 +287,7 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
     const metric = poolMetrics(
       observations[0],
       observations[1],
-      1800n,
+      window,
       same(t0, row.token),
       Number(td),
       Number(quoteDecimals),
@@ -296,7 +302,7 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
       poolPrice > feedPrice ? poolPrice - feedPrice : feedPrice - poolPrice;
     gapBps = (difference * 10000n) / feedPrice;
     if (liquidity < row.minLiquidity)
-      error = "30-minute pool liquidity is under minLiquidity.";
+      error = `${window / 60n}-minute pool liquidity is under minLiquidity.`;
     if (difference > (feedPrice * BigInt(settings.poolDeviation)) / 10000n)
       error =
         (error ? error + " " : "") + "Pool-vs-feed gap is over poolDeviation.";
@@ -304,7 +310,7 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
       warning = "Liquidity is under 1.5× minLiquidity.";
   }
   const cleaned = cleanFeedDescription(description, symbol);
-  if (!same(config.token, zeroAddress)) {
+  if (config) {
     const differences = ["feed", "pool", "quoteFeed"].filter(
       (k) => !same(config[k], row[k as "feed" | "pool" | "quoteFeed"]),
     );
@@ -326,24 +332,24 @@ export async function inspectListing(row: Listing): Promise<Pairing> {
     feedDecimals: Number(decimals),
     poolSymbols,
     quoteName,
-    listed: !same(config.token, zeroAddress),
+    listed,
     marked: row.ticker !== symbol || !pairingMatches(symbol, cleaned),
   };
 }
 export { proposalKinds };
 
-export function settingWords(key: number, n: bigint) {
+export function settingWords(key: number, n: bigint, n2 = 0n) {
   if (key === 0) return `centre /${n} to ×${n}`;
-  if ([1, 2, 6].includes(key)) return `${Number(n) / 3600} hours (${n} s)`;
-  if (key === 7) return `${Number(n) / 100}% (${n} basis points)`;
-  if (key === 5) {
-    const from = n >> 32n,
-      to = n & 0xffffffffn;
-    return `${utcTime(from)} to ${utcTime(to)} UTC; ${from === 0n && to === 0n ? "always open" : "Monday to Friday only"}`;
-  }
-  if (key === 14)
+  if ([1, 2, 7].includes(key)) return `${Number(n) / 3600} hours (${n} s)`;
+  if (key === 8) return `${Number(n) / 100}% (${n} basis points)`;
+  if (key === 5) return hoursWordsOf(n, n2);
+  if (key === 6) return dstWords[Number(n)] ?? "unknown daylight rule";
+  if (key === 15)
     return `With at most ${n} held stocks, every leg is tried now; with more, every leg is owed for claims. Zero disables direct attempts.`;
-  if (key === 4) return `${n} hours`;
-  if (key >= 8 && key <= 12) return `${n} gas`;
+  if (key === 3)
+    return `${n} listed stock prices must have updated within the last FreshHours; deposits close when prices stop (US market holidays) until one updates`;
+  if (key === 4)
+    return `${n} hours; deposits need FreshCount prices updated within this window, so they close when prices stop (US market holidays) until one updates`;
+  if (key >= 9 && key <= 13) return `${n} gas`;
   return `${n} stocks`;
 }

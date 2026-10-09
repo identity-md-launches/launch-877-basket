@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Address } from "viem";
 import {
   read,
+  many,
   vault,
   simulate,
   explain,
@@ -45,9 +46,10 @@ import {
   settingFields,
   settingBounds,
   settingWords,
-  parseTime,
+  settingValues,
   type Pairing,
 } from "./governance";
+import { dstWords, hoursWordsOf } from "./newYork";
 import type { Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
 type Field = {
@@ -367,7 +369,7 @@ function LaunchListing({
           r.error = "Stock feed already used by an unretired stock.";
         if (!r.listed && !r.error && !r.marked)
           await simulate(
-            vault("genesisList", [
+            vault("listGenesis", [
               r.token,
               r.feed,
               r.pool,
@@ -490,7 +492,7 @@ function LaunchListing({
                 throw new InputError(fresh.error || "check this pairing");
               if (fresh.listed) continue;
               await w.send(
-                vault("genesisList", [
+                vault("listGenesis", [
                   r.token,
                   r.feed,
                   r.pool,
@@ -558,6 +560,13 @@ function LaunchListing({
 function SettingForm(props: Props) {
   const [key, setKey] = useState(0);
   const current = props.snapshot.globals.settings;
+  const currentWords = !current
+    ? "unreadable — Retry vault"
+    : key === 5
+      ? `${hoursWordsOf(current.hoursFrom, current.hoursTo)}; ${current.hoursFrom}-${current.hoursTo}`
+      : key === 6
+        ? `${dstWords[Number(current.dst)] ?? "unknown"}; ${current.dst}`
+        : `${current[settingFields[key]]}; ${settingWords(key, BigInt(current[settingFields[key]]))}`;
   return (
     <div className="panel setting-panel">
       <h3>Setting</h3>
@@ -577,19 +586,28 @@ function SettingForm(props: Props) {
       </label>
       <p>
         Current {settingFields[key]}:{" "}
-        {props.snapshot.loading
-          ? "Reading..."
-          : current
-            ? key === 5
-              ? `${current.hoursFrom} / ${current.hoursTo} seconds UTC; ${settingWords(5, (current.hoursFrom << 32n) | current.hoursTo)}`
-              : `${current[settingFields[key]]}; ${settingWords(key, BigInt(current[settingFields[key]]))}`
-            : "unreadable — Retry vault"}
+        {props.snapshot.loading ? "Reading..." : currentWords}
       </p>
       <p>Bounds: {settingBounds[key]}</p>
       {key === 5 && (
         <p>
-          00:00 to 00:00 means always open. Any other pair means Monday to
-          Friday only. 00:00 to 24:00 is Monday to Friday only.
+          Hours are seconds since Sunday 00:00 New York time. Enter From and To
+          as a weekday and New York time, e.g. "Monday 9:30 am" and "Friday
+          4:00 pm" (To may be "Saturday 24:00"), or "Always open" in both. The
+          start is inclusive and the end exclusive.
+        </p>
+      )}
+      {key === 6 && (
+        <p>
+          0 follows the US daylight saving rule; 1 never applies daylight
+          saving (UTC-5); 2 always applies it (UTC-4).
+        </p>
+      )}
+      {(key === 3 || key === 4) && (
+        <p>
+          Deposits need at least FreshCount listed stock prices updated within
+          the last FreshHours hours, so they close when prices stop (US market
+          holidays) until one updates.
         </p>
       )}
       <ActionForm
@@ -602,9 +620,12 @@ function SettingForm(props: Props) {
             ? [
                 {
                   key: "from",
-                  label: "From UTC (HH:MM:SS)",
+                  label: "From (weekday and New York time, or Always open)",
                 },
-                { key: "to", label: "To UTC (HH:MM:SS; 24:00:00 allowed)" },
+                {
+                  key: "to",
+                  label: "To (weekday and New York time; Saturday 24:00 allowed)",
+                },
               ]
             : [
                 {
@@ -616,13 +637,17 @@ function SettingForm(props: Props) {
         }
         preview={(v) => {
           try {
-            const n =
-              key === 5
-                ? (parseTime(v.from) << 32n) | parseTime(v.to)
-                : BigInt(v.value);
-            return `Proposed raw value: ${n}; ${settingWords(key, n)}`;
-          } catch {
-            return "Enter a proposed value to see its plain units.";
+            const [, value, value2] = settingValues({
+              ...v,
+              setting: String(key),
+            });
+            return key === 5
+              ? `Proposed value ${value}, value2 ${value2}; ${settingWords(key, value, value2)}`
+              : `Proposed raw value: ${value}; ${settingWords(key, value)}`;
+          } catch (e) {
+            return e instanceof InputError
+              ? e.message
+              : "Enter a proposed value to see its plain units.";
           }
         }}
         build={(v) => proposalSpec(10, { ...v, setting: String(key) })}
@@ -641,10 +666,18 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
     setLoading(true);
     setRows([]);
     setError("");
-    read(vault("pendingProposals", [start, 50n]))
-      .then(([ids, items]) => {
+    read(vault("pendingProposals", [start, start + 49n]))
+      .then(async (ids: bigint[]) => {
+        // proposal(id) -> [data, pending]; data.action is the BaskVault.Action.
+        const items = await many(ids.map((id) => vault("proposal", [id])));
+        if (items.some((r) => !r.ok)) throw new Error("proposal unreadable");
         if (live)
-          setRows(items.map((p: any, i: number) => ({ ...p, id: ids[i] })));
+          setRows(
+            items.map((r, i) => ({
+              ...(r as { ok: true; value: any }).value[0],
+              id: ids[i],
+            })),
+          );
       })
       .catch(() => {
         if (live) setError("Pending proposals unreadable. Retry proposals.");
@@ -685,30 +718,33 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
       ) : null}
       <div className="two-col">
         {rows.map((p) => {
-          const ready = BigInt(Math.floor(Date.now() / 1000)) >= p.readyAt,
-            expired =
-              BigInt(Math.floor(Date.now() / 1000)) > p.readyAt + 7n * 86400n,
-            paused = [4, 6].includes(Number(p.action));
+          // Executable from createdAt + 2 days until createdAt + 9 days (exclusive).
+          const now = BigInt(Math.floor(Date.now() / 1000)),
+            readyAt = p.createdAt + 2n * 86400n,
+            expiresAt = p.createdAt + 9n * 86400n,
+            ready = now >= readyAt,
+            expired = now >= expiresAt,
+            kind = Number(p.action.kind),
+            token = p.action.token as Address,
+            paused = [4, 6].includes(kind);
           return (
             <article className="receipt" key={String(p.id)}>
               <h3>
-                {proposalKinds[p.action as number]} · Proposal {String(p.id)}
+                {proposalKinds[kind]} · Proposal {String(p.id)}
               </h3>
               <p>
                 Stock:{" "}
-                {same(p.token, zeroAddress)
+                {same(token, zeroAddress)
                   ? "Global setting"
-                  : (s.assets.find((a) => same(a.token, p.token))?.symbol ??
+                  : (s.assets.find((a) => same(a.token, token))?.symbol ??
                     "unlisted / symbol unreadable")}
               </p>
-              {!same(p.token, zeroAddress) && <Addr value={p.token} />}
-              <p className="chain-text">
-                {proposalWords(Number(p.action), p.data)}
-              </p>
+              {!same(token, zeroAddress) && <Addr value={token} />}
+              <p className="chain-text">{proposalWords(p.action)}</p>
               <p>
                 {ready
-                  ? `ready until ${date(p.readyAt + 7n * 86400n)}`
-                  : `waiting, executable from ${date(p.readyAt)}`}
+                  ? `ready until ${date(expiresAt)} (exclusive)`
+                  : `waiting, executable from ${date(readyAt)}`}
               </p>
               {paused && (
                 <Note warning>Keep deposits paused for execution.</Note>
@@ -728,7 +764,7 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
                   expired
                     ? "Proposal expired. Propose the change again."
                     : !ready
-                      ? `Wait until ${date(p.readyAt)}.`
+                      ? `Wait until ${date(readyAt)}.`
                       : "Pause deposits before executing this proposal."
                 }
                 getSpec={async () => {
@@ -742,7 +778,7 @@ function Proposals({ snapshot: s, wallet: w }: Props) {
               <TxButton
                 snapshot={s}
                 wallet={w}
-                role={Number(p.action) === 7 ? "owner" : "operator"}
+                role={kind === 7 ? "owner" : "operator"}
                 label="Cancel proposal"
                 scope={`Cancel proposal ${p.id}`}
                 getSpec={() => vault("cancel", [p.id])}
@@ -1025,7 +1061,7 @@ export function OwnerPage(props: Props) {
             fields={[
               { key: "cap", label: "Lower limit in dollars", type: "amount" },
             ]}
-            build={(v) => vault("lowerNavCap", [amount(v.cap, true)])}
+            build={(v) => vault("lowerNAVCap", [amount(v.cap, true)])}
           />
           <ActionForm
             {...props}
@@ -1089,8 +1125,8 @@ export function OwnerPage(props: Props) {
           />
           <ActionForm
             {...props}
-            title="Centre"
-            label="Propose Centre"
+            title="Recentre"
+            label="Propose Recentre"
             description="Re-centres the band on the feed answer at execution."
             fields={[stock()]}
             build={(v) => proposalSpec(2, v)}
@@ -1139,8 +1175,8 @@ export function OwnerPage(props: Props) {
           />
           <ActionForm
             {...props}
-            title="NavCap"
-            label="Propose NavCap"
+            title="RaiseCap"
+            label="Propose RaiseCap"
             description={`Current size limit: ${usd(s.globals.NAV_CAP)}. Maximum $10 billion.`}
             fields={[
               {

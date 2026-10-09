@@ -1,4 +1,4 @@
-// Vault 5 invariants replace the obsolete expression-equality check.
+// Vault 6 invariants replace the obsolete expression-equality check.
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
@@ -46,9 +46,16 @@ for (const x of [
   "Losses",
 ])
   assert.ok(main.includes(x), x);
-const forbidden = [
-  "d77a" + "5f93",
+// Fragments of the five abandoned vault addresses are forbidden in every file.
+const oldVaults = [
+  "a00d" + "a50c",
   "518a" + "a023",
+  "d77a" + "5f93",
+  "b587" + "8b75",
+  "4e19" + "d747",
+];
+const forbidden = [
+  ...oldVaults,
   "decayed" + "Bucket",
   "deposits" + "OpenAt",
   "assetIndex" + "PlusOne",
@@ -76,7 +83,7 @@ for (const p of files) {
     /^(web|dist|artifacts)\//.test(scope) ||
     ["README.md", "DESIGN.md"].includes(scope)
       ? forbidden
-      : forbidden.slice(0, 2);
+      : oldVaults;
   for (const word of words)
     assert.ok(
       !s.toLowerCase().includes(word.toLowerCase()),

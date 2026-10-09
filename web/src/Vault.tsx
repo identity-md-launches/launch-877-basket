@@ -12,8 +12,42 @@ import {
 } from "./model";
 import { PageTitle, AddressLink, Note, Empty } from "./components";
 import { StoreShelf } from "./Scenery";
+import {
+  countdown,
+  nextOpening,
+  nyDate,
+  weekdayWords,
+  zoneWords,
+} from "./newYork";
+// Reason 3 (Hours) and 14 (Freshness) in words; computed like the contract from
+// settings() and the latest block timestamp, never the browser time zone.
+export function closedWords(
+  reason: number,
+  settings: any,
+  blockTime: bigint | undefined,
+): string | undefined {
+  if (!settings) return undefined;
+  if (reason === 14)
+    return `Deposits are closed until stock prices update (at least ${settings.freshCount} must have updated in the last ${settings.freshHours} hour(s), e.g. a US market holiday); no set time. Redemptions are always open.`;
+  if (reason !== 3 || blockTime === undefined) return undefined;
+  const from = BigInt(settings.hoursFrom),
+    dst = BigInt(settings.dst);
+  const t = nextOpening(blockTime, from, dst);
+  const local = new Date(Number(t) * 1000).toLocaleString("en-GB");
+  return `Deposits reopen ${weekdayWords(from)} ${zoneWords(dst)} (${nyDate(t, dst)}, in ${countdown(t - blockTime)}; your time ${local}). On a US market holiday they reopen when prices update. Redemptions are always open.`;
+}
+export function hoursLine(settings: any): string {
+  if (!settings) return "unreadable";
+  const dst = BigInt(settings.dst);
+  const zone = dst === 0n ? "" : ` (${zoneWords(dst)})`;
+  return `${hoursWords(settings)}${zone}; ${settings.hoursFrom}-${settings.hoursTo}`;
+}
 export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
   const r = s.status;
+  const closed =
+    r?.ok && !s.loading
+      ? closedWords(Number(r.value[0]), s.globals.settings, s.blockTime)
+      : undefined;
   return (
     <div className="deposit-state">
       <strong>Vault deposit status</strong>
@@ -40,7 +74,8 @@ export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
           )?.symbol ?? r.value[1]}
         </p>
       )}
-      <p>Hours: {s.loading ? "Reading..." : hoursWords(s.globals.settings)}</p>
+      {closed && <p className="reopen">{closed}</p>}
+      <p>Hours: {s.loading ? "Reading..." : hoursLine(s.globals.settings)}</p>
       {!s.loading && (!r || !r.ok) && (
         <button onClick={s.retry}>Retry vault</button>
       )}

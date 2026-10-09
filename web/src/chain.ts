@@ -176,7 +176,7 @@ export async function many(specs: Spec[]): Promise<ReadResult[]> {
   }
   return results;
 }
-// Ordinals match the pinned BaskTypes.Reason exactly.
+// Ordinals match the pinned BaskVault.Reason exactly.
 export const reasons = [
   "OK",
   "genesis not finished",
@@ -191,45 +191,50 @@ export const reasons = [
   "price outside its band",
   "paused by its issuer",
   "pool check failed (over 3% off, unreadable, under its floor or quote feed bad)",
+  "no pool and feed older than noPoolAge",
   "too few fresh prices",
 ];
+// Ordinals match the pinned BaskVault.Kind exactly.
 export const proposalKinds = [
   "List",
   "Feed",
-  "Centre",
+  "Recentre",
   "Reopen",
   "Retire",
   "Pool",
   "Resync",
   "Guardian",
-  "NavCap",
+  "RaiseCap",
   "FeeRecipient",
   "Setting",
 ] as const;
+// Keys are the pinned BaskVault error names.
 export const errorWords: Record<string, string> = {
   Unauthorized: "This wallet is not allowed to perform this action.",
-  Reentrancy: "The contract rejected a reentrant call.",
+  Reentrant: "The contract rejected a reentrant call.",
   InvalidAddress: "Choose a valid allowed address.",
   InvalidInput:
     "Check the amounts, array lengths and allowed values, then retry.",
-  InvalidAsset:
-    "Check this stock’s listing, feed uniqueness, decimals and closed or retired status.",
   InvalidSetting:
     "This setting is outside its bounds or exceeds the combined gas limits. Refresh settings and retry.",
+  InvalidAsset:
+    "Check this stock’s listing, closed or retired status and the asset limit.",
+  InvalidFeed:
+    "The feed is unreadable, has more than 18 decimals, a stale or invalid answer, or is already used by another stock.",
+  InvalidPool:
+    "The pool is unreadable or does not include this stock, or the pool, quote feed and minimum liquidity are not set together.",
   InvalidProposal:
     "This proposal is cancelled, expired or no longer valid. Retry the proposal list.",
-  TooEarly: "The waiting period has not ended. Check the execution time.",
-  Expired: "The deadline has passed. Refresh the preview and retry.",
-  TransferFailed:
+  Timelock: "The waiting period has not ended. Check the execution time.",
+  BalanceUnreadable: "A stock balance could not be read. Retry later.",
+  PaymentFailed:
     "The stock transfer failed. If the issuer paused it, retry later or use another claim recipient.",
   Slippage: "The preview changed beyond your minimum. Refresh and retry.",
+  Deadline: "The deadline has passed. Refresh the preview and retry.",
   CapExceeded: "This deposit exceeds the vault size limit. Reduce the amount.",
   ZeroNAV: "The vault has shares but zero NAV. Deposits cannot proceed.",
   InsufficientBalance: "Your balance is too low for this amount.",
-  InvalidOracle:
-    "The feed or pool is invalid or unreadable. Check its configuration and retry.",
-  MathOverflow: "This amount is outside the supported range.",
-  InvalidTick: "The pool tick is outside its supported range.",
+  InsufficientAllowance: "The BASK allowance is too low for this transfer.",
 };
 export async function explainAction(e: unknown, _spec: Spec): Promise<string> {
   return explain(e);

@@ -3,7 +3,9 @@
   "checks": [
     "line-numbered parser refusals including blank lines and checksum",
     "exact balances with no rounding or commas",
-    "plain setting units and hours semantics",
+    "plain setting units, New York hours and Dst words, hours parser",
+    "NewYorkTime port: inside and nextOpening vectors for dst 0, 1 and 2",
+    "Action struct per proposal kind; set pool refuses minLiquidity 0",
     "TickMath boundaries and harmonic liquidity formula",
     "unchanged deposit/redeem minimum arithmetic"
   ]

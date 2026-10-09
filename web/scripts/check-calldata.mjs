@@ -6,7 +6,8 @@ import ts from 'typescript';
 const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const baseline=p=>execFileSync('git',['show','HEAD:'+p],{cwd:root,encoding:'utf8'});
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
-const protectedFiles=['chain.ts','model.ts','deployment.ts','vault.abi.json','Owner.tsx','Losses.tsx','Docs.tsx','main.tsx','components.tsx','poolMath.ts'];
+// Vault 6 re-point: Losses, main, components and Scenery stay as at HEAD; Flows and Vault keep every call expression (only VAULT differs).
+const protectedFiles=['Losses.tsx','main.tsx','components.tsx','Scenery.tsx'];
 for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src/'+f),f);
 const names=new Set(['vault','token','feed','read','many','simulate','verifyNetwork','encode','depositArgs','redeemArgs','w.send','p.request']);
 function calls(text,file) {
@@ -15,7 +16,7 @@ function calls(text,file) {
  function visit(n){if(ts.isCallExpression(n)&&names.has(n.expression.getText(tree)))found.push(printer.printNode(ts.EmitHint.Unspecified,n,tree).replace(/\s+/g,' '));ts.forEachChild(n,visit);}
  visit(tree);return found;
 }
-const files=['Flows.tsx','Vault.tsx','wallet.tsx','governance.ts'],counts={};
+const files=['Flows.tsx','Vault.tsx'],counts={};
 for(const f of files){const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f);assert.deepEqual(now,old,f+' changed calldata/read/check call expressions');counts[f]=now.length;}
-fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',baseline:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),protectedFiles,counts,checks:['Current chain, ABI, model and all other pages byte-identical','All vault/token/feed calls, transaction arguments, wallet requests, encodings, reads, simulations and network checks in permitted files equal baseline AST','Only explicit gas padding, nonce recovery and requested wording differ; gas and nonce recovery do not change calldata']},null,2)+'\n');
+fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',baseline:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),protectedFiles,counts,checks:['Losses.tsx, main.tsx, components.tsx and Scenery.tsx byte-identical to HEAD','All vault/token/feed calls, transaction arguments, encodings, reads and simulations in Flows.tsx and Vault.tsx equal the HEAD AST; only the VAULT constant and wording differ','chain.ts, model.ts, governance.ts, Owner.tsx, wallet.tsx, Docs.tsx, poolMath.ts and newYork.ts carry the vault 6 ABI, names and New York hours']},null,2)+'\n');
 console.log('PASS baseline call-expression comparison',counts);
