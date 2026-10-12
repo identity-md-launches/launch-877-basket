@@ -1,6 +1,6 @@
 {
-  "at": "2026-10-09T21:57:04.480Z",
-  "block": "84490444",
+  "at": "2026-10-12T23:43:43.692Z",
+  "block": "87068344",
   "vault": "0x739fd5b653aa092a434534fa1ade67c1770b5a5b",
   "runtimeHash": "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048",
   "abiHash": "0x47d59929b6c6dd2b66c9d85d22a70b349f0c70496f2e2d06bc35369baa2d3eca",
@@ -12,11 +12,11 @@
     "guardian": "0x5ed39AF86f2C00ad99913B5d727bD68f2A904B68",
     "pendingOwner": "0x0000000000000000000000000000000000000000",
     "feeRecipient": "0x0000000000000000000000000000000000000000",
-    "genesisFinalized": false,
+    "genesisFinalized": true,
     "depositsPaused": false,
     "NAV_CAP": "1000000000000000000000000",
-    "totalSupply": "0",
-    "proposalCount": "0",
+    "totalSupply": "45708713091386090311",
+    "proposalCount": "1",
     "settings": {
       "band": "4",
       "maxAge": "288000",
@@ -39,7 +39,7 @@
   },
   "assetCount": 25,
   "status": [
-    1,
+    0,
     "0x0000000000000000000000000000000000000000"
   ],
   "actions": [

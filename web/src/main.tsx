@@ -112,6 +112,13 @@ function App() {
                 <span className="connected-address" title={wallet.account}>
                   {wallet.account.slice(0, 6)}…{wallet.account.slice(-4)}
                 </span>
+                <button
+                  className="disconnect"
+                  onClick={wallet.disconnect}
+                  disabled={wallet.busy}
+                >
+                  Disconnect
+                </button>
                 {wallet.chainId !== 4663 && (
                   <button onClick={wallet.switchChain}>
                     Switch to chain 4663

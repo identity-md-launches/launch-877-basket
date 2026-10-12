@@ -51,9 +51,21 @@ function savedPending(): PendingTx | undefined {
     return undefined;
   }
 }
+// Set by Disconnect and kept across reloads until Connect wallet is answered.
+const disconnectedKey = "basket-disconnected-4663";
+function savedDisconnected() {
+  try {
+    return localStorage.getItem(disconnectedKey) === "1";
+  } catch {
+    return false;
+  }
+}
 export function useWallet(refresh: () => Promise<Snapshot>) {
   const sending = useRef(false),
     connectingLock = useRef(false);
+  // Mirrors the saved flag, so Disconnect also holds without storage.
+  const disconnected = useRef(savedDisconnected());
+  const accountVersion = useRef(0);
   const [connecting, setConnecting] = useState(false);
   const [progress, setProgress] = useState<Record<string, ActionProgress>>({});
   const pendingRef = useRef<PendingTx | undefined>(savedPending());
@@ -163,10 +175,18 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   useEffect(() => {
     const p = window.ethereum;
     if (!p) return;
-    const accounts = (a: Address[]) => setAccount(a[0]);
+    // After Disconnect the page takes no account until Connect wallet.
+    const accounts = (a: Address[]) => {
+      accountVersion.current++;
+      if (!disconnected.current) setAccount(a[0]);
+    };
     const network = (n: string) => setChainId(Number(n));
+    const version = accountVersion.current;
     p.request({ method: "eth_accounts" })
-      .then(accounts)
+      .then((a) => {
+        // A later wallet event or user action takes precedence over this read.
+        if (version === accountVersion.current) accounts(a);
+      })
       .catch(() => {});
     p.request({ method: "eth_chainId" })
       .then(network)
@@ -174,6 +194,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     p.on?.("accountsChanged", accounts);
     p.on?.("chainChanged", network);
     return () => {
+      accountVersion.current++;
       p.removeListener?.("accountsChanged", accounts);
       p.removeListener?.("chainChanged", network);
     };
@@ -181,6 +202,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   async function connect() {
     if (connectingLock.current) return;
     connectingLock.current = true;
+    accountVersion.current++;
     setConnecting(true);
     try {
       if (!window.ethereum)
@@ -188,6 +210,14 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       const a = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
+      if (a[0]) {
+        disconnected.current = false;
+        try {
+          localStorage.removeItem(disconnectedKey);
+        } catch {
+          /* storage unavailable */
+        }
+      }
       setAccount(a[0]);
       setChainId(
         Number(await window.ethereum.request({ method: "eth_chainId" })),
@@ -199,6 +229,22 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       connectingLock.current = false;
       setConnecting(false);
     }
+  }
+  // Forget the wallet on this page only; a reload stays disconnected.
+  function disconnect() {
+    if (sending.current) return;
+    accountVersion.current++;
+    disconnected.current = true;
+    try {
+      localStorage.setItem(disconnectedKey, "1");
+    } catch {
+      /* the ref above still holds for this visit */
+    }
+    setAccount(undefined);
+    setHash(undefined);
+    setMessage(
+      "Wallet disconnected from this page. To use another wallet, switch the address in your wallet app, then press Connect wallet.",
+    );
   }
   async function switchChain() {
     try {
@@ -414,6 +460,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     busy,
     confirmed,
     connect,
+    disconnect,
     switchChain,
     send,
     setMessage,

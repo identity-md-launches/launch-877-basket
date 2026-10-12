@@ -1,3 +1,76 @@
+# 2026-10-13 — v11 exact patch delivered on vault 6
+
+Complete for the stated scope, subject to the owner's explicitly accepted findings below. This entry records this run (Europe/Berlin date; machine logs begin on 2026-10-12 UTC). Applied the supplied patch unchanged to `507f2b164160ed7b1361bac55b67bac76a0f3d38`. Source, rebuilt `dist/`, and regenerated artifacts are prepared for the submission commit. Git metadata was not modified. No contract was changed, deployed, replaced or re-minted; no live transaction or publication occurred. Older entries below describe earlier runs only.
+
+## Exact patch and export
+
+- Downloaded the specified Pinata CID `bafkreialgxix5c44nx7prq64afjx3qxchcn3mqmevqdbhws42src7moebm`: **246,058 bytes**, SHA-256 **`0b35d17e8b9c6dfef8c3dc01537dc2e2389bb64184ac0613da5cd4a22fb1c40b`**. Both matched before `git apply --check` and `git apply`, which passed on the requested clean base.
+- All **12** patched files match the post-patch Git blob hashes embedded in the patch; their full SHA-256 values were also captured immediately after application and checked again at completion. Reverse-application checking passes. No source, assertion, preservation pin, wording, style or transaction was changed beyond that patch. `Vault.tsx`, `web/index.html`, public art, pinned contracts, build configuration, package manifests and lockfiles remain unchanged.
+- `dist/assets/index-O9B-ydQc.js`: **`b00c8fc2424b865d0cad1562d1a719509f2d59283c42a5c455b638b5a3f7c9ef`**.
+- `dist/assets/index-D1E9mcXX.css`: **`cc2fbd60fd75bf20cf245e771ba6062f4f5a6e3b9e306ce8d9d0544ecd2c4330`**.
+- Both filenames and output hashes match the requested values exactly. The complete **920,374-byte** static export includes relative asset URLs, the companion JavaScript chunk, local fonts, favicon, all art and license files. The final complete candidate count, including tracked libraries and this entry, is in `bundle-check.json` and remains below **8,388,608 bytes**. All 24 required JPEGs and three existing DPR captures are retained. No dependency directory, package cache, registry mirror, dependency archive or submodule is submitted; the ignore file was unchanged.
+- The patched README explains installation, preview and rebuilding. The patched DESIGN.md was checked against the final source for tokens, local fonts, the one-column Deposit form, responsive rows, disclosure list and Disconnect sizing; its exact patch text is retained.
+
+## Actual verification
+
+Commands ran from `web/` unless stated otherwise. `npm ci --cache /tmp/basket-npm-cache`, `npm run typecheck` and `npm run build` passed. The regenerated `build-validation.txt` records the final typecheck/build. Vite retains its existing >500 kB chunk advisory. Dependencies and their lockfile were not updated.
+
+The unchanged `scripts/run-browser.mjs` ran before the other gates. It used `NODE_OPTIONS='--import tsx'`, the existing locked TypeScript loader, and the external tool selections described below. A copy of **507f2b1's dist** was saved before rebuilding and used for visibility comparison.
+
+| Command | Actual result |
+| --- | --- |
+| `node scripts/run-browser.mjs` via the temporary read-only archive adapter | **PASS: 74 checks, 70 wallet sends, 24 screenshots**, fork **83874298**, zero recorded issues |
+| `npm run validate` | **PASS**: unit cases, canonical ABI, live **verifyNetwork**, runtime hash, aggregate snapshot/status, all 11 proposal kinds; live block **87068344**, 25 listed stocks |
+| `node scripts/check-preservation.mjs` | **PASS**: protected source/configuration, send guards, ABI/wording invariants and obsolete integration scan |
+| `node scripts/check-interface.ts` with the TypeScript loader | **PASS**: interface arithmetic, parsing, exact balances and setting units |
+| `node scripts/check-calldata.mjs` | **PASS against 507f2b1**: frozen files/restored pieces, independently pinned calls/state writes, send/approveAll/onSubmit/getSpec equality, network/load sinks and differential calldata; no new refusals |
+| `node scripts/check-art.mjs` | **PASS in Chromium and WebKit: 74 manifest asset copies, 32 layout groups**, full title-width sweeps and tag/strip/shelf assertions |
+| `node scripts/check-motion.mjs` | **PASS: 39 checks**, DPR 1 / 1.25 / 1.5, strip timing/reset geometry, one-time shelf motion and reduced motion |
+| `node scripts/inspect-export.mjs` | **PASS: 24 page/viewport checks**, six routes at 320 / 375 / 800 / 1440; subpath navigation, local fonts, overflow, keyboard smoke checks, seven contrast pairs; zero recorded issues |
+| `node scripts/check-guards.mjs` | **PASS: four send guards, zero sends** |
+| `node scripts/check-fixes.mjs` | **PASS: nine regressions** using the actual wallet hook and Claims component |
+| `BASKET_BASELINE_DIST=<saved 507f2b1 dist> node scripts/check-visibility.mjs` | **PASS**: six routes at 375×812, no-wallet and connected; **47** prior first-screen elements retained with the same words, none moved or removed |
+| `node scripts/check-bundle.mjs` | **PASS**: complete candidate below 8 MiB; required runtime assets and screenshots retained |
+
+`browser-fork.json` records actual production UI actions against the original vault bytecode on the isolated fork. The 13 additional checks cover wallet-owned rows, small-balance disclosure, search/Enter behavior, the full open-stock disclosure, blocked-price rows and Refresh, open/closed status, estimated total, receipt-derived BASK, cleared redeem amount and local Disconnect/reload/reconnect without revoking permissions. The alphabetical comparator was reviewed in source; the runner's stock-list fixture is already alphabetical, so that fixture alone does not demonstrate sorting an unordered list. The existing listing/recovery, approvals, sends, ownership, losses and proposal coverage remains.
+
+An additional ordered comparison against the original `artifacts/browser-fork.json` from 507f2b1 found **all 70 destinations, functions, arguments and gas values identical**, apart from the final deadline argument in one deposit and two redeems, which follows the test clock. The static/differential calldata gate separately verifies identical calldata for identical inputs with a fixed clock. All wallet sends were on the local fork. The 24 empty/populated screenshots were regenerated at 1440 and 375 pixels with the patch's JPEG quality **32**.
+
+## Better Interface review and owner decisions
+
+Read the pinned workflow, all six core domains and implementation-documentation guidance. Reviewed the affected forms/header within the established supermarket-flyer design, the actual production export, and the patched README/DESIGN.md. No design preference was used to rewrite the exact patch.
+
+| Domain | Coverage and limits |
+| --- | --- |
+| Accessibility — Checked | Native labeled inputs/buttons/details, stock-specific accessible names, permanent search status region, receipt status, focus moved to added rows and away from removed controls (`Flows.tsx:108`, `:515`, `:617`, `:665`, `:849`). Fork interaction/focus checks, skip-link smoke test, target checks and reduced motion ran. Full keyboard-only wallet journeys, screen-reader sessions and a comprehensive accessibility audit were not performed. |
+| Layout — Checked | One-column form and responsive rows (`styles.css:1148`, `:1175`, `:1442`), empty/populated phone and desktop captures, four-width export checks, baseline visibility and art geometry sweeps. The 390×844 first screen shows the brand, Connect wallet, Deposit/Redeem navigation and refresh; the character precedes the figures as approved. Native 200% browser zoom and RTL were not tested. |
+| Writing — Checked | Exact search/disclosure labels, per-stock price reason and Refresh, explicitly estimated dollar total, receipt-derived "You received … BASK", and local Disconnect explanation. Source and browser checks agree with the supplied wording. No copy was rewritten. |
+| Typography — Checked | Local Flyer/Pixel loaded, 16px inputs, desktop/phone row wrapping and amount controls inspected. Arial resolves to Liberation Sans on this machine. The existing multiple sizes/families, uppercase headings and pixel slogan remain intentional frozen design. Other platform font substitutions and native display scaling are not verified. |
+| Colors — Checked | Existing tokens retained. `export-review.json` records seven solid pairs, from 4.80:1 (white/red) to 13.83:1 (ink/paper); white/royal is 7.47:1. The rendered taste probe passes measured text contrast, with one image/gradient text box unmeasured. This does not certify every pixel or focus/background pairing. Only the existing light theme applies. |
+| UI — Checked | Empty/populated and blocked-price states, Max/Remove/search/list disclosure, preview/approval/success, local Disconnect and reload, receiver/claims and failed-read recovery exercised. Motion tests verify strip resets/speeds and cancellation under reduced motion. DevTools 10% playback, physical phones and native Windows scaling were not performed. |
+
+The pinned design probe ran from the repository root using `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste` with the external Playwright module. It completed, **9/16 checks passed**. Passing: render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget and reduced motion. Flagged: casing, tracking, type sizes, type families/monospace slogan, repeated animated slogan, border-plus-shadow decoration, and missing Open Graph tags. These concern the retained flyer system and frozen page shell (`styles.css:102`, `:174`, `:221`, `:393`, `:1030`; `Vault.tsx:183`; `web/index.html:3`). No horizontal scroll, overlapping text, obscured controls or clipped text was measured at 320/390/1440. The probe is supplemental evidence, not a replacement for the gates, and its raw style flags are not claimed as passes. The exact-patch instruction takes precedence over those design-bar preferences.
+
+The owner's four accepted findings remain explicitly deferred, with no patch or pin edits:
+
+1. **Phone ordering:** the character panel preceding vault figures is the approved design (`Vault.tsx:168`, `styles.css` phone title rules). The 390px screenshot confirms this order; no change was made.
+2. **Pending Connect race:** a delayed `eth_requestAccounts` reply can undo a later Disconnect after an intervening account event (`wallet.tsx:202`, `:234`). The owner defers this scenario. This run does not claim a timing measurement or a fix; the required guarded initial account-read and normal Disconnect checks pass.
+3. **Open Graph:** `og:title` and `og:image` are absent from the frozen shell (`web/index.html:3`). Title, favicon and description are present. The owner defers the missing tags; the probe reports them honestly.
+4. **Fallback-only 24/7 label overflow:** the approved one-line tag remains unchanged (`styles.css:516`). The owner accepts the reported DejaVu Sans-only overflow where Arial/Helvetica and metric-compatible fallback fonts are unavailable. This environment has a metric-compatible fallback and the complete art check passed; the narrow fallback-font exception was **not invoked**.
+
+Viewed the generated `empty-deposit-375.jpg`, `stocks25-deposit-375.jpg`, `stocks25-deposit-1440.jpg`, `stocks25-redeem-375.jpg` the probe's 390px first-screen screenshot, and the WebKit 375px Deposit title capture. These confirm the reviewed composition; they are not a claim of manual inspection of every pixel in all 24 captures. Probe and extra inspection captures remain disposable scratch. No additional source correction was authorized or made.
+
+## Tooling and limitations
+
+Node **24.21.0**, npm **11.19.0**, Anvil **1.8.3**, solc **0.8.26+commit.8a97fa7a**, Chromium **154.0.8037.0** and WebKit **26.6** were used. Playwright/browser/compiler tooling is external to the delivery. Chromium uses the full installed build, matching the prior runs' font-metrics setup. WebKit and missing shared libraries/Mesa components were installed only under `/tmp`; its launch environment supplies the library and EGL vendor paths. No font or site asset was substituted to satisfy a check.
+
+The default fork attempt failed before the walkthrough because Anvil requested historical state by a bare block-hash string, which the archive refused. Early adapter attempts encountered HTTP 429 and a too-serial batch connection failure. The successful temporary adapter retained the runner's own read-only proxy, mapped state block-hash references through `eth_getBlockByHash`, forwarded genuine answers from `https://robinhood.api.pocket.network`, coalesced/cached exact reads, limited concurrency to four and spaced completed upstream reads by 150 ms with bounded transient retries. It did not fabricate proofs/accounts or overwrite vault state/bytecode. The pinned block and all assertions stayed unchanged. Failed setup attempts are not counted as successful validation.
+
+The first art attempt stopped when WebKit could not create an EGL display. Missing external Mesa support was repaired. A later invocation was externally terminated with exit 143 before a result, so the unchanged check was rerun with periodic progress output; no assertion was removed or weakened. Only the completed result above counts. Source, artifact and export integrity were rechecked at completion, including a byte scan of every candidate file (tracked libraries included, task inputs and disposable scratch excluded): no vault 1–5 address fragment. Native devices, assistive-technology sessions, native zoom and live wallet transactions remain unperformed. Existing compiler evidence is historical; this task does not regenerate the ABI or change any contract. These are worker-side results, not independent certification.
+
+---
+
+
 # 2026-10-09 — v10 pinned patch, vault 6
 
 Complete for the stated scope. Applied the supplied patch unchanged to clean commit `7aea768c2197cde37353107b8d1a49533e33c942`, rebuilt the production export, and reran every requested gate. No contract, dependency, build configuration, public art, transaction, read or argument was changed beyond the patch's declared website scope. Nothing was deployed or published. Git metadata was not modified; the changed source, export and artifacts are ready for the worker's submission commit. The v9 entry below is historical evidence, not this run's results.

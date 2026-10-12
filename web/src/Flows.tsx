@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { Address } from "viem";
+import { decodeEventLog, type Address, type Hex } from "viem";
 import {
   read,
   many,
@@ -9,6 +9,9 @@ import {
   simulate,
   InputError,
   VAULT,
+  client,
+  vaultAbi,
+  reasonWords,
 } from "./chain";
 import {
   amount,
@@ -19,6 +22,7 @@ import {
   exact,
   usd,
   same,
+  type Asset,
   type Snapshot,
 } from "./model";
 import {
@@ -32,7 +36,7 @@ import {
   actionReason,
   Receiver,
 } from "./components";
-import { DepositState } from "./Vault";
+import { DepositState, hoursLine } from "./Vault";
 import type { Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
 // Always shown at the top of the Deposit and Redeem forms (open or closed), so
@@ -65,6 +69,18 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
     >({}),
     [simulated, setSimulated] = useState(false),
     [retry, setRetry] = useState(0);
+  const [received, setReceived] = useState<{
+    hash: Hex;
+    receiver: Address;
+    shares: bigint;
+  }>();
+  // The rows come from the last finished balance read, so they stay in place
+  // while a new read runs. Never an input to a transaction.
+  const [held, setHeld] = useState<Record<string, bigint | undefined>>();
+  const [removed, setRemoved] = useState<Record<string, boolean>>({});
+  const [showSmall, setShowSmall] = useState(false);
+  // The stock an Add button just added, until its row is on screen.
+  const focusRow = useRef<Address | undefined>(undefined);
   const sequence = useRef(0),
     lock = useRef(false);
   useLayoutEffect(() => {
@@ -81,6 +97,56 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       setSimulated(false);
       sequence.current++;
     }
+  }, [w.confirmed]);
+  useLayoutEffect(() => {
+    if (w.confirmed?.functionName === "deposit") setRemoved({});
+  }, [w.confirmed]);
+  // Another wallet's rows must not stay on screen.
+  useLayoutEffect(() => {
+    setHeld(undefined);
+    setRemoved({});
+  }, [w.account]);
+  // The pressed Add button is gone: the new row's amount box takes its focus,
+  // or the row itself when the stock is blocked and its box is off.
+  useLayoutEffect(() => {
+    const box = focusRow.current
+      ? document.getElementById(`amount-${focusRow.current}`)
+      : null;
+    if (box instanceof HTMLInputElement && box.disabled)
+      box.closest<HTMLElement>(".deposit-row")?.focus();
+    else box?.focus();
+    focusRow.current = undefined;
+  }, [inputs]);
+  // The BASK a confirmed deposit minted, from the Deposit event in its receipt.
+  useEffect(() => {
+    const done = w.confirmed;
+    if (done?.functionName !== "deposit") return;
+    let live = true;
+    client
+      .getTransactionReceipt({ hash: done.hash })
+      .then((receipt) => {
+        const event = receipt.logs
+          .filter((l) => same(l.address, VAULT))
+          .map((l) => {
+            try {
+              return decodeEventLog({
+                abi: vaultAbi,
+                data: l.data,
+                topics: l.topics,
+              });
+            } catch {
+              return undefined;
+            }
+          })
+          .find((l) => l?.eventName === "Deposit");
+        if (!live || !event) return;
+        const { receiver, shares } = event.args as any;
+        setReceived({ hash: done.hash, receiver, shares });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
   }, [w.confirmed]);
   useEffect(() => {
     let live = true;
@@ -104,6 +170,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
           al[a.token] = ar.ok ? ar.value : undefined;
         });
         setBalances(b);
+        setHeld(b);
         setAllowances(al);
         setReading(false);
       });
@@ -191,6 +258,134 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       setWorking(false);
     }
   }
+  // From the last finished vault read, kept while a new read runs so the form
+  // does not jump; undefined before the first read or when unreadable.
+  const r = s.status;
+  const reason = r?.ok ? Number(r.value[0]) : undefined;
+  // Dollar value of n units at the feed price of the last vault read, 18
+  // decimals; undefined when that price is unreadable.
+  const worth = (a: Asset, n: bigint) =>
+    a.answer !== undefined && a.answer > 0n
+      ? (n * a.answer * 10n ** 18n) /
+        10n ** BigInt(a.tokenDecimals + a.feedDecimals)
+      : undefined;
+  // "about $1,234.56"; usd() alone writes a value under one cent as "$<0.01".
+  const about = (value: bigint) =>
+    value < 10n ** 16n ? "under $0.01" : `about ${usd(value)}`;
+  // Display only. Preview and Deposit read `inputs` in the vault's order.
+  const stocks = open.map((a) => {
+    const balance = held?.[a.token] ?? 0n,
+      value = balance > 0n ? worth(a, balance) : undefined;
+    return {
+      a,
+      value,
+      inWallet: balance > 0n,
+      // Under one cent. An unreadable price is unknown, never small.
+      small: value !== undefined && value < 10n ** 16n,
+      added: inputs[a.token] !== undefined,
+    };
+  });
+  type Stock = (typeof stocks)[number];
+  // A wallet stock the user has not removed.
+  const kept = (x: Stock) => x.inWallet && !removed[x.a.token];
+  const onScreen = (x: Stock) =>
+    x.added || (kept(x) && (!x.small || showSmall));
+  const hiddenSmall = stocks.filter((x) => kept(x) && !onScreen(x)).length;
+  // Wallet stocks by value, largest first, unpriced ones after them; then the
+  // stocks added by hand. Ties keep the vault's order.
+  const rows = [
+    ...stocks
+      .filter((x) => onScreen(x) && x.inWallet)
+      .sort((x, y) =>
+        x.value === y.value
+          ? 0
+          : x.value === undefined
+            ? 1
+            : y.value === undefined || x.value > y.value
+              ? -1
+              : 1,
+      ),
+    ...stocks.filter((x) => onScreen(x) && !x.inWallet),
+  ];
+  // The last finished read covers every stock now listed.
+  const ready = !!held && open.every((a) => a.token in held);
+  // A gap in that read; it stays so while the next read runs.
+  const unread = ready && open.some((a) => held[a.token] === undefined);
+  // Tickers first (the exact one, then those that start with the text, then
+  // those that contain it), then token addresses from four characters on.
+  const query = search.trim().toLowerCase();
+  const rank = (a: Asset) => {
+    const ticker = a.symbol.toLowerCase();
+    return ticker === query
+      ? 0
+      : ticker.startsWith(query)
+        ? 1
+        : ticker.includes(query)
+          ? 2
+          : query.length >= 4 && a.token.toLowerCase().includes(query)
+            ? 3
+            : 4;
+  };
+  const matches = query
+    ? stocks
+        .filter((x) => !onScreen(x) && rank(x.a) < 4)
+        .map((x) => x.a)
+        .sort((x, y) => rank(x) - rank(y))
+    : [];
+  // Every open stock by ticker, A to Z, for the list under the search. A copy
+  // for display only: `open` keeps the vault's order.
+  const listed = [...open].sort((x, y) => {
+    const a = x.symbol.toLowerCase(),
+      b = y.symbol.toLowerCase();
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  // `focus` is false for Enter in the search box, which keeps the focus.
+  function add(t: Address, focus = true) {
+    if (focus) focusRow.current = t;
+    setRemoved((old) => ({ ...old, [t]: false }));
+    setInputs((old) => ({ ...old, [t]: "" }));
+    setSearch("");
+  }
+  function remove(t: Address) {
+    // The pressed button goes with its row: focus a row beside it or search.
+    const row = document.getElementById(`amount-${t}`)?.closest(".deposit-row"),
+      beside = row?.nextElementSibling ?? row?.previousElementSibling;
+    if (row?.contains(document.activeElement)) {
+      if (beside instanceof HTMLElement) beside.focus({ preventScroll: true });
+      else
+        document
+          .querySelector<HTMLInputElement>(".stock-search input")
+          ?.focus({ preventScroll: true });
+    }
+    setRemoved((old) => ({ ...old, [t]: true }));
+    if (inputs[t] !== undefined)
+      setInputs((old) => {
+        const next = { ...old };
+        delete next[t];
+        return next;
+      });
+  }
+  // An estimate of the typed amounts, for the same stocks Preview would send.
+  let total = 0n,
+    counted = 0;
+  const badAmount: string[] = [],
+    noPrice: string[] = [];
+  for (const a of open) {
+    const text = inputs[a.token];
+    if (!text?.trim()) continue;
+    let value: bigint | undefined;
+    try {
+      value = worth(a, amount(text, false, a.tokenDecimals));
+    } catch {
+      badAmount.push(a.symbol);
+      continue;
+    }
+    if (value === undefined) noPrice.push(a.symbol);
+    else {
+      total += value;
+      counted++;
+    }
+  }
   return (
     <>
       <PageTitle
@@ -208,10 +403,19 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
         Choose one or more open stocks. They go into the vault together in one
         deposit.
       </PageTitle>
-      <div className="flow-layout">
+      <div className="flow-layout one-column">
         <section className="panel">
           <HoursTag />
-          <DepositState snapshot={s} />
+          {/* One line while the vault takes deposits; otherwise, and while the
+              status is unread or unreadable, the full box with its reason. */}
+          {reason === 0 && open.length > 0 ? (
+            <p className="deposit-open">
+              <strong>Deposits are open.</strong> Hours:{" "}
+              {hoursLine(s.globals.settings)}
+            </p>
+          ) : (
+            <DepositState snapshot={s} />
+          )}
           <p className="flow-steps">
             Choose amounts, preview, approve each stock, press Deposit.
           </p>
@@ -275,101 +479,240 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                   }
                 }}
               >
-                {open.length > 6 && (
+                {!w.account ? (
+                  <div className="wallet-connect">
+                    <p>Connect your wallet to see the stocks you hold.</p>
+                    <button
+                      type="button"
+                      onClick={w.connect}
+                      disabled={w.connecting}
+                    >
+                      {w.connecting ? "Connecting..." : "Connect wallet"}
+                    </button>
+                  </div>
+                ) : (
                   <>
-                    <label className="stock-search">
-                      Search to add stocks
-                      <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                      />
-                    </label>
-                    <div className="add-stocks">
-                      {open
-                        .filter(
-                          (a) =>
-                            inputs[a.token] === undefined &&
-                            (a.symbol
-                              .toLowerCase()
-                              .includes(search.toLowerCase()) ||
-                              a.token
-                                .toLowerCase()
-                                .includes(search.toLowerCase())),
-                        )
-                        .map((a) => (
-                          <button
-                            type="button"
-                            key={a.token}
-                            disabled={working || w.busy}
-                            onClick={() =>
-                              setInputs((old) => ({ ...old, [a.token]: "" }))
-                            }
-                          >
-                            Add {a.symbol}
-                          </button>
-                        ))}
-                    </div>
+                    {!ready && <p>Reading your wallet...</p>}
+                    <p className="wallet-line">
+                      Showing {w.account.slice(0, 6)}…{w.account.slice(-4)}. To
+                      use another wallet, switch the address in your wallet app:
+                      this page follows it.
+                    </p>
+                    {unread ? (
+                      <p>
+                        Some balances could not be read. Press Retry balances
+                        below.
+                      </p>
+                    ) : (
+                      ready &&
+                      !rows.length &&
+                      !stocks.some((x) => x.inWallet) && (
+                        <p>No open listed stock in this wallet.</p>
+                      )
+                    )}
                   </>
                 )}
-                {open
-                  .filter(
-                    (a) => open.length <= 6 || inputs[a.token] !== undefined,
-                  )
-                  .map((a) => (
-                    <div className="amount-row" key={a.token}>
-                      <label>
-                        <span>
-                          <bdi>{a.symbol}</bdi> amount
-                        </span>
+                <div className="deposit-rows">
+                  {rows.map(({ a, value, inWallet }) => {
+                    const blocked = a.reason !== undefined && a.reason !== 0,
+                      balance = held?.[a.token];
+                    return (
+                      <div
+                        className={
+                          blocked ? "deposit-row blocked" : "deposit-row"
+                        }
+                        key={a.token}
+                        tabIndex={-1}
+                      >
+                        <div className="row-stock">
+                          <label htmlFor={`amount-${a.token}`}>
+                            <bdi>{a.symbol}</bdi>
+                          </label>
+                          <small id={`balance-${a.token}`}>
+                            Wallet balance:{" "}
+                            {w.account
+                              ? balance === undefined && (reading || !ready)
+                                ? "Reading..."
+                                : fmt(balance, a.tokenDecimals)
+                              : "Connect wallet"}
+                            {inWallet && value !== undefined && (
+                              <span> · {about(value)}</span>
+                            )}
+                          </small>
+                        </div>
                         <input
+                          id={`amount-${a.token}`}
                           aria-label={`${a.symbol} amount`}
                           aria-describedby={`balance-${a.token}`}
                           inputMode="decimal"
                           autoComplete="off"
                           value={inputs[a.token] ?? ""}
-                          disabled={working || w.busy}
+                          disabled={working || w.busy || blocked}
                           onChange={(e) =>
                             setInputs({ ...inputs, [a.token]: e.target.value })
                           }
                         />
-                        <small id={`balance-${a.token}`}>
-                          Wallet balance:{" "}
-                          {w.account
-                            ? reading
-                              ? "Reading..."
-                              : fmt(balances[a.token], a.tokenDecimals)
-                            : "Connect wallet"}
-                        </small>
-                      </label>
-                      <button
-                        type="button"
-                        disabled={
-                          working || w.busy || balances[a.token] === undefined
-                        }
-                        onClick={() =>
-                          setInputs((old) => ({
-                            ...old,
-                            [a.token]: exact(
-                              balances[a.token]!,
-                              a.tokenDecimals,
-                            ),
-                          }))
-                        }
-                      >
-                        Use full balance
-                      </button>
-                      {balances[a.token] === undefined && (
-                        <p className="disabled-reason">
-                          {!w.account
-                            ? "Connect wallet to read your balance."
-                            : reading
-                              ? "Reading..."
-                              : "Balance unreadable. Retry balances below."}
-                        </p>
-                      )}
-                    </div>
+                        <button
+                          type="button"
+                          className="quiet"
+                          aria-label={`Max ${a.symbol}`}
+                          disabled={
+                            working ||
+                            w.busy ||
+                            blocked ||
+                            balances[a.token] === undefined
+                          }
+                          onClick={() =>
+                            setInputs((old) => ({
+                              ...old,
+                              [a.token]: exact(
+                                balances[a.token]!,
+                                a.tokenDecimals,
+                              ),
+                            }))
+                          }
+                        >
+                          Max
+                        </button>
+                        <button
+                          type="button"
+                          className="quiet remove"
+                          aria-label={`Remove ${a.symbol}`}
+                          disabled={working || w.busy}
+                          onClick={() => remove(a.token)}
+                        >
+                          Remove
+                        </button>
+                        {blocked && (
+                          <p className="row-note">
+                            Deposits of this stock are blocked right now:{" "}
+                            {reasonWords(a.reason, s.globals.settings)}.{" "}
+                            <button
+                              type="button"
+                              className="quiet"
+                              aria-label={`Refresh ${a.symbol}`}
+                              disabled={working || w.busy || s.loading}
+                              onClick={s.retry}
+                            >
+                              Refresh
+                            </button>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {(hiddenSmall > 0 || showSmall) && (
+                  <button
+                    type="button"
+                    className="quiet small-toggle"
+                    onClick={() => setShowSmall(!showSmall)}
+                  >
+                    {showSmall
+                      ? "Hide small balances"
+                      : `Show small balances (${hiddenSmall})`}
+                  </button>
+                )}
+                <label className="stock-search">
+                  Add another stock
+                  <input
+                    type="search"
+                    placeholder="Ticker or token address"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={search}
+                    disabled={working || w.busy}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Enter adds the first match; it never runs Preview.
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      if (matches[0]) add(matches[0].token, false);
+                    }}
+                  />
+                </label>
+                {/* Always in the page, so that a screen reader hears what the
+                    search found. */}
+                <div className="stock-matches" role="status">
+                  {matches.slice(0, 6).map((a) => (
+                    <button
+                      type="button"
+                      key={a.token}
+                      disabled={working || w.busy}
+                      onClick={() => add(a.token)}
+                    >
+                      Add {a.symbol}
+                    </button>
                   ))}
+                  {matches.length > 6 && (
+                    <p>{matches.length - 6} more: keep typing.</p>
+                  )}
+                  {!!query && !matches.length && (
+                    <p>
+                      {rows.some(
+                        (x) =>
+                          rank(x.a) === 0 || x.a.token.toLowerCase() === query,
+                      )
+                        ? "That stock is already in the list above."
+                        : "No open stock matches."}
+                    </p>
+                  )}
+                </div>
+                {/* Every stock the vault takes now, closed until pressed. A
+                    press is the same Add as in the search; a stock that has a
+                    row stays in the list, switched off. */}
+                <details className="all-stocks">
+                  <summary>All stocks you can deposit ({open.length})</summary>
+                  <p>Press a stock to add it to your deposit.</p>
+                  <p>Grey stocks are already in the form above.</p>
+                  <ul>
+                    {listed.map((a) => (
+                      <li
+                        key={a.token}
+                        className={a.symbol.length > 5 ? "wide" : undefined}
+                      >
+                        <button
+                          type="button"
+                          className="quiet"
+                          disabled={
+                            working ||
+                            w.busy ||
+                            rows.some((x) => x.a.token === a.token)
+                          }
+                          onClick={() => add(a.token)}
+                        >
+                          <bdi>{a.symbol}</bdi>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                {counted + badAmount.length + noPrice.length > 0 && (
+                  <div className="deposit-total">
+                    {counted > 0 && (
+                      <>
+                        <p>
+                          <strong>Total: {about(total)}</strong>
+                        </p>
+                        <small>
+                          An estimate from the last vault read. Preview gives
+                          the exact figure.
+                        </small>
+                      </>
+                    )}
+                    {badAmount.length > 0 && (
+                      <p>
+                        Not counted: {badAmount.join(", ")} (check the amount
+                        typed).
+                      </p>
+                    )}
+                    {noPrice.length > 0 && (
+                      <p>
+                        Not counted: {noPrice.join(", ")} (price unreadable).
+                      </p>
+                    )}
+                  </div>
+                )}
                 <button className="primary" disabled={working || w.busy}>
                   {working ? "Checking..." : "Preview deposit"}
                 </button>
@@ -497,6 +840,16 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
             </>
           )}
           <ActionStatus wallet={w} scope="Deposit" />
+          {/* Only under the status of that same deposit, never under a later
+              attempt. */}
+          {received &&
+            received.hash === w.confirmed?.hash &&
+            received.hash === w.progress.Deposit?.hash &&
+            same(received.receiver, w.account) && (
+              <p className="received" role="status">
+                You received {fmt(received.shares)} BASK.
+              </p>
+            )}
           <p className="error" role="alert">
             {error}
           </p>
@@ -551,6 +904,9 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
     setQuote(undefined);
     setWorking(false);
   }, [input, to, w.account, s.loadedAt]);
+  useLayoutEffect(() => {
+    if (w.confirmed?.functionName === "redeem") setInput("");
+  }, [w.confirmed]);
   useEffect(() => {
     let live = true;
     setBalance(undefined);

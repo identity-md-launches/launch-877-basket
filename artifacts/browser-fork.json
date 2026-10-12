@@ -8,15 +8,28 @@
     "Marked genesis pairing blocks listing",
     "25-row listing: decline, resume, receipt timeout retains hash, pending nonce blocks reload, mine and resume without duplicate calldata",
     "finalizeGenesis",
+    "Deposit form lists the test wallet's stocks without any Add press: 23 rows, not S22 (none held) nor S21 (under one cent)",
     "US market holiday: Freshness refusal (reason 14) with no set time",
+    "Deposit form keeps a balance under one cent behind Show small balances (1)",
+    "Deposit search: Add buttons only while text is typed, at most six, never for a stock on screen",
     "One updated feed reopens deposits after the holiday",
+    "Deposit status: one line while deposits are open, the full Vault deposit status box while closed",
+    "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
+    "Greyed row: a stock failing its own check (feed too old) says why; amount box and Max off, Remove and Refresh on; Refresh clears it once the feed is back",
     "Exact full stock balance and chosen amount retained while searching",
     "CapExceeded explained before approvals",
+    "Deposit row: Remove takes OAT away, the search then offers Add OAT, and that brings back an empty row",
+    "Enter in the search adds the first match and starts no preview",
+    "Running total equals the preview's Dollar value for the three-stock deposit",
     "Primary button label remains readable on hover",
     "deposit",
     "Three-stock deposit succeeds with estimated gas +30%, exact approvals, preview invalidated after success",
+    "After the deposit the wallet's rows are still there with empty boxes",
+    "\"You received 5,999.999 BASK.\" equals the shares of the Deposit event in the deposit's receipt",
+    "Disconnect: address gone, Connect wallet shown, the exact top message, still disconnected after a reload, Connect wallet brings the address back; Disconnect makes no wallet request or send",
     "Saturday deposit refused (Hours) with the Sunday 8:00 pm reopening shown",
     "redeem",
+    "Redeem: the BASK amount box is empty after a confirmed redeem",
     "claim",
     "redeem",
     "claim",
@@ -385,7 +398,7 @@
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "5969999005000000000000",
-        "1791520598"
+        "1791520652"
       ],
       "gas": "0x17d63b"
     },
@@ -422,7 +435,7 @@
           "0",
           "0"
         ],
-        "1791677445"
+        "1791677446"
       ],
       "gas": "0x43918"
     },
@@ -470,7 +483,7 @@
           "0",
           "0"
         ],
-        "1791677446"
+        "1791677448"
       ],
       "gas": "0x4d886"
     },
@@ -873,7 +886,7 @@
     "stocks25-owner-375.jpg",
     "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 3709,
+  "rpcCalls": 3747,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",

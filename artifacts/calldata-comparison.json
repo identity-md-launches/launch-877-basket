@@ -1,92 +1,262 @@
 {
   "result": "PASS",
-  "baseline": "7aea768c2197cde37353107b8d1a49533e33c942",
+  "baseline": "507f2b164160ed7b1361bac55b67bac76a0f3d38",
   "protectedFiles": [
+    "Docs.tsx",
     "Losses.tsx",
-    "poolMath.ts",
-    "deployment.ts",
-    "vault.abi.json",
-    "main.tsx",
-    "components.tsx",
     "Owner.tsx",
-    "wallet.tsx",
-    "governance.ts",
+    "Scenery.tsx",
+    "Vault.tsx",
     "chain.ts",
-    "newYork.ts"
+    "components.tsx",
+    "deployment.ts",
+    "governance.ts",
+    "model.ts",
+    "newYork.ts",
+    "poolMath.ts",
+    "vault.abi.json"
   ],
   "editedFiles": {
-    "Docs.tsx": "1 documented pieces [v10, HEAD]",
-    "Flows.tsx": "4 documented pieces [v10, HEAD]",
-    "Vault.tsx": "6 documented pieces [v10, HEAD]",
-    "model.ts": "1 documented pieces [v10, HEAD]",
-    "Scenery.tsx": "2 documented pieces [v10, HEAD]"
+    "Flows.tsx": "14 documented pieces [v11, HEAD]",
+    "wallet.tsx": "8 documented pieces [v11, HEAD]",
+    "main.tsx": "1 documented pieces [v11, HEAD]"
   },
-  "v10Pieces": {
-    "Docs.tsx": [
-      [
-        "          <p>\n            Deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US\n            market holidays, redemptions always open\n",
-        "          <p>\n            deposits open Sunday 8 pm to Friday 8 pm New York time, closed on US\n            market holidays, redemptions always open\n"
-      ]
-    ],
+  "v11Pieces": {
     "Flows.tsx": [
-      [
-        "type Props = { snapshot: Snapshot; wallet: Wallet };\n// Always shown at the top of the Deposit and Redeem forms (open or closed), so\n// nobody reads the deposit hours as redemption hours.\nfunction HoursTag() {\n  return (\n    <p className=\"hours-tag\">\n      <strong>Redemptions are open 24/7.</strong>{\" \"}\n      <span>Deposit hours apply to deposits only.</span>\n    </p>\n  );\n}\nexport function DepositPage({ snapshot: s, wallet: w }: Props) {\n",
-        "type Props = { snapshot: Snapshot; wallet: Wallet };\nexport function DepositPage({ snapshot: s, wallet: w }: Props) {\n"
-      ],
-      [
-        "        <section className=\"panel\">\n          <HoursTag />\n          <DepositState snapshot={s} />\n",
-        "        <section className=\"panel\">\n          <DepositState snapshot={s} />\n"
-      ],
-      [
-        "      >\n        Receive your share of every stock.\n      </PageTitle>\n",
-        "      >\n        Receive your share of every stock. Redemption is always open.\n      </PageTitle>\n"
-      ],
-      [
-        "        <section className=\"panel\">\n          <HoursTag />\n          <h2>Redeem shares</h2>\n",
-        "        <section className=\"panel\">\n          <h2>Redeem shares</h2>\n"
-      ]
+      {
+        "v11": {
+          "length": 142,
+          "sha256": "1f4302164b43d6e2d3a5d44ca716ca0bb44206368f5d6688cc17407d8156d627"
+        },
+        "head": {
+          "length": 116,
+          "sha256": "fcfc170dd2a876bd6482e91c32b6ebbbe686cba597cd8de265f9f66853e3459e"
+        }
+      },
+      {
+        "v11": {
+          "length": 64,
+          "sha256": "9d67aecc2670fbf79abaee5049e6a134da378d9566011014e7cd6b8f15b88bf6"
+        },
+        "head": {
+          "length": 27,
+          "sha256": "d790dc8a373bd73f725258212ea5a481086f9f66076930c98e97c4cb379ad7a7"
+        }
+      },
+      {
+        "v11": {
+          "length": 39,
+          "sha256": "9dabf79bb3d9ae67e38f466498d17da11e72d8a329d5d2b069c679b10a3c01ae"
+        },
+        "head": {
+          "length": 25,
+          "sha256": "d58f5516a6039142ccc9d1296c281c81f42a6f1373c1b070de03c1084489c702"
+        }
+      },
+      {
+        "v11": {
+          "length": 114,
+          "sha256": "0b5e1c4436d4be2b12f2822c819beef01a14fb28d84b22236f224c896aa41ddc"
+        },
+        "head": {
+          "length": 103,
+          "sha256": "efc3e7aafd6e6ffb85e05bf5c37ddf1a47820cc909c2c59e25565e2af18040c9"
+        }
+      },
+      {
+        "v11": {
+          "length": 643,
+          "sha256": "e664cb8e4178319eafa6f803085361d56a3a91510292119feb434d73beec4923"
+        },
+        "head": {
+          "length": 67,
+          "sha256": "4b2c648e8baf9ee5f7ca70fb38e56129b5dee60fb26a16f12a80eb524835b109"
+        }
+      },
+      {
+        "v11": {
+          "length": 1717,
+          "sha256": "f29f71b08907d4bbe4cc7e24aa315239c6880e07a0270a06d2aa03ccbde3ac87"
+        },
+        "head": {
+          "length": 41,
+          "sha256": "18db270b64b95a2e9107e2012179aada33588bdebdc9404daaf07a9bd583274d"
+        }
+      },
+      {
+        "v11": {
+          "length": 71,
+          "sha256": "ea19b7ed16df2410fe08a49d59f292faec45e0be1ad57ca81b3711985d9a525a"
+        },
+        "head": {
+          "length": 51,
+          "sha256": "09caa5ae0576e3121a6c9cc8a8c39c82f10507a5592846f52239905e7466e3df"
+        }
+      },
+      {
+        "v11": {
+          "length": 4818,
+          "sha256": "0b887c0b41b6ad64546b0b1c7d96e43ddafdabc15b75466512c09b81522c32a9"
+        },
+        "head": {
+          "length": 15,
+          "sha256": "eeb13b47f1fe6b6e49de274b63d69e8319e0fd523916f0b9f914576c79774f29"
+        }
+      },
+      {
+        "v11": {
+          "length": 606,
+          "sha256": "4bde9f9ad6808bc3e3c099dccccb5099be381533acadb9a2278280cba417f474"
+        },
+        "head": {
+          "length": 191,
+          "sha256": "7ae4b8c05581025b2e59522b6360bf354a14d4becd311f237632926c38a7609a"
+        }
+      },
+      {
+        "v11": {
+          "length": 2841,
+          "sha256": "11eb1b9b71056c4b84bf912b519cae8dec4942a7bacffd587b9a5dc881b91f3e"
+        },
+        "head": {
+          "length": 1976,
+          "sha256": "694768d38a05b7c3733dd618b1497afca2258926e061c3d8c13775d4d67335a4"
+        }
+      },
+      {
+        "v11": {
+          "length": 165,
+          "sha256": "8fa0ef8b0eef90a32b986e410eb159dc972a94041e2bf5b0fc8011cc8c4ef734"
+        },
+        "head": {
+          "length": 154,
+          "sha256": "e3083961bb573ad1284afab9aa9d9cb15f07f119842249918ab296ef8e130df8"
+        }
+      },
+      {
+        "v11": {
+          "length": 6821,
+          "sha256": "1ff0c591b420aca2500f4149714a9f64466b4216ae86828dd49a441a80f5334c"
+        },
+        "head": {
+          "length": 1654,
+          "sha256": "8d1f568fa04bd651881c1b634c2f7d92f4110107fa16773d7834ae976e151158"
+        }
+      },
+      {
+        "v11": {
+          "length": 533,
+          "sha256": "bb367bd634a2bbc65e784fedeaed94804e7ae4b97b6a649750940d4f25e98169"
+        },
+        "head": {
+          "length": 99,
+          "sha256": "4f2ad369c6987d10b5b9628dc7704e9d9d57949501fc77ebb011bca42c9f4d3e"
+        }
+      },
+      {
+        "v11": {
+          "length": 171,
+          "sha256": "bdbedef50e18d35930e3ea4e456e858c97fb75e885cbd593bd8d7d11acc44667"
+        },
+        "head": {
+          "length": 62,
+          "sha256": "cd02ca528c94522b89e08e5a2763bb27bc87e38ac7c37355a2fba408f7b94962"
+        }
+      }
     ],
-    "Vault.tsx": [
-      [
-        "  usd,\n  pairingMatches,\n",
-        "  usd,\n  age,\n  pairingMatches,\n"
-      ],
-      [
-        "// cents in two digits (\"$669.5\" shows as $669 and 50 cents).\nfunction ShelfPrice({ a, stale }: { a: Asset; stale: boolean }) {\n",
-        "// cents in two digits (\"$669.5\" shows as $669 and 50 cents).\n// age() as today, but on the labels under 1 minute reads \"just now\" (the long\n// words wrapped and made the row taller; the drawer keeps age()'s full words)\n// and 48 hours or more reads in days (\"4 days ago\")\nfunction shelfAge(a: Asset): string {\n  const t = age(a.updatedAt);\n  if (!t.endsWith(\" ago\") || a.updatedAt === undefined) return t;\n  const s = Math.floor(Date.now() / 1000 - Number(a.updatedAt));\n  return s < 60 ? \"just now\" : s >= 2 * 86400 ? `${Math.floor(s / 86400)} days ago` : t;\n}\nfunction ShelfPrice({ a, stale }: { a: Asset; stale: boolean }) {\n"
-      ],
-      [
-        "}\n// No price time on the labels or in the drawer: feeds post only on a 0.5% move\n// or every 24 hours, so an age like \"17h 55m ago\" looked stale when it was not.\n// Only a price the vault refuses as too old (reason 9) gets the \"old price\" tag.\nfunction OldPriceTag({ stale }: { stale: boolean }) {\n  return stale ? (\n    <p className=\"sa-age is-stale\">\n      <span className=\"sa-old\">old price</span>\n    </p>\n  ) : null;\n}\n",
-        "}\nfunction PriceAge({ a, stale }: { a: Asset; stale: boolean }) {\n  const t = shelfAge(a);\n  return (\n    <p className={stale ? \"sa-age is-stale\" : \"sa-age\"}>\n      {stale && <span className=\"sa-old\">old price</span>}\n      {stale && \" \"}\n      {t.endsWith(\" ago\") || t === \"just now\" ? (\n        <>\n          {/* narrower labels show a small clock (or nothing) instead of the words; still read out */}\n          <span className=\"sa-upd\">price updated </span>\n          <span className=\"sa-when\">\n            <span className=\"sa-clock\" aria-hidden=\"true\" />\n            {t.charAt(0).toLowerCase() + t.slice(1)}\n          </span>\n        </>\n      ) : (\n        `price time: ${t}`\n      )}\n    </p>\n  );\n}\n"
-      ],
-      [
-        "            <ShelfPrice a={a} stale={stale} />\n            <OldPriceTag stale={stale} />\n          </div>\n",
-        "            <ShelfPrice a={a} stale={stale} />\n            <PriceAge a={a} stale={stale} />\n          </div>\n"
-      ],
-      [
-        "        <div>\n          <dt>Feed price</dt>\n          <dd>\n",
-        "        <div>\n          <dt>Feed price / age</dt>\n          <dd>\n"
-      ],
-      [
-        "              ? \"unreadable / invalid feed\"\n              : \"$\" + fmt(a.answer, a.feedDecimals)}\n          </dd>\n",
-        "              ? \"unreadable / invalid feed\"\n              : \"$\" + fmt(a.answer, a.feedDecimals)}{\" \"}\n            <small>{age(a.updatedAt)}</small>\n          </dd>\n"
-      ]
+    "wallet.tsx": [
+      {
+        "v11": {
+          "length": 328,
+          "sha256": "d7404db16974469531e84d4d8043328aee90f3847d314142565e3fd4fbb7aa74"
+        },
+        "head": {
+          "length": 64,
+          "sha256": "e0248d4ef6419338ea58f158f3aeebd86f5ee0a7268f2e7d6b9b964aea741b6a"
+        }
+      },
+      {
+        "v11": {
+          "length": 250,
+          "sha256": "41f1cd3326a31bf77dc39dd66e14864b67f3fa5e9a11c18474df5ec51f64b6bf"
+        },
+        "head": {
+          "length": 91,
+          "sha256": "6a86c88fe773aef1bdba0d0fd2c6aae048eeec6f2971854303bbf21182ce1331"
+        }
+      },
+      {
+        "v11": {
+          "length": 562,
+          "sha256": "1a0f99747825670c3a5e35b889f342b28ed7d938887414786d2457c18952dc5c"
+        },
+        "head": {
+          "length": 223,
+          "sha256": "4ed490db072ffa03a6917b49dccf9fe0055799e9068d09421a4c245282a60cba"
+        }
+      },
+      {
+        "v11": {
+          "length": 106,
+          "sha256": "a80e15472770dbcc0f0776612b639d7a35e7696eb0be9d14652bf26a7dda3379"
+        },
+        "head": {
+          "length": 74,
+          "sha256": "187ea6db9aee673ef99ea73ec95d2447f2fb0f80f1f513f0c5307948a0fb0765"
+        }
+      },
+      {
+        "v11": {
+          "length": 90,
+          "sha256": "1b5b17865697dd4f784253eaec3d69560286f3d71f1ef8b93eb695219b94b495"
+        },
+        "head": {
+          "length": 60,
+          "sha256": "f4edd431025f0a30839ba70d772760d1c0a4956bcee83db7280992a457c63683"
+        }
+      },
+      {
+        "v11": {
+          "length": 228,
+          "sha256": "dce0f473047e8c27e5c04099197ddf79870b2f920e983b101f3a42f413beefe3"
+        },
+        "head": {
+          "length": 34,
+          "sha256": "d23c0139847b8f73aa01da8df0713df13389a3c10f9756e8bd14ba1ef2c8c115"
+        }
+      },
+      {
+        "v11": {
+          "length": 575,
+          "sha256": "9ab7b3e16d3b38f95f875652f28fdbece32dd2431aa120958aa3899c9a7d63bc"
+        },
+        "head": {
+          "length": 37,
+          "sha256": "0bcd38be29fd84536e4a17ce0d71f5519b2a5e3b68136c263e50584f28d63364"
+        }
+      },
+      {
+        "v11": {
+          "length": 46,
+          "sha256": "331945edceec4da525d4e1ab2963ecec5841fec65c055f30e7b19f585160d7d5"
+        },
+        "head": {
+          "length": 30,
+          "sha256": "976bfcddb3aa0016471fff8fe2a4d6b0042e72a2ddd0d2ae9560b76e0a960f95"
+        }
+      }
     ],
-    "model.ts": [
-      [
-        "}\nexport const same = (a?: string, b?: string) =>\n",
-        "}\nexport function age(n: bigint | undefined, now = Date.now() / 1000) {\n  if (n === undefined || n === 0n) return \"unreadable\";\n  const s = Math.floor(now - Number(n));\n  return s < 0\n    ? \"Future timestamp\"\n    : s < 60\n      ? \"Less than 1 min ago\"\n      : s < 3600\n        ? `${Math.floor(s / 60)} min ago`\n        : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;\n}\nexport const same = (a?: string, b?: string) =>\n"
-      ]
-    ],
-    "Scenery.tsx": [
-      [
-        "import { useLayoutEffect, useRef } from \"react\";\n\nexport function Marquee() {\n  const trackRef = useRef<HTMLDivElement>(null);\n\n  useLayoutEffect(() => {\n    const halves = Array.from(trackRef.current!.children) as HTMLElement[];\n    const reducedMotion = matchMedia(\"(prefers-reduced-motion: reduce)\");\n    const phone = matchMedia(\"(max-width: 660px)\");\n    let animations: Animation[] = [];\n    let width = 0;\n    let speed = 0;\n\n    const update = () => {\n      const nextWidth = halves[0].getBoundingClientRect().width;\n      const nextSpeed = phone.matches ? 64 : 16;\n      if (reducedMotion.matches) {\n        animations.forEach((animation) => animation.cancel());\n        animations = [];\n        return;\n      }\n      if (\n        !nextWidth ||\n        (animations.length && width === nextWidth && speed === nextSpeed)\n      ) return;\n\n      // Keep the visible phase when resizing or when the web font arrives.\n      const distance = (Number(animations[0]?.currentTime ?? 0) * speed) / 1000;\n      animations.forEach((animation) => animation.cancel());\n      width = nextWidth;\n      speed = nextSpeed;\n      const halfDuration = (width / speed) * 1000;\n      const elapsed = ((distance % width) / speed) * 1000;\n      const startTime = Number(document.timeline.currentTime) - elapsed;\n\n      animations = halves.map((half, index) => {\n        // The two halves share a clock. Each wraps only outside the window;\n        // Web Animations don't dispatch CSS animationiteration events to React.\n        const animation = half.animate(\n          [\n            { transform: \"translateX(100%)\" },\n            { transform: \"translateX(-100%)\" },\n          ],\n          {\n            duration: halfDuration * 2,\n            delay: index === 0 ? -halfDuration : 0,\n            iterations: Infinity,\n            easing: \"linear\",\n          },\n        );\n        animation.startTime = startTime;\n        return animation;\n      });\n    };\n\n    const observer = new ResizeObserver(update);\n    observer.observe(halves[0]);\n    reducedMotion.addEventListener(\"change\", update);\n    phone.addEventListener(\"change\", update);\n    update();\n    return () => {\n      observer.disconnect();\n      reducedMotion.removeEventListener(\"change\", update);\n      phone.removeEventListener(\"change\", update);\n      animations.forEach((animation) => animation.cancel());\n    };\n  }, []);\n\n  return (\n",
-        "export function Marquee() {\n  return (\n"
-      ],
-      [
-        "      <div aria-hidden=\"true\" className=\"marquee-window\">\n        <div className=\"marquee-track\" ref={trackRef}>\n          {[0, 1].map((half) => (\n",
-        "      <div aria-hidden=\"true\" className=\"marquee-window\">\n        <div className=\"marquee-track\">\n          {[0, 1].map((half) => (\n"
-      ]
+    "main.tsx": [
+      {
+        "v11": {
+          "length": 295,
+          "sha256": "ad9880e79750145d3309e20b0dff9b5c3f6017a151190e6d92ceb1f1980d389e"
+        },
+        "head": {
+          "length": 70,
+          "sha256": "7e5d7cb933c1321d0a7f786dca8d2aaef0177a03d3cb482a13017eb1b4636e84"
+        }
+      }
     ]
   },
   "counts": {
@@ -96,19 +266,19 @@
       "attributes": 1
     },
     "Flows.tsx": {
-      "guarded": 39,
-      "calls": 217,
-      "attributes": 63
+      "guarded": 41,
+      "calls": 308,
+      "attributes": 95
     },
     "Losses.tsx": {
       "guarded": 5,
       "calls": 30,
-      "attributes": 10
+      "attributes": 16
     },
     "Owner.tsx": {
       "guarded": 45,
       "calls": 307,
-      "attributes": 116
+      "attributes": 131
     },
     "Scenery.tsx": {
       "guarded": 0,
@@ -118,17 +288,17 @@
     "Vault.tsx": {
       "guarded": 0,
       "calls": 167,
-      "attributes": 14
+      "attributes": 19
     },
     "chain.ts": {
-      "guarded": 10,
+      "guarded": 13,
       "calls": 66,
       "attributes": 0
     },
     "components.tsx": {
       "guarded": 1,
       "calls": 22,
-      "attributes": 13
+      "attributes": 16
     },
     "deployment.ts": {
       "guarded": 0,
@@ -136,17 +306,17 @@
       "attributes": 0
     },
     "governance.ts": {
-      "guarded": 50,
+      "guarded": 51,
       "calls": 125,
       "attributes": 0
     },
     "main.tsx": {
       "guarded": 1,
       "calls": 57,
-      "attributes": 11
+      "attributes": 24
     },
     "model.ts": {
-      "guarded": 21,
+      "guarded": 22,
       "calls": 113,
       "attributes": 0
     },
@@ -161,20 +331,239 @@
       "attributes": 0
     },
     "wallet.tsx": {
-      "guarded": 29,
-      "calls": 129,
+      "guarded": 31,
+      "calls": 139,
       "attributes": 0
     }
   },
-  "documentedGuardedCallChanges": {},
+  "documentedGuardedCallChanges": {
+    "Flows.tsx": {
+      "why": "\"You received ... BASK\": one read of the receipt of the visitor's own confirmed deposit (the hash send() reported), to take the minted shares from its Deposit event; it runs after the deposit is confirmed and feeds only that line. The running total parses each typed amount with the page's own amount() to show an estimate in dollars; it runs while the form is drawn, outside every handler, and its result goes into no preview, approval or deposit (those still parse inputs[a.token] themselves, as at HEAD).",
+      "removed": [],
+      "added": [
+        [
+          "client .getTransactionReceipt({ hash: done.hash })",
+          "DepositPage"
+        ],
+        [
+          "amount(text, false, a.tokenDecimals)",
+          "DepositPage"
+        ]
+      ]
+    },
+    "wallet.tsx": {
+      "why": "Disconnect forgets the wallet only on this page. It adds no provider request, avoiding a late permission revocation undoing a later Connect in this page or another tab.",
+      "removed": [],
+      "added": []
+    }
+  },
+  "documentedAttributeChanges": {
+    "Flows.tsx": {
+      "removed": [
+        "<input> value={search}",
+        "<input> onChange={(e) => setSearch(e.target.value)}",
+        "<button> disabled={working || w.busy}",
+        "<button> onClick={() => setInputs((old) => ({ ...old, [a.token]: \"\" }))}",
+        "<input> disabled={working || w.busy}",
+        "<button> disabled={working || w.busy || balances[a.token] === undefined}"
+      ],
+      "added": [
+        "<button> onClick={w.connect}",
+        "<button> disabled={w.connecting}",
+        "<input> disabled={working || w.busy || blocked}",
+        "<button> disabled={working || w.busy || blocked || balances[a.token] === undefined}",
+        "<button> onClick={() => remove(a.token)}",
+        "<button> disabled={working || w.busy || s.loading}",
+        "<button> onClick={s.retry}",
+        "<button> onClick={() => setShowSmall(!showSmall)}",
+        "<input> value={search}",
+        "<input> disabled={working || w.busy}",
+        "<input> onChange={(e) => setSearch(e.target.value)}",
+        "<input> onKeyDown={(e) => { if (e.key !== \"Enter\") return; e.preventDefault(); if (matches[0]) add(matches[0].token, false); }}",
+        "<div> role=\"status\"",
+        "<button> disabled={working || w.busy}",
+        "<button> onClick={() => add(a.token)}",
+        "<button> disabled={working || w.busy || rows.some((x) => x.a.token === a.token)}",
+        "<button> onClick={() => add(a.token)}",
+        "<button> disabled={working || w.busy}",
+        "<p> role=\"status\""
+      ],
+      "why": "each has its why in scripts/check-calldata.mjs"
+    },
+    "main.tsx": {
+      "removed": [],
+      "added": [
+        "<button> onClick={wallet.disconnect}",
+        "<button> disabled={wallet.busy}"
+      ],
+      "why": "each has its why in scripts/check-calldata.mjs"
+    }
+  },
+  "documentedCallChanges": {
+    "Flows.tsx": {
+      "why": "The balance read keeps a copy of what it read for the rows (setHeld(b), one added line; the effect and its read are otherwise HEAD's). Removed with the old form: the search handler in its old place, the grid of Add buttons with its filter, and the amount rows with their filter and balance text; the new rows, search and Add are added calls. New uses: the receipt read with its whole answer handling (it keeps the vault's Deposit event of that receipt and remembers its receiver and shares for the \"You received\" line, nothing else); Add and Remove change the typed amounts only for the stock pressed and Add empties the search text; the estimate's amount(); the search box sets the search text; a confirmed redeem empties the Redeem amount box.",
+      "piecesPutBackInsideCalls": [
+        {
+          "v11": {
+            "length": 46,
+            "sha256": "21457536ab4542298396b95ed179f7a05a204ac19f48695c47ee7b030dfbb941"
+          },
+          "head": {
+            "length": 34,
+            "sha256": "7d6eff9a4662a128fd9dca0e6275d4445b91ee548268be98ce8fd2cddd061c61"
+          }
+        }
+      ],
+      "removed": [
+        "setSearch(e.target.value)",
+        {
+          "start": "open .filter((a) => inputs[a.token] === undefined && (a.symbol .toLowerCase() .i",
+          "length": 339,
+          "sha256": "7211c3cf7ee3ae7e577ace2f3a98e9c32b02346afaeddc9571fbe63fcc9b443a"
+        },
+        {
+          "start": "open .filter((a) => inputs[a.token] === undefined && (a.symbol .toLowerCase() .i",
+          "length": 169,
+          "sha256": "dbc43f4343a7164584a3ffa008e9c6695da915db09bf390a8193fe96b0c7d045"
+        },
+        "a.symbol .toLowerCase() .includes(search.toLowerCase())",
+        "a.symbol .toLowerCase()",
+        "search.toLowerCase()",
+        "a.token .toLowerCase() .includes(search.toLowerCase())",
+        "a.token .toLowerCase()",
+        "search.toLowerCase()",
+        "setInputs((old) => ({ ...old, [a.token]: \"\" }))",
+        {
+          "start": "open .filter((a) => open.length <= 6 || inputs[a.token] !== undefined) .map((a) ",
+          "length": 1029,
+          "sha256": "dcd336540839d87d9cfdaf2feb226630eb91021bc246ac5908fe1edfc5968d19"
+        },
+        "open .filter((a) => open.length <= 6 || inputs[a.token] !== undefined)",
+        "fmt(balances[a.token], a.tokenDecimals)"
+      ],
+      "newUsesOfWatchedNames": [
+        [
+          {
+            "start": "client .getTransactionReceipt({ hash: done.hash }) .then((receipt) => { const ev",
+            "length": 457,
+            "sha256": "4791d5eee36a9411e31e2e11f9d7967251c690e2993e2db43b4d4aa514c38450"
+          },
+          "DepositPage"
+        ],
+        [
+          "setInputs((old) => ({ ...old, [t]: \"\" }))",
+          "DepositPage > add"
+        ],
+        [
+          "setSearch(\"\")",
+          "DepositPage > add"
+        ],
+        [
+          "setInputs((old) => { const next = { ...old }; delete next[t]; return next; })",
+          "DepositPage > remove"
+        ],
+        [
+          "amount(text, false, a.tokenDecimals)",
+          "DepositPage"
+        ],
+        [
+          "setSearch(e.target.value)",
+          "DepositPage, in onChange"
+        ],
+        [
+          "setInput(\"\")",
+          "RedeemPage"
+        ]
+      ]
+    },
+    "wallet.tsx": {
+      "why": "The handler for the wallet's accounts (the first read and accountsChanged) takes no account while the disconnected flag is set; its startup answer is ignored after a newer event, user action or cleanup. The four exact pieces restore HEAD's effect and each must occur. New uses, all in disconnect(): it looks at the send lock (and returns while a send is running), forgets the account and the last transaction link and sets the top message.",
+      "piecesPutBackInsideCalls": [
+        {
+          "v11": {
+            "length": 110,
+            "sha256": "c80b704a52c7c20b61301056c1b0a2c50b3367562160e5557a0f4cc773e21d1f"
+          },
+          "head": {
+            "length": 52,
+            "sha256": "fde038091c7b9c82051dfa4274f93b0f5226622ec3746ceb7e7fe5aca8f8b1d3"
+          }
+        },
+        {
+          "v11": {
+            "length": 77,
+            "sha256": "55efe157750c18263c054ca6dd693b30bdff1fbca96a5c8a125a53b5d87c5c7e"
+          },
+          "head": {
+            "length": 37,
+            "sha256": "b4a740e6c0a0f1a23362e41a169e9dc222e63fabbf1b354300496af8e0eeb786"
+          }
+        },
+        {
+          "v11": {
+            "length": 108,
+            "sha256": "c264035c91ce3b257b0c9b8a446c298e71571c3f573836366528759db79729cf"
+          },
+          "head": {
+            "length": 53,
+            "sha256": "8995152d2e9f7f055d5f6850b7aaaa87d106353db69b547d842f9da2c6e9b023"
+          }
+        },
+        {
+          "v11": {
+            "length": 89,
+            "sha256": "21b59dc78accc5902a3f2e57aa6dceeb09d1bb0bfe37a8c8774e0123f88015fc"
+          },
+          "head": {
+            "length": 63,
+            "sha256": "c3cc190aca85330e9e3a7e7ba0cf2a3fd03af6a9a0a8a9e69f90fd451b8adb08"
+          }
+        }
+      ],
+      "removed": [],
+      "newUsesOfWatchedNames": [
+        [
+          "sending.current",
+          "useWallet > disconnect"
+        ],
+        [
+          "setAccount(undefined)",
+          "useWallet > disconnect"
+        ],
+        [
+          "setHash(undefined)",
+          "useWallet > disconnect"
+        ],
+        [
+          {
+            "start": "setMessage(\"Wallet disconnected from this page. To use another wallet, switch th",
+            "length": 138,
+            "sha256": "51e2fcfb62ed5b323953fc574dd40449b06311a08fda9ca79cbb06ca3c704506"
+          },
+          "useWallet > disconnect"
+        ]
+      ]
+    },
+    "main.tsx": {
+      "why": "No call added or removed: the Disconnect button is markup with two attributes.",
+      "piecesPutBackInsideCalls": [],
+      "removed": [],
+      "newUsesOfWatchedNames": []
+    }
+  },
   "vaultStockShelves": {
     "attributes": [
       "onClick={s.retry}",
+      "snapshot={s}",
       "value={VAULT}",
+      "snapshot={s}",
       "onClick={onToggle}",
+      "onKeyDown={(e) => e.key === \"Escape\" && onClose()}",
       "onClick={onClose}",
       "value={a.token}",
       "value={a.feed}",
+      "onClose={() => onClose(o.a.token)}",
+      "onToggle={() => onToggle(a.token)}",
       "role=\"list\"",
       "role=\"group\"",
       "onClick={() => show(f, search)}",
@@ -191,7 +580,152 @@
       "group": "const group = { nav, settings: s.globals.settings, openToken, onToggle: toggle, onClose: close };"
     }
   },
-  "walletSendDocumentedPieces": [],
+  "pinnedFunctions": {
+    "wallet.tsx send()": {
+      "equalToHead": true,
+      "length": 4861,
+      "sha256": "8b98cdf616780c85d328cf0f6fd1742218ed1e04aaa72d7d930cad0d8ed8f965"
+    },
+    "Flows.tsx approveAll()": {
+      "equalToHead": true,
+      "length": 1060,
+      "sha256": "ffcf652ea60d71f8a4c4f3b8197f12d62e73bc97ebf245c1b846b5e0ab43f02a"
+    },
+    "wallet.tsx disconnect()": {
+      "pinnedText": true,
+      "length": 354,
+      "sha256": "518a4516acc1ee54bba49e774757cc3cca80b0010182c26bfa92198ad26f3ddc"
+    },
+    "wallet.tsx connect()": {
+      "pinnedText": true,
+      "length": 633,
+      "sha256": "a4c91fb572663b53621460583f66b4cde233ef84926f5ae159cf5899f22cd900"
+    }
+  },
+  "walletHookReturn": {
+    "equalToHeadPlus": "disconnect"
+  },
+  "walletAndRpcMethods": {
+    "named": {
+      "eth_accounts": 3,
+      "eth_chainId": 5,
+      "eth_requestAccounts": 1,
+      "wallet_switchEthereumChain": 1,
+      "wallet_addEthereumChain": 1,
+      "eth_sendTransaction": 1
+    },
+    "addedInV11": []
+  },
+  "browserStorageAddedInV11": {
+    "wallet.tsx": [
+      [
+        "localStorage.getItem(disconnectedKey)",
+        "savedDisconnected"
+      ],
+      [
+        "localStorage.removeItem(disconnectedKey)",
+        "useWallet > connect"
+      ],
+      [
+        "localStorage.setItem(disconnectedKey, \"1\")",
+        "useWallet > disconnect"
+      ]
+    ]
+  },
+  "namesAddedAtTheTopOfAFile": {
+    "Flows.tsx": {
+      "decodeEventLog": "import decodeEventLog from \"viem\"",
+      "Hex": "import type Hex from \"viem\"",
+      "client": "import client from \"./chain\"",
+      "vaultAbi": "import vaultAbi from \"./chain\"",
+      "reasonWords": "import reasonWords from \"./chain\"",
+      "Asset": "import type Asset from \"./model\"",
+      "hoursLine": "import hoursLine from \"./Vault\""
+    },
+    "wallet.tsx": {
+      "disconnectedKey": "disconnectedKey = \"basket-disconnected-4663\"",
+      "savedDisconnected": "function"
+    },
+    "main.tsx": {}
+  },
+  "namesAddedInsideComponents": {
+    "Flows.tsx": {
+      "DepositPage": [
+        "received",
+        "setReceived",
+        "held",
+        "setHeld",
+        "removed",
+        "setRemoved",
+        "showSmall",
+        "setShowSmall",
+        "focusRow",
+        "r",
+        "reason",
+        "worth",
+        "about",
+        "stocks",
+        "kept",
+        "onScreen",
+        "hiddenSmall",
+        "rows",
+        "ready",
+        "unread",
+        "query",
+        "rank",
+        "matches",
+        "listed",
+        "add",
+        "remove",
+        "total",
+        "counted",
+        "badAmount",
+        "noPrice"
+      ]
+    },
+    "wallet.tsx": {
+      "useWallet": [
+        "disconnected",
+        "accountVersion",
+        "disconnect"
+      ]
+    }
+  },
+  "transactionCode": {
+    "Flows.tsx": {
+      "pieces": 9,
+      "namesDeclaredAroundThem": [
+        "#9 Claims getSpec: a is declared around it by a"
+      ]
+    },
+    "wallet.tsx": {
+      "pieces": 1,
+      "namesDeclaredAroundThem": []
+    },
+    "main.tsx": {
+      "pieces": 0,
+      "namesDeclaredAroundThem": []
+    }
+  },
+  "reviewedAddedCalls": {
+    "Flows.tsx": {
+      "sha256": "2a444f9a1180a8f5e693d9ae7db5e8b4efd2899e4e6aab2724bfee440d741d8c",
+      "callees": "useState useState useState useState useRef useLayoutEffect setRemoved useLayoutEffect setHeld setRemoved useLayoutEffect getElementById focus closest focus useEffect catch then getTransactionReceipt find map filter same decodeEventLog setReceived setHeld Number BigInt usd map worth kept filter kept onScreen sort filter onScreen filter onScreen every some toLowerCase trim toLowerCase startsWith includes includes toLowerCase sort map filter onScreen rank rank rank sort toLowerCase toLowerCase setRemoved setInputs setSearch closest getElementById contains focus focus querySelector setRemoved setInputs trim worth amount push push hoursLine slice slice some map fmt about remove reasonWords setShowSmall setSearch preventDefault add map slice add some rank toLowerCase map some add about join join same fmt useLayoutEffect setInput"
+    },
+    "wallet.tsx": {
+      "sha256": "76209004bfb699f033e9ba9e7e42a5b08029064f660c535033933e46caf4cdb8",
+      "callees": "getItem useRef savedDisconnected useRef accounts removeItem setItem setAccount setHash setMessage"
+    },
+    "main.tsx": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "callees": ""
+    }
+  },
+  "transactionStateWrites": {
+    "Flows.tsx": 0,
+    "wallet.tsx": 0,
+    "main.tsx": 0
+  },
   "differentialEncoding": {
     "cases": 2213,
     "sameCalldata": 496,
@@ -318,7 +852,65 @@
     },
     "components": [
       "wallet.send(await getSpec(), scope, scope)"
-    ]
+    ],
+    "addedInV11": []
+  },
+  "pageLoads": {
+    "names": [
+      "Image",
+      "Audio",
+      "Worker",
+      "SharedWorker",
+      "serviceWorker",
+      "RTCPeerConnection",
+      "location",
+      "history",
+      "navigator",
+      "open",
+      "createElement",
+      "createElementNS",
+      "innerHTML",
+      "outerHTML",
+      "insertAdjacentHTML",
+      "setAttribute",
+      "setAttributeNS",
+      "write",
+      "writeln",
+      "src",
+      "srcset",
+      "srcdoc",
+      "href",
+      "action",
+      "formAction",
+      "style",
+      "cssText"
+    ],
+    "jsxAttributes": [
+      "href",
+      "xlinkhref",
+      "xlink:href",
+      "src",
+      "srcset",
+      "srcdoc",
+      "action",
+      "formaction",
+      "data",
+      "poster",
+      "ping",
+      "style",
+      "dangerouslysetinnerhtml",
+      "httpequiv"
+    ],
+    "usesPerFile": {
+      "Docs.tsx": 2,
+      "Flows.tsx": 3,
+      "Owner.tsx": 28,
+      "Scenery.tsx": 1,
+      "Vault.tsx": 16,
+      "components.tsx": 5,
+      "main.tsx": 14
+    },
+    "equalToHead": true
   },
   "pinnedV9Declarations": {
     "web/src/governance.ts": {
@@ -365,16 +957,21 @@
     }
   },
   "checks": [
-    "v10 scope: Losses, poolMath, deployment, the ABI, main, components, Owner, wallet, governance, chain and newYork byte-identical to HEAD; Docs.tsx, Flows.tsx, Vault.tsx and model.ts byte-identical to HEAD once their documented v10 pieces are put back (Docs: capital D; Flows: the HoursTag \"Redemptions are open 24/7. Deposit hours apply to deposits only.\" at the top of the Deposit and Redeem forms and \"Redemption is always open.\" out of the Redeem title; Vault: no price time on the labels or in the drawer, the reason-9 \"old price\" tag kept; model: age() removed); Scenery.tsx byte-identical to HEAD once its two slogan strip pieces are put back (the react import with the Marquee hook that runs each half as its own Web Animation, and the track ref); no source file added or removed",
-    "Every vault/token/feed/read call, transaction argument parser, encoding, simulation and send (guarded names) in every web/src source equals the HEAD AST in order (v10 changes none)",
-    "Action/send/check JSX attributes equal HEAD in every file, in order (v10 changes none); Vault.tsx has no guarded call at all, its attributes equal the pinned list (Retry vault button and address links plus the Stock shelves controls, none with a guarded call) and its StockShelves handlers equal their pinned text",
-    "Wallet sends and raw requests: in every web/src file the uses of a send/request name or of the provider (ethereum) with their calls, every string naming a sending or signing method, computed access to the global object and eval/Function/Reflect equal HEAD in order, with no exception; Vault, Scenery, main and Docs have no send or request (main only reads window.ethereum), components keeps the single wallet.send of HEAD",
+    "v11 scope: Docs, Losses, Owner, Scenery, Vault, chain, components, deployment, governance, model, newYork, poolMath and the ABI byte-identical to HEAD; Flows.tsx, wallet.tsx and main.tsx byte-identical to HEAD once their documented v11 pieces are put back, each exactly once (Flows: the rebuilt Deposit form, the \"You received ... BASK\" line, the Redeem amount box emptied after a confirmed redeem; wallet: the remembered disconnected flag and disconnect(); main: the Disconnect button); the pieces are recorded here by length and SHA-256; no source file added or removed",
+    "Every vault/token/feed/read call, transaction argument parser, encoding, simulation and send, and every method called on the public client (the guarded calls), equals the HEAD AST in order in every web/src source, apart from two documented additions in Flows.tsx: the one new chain read, client.getTransactionReceipt of the visitor's own confirmed deposit, and the display-only amount() of the estimated total, both in DepositPage outside every handler; wallet.tsx adds no guarded call or provider request",
+    "Action, send and check JSX attributes (every event handler, the wallet and snapshot handed to a component, and the listed names) equal HEAD in every file, in order, apart from the documented ones of Flows.tsx and main.tsx, each listed with its element and a why; no onSubmit, getSpec, build or claim attribute is added, removed or changed in any file (their texts equal HEAD in order), and no added or removed attribute contains a guarded call; Vault.tsx has no guarded call at all, its attributes equal the pinned list and its StockShelves handlers equal their pinned text",
+    "Every call expression of HEAD in Flows.tsx, wallet.tsx and main.tsx is still there, in order, apart from the documented removed ones (the old grid of Add buttons, the old search filter and the old amount rows in Flows.tsx; a call that only gained a documented piece inside it counts as kept); the complete ordered added calls, including their callbacks and places, match independently reviewed SHA-256 pins and ordered callee lists that the piece-regeneration tool never refreshes",
+    "Direct and aliased assignments, deletion, updates and mutating methods on inputs, open, quote and its arrays, balances, allowances and s.assets equal HEAD in order; shallow copies retain tracking of nested references",
+    "Watched names (the names that build, parse, read or send, and the state setters and refs each file had at HEAD): every use, a call or the bare name handed on or renamed, equals HEAD in order and place, apart from the documented new uses: the receipt read with its whole answer handling, the writes of Add and Remove to the typed amounts and to the search text, the amount() of the estimated total, the search box, the emptied Redeem amount box, and in disconnect() the look at the send lock and the forgetting of the account, the transaction link and the top message",
+    "Wallet sends and raw requests: in every web/src file the uses of a send/request name or of the provider (ethereum) with their calls, every string naming a sending or signing method, computed access to the global object with any key, eval/Function/Reflect and the listed names that reach the network (fetch, XMLHttpRequest, WebSocket, EventSource, sendBeacon, importScripts, dynamic import; as a name or as a plain string) equal HEAD in order and place after restoring the exact guarded startup eth_accounts reply once; the request expression and every method still equal HEAD directly; Vault, Scenery, main and Docs have no send or request (main only reads window.ethereum), components keeps the single wallet.send of HEAD",
+    "What a page can load or open without those names equals HEAD in every web/src file, in order and place, with no exception: the listed names (a picture, sound or worker made in script, the address bar, the history, the navigator, a new window, an element or HTML built in script, a src, href, action or style set in script; as a name, a property or a plain string), the JSX attributes that carry an address, a style or HTML, and attributes spread onto an element. A list of known ways, not a proof that no other exists",
+    "The wallet and RPC methods named in web/src equal HEAD with no additions; browser storage is used as at HEAD plus the three documented uses of the disconnected flag (key \"basket-disconnected-4663\")",
+    "wallet.tsx send() (the only function that asks the wallet for a transaction) equals HEAD: from, to, data, gas, nonce, chain and account rechecks, simulation and the eth_sendTransaction request unchanged; disconnect() equals its pinned text; the hook returns HEAD's list plus disconnect, so the pages call the same send",
+    "Flows.tsx approveAll() equals HEAD, and so does every onSubmit and getSpec (the two previews, Deposit, Redeem and Claim); in the three v11 files every name HEAD declares at the top of the file (imports included) and at the top of each component or hook is still declared once by the same text, the names added at the top of a file are the documented ones, and a new name inside a component hides none of them",
     "Argument sources: governance.ts proposalAction (Guardian target newGuardian(v.next), FeeRecipient target feeRecipient(v.recipient)), proposalSpec, settingValues and poolValues equal HEAD; newOwner, newGuardian, feeRecipient, minLiquidityOf and the spring-forward rule equal the pinned v9 text (at HEAD and now); Owner.tsx checkRows equals HEAD and the Finalize helpers equal the pinned v9 text; the names these call are bound only by their imports; the encoders use the same vault address",
-    "wallet.tsx send() (the only wallet prompt) equals HEAD: from, to, data, gas, nonce, chain and account rechecks, simulation and the eth_sendTransaction request unchanged",
-    "Every call expression in components.tsx, Docs.tsx and Flows.tsx equals HEAD (the 24/7 tag is markup only)",
     "Differential encoding of HEAD and current governance/model/chain: identical calldata for every input the page accepts (proposals of every kind, transfer ownership, genesis listing); no new refusal, nothing HEAD refused is accepted, and every refusal has HEAD's words (the v9 refusals, uint128 minLiquidity, vault as guardian or new owner, Sunday 2:00-2:59 am start under Dst 0, are still made by both)",
     "Under six fixed clocks: deadline() and the full depositArgs and redeemArgs tuples (deadline included) equal HEAD, and so does the encoded deposit and redeem calldata; redeem built as Flows does (amount, recipient, redeemArgs), approve (amount with 0/6/8/18 decimals), claim (recipient), lowerNAVCap (amount, zero allowed), close and removeRetired (address), and the uint and address parsers give the same value or are refused by both, with no new refusal",
     "The printed text (no comments) of same, deadline, depositArgs, redeemArgs, amount, address, recipient, uint and parseLaunch in model.ts and of vault, token and encode in chain.ts equals HEAD",
-    "Only the v10 files change in web/src (check-bundle.mjs)"
+    "Only the v11 files change in web/src (check-bundle.mjs)"
   ]
 }

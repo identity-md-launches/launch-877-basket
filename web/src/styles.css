@@ -269,6 +269,19 @@ header {
 .connected-address {
   font-family: monospace;
 }
+/* As tall as the address line, so the header keeps its height. */
+.disconnect {
+  position: relative;
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+/* A taller touch area in the free space above and below it. */
+.disconnect:after {
+  content: "";
+  position: absolute;
+  inset: -12px 0;
+}
 nav {
   max-width: 900px;
   margin: auto;
@@ -1130,24 +1143,206 @@ summary {
 .owner-section {
   scroll-margin-top: 16px;
 }
-.stock-search {
-  margin-block: 16px;
+/* Deposit form: one column; one stock per row, split by space and a thin line
+   instead of boxes. */
+.flow-layout.one-column {
+  grid-template-columns: minmax(0, 1fr);
 }
-.add-stocks {
-  max-height: 260px;
-  overflow-y: auto;
-  margin-bottom: 18px;
+.deposit-open {
+  padding-left: 12px;
+  border-left: 4px solid var(--royal);
 }
-.add-stocks button {
-  margin: 4px;
+.wallet-connect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-bottom: 20px;
 }
-.amount-row {
+.wallet-connect p {
+  margin: 0;
+}
+.wallet-line {
+  font-size: 15px;
+}
+.deposit-rows {
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
-  margin-bottom: 14px;
 }
-.amount-row label {
-  margin-bottom: 6px;
+.deposit-rows:empty {
+  display: none;
+}
+.deposit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) auto auto;
+  align-items: center;
+  gap: 10px 12px;
+  padding-block: 18px;
+  border-top: 1px solid var(--line);
+}
+.deposit-row label {
+  margin: 0;
+  font:
+    24px/1.15 Flyer,
+    Impact,
+    sans-serif;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.deposit-row small {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.deposit-row small span {
+  white-space: nowrap;
+}
+/* Bold as the other boxes; a figure too long for the box ends in "…". */
+.deposit-row input:not([type="checkbox"]) {
+  margin-top: 0;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+/* Quiet controls of the Deposit form, still 44px tall for touch. */
+button.quiet {
+  padding-inline: 12px;
+  border-color: var(--line);
+  font-size: 14px;
+}
+button.quiet.remove,
+button.quiet.small-toggle {
+  border-color: transparent;
+  background: none;
+  color: var(--royal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button.quiet.remove:hover:not(:disabled),
+button.quiet.small-toggle:hover {
+  text-decoration-thickness: 2px;
+}
+button.quiet.remove:disabled {
+  color: #53617a;
+  text-decoration: none;
+}
+/* Its text starts where the lines around it start, inside its clear border. */
+button.quiet.small-toggle {
+  margin-bottom: 8px;
+  margin-left: -2px;
+  padding-inline: 0;
+}
+/* A stock the vault will not take right now: muted, with the reason. */
+.deposit-row.blocked label,
+.deposit-row.blocked small {
+  color: #485974;
+}
+.deposit-row.blocked input:not([type="checkbox"]) {
+  background: #e4e9f0;
+  border-color: #8c98ab;
+  color: #53617a;
+  -webkit-text-fill-color: #53617a;
+  opacity: 1;
+}
+.row-note {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 14px;
+}
+.stock-search {
+  max-width: 420px;
+  margin-block: 12px;
+}
+.stock-search input::placeholder {
+  color: #53617a;
+  opacity: 1;
+}
+.stock-matches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+/* Always in the page for screen readers; it takes no room while empty. */
+.stock-matches:empty {
+  display: block;
+  margin: 0;
+}
+.stock-matches button {
+  overflow-wrap: anywhere;
+}
+.stock-matches p {
+  margin: 0;
+  font-size: 14px;
+}
+/* Every open stock behind one line that reads as a link, as Remove and the
+   small-balances toggle do; the tickers wrap, however many there are. */
+.all-stocks summary {
+  width: fit-content;
+  color: var(--royal);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.all-stocks summary:hover {
+  text-decoration-thickness: 2px;
+}
+.all-stocks[open] {
+  margin-bottom: 20px;
+}
+/* Clear of the focus ring of the line above it. */
+.all-stocks p {
+  margin: 6px 0 10px;
+  font-size: 14px;
+}
+/* Even columns that fill the line, so many tickers stay easy to scan. */
+.all-stocks ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.all-stocks li {
+  min-width: 0;
+}
+/* A ticker of more than five letters takes two columns. */
+.all-stocks li.wide {
+  grid-column: span 2;
+}
+/* A very long ticker wraps inside its button; it never widens the page. */
+.all-stocks ul button {
+  width: 100%;
+  padding-inline: 4px;
+  overflow-wrap: anywhere;
+}
+.deposit-total {
+  margin-block: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.deposit-total p {
+  margin-bottom: 4px;
+}
+.deposit-total strong {
+  font-size: 20px;
+}
+.deposit-total small {
+  margin-bottom: 8px;
+}
+.one-column form > .primary {
+  margin-top: 8px;
+}
+/* What a confirmed deposit gave: bold, as the total is. */
+.received {
+  font-weight: 700;
 }
 .flow-steps {
   margin-block: 14px;
@@ -1181,6 +1376,10 @@ summary {
   }
   .wallet-area {
     margin-top: 10px;
+  }
+  .disconnect {
+    padding-inline: 4px;
+    font-size: 12px;
   }
   nav {
     padding-bottom: 10px;
@@ -1238,6 +1437,18 @@ summary {
   .address,
   .role-info .address {
     font-size: 13px;
+  }
+  /* A Deposit row here: the stock, its balance, then amount, Max and Remove. */
+  .deposit-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    padding-block: 14px;
+  }
+  .row-stock {
+    grid-column: 1 / -1;
+  }
+  button.quiet {
+    padding-inline: 10px;
   }
 }
 

@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8127785,
+  "uncompressedDeliveryBytes": 8258513,
   "fileCount": 228,
-  "productionExportBytes": 910824,
+  "productionExportBytes": 920374,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-DvVxTIUX.js": {
+    "dist/assets/ccip-CT0s-mGH.js": {
       "bytes": 2610,
-      "sha256": "e14d2da0287e6b87c16ce7b7610a96793db7d2b2bfd0e40ccc86ad268d11d6e9"
+      "sha256": "ee4895b3e769827e5b1e2bb3105f15673e75660996de2edbff7346bde9eb697d"
     },
-    "dist/assets/index-CizpQbvD.css": {
-      "bytes": 37293,
-      "sha256": "1c601e5a9a136fd523a2d22c3c1d92690fd620d25448e6c09dc053d01cd25f58"
+    "dist/assets/index-D1E9mcXX.css": {
+      "bytes": 40212,
+      "sha256": "cc2fbd60fd75bf20cf245e771ba6062f4f5a6e3b9e306ce8d9d0544ecd2c4330"
     },
-    "dist/assets/index-DJaEP2OT.js": {
-      "bytes": 566679,
-      "sha256": "3dd75e0037c6c23adf7535fae4216a9f4b5baead3de59526ed69f68a6f33f288"
+    "dist/assets/index-O9B-ydQc.js": {
+      "bytes": 573310,
+      "sha256": "b00c8fc2424b865d0cad1562d1a719509f2d59283c42a5c455b638b5a3f7c9ef"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -186,14 +186,14 @@
     },
     "dist/index.html": {
       "bytes": 662,
-      "sha256": "d599527b28fdf7ecb080843470ddf46b850a0311835282f33d615020460274ca"
+      "sha256": "7a056dba84770815c029d481771eaecf8cb03aff00a61cec88a06e5abb15dabf"
     }
   },
   "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
-    "Protected configuration, dependencies, root contracts, web/pinned, web/index.html, web/vite.config.ts, web/tsconfig.json and the validation fixtures unchanged; web/public unchanged (web/public/favicon.svg and dist/favicon.svg keep the SHA-256 of the chosen icon); web/src changed only within the v10 scope (Docs: deposits sentence; Flows: 24/7 redemption tag; Vault and model: no price times on the Stock shelves; styles: the tag and the removed age rules; Scenery and styles: slogan strip fix); every other source frozen",
+    "Protected configuration, dependencies, root contracts, web/pinned, web/index.html, web/vite.config.ts, web/tsconfig.json and the validation fixtures unchanged; web/public unchanged (web/public/favicon.svg and dist/favicon.svg keep the SHA-256 of the chosen icon); web/src changed only within the v11 scope (Flows: the rebuilt Deposit form, \"You received ... BASK\" after a confirmed deposit, the Redeem amount box emptied after a confirmed redeem; wallet: disconnect() and the remembered disconnected flag; main: the Disconnect button; styles: the form, its rows and the Disconnect button); every other source frozen",
     "No git submodules or nested dependency/cache/archive payloads",
-    "24 required empty/25-stock JPEGs retained (quality 36 since v9, 40 before); no additional artifact images",
+    "24 required empty/25-stock JPEGs retained (quality 32 since v11, 36 since v9, 40 before); no additional artifact images",
     "Both copies of all 37 manifest assets included"
   ]
 }

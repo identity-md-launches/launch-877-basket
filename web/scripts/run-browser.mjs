@@ -11,6 +11,7 @@ import {
   http as transport,
   encodeFunctionData,
   decodeFunctionData,
+  decodeEventLog,
   keccak256,
   zeroAddress,
   parseAbi,
@@ -20,6 +21,7 @@ import {
 } from "viem";
 import { VAULT, RUNTIME_HASH } from "../src/deployment.ts";
 import { chain, vaultAbi, GAS } from "../src/chain.ts";
+import { fmt } from "../src/model.ts";
 import { inside, nextOpening, weekSecond, WEEK } from "../src/newYork.ts";
 import { mainnet } from "viem/chains";
 const { chromium } = await import(
@@ -177,6 +179,8 @@ const proc = spawn(
   ],
   { stdio: ["ignore", "pipe", "pipe"] },
 );
+// Drain child output even when an Anvil build logs with --silent.
+proc.stdout.resume();
 let forkLog = "";
 proc.stderr.on("data", (d) => (forkLog += d));
 let browser, server, page;
@@ -454,6 +458,16 @@ try {
   page.on("response", (r) => {
     if (r.status() >= 400) issues.push(`${r.status()} ${r.url()}`);
   });
+  // v11: the page's console errors; every wallet request by method, in order;
+  // whether the page wrongly asked for wallet_revokePermissions; the hash of
+  // the last send.
+  const consoleErrors = [],
+    asked = [],
+    revoked = [];
+  let lastSent;
+  page.on("console", (m) => {
+    if (m.type() === "error") consoleErrors.push(m.text());
+  });
   let currentAccount = owner,
     currentChain = "0x1237",
     now = Number((await pc.getBlock()).timestamp) * 1000,
@@ -461,6 +475,7 @@ try {
     declineNext = false,
     pendingNext = false;
   await page.exposeFunction("testWallet", async ({ method, params }) => {
+    asked.push(method);
     if (method === "eth_accounts" || method === "eth_requestAccounts")
       return [currentAccount];
     if (method === "eth_chainId") return currentChain;
@@ -486,7 +501,14 @@ try {
       const decoded = decodeFunctionData({ abi, data: t.data });
       assert.equal(await raw("eth_chainId"), "0x1237");
       sends.push({ to: t.to, ...decoded, gas: t.gas });
-      return raw(method, params);
+      return (lastSent = await raw(method, params));
+    }
+    if (method === "wallet_revokePermissions") {
+      // Disconnect is local to this page and must never make this request.
+      // Keep the trap: both the Disconnect step and the final check require
+      // this record to stay empty. It is never counted as a send.
+      revoked.push({ params, refused: true });
+      throw Object.assign(new Error("Method not found"), { code: -32601 });
     }
     return raw(method, params);
   });
@@ -508,8 +530,17 @@ try {
           window.__fastReceipt && delay === 180000 ? 500 : delay,
           ...args,
         );
+      // v11: the count of answered wallet requests lets a step wait until the
+      // page has had the wallet's answer. The page still gets the same result
+      // or the same error, and an error it does not catch is still reported.
       window.ethereum = {
-        request: (a) => window.testWallet(a),
+        request: async (a) => {
+          try {
+            return await window.testWallet(a);
+          } finally {
+            window.__walletAnswers = (window.__walletAnswers ?? 0) + 1;
+          }
+        },
         on() {},
         removeListener() {},
       };
@@ -659,6 +690,67 @@ try {
     if (await checkbox.count()) await checkbox.check();
     await sendClick(box.getByRole("button", { name: button, exact: true }), fn);
   }
+  // v11 Deposit form. One row per stock, found by its amount box.
+  const depositRow = (symbol) =>
+    page.locator(".deposit-row").filter({
+      has: page.getByLabel(`${symbol} amount`, { exact: true }),
+    });
+  // The rows as a visitor reads them, top to bottom: ticker, balance line and
+  // the text in the amount box.
+  const depositRows = () =>
+    page
+      .locator(".deposit-row")
+      .evaluateAll((rows) =>
+        rows.map((row) => [
+          row.querySelector("label").textContent,
+          row.querySelector("small").textContent,
+          row.querySelector("input").value,
+        ]),
+      );
+  const search = page.getByLabel("Add another stock", { exact: true });
+  // The Add buttons the search offers now.
+  const offered = () =>
+    page.getByRole("button", { name: /^Add / }).allInnerTexts();
+  // Waits until a row button, found by its exact name, can be pressed (Max is
+  // off while the wallet's balances are read again).
+  const pressable = (name) =>
+    page.waitForFunction(
+      (name) =>
+        document.querySelector(`button[aria-label="${name}"]`)?.disabled ===
+        false,
+      name,
+    );
+  // The status at the top of the Deposit form: the one line while the vault
+  // takes deposits, otherwise the lines of the full box. Never both.
+  async function statusShown() {
+    const line = page.locator(".flow-layout .deposit-open"),
+      box = page.locator(".flow-layout .deposit-state");
+    assert.equal((await line.count()) + (await box.count()), 1);
+    return (await line.count())
+      ? [await line.innerText()]
+      : box.locator("strong, p").allInnerTexts();
+  }
+  // previewDeposit reads the page has made so far.
+  const previewDeposit = encodeFunctionData({
+    abi: vaultAbi,
+    functionName: "previewDeposit",
+    args: [[], []],
+  }).slice(0, 10);
+  const previews = () =>
+    rpcCalls.filter(
+      (c) =>
+        c.method === "eth_call" && c.params[0].data?.startsWith(previewDeposit),
+    ).length;
+  // Runs a step and waits until the page has had the wallet's answers to the
+  // `count` requests the step makes.
+  async function walletAnswers(count, step) {
+    const before = await page.evaluate(() => window.__walletAnswers ?? 0);
+    await step();
+    await page.waitForFunction(
+      (n) => window.__walletAnswers >= n,
+      before + count,
+    );
+  }
   const shots = [];
   async function screenshots(state) {
     for (const width of [1440, 375]) {
@@ -673,10 +765,13 @@ try {
       ]) {
         await nav(name);
         await page.evaluate(() => document.fonts.ready);
+        // v11: the Deposit form's rows come with the wallet's balances.
         await page.waitForFunction(
           () =>
-            ![...document.querySelectorAll("p, small, button")].some((e) =>
-              e.textContent.includes("Reading..."),
+            ![...document.querySelectorAll("p, small, button")].some(
+              (e) =>
+                e.textContent.includes("Reading...") ||
+                e.textContent.includes("Reading your wallet..."),
             ),
         );
         await page.waitForFunction(() => {
@@ -697,12 +792,14 @@ try {
           `${state} ${name} overflow ${width}`,
         );
         const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
-        // Quality 36 (40 before v9): the Docs FAQ and the longer Owner texts made
-        // the quality-40 set about 163 KB larger, over the 8 MiB delivery budget.
+        // Quality 32 (36 in v9 and v10, 40 before): the v11 Deposit form has a
+        // row for every stock in the wallet, so the two "stocks25" Deposit
+        // pictures are much taller. The quality-36 set is about 310 KB larger
+        // than this one and no longer fits the 8 MiB delivery budget.
         await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
-          quality: 36,
+          quality: 32,
           fullPage: true,
         });
         shots.push(file);
@@ -861,6 +958,26 @@ try {
   // A US market holiday inside the hours: every feed three hours old.
   for (const f of feeds) await tx(f, compiled.TestFeed.abi, "setLag", [3 * 3600]);
   assert.equal(Number((await rv("depositStatus", [[]]))[0]), 14);
+  // v11: the Deposit form opens with the stocks the wallet holds. The test
+  // wallet (the owner) holds 1,000,000 of each of the 25 listed stocks; for its
+  // first look at the form it holds none of S22 and one base unit of S21 (far
+  // under one cent). Both get their million back before deposits reopen.
+  const listed = indices.map((i) => symbols[i]),
+    million = 1000000n * 10n ** 18n,
+    full = "Wallet balance: 1,000,000 · about $100,000,000",
+    walletBalance = (i) =>
+      pc.readContract({
+        address: stocks[i],
+        abi: compiled.TestStock.abi,
+        functionName: "balanceOf",
+        args: [owner],
+      });
+  await tx(stocks[25], compiled.TestStock.abi, "burn", [owner, million]);
+  await tx(stocks[24], compiled.TestStock.abi, "burn", [owner, million - 1n]);
+  assert.deepEqual(
+    [await walletBalance(24), await walletBalance(25)],
+    [1n, 0n],
+  );
   // v10: the 24/7 redemption tag is always shown on Deposit (closed here, open below) and Redeem.
   const hoursTag = "Redemptions are open 24/7. Deposit hours apply to deposits only.";
   await nav("Deposit");
@@ -868,33 +985,250 @@ try {
   await page.getByText(/^Deposits are closed until stock prices update \(at least 1 must have updated in the last 1 hour\(s\), e\.g\. a US market holiday\); no set time\. Redemptions are always open\.$/).waitFor();
   await page.getByText(hoursTag, { exact: true }).waitFor();
   assert.equal(await page.getByText(/Deposits reopen /).count(), 0, "no reopen time on a holiday");
-  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
+  // v11: closed, so the status is the full box: title, reason, when it
+  // reopens, hours.
+  const closedBox = await statusShown();
+  assert.deepEqual(closedBox.slice(0, 2), [
+    "Vault deposit status",
+    "too few fresh prices",
+  ]);
+  assert.match(closedBox[2], /^Deposits are closed until stock prices update /);
+  assert.match(closedBox[3], /^Hours: \S/);
+  assert.equal(closedBox.length, 4);
+  // v11: the wallet's stocks are rows from the start, in the vault's order
+  // while their values are equal (v10 had to press "Add FIG" here).
+  await page.getByLabel("FIG amount", { exact: true }).waitFor();
+  assert.deepEqual(
+    await depositRows(),
+    listed.slice(0, 23).map((s) => [s, full, ""]),
+  );
+  assert.deepEqual(await offered(), []);
+  checks.push(
+    "Deposit form lists the test wallet's stocks without any Add press: 23 rows, not S22 (none held) nor S21 (under one cent)",
+  );
   await page.getByLabel("FIG amount", { exact: true }).fill("10");
   await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
   await page.getByText(/too few fresh prices/).first().waitFor();
+  // v11: the status box says these words too, so wait for the refusal itself.
+  await page
+    .getByText("too few fresh prices. Stock at fault: none.", { exact: true })
+    .waitFor();
   checks.push("US market holiday: Freshness refusal (reason 14) with no set time");
+  // v11: a balance worth under one cent waits behind a toggle.
+  await page
+    .getByRole("button", { name: "Show small balances (1)", exact: true })
+    .click();
+  await page.getByLabel("S21 amount", { exact: true }).waitFor();
+  assert.deepEqual(await depositRows(), [
+    ...listed.slice(0, 23).map((s) => [s, full, s === "FIG" ? "10" : ""]),
+    ["S21", "Wallet balance: <0.0001 · under $0.01", ""],
+  ]);
+  await page
+    .getByRole("button", { name: "Hide small balances", exact: true })
+    .click();
+  await page
+    .getByLabel("S21 amount", { exact: true })
+    .waitFor({ state: "detached" });
+  await page
+    .getByRole("button", { name: "Show small balances (1)", exact: true })
+    .waitFor();
+  checks.push(
+    "Deposit form keeps a balance under one cent behind Show small balances (1)",
+  );
+  // v11: the search offers Add buttons only while text is typed, never for a
+  // stock that is on screen, and six at most. "s2" matches S20, S21 and S22;
+  // S20 has a row. With S10 to S16 removed, "s1" matches those seven.
+  await search.fill("s2");
+  await page.getByRole("button", { name: "Add S22", exact: true }).waitFor();
+  assert.deepEqual(await offered(), ["Add S21", "Add S22"]);
+  for (const s of listed.slice(12, 19))
+    await page
+      .getByRole("button", { name: `Remove ${s}`, exact: true })
+      .click();
+  await search.fill("s1");
+  await page.getByText("1 more: keep typing.", { exact: true }).waitFor();
+  assert.deepEqual(
+    await offered(),
+    listed.slice(12, 18).map((s) => `Add ${s}`),
+  );
+  await search.fill("");
+  await page
+    .getByRole("button", { name: "Add S10", exact: true })
+    .waitFor({ state: "detached" });
+  assert.deepEqual(await offered(), []);
+  assert.equal(
+    await page.getByLabel("FIG amount", { exact: true }).inputValue(),
+    "10",
+  );
+  checks.push(
+    "Deposit search: Add buttons only while text is typed, at most six, never for a stock on screen",
+  );
+  await tx(stocks[25], compiled.TestStock.abi, "mint", [owner, million]);
+  await tx(stocks[24], compiled.TestStock.abi, "mint", [owner, million - 1n]);
+  assert.deepEqual(
+    [await walletBalance(24), await walletBalance(25)],
+    [million, million],
+  );
   // One feed updates and deposits pass again.
   await tx(feeds[1], compiled.TestFeed.abi, "setLag", [0]);
   assert.equal(Number((await rv("depositStatus", [[]]))[0]), 0);
   await refresh();
   checks.push("One updated feed reopens deposits after the holiday");
+  // v11: open, so the status is one line, with the same hours. After this read
+  // S22 is a row (the wallet holds it now) and a removed row stays removed.
+  assert.deepEqual(await statusShown(), [
+    "Deposits are open. " + closedBox[3],
+  ]);
+  await page.getByLabel("S22 amount", { exact: true }).waitFor();
+  assert.equal(await page.getByLabel("S10 amount", { exact: true }).count(), 0);
+  checks.push(
+    "Deposit status: one line while deposits are open, the full Vault deposit status box while closed",
+  );
+  // v11: the list under the search, closed until pressed, holds every stock
+  // the vault takes now. A stock that has a row is switched off; S10 to S16
+  // were removed above, so only they can be pressed. A press adds that
+  // stock's row, empty, in its place, with the focus in its amount box. (This
+  // fixture lists its stocks in A to Z order, so the walk does not show the
+  // list's own sorting.) The reload below clears it all.
+  const allStocks = page.locator("details.all-stocks"),
+    tickers = () =>
+      allStocks
+        .locator("ul button")
+        .evaluateAll((list) => list.map((b) => [b.textContent, b.disabled]));
+  assert.equal(await allStocks.count(), 1);
+  assert.equal(await allStocks.evaluate((d) => d.open), false);
+  assert.equal(
+    await allStocks.locator("summary").textContent(),
+    "All stocks you can deposit (25)",
+  );
+  await allStocks.locator("summary").click();
+  await allStocks
+    .getByText("Press a stock to add it to your deposit.", { exact: true })
+    .waitFor();
+  assert.deepEqual(
+    await tickers(),
+    listed.map((s) => [s, !listed.slice(12, 19).includes(s)]),
+  );
+  await allStocks.getByRole("button", { name: "S10", exact: true }).click();
+  await page.getByLabel("S10 amount", { exact: true }).waitFor();
+  assert.equal(
+    await page.locator(":focus").getAttribute("aria-label"),
+    "S10 amount",
+  );
+  assert.deepEqual(
+    await tickers(),
+    listed.map((s) => [s, !listed.slice(13, 19).includes(s)]),
+  );
+  assert.deepEqual(
+    await depositRows(),
+    listed
+      .filter((s) => !listed.slice(13, 19).includes(s))
+      .map((s) => [s, full, s === "FIG" ? "10" : ""]),
+  );
+  assert.deepEqual(await offered(), []);
+  checks.push(
+    "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
+  );
   // Same hash: reload so the holiday attempt's chosen stock is cleared.
   await page.reload();
   await nav("Deposit");
   await page.getByText(hoursTag, { exact: true }).waitFor();
-  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Use full balance", exact: true })
-    .click();
+  // v11: nothing of the form is kept across a reload: all 25 rows, empty.
+  await page.getByLabel("FIG amount", { exact: true }).waitFor();
+  assert.deepEqual(
+    await depositRows(),
+    listed.map((s) => [s, full, ""]),
+  );
+  // v11: a stock that fails its own check has a greyed row. S03's feed goes
+  // older than maxAge (reason 9). S03 is not deposited below and the vault
+  // holds none of it, so the vault's own deposit status stays 0.
+  const grey = 6,
+    feedLag = {
+      address: feeds[grey],
+      abi: compiled.TestFeed.abi,
+      functionName: "lag",
+    },
+    lagBefore = await pc.readContract(feedLag),
+    ownReason = async () =>
+      (await rv("allAssets"))[indices.indexOf(grey)].reason,
+    blockedWords =
+      "Deposits of this stock are blocked right now: feed price missing or too old.",
+    look = (symbol) =>
+      depositRow(symbol).evaluate((row) => [
+        getComputedStyle(row.querySelector("label")).color,
+        getComputedStyle(row.querySelector("input")).backgroundColor,
+      ]),
+    plain = await look("S03");
+  await tx(feeds[grey], compiled.TestFeed.abi, "setLag", [
+    (await rv("settings")).maxAge + 3600n,
+  ]);
+  assert.equal(await ownReason(), 9);
+  assert.equal(Number((await rv("depositStatus", [[]]))[0]), 0);
+  await refresh();
+  await depositRow("S03").getByText(blockedWords).waitFor();
+  // Balances are read again, so Max S03 is off for the row's own reason.
+  await pressable("Max FIG");
+  assert.equal(
+    await depositRow("S03").locator("p").textContent(),
+    blockedWords + " Refresh",
+  );
+  assert.equal(
+    await page
+      .getByText(/^Deposits of this stock are blocked right now: /)
+      .count(),
+    1,
+  );
+  assert.deepEqual(
+    [
+      await page.getByLabel("S03 amount", { exact: true }).isDisabled(),
+      await page
+        .getByRole("button", { name: "Max S03", exact: true })
+        .isDisabled(),
+      await page
+        .getByRole("button", { name: "Remove S03", exact: true })
+        .isEnabled(),
+      await page
+        .getByRole("button", { name: "Refresh S03", exact: true })
+        .isEnabled(),
+      await page.getByLabel("FIG amount", { exact: true }).isEnabled(),
+    ],
+    [true, true, true, true, true],
+  );
+  const greyed = await look("S03");
+  assert.ok(greyed[0] !== plain[0] && greyed[1] !== plain[1], "muted look");
+  assert.deepEqual(await look("S02"), plain);
+  assert.deepEqual(await statusShown(), [
+    "Deposits are open. " + closedBox[3],
+  ]);
+  // Undo it on the chain; the row's own Refresh reads the vault again.
+  await tx(feeds[grey], compiled.TestFeed.abi, "setLag", [lagBefore]);
+  assert.equal(await pc.readContract(feedLag), lagBefore);
+  assert.equal(await ownReason(), 0);
+  await page.getByRole("button", { name: "Refresh S03", exact: true }).click();
+  await page.getByText(blockedWords).waitFor({ state: "detached" });
+  await pressable("Max S03");
+  assert.ok(await page.getByLabel("S03 amount", { exact: true }).isEnabled());
+  assert.deepEqual(await look("S03"), plain);
+  assert.deepEqual(
+    await depositRows(),
+    listed.map((s) => [s, full, ""]),
+  );
+  checks.push(
+    "Greyed row: a stock failing its own check (feed too old) says why; amount box and Max off, Remove and Refresh on; Refresh clears it once the feed is back",
+  );
+  // v11: "Max FIG" (v10: "Add FIG", then "Use full balance").
+  await page.getByRole("button", { name: "Max FIG", exact: true }).click();
   assert.equal(
     await page.getByLabel("FIG amount", { exact: true }).inputValue(),
     "1000000",
   );
-  await page.getByLabel("Search to add stocks", { exact: true }).fill("OAT");
+  await search.fill("OAT");
   assert.equal(
     await page.getByLabel("FIG amount", { exact: true }).inputValue(),
     "1000000",
   );
+  // v11: OAT has a row, so the search does not offer it.
+  assert.deepEqual(await offered(), []);
   checks.push(
     "Exact full stock balance and chosen amount retained while searching",
   );
@@ -910,17 +1244,90 @@ try {
     .waitFor();
   checks.push("CapExceeded explained before approvals");
   await page.getByLabel("FIG amount", { exact: true }).fill("10");
+  // v11: OAT and S01 have rows already. Remove takes OAT's row away, the search
+  // (any letter case) then offers it, and Add OAT brings back an empty row
+  // with the focus in its amount box.
+  await page.getByRole("button", { name: "Remove OAT", exact: true }).click();
+  await page
+    .getByLabel("OAT amount", { exact: true })
+    .waitFor({ state: "detached" });
+  assert.deepEqual(
+    await depositRows(),
+    listed
+      .filter((s) => s !== "OAT")
+      .map((s) => [s, full, s === "FIG" ? "10" : ""]),
+  );
+  await search.fill("oat");
+  await page.getByRole("button", { name: "Add OAT", exact: true }).waitFor();
+  assert.deepEqual(await offered(), ["Add OAT"]);
   await page.getByRole("button", { name: "Add OAT", exact: true }).click();
+  await page.getByLabel("OAT amount", { exact: true }).waitFor();
+  assert.equal(
+    await page.locator(":focus").getAttribute("aria-label"),
+    "OAT amount",
+  );
+  assert.equal(await search.inputValue(), "");
+  assert.deepEqual(
+    await depositRows(),
+    listed.map((s) => [s, full, s === "FIG" ? "10" : ""]),
+  );
+  checks.push(
+    "Deposit row: Remove takes OAT away, the search then offers Add OAT, and that brings back an empty row",
+  );
   await page.getByLabel("OAT amount", { exact: true }).fill("20");
-  await page.getByLabel("Search to add stocks", { exact: true }).fill("S01");
-  await page.getByRole("button", { name: "Add S01", exact: true }).click();
+  // v11: Enter in the search never runs Preview. With no match it does
+  // nothing; with matches it adds the first one (S01, not S02) and the focus
+  // stays in the search. v10 typed "S01" and pressed "Add S01".
+  const previewsBefore = previews();
+  for (const s of ["S01", "S02"])
+    await page
+      .getByRole("button", { name: `Remove ${s}`, exact: true })
+      .click();
+  await search.fill("zzz");
+  await page.getByText("No open stock matches.", { exact: true }).waitFor();
+  await search.press("Enter");
+  assert.equal(await search.inputValue(), "zzz");
+  await search.fill("s0");
+  await page.getByRole("button", { name: "Add S01", exact: true }).waitFor();
+  assert.deepEqual(await offered(), ["Add S01", "Add S02"]);
+  await search.press("Enter");
+  await page.getByLabel("S01 amount", { exact: true }).waitFor();
+  assert.equal(await page.locator(":focus").getAttribute("type"), "search");
+  assert.equal(await search.inputValue(), "");
+  assert.deepEqual(
+    await depositRows(),
+    listed
+      .filter((s) => s !== "S02")
+      .map((s) => [s, full, { FIG: "10", OAT: "20" }[s] ?? ""]),
+  );
   await page.getByLabel("S01 amount", { exact: true }).fill("30");
+  // v11: the running total of the three typed amounts, called an estimate.
+  const total = await page.getByText(/^Total: about /).innerText();
+  await page
+    .getByText(
+      "An estimate from the last vault read. Preview gives the exact figure.",
+      { exact: true },
+    )
+    .waitFor();
   await page
     .getByRole("button", { name: "Preview deposit", exact: true })
     .click();
   await page
     .getByRole("heading", { name: "Deposit preview", exact: true })
     .waitFor();
+  // Every read passes the route in order: had an Enter press started a
+  // preview, its read would be counted here beside this one.
+  assert.equal(previews(), previewsBefore + 1);
+  checks.push("Enter in the search adds the first match and starts no preview");
+  const dollars = await page
+    .locator(".receipt dl > div")
+    .filter({ has: page.locator("dt", { hasText: /^Dollar value$/ }) })
+    .locator("dd")
+    .innerText();
+  assert.deepEqual([total, dollars], ["Total: about $6,000", "$6,000"]);
+  checks.push(
+    "Running total equals the preview's Dollar value for the three-stock deposit",
+  );
   await page
     .getByRole("button", { name: "Preview deposit", exact: true })
     .hover();
@@ -947,7 +1354,12 @@ try {
     page.getByRole("button", { name: "Deposit", exact: true }),
     "deposit",
   );
-  assert.equal(await page.getByLabel("FIG amount", { exact: true }).count(), 0);
+  // v11: the typed amounts are gone with the preview, but FIG keeps its row
+  // (in v10 the chosen rows went away: count 0).
+  assert.equal(
+    await page.getByLabel("FIG amount", { exact: true }).inputValue(),
+    "",
+  );
   assert.equal(
     await page
       .getByRole("heading", { name: "Deposit preview", exact: true })
@@ -965,6 +1377,120 @@ try {
   checks.push(
     "Three-stock deposit succeeds with estimated gas +30%, exact approvals, preview invalidated after success",
   );
+  // v11: once the balances are read again, every wallet stock still has its
+  // row with an empty box, S02 too although it was removed. The three
+  // deposited stocks are worth less now, so they come last, largest first.
+  await page
+    .getByText("Wallet balance: 999,990 · about $99,999,000", { exact: true })
+    .waitFor();
+  assert.deepEqual(await depositRows(), [
+    ...listed
+      .filter((s) => !["FIG", "OAT", "S01"].includes(s))
+      .map((s) => [s, full, ""]),
+    ["FIG", "Wallet balance: 999,990 · about $99,999,000", ""],
+    ["OAT", "Wallet balance: 999,980 · about $99,998,000", ""],
+    ["S01", "Wallet balance: 999,970 · about $99,997,000", ""],
+  ]);
+  checks.push(
+    "After the deposit the wallet's rows are still there with empty boxes",
+  );
+  // v11: "You received" is the shares of the Deposit event in the receipt of
+  // that same transaction, read and decoded here.
+  const minted = (await pc.getTransactionReceipt({ hash: lastSent })).logs
+    .filter((l) => l.address.toLowerCase() === VAULT)
+    .map((l) => {
+      try {
+        return decodeEventLog({
+          abi: vaultAbi,
+          data: l.data,
+          topics: l.topics,
+        });
+      } catch {
+        return undefined;
+      }
+    })
+    .find((l) => l?.eventName === "Deposit");
+  assert.equal(minted.args.receiver.toLowerCase(), owner.toLowerCase());
+  await page
+    .getByText(`You received ${fmt(minted.args.shares)} BASK.`, {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(await page.getByText(/^You received /).count(), 1);
+  checks.push(
+    `"You received ${fmt(minted.args.shares)} BASK." equals the shares of the Deposit event in the deposit's receipt`,
+  );
+  // v11 Disconnect: the page forgets the wallet and stays so across a reload,
+  // until Connect wallet. It makes no wallet request or send, so no delayed
+  // revocation from this page can undo a later connection.
+  const header = page.locator("header"),
+    address = page.locator(".connected-address"),
+    short = `${owner.slice(0, 6)}…${owner.slice(-4)}`,
+    before = [asked.length, sends.length, consoleErrors.length];
+  assert.equal(await address.innerText(), short);
+  await page.getByRole("button", { name: "Disconnect", exact: true }).click();
+  await header
+    .getByRole("button", { name: "Connect wallet", exact: true })
+    .waitFor();
+  assert.equal(
+    await page.locator(".wallet-status").textContent(),
+    "Wallet disconnected from this page. To use another wallet, switch the address in your wallet app, then press Connect wallet.",
+  );
+  await page
+    .getByText("Connect your wallet to see the stocks you hold.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.deepEqual(
+    [
+      await address.count(),
+      await page
+        .getByRole("button", { name: "Disconnect", exact: true })
+        .count(),
+      await page.locator(".deposit-row").count(),
+      await page.getByText(/^You received /).count(),
+    ],
+    [0, 0, 0, 0],
+  );
+  assert.deepEqual(asked.slice(before[0]), []);
+  assert.deepEqual(revoked, []);
+  assert.equal(sends.length, before[1]);
+  assert.deepEqual([issues, consoleErrors.slice(before[2])], [[], []]);
+  // After a reload the wallet still answers eth_accounts with the account,
+  // and the page does not take it.
+  await page.reload();
+  await nav("Deposit");
+  await page.waitForFunction(() => window.__walletAnswers >= 2);
+  await page
+    .getByText("Connect your wallet to see the stocks you hold.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.deepEqual(
+    [...new Set(asked.slice(before[0]))],
+    ["eth_accounts", "eth_chainId"],
+  );
+  assert.deepEqual(
+    [await address.count(), await page.locator(".deposit-row").count()],
+    [0, 0],
+  );
+  await header
+    .getByRole("button", { name: "Connect wallet", exact: true })
+    .waitFor();
+  await walletAnswers(2, () =>
+    header.getByRole("button", { name: "Connect wallet", exact: true }).click(),
+  );
+  await address.waitFor();
+  assert.equal(await address.innerText(), short);
+  assert.deepEqual(asked.slice(-2), ["eth_requestAccounts", "eth_chainId"]);
+  assert.equal(await page.locator(".wallet-status").textContent(), "");
+  await page.getByLabel("FIG amount", { exact: true }).waitFor();
+  assert.equal(await page.locator(".deposit-row").count(), 25);
+  assert.equal(sends.length, before[1]);
+  assert.deepEqual([issues, consoleErrors.slice(before[2])], [[], []]);
+  checks.push(
+    "Disconnect: address gone, Connect wallet shown, the exact top message, still disconnected after a reload, Connect wallet brings the address back; Disconnect makes no wallet request or send",
+  );
   // A Saturday: deposits refused (Hours) with the reopen time; redeem and claim still work.
   await warpTo(await saturday());
   assert.equal(await rv("insideHours"), false);
@@ -974,10 +1500,20 @@ try {
   await refresh();
   await page.getByText(/^Deposits reopen Sunday 8:00 pm New York time \(Sunday, .* in \d+ h \d+ min; your time .*\)\. On a US market holiday they reopen when prices update\. Redemptions are always open\.$/).waitFor();
   await page.getByText(hoursTag, { exact: true }).waitFor();
-  await page.getByRole("button", { name: "Add FIG", exact: true }).click();
+  // v11: closed, so the full status box again. The wallet is still connected
+  // after this reload and FIG has its row (v10 pressed "Add FIG" here).
+  assert.deepEqual((await statusShown()).slice(0, 2), [
+    "Vault deposit status",
+    "outside deposit hours",
+  ]);
+  assert.equal(await address.innerText(), short);
   await page.getByLabel("FIG amount", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
   await page.getByText(/outside deposit hours/).first().waitFor();
+  // v11: the status box says these words too, so wait for the refusal itself.
+  await page
+    .getByText("outside deposit hours. Stock at fault: none.", { exact: true })
+    .waitFor();
   checks.push("Saturday deposit refused (Hours) with the Sunday 8:00 pm reopening shown");
   // Force a deferred leg, then claim it from the receiver wallet.
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [true]);
@@ -1000,6 +1536,12 @@ try {
     page.getByRole("button", { name: "Redeem", exact: true }),
     "redeem",
   );
+  // v11: a confirmed redeem empties the amount box.
+  assert.equal(
+    await page.getByLabel("BASK amount", { exact: true }).inputValue(),
+    "",
+  );
+  checks.push("Redeem: the BASK amount box is empty after a confirmed redeem");
   assert.ok(sends.at(-1).gas);
   assert.ok((await rv("owed", [owner, stocks[0]])) > 0n);
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [false]);
@@ -1019,6 +1561,10 @@ try {
   await sendClick(
     page.getByRole("button", { name: "Redeem", exact: true }),
     "redeem",
+  );
+  assert.equal(
+    await page.getByLabel("BASK amount", { exact: true }).inputValue(),
+    "",
   );
   for (const t of stocks.slice(0, 2))
     await tx(t, compiled.TestStock.abi, "setFail", [false]);
@@ -1279,6 +1825,11 @@ try {
   await nav("Deposit");
   await refresh();
   await page.getByText(/^Deposits reopen Monday 9:30 am UTC-5 \(Monday, /).waitFor();
+  // v11: closed, so the full status box.
+  assert.deepEqual((await statusShown()).slice(0, 2), [
+    "Vault deposit status",
+    "outside deposit hours",
+  ]);
   checks.push("Saturday after the Hours change shows Deposits reopen Monday 9:30 am");
   await nav("Owner");
   // Cancel owner and guardian proposal boundaries, without changing the deployed roles.
@@ -1341,6 +1892,18 @@ try {
     [10n * 10n ** 18n, 20n * 10n ** 6n, 30n * 10n ** 18n],
   );
   assert.deepEqual(issues, []);
+  // v11: Disconnect adds no wallet request. Connect wallet is pressed only
+  // in the Disconnect step; the v10 walk never pressed it.
+  assert.deepEqual(
+    [...new Set(asked)].sort(),
+    [
+      "eth_accounts",
+      "eth_chainId",
+      "eth_requestAccounts",
+      "eth_sendTransaction",
+    ],
+  );
+  assert.equal(revoked.length, 0);
   fs.writeFileSync(
     path.join(artifacts, "browser-fork.json"),
     JSON.stringify(

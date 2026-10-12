@@ -2,10 +2,12 @@ import fs from 'node:fs';import http from 'node:http';import path from 'node:pat
 const server=http.createServer((req,res)=>{const ps=req.url.split('?')[0].split('/'),root=ps[1]==='old'?process.env.BASKET_BASELINE_DIST:path.resolve('../dist'),p=path.join(root,ps.slice(2).join('/')||'index.html');try{res.setHeader('Content-Type',({'.js':'application/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'})[path.extname(p)]||'text/plain');res.end(fs.readFileSync(p));}catch{res.writeHead(404).end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const b=await chromium.launch(),page=await b.newPage({viewport:{width:375,height:812},reducedMotion:'reduce'});const results=[];
 const owner=JSON.parse(fs.readFileSync('../artifacts/live-validation.json')).globals.owner;
-// v10 (the previous build is v9): nothing may leave the first phone screen. Every element visible on the first screen
+// v11 (the previous build is v10): nothing may leave the first phone screen. Every element visible on the first screen
 // of the previous build must still be visible there, with the same words (line breaks aside), and the title character
-// must still start on it. The v10 changes (the 24/7 tag at the top of the Deposit and Redeem forms, the shorter Redeem
-// title sentence, no price times on the Stock shelves) all sit below the first screen on phones.
+// must still start on it. With a wallet connected the header gained a Disconnect button beside the address: it must
+// not make the header taller, or everything under it would move down and the last elements of the first screen (on
+// the Owner page the Immediate and Propose buttons) would leave it. The other v11 changes (the rebuilt Deposit form,
+// "You received" after a deposit, the emptied Redeem amount box) sit below the first screen on phones.
 const characterPages=['vault','deposit','redeem'];
 await page.addInitScript(({owner})=>{if(location.search.includes('connected')) window.ethereum={request:async({method})=>method==='eth_chainId'?'0x1237':[owner]};},{owner});
 try{await page.route(/https:\/\//,async route=>{try{const r=await fetch(route.request().url(),{method:'POST',headers:{'content-type':'application/json'},body:route.request().postData()});await route.fulfill({body:await r.text(),contentType:'application/json'});}catch{await route.abort();}});

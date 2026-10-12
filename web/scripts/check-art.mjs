@@ -46,6 +46,11 @@ const styles = fs.readdirSync(path.join(root, "dist/assets")).filter(f => f.ends
 for (const text of ["Redemptions are open 24/7.", "Deposit hours apply to deposits only.", "Deposits open Sunday 8 pm to Friday 8 pm New York time", "old price", '"sa-old"', "Feed price"]) assert.ok(bundle.includes(text), "v10 text in the bundle: " + text);
 for (const gone of ["Redemption is always open.", "deposits open Sunday", "Feed price / age", "just now", "Less than 1 min ago", " min ago", "m ago", "days ago", "price time: ", "Future timestamp", "sa-clock", "sa-upd", "sa-when"]) assert.ok(!(bundle + styles).includes(gone), "removed from the bundle (v10): " + gone);
 assert.ok(styles.includes(".hours-tag"), "v10 tag style");
+// v11: the fixed words of the rebuilt Deposit form (the search label, the small-balances switch, the one-line status),
+// of the line under a confirmed deposit and of the header's Disconnect button are in the scripts; the old search label
+// is gone from scripts and styles.
+for (const text of ["Add another stock", "Disconnect", "Show small balances", "You received", "Deposits are open.", "All stocks you can deposit", "Press a stock to add it to your deposit."]) assert.ok(bundle.includes(text), "v11 text in the bundle: " + text);
+for (const gone of ["Search to add stocks"]) assert.ok(!(bundle + styles).includes(gone), "removed from the bundle (v11): " + gone);
 // Words on the shelves that would be a price time.
 const PRICE_TIME = /\bago\b|just now|price updated|price time|less than 1 min|future timestamp|\d+h \d+m/i;
 // v9 A4: the old tagline is gone from the whole built site (page, scripts, styles, icon), in any letter case.
