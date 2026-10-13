@@ -79,6 +79,9 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   const [held, setHeld] = useState<Record<string, bigint | undefined>>();
   const [removed, setRemoved] = useState<Record<string, boolean>>({});
   const [showSmall, setShowSmall] = useState(false);
+  // v13: the account ("" for none) for which the stock list under the search
+  // was shown open because the form was empty; it stays open for it.
+  const [listOpenFor, setListOpenFor] = useState<string>();
   // The stock an Add button just added, until its row is on screen.
   const focusRow = useRef<Address | undefined>(undefined);
   const sequence = useRef(0),
@@ -337,6 +340,19 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       b = y.symbol.toLowerCase();
     return a < b ? -1 : a > b ? 1 : 0;
   });
+  // v13: the form is empty with no wallet, or with a wallet whose balances
+  // are read and hold no listed stock while no row is in the form. Then the
+  // stock list is shown open across the panel, and it stays open for that
+  // account until the account changes or the page is reloaded.
+  const emptyForm =
+    !w.account ||
+    (ready && !unread && !rows.length && !stocks.some((x) => x.inWallet));
+  const accountKey = w.account ?? "";
+  useEffect(() => {
+    if (emptyForm) setListOpenFor(accountKey);
+  }, [emptyForm, accountKey]);
+  const listOpen = emptyForm || listOpenFor === accountKey;
+  const StockList = listOpen ? "div" : "details";
   // `focus` is false for Enter in the search box, which keeps the focus.
   function add(t: Address, focus = true) {
     if (focus) focusRow.current = t;
@@ -642,11 +658,24 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                     </p>
                   )}
                 </div>
-                {/* Every stock the vault takes now, closed until pressed. A
-                    press is the same Add as in the search; a stock that has a
-                    row stays in the list, switched off. */}
-                <details className="all-stocks">
-                  <summary>All stocks you can deposit ({open.length})</summary>
+                {/* Every stock the vault takes now. Closed until pressed while
+                    the form has rows; shown open across the panel while the
+                    form is empty (no wallet, or a wallet without a listed
+                    stock), and then for the rest of the visit for that account
+                    (v13). A press is the same Add as in the search; a stock
+                    that has a row stays in the list, switched off. */}
+                <StockList
+                  className={listOpen ? "all-stocks open-list" : "all-stocks"}
+                >
+                  {listOpen ? (
+                    <p className="list-title">
+                      All stocks you can deposit ({open.length})
+                    </p>
+                  ) : (
+                    <summary>
+                      All stocks you can deposit ({open.length})
+                    </summary>
+                  )}
                   <p>Press a stock to add it to your deposit.</p>
                   <p>Grey stocks are already in the form above.</p>
                   <ul>
@@ -670,7 +699,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                       </li>
                     ))}
                   </ul>
-                </details>
+                </StockList>
                 {counted + badAmount.length + noPrice.length > 0 && (
                   <div className="deposit-total">
                     {counted > 0 && (

@@ -1,10 +1,14 @@
 {
   "result": "PASS",
-  "baseline": "a6e1b4d2eb5988ab8eb7cfc404161f035aa96d84",
+  "baseline": "586998cf5eb2a6ccce05615ddf7f44874813042c",
   "protectedFiles": [
+    "Docs.tsx",
     "Losses.tsx",
     "Owner.tsx",
     "Scenery.tsx",
+    "Vault.tsx",
+    "components.tsx",
+    "main.tsx",
     "chain.ts",
     "deployment.ts",
     "governance.ts",
@@ -14,303 +18,71 @@
     "vault.abi.json"
   ],
   "editedFiles": {
-    "Vault.tsx": "6 documented pieces [v12, HEAD]",
-    "components.tsx": "2 documented pieces [v12, HEAD]",
-    "Docs.tsx": "1 documented pieces [v12, HEAD]",
-    "Flows.tsx": "11 documented pieces [v12, HEAD]",
-    "wallet.tsx": "6 documented pieces [v12, HEAD]",
-    "main.tsx": "2 documented pieces [v12, HEAD]"
+    "Flows.tsx": "4 documented pieces [v12, HEAD]",
+    "wallet.tsx": "2 documented pieces [v12, HEAD]"
   },
   "v12Pieces": {
-    "Vault.tsx": [
-      {
-        "v12": {
-          "length": 1699,
-          "sha256": "2a7775945a2e61009cd8744cf63249bcf467902f811875b1b4f3a6cc1e4ab646"
-        },
-        "head": {
-          "length": 181,
-          "sha256": "a701134362271d6f693cb63881b162f628cc535d7564454d6fe1e1c94f98941e"
-        }
-      },
-      {
-        "v12": {
-          "length": 1527,
-          "sha256": "6e412557959a394f97f8278a1c838e5ced589ecf0f89ea1cc225cec23dfddb8b"
-        },
-        "head": {
-          "length": 1314,
-          "sha256": "356dd0b88ef96093bb7e7322c2b5b4449bea00c982e206c4abe534fa8055061e"
-        }
-      },
-      {
-        "v12": {
-          "length": 102,
-          "sha256": "c0dd702e5f5f226674a0cba06ffefb00bea844f77d324cf572f8611b2b6e2068"
-        },
-        "head": {
-          "length": 106,
-          "sha256": "85ab0e7b628f872434d13dbace6912ab439eb22ced0a3c082a2e11103b48682e"
-        }
-      },
-      {
-        "v12": {
-          "length": 160,
-          "sha256": "069a3c66f851c3ad31c831de34c9da582776941530ce57daf3c542b2b5d0ddfa"
-        },
-        "head": {
-          "length": 252,
-          "sha256": "bc8a7586f9a9229621b7f0ce6875dffcfd29eee65d675a45bfad0f6196b8f091"
-        }
-      },
-      {
-        "v12": {
-          "length": 218,
-          "sha256": "8e4ece762c9205e10dfae0be355f5880cd9191abdaff0c32e9ffb4887de994cc"
-        },
-        "head": {
-          "length": 167,
-          "sha256": "8aa037532c6d09f5d38a0cc776884f86d550576b9b0195172d55d3227a8f7e2a"
-        }
-      },
-      {
-        "v12": {
-          "length": 198,
-          "sha256": "abdfdbf9608529dca4d1469bda254fff8b37aafd642c4a355e4945c9c40a3578"
-        },
-        "head": {
-          "length": 135,
-          "sha256": "15d5dc0f99524e624d1dfa831989d6a3c4fa79851cbb4a8e1aad25b169325c72"
-        }
-      }
-    ],
-    "components.tsx": [
-      {
-        "v12": {
-          "length": 119,
-          "sha256": "08115145d30c9f53941bae49f3730c3c193edcce1c61c22ded8fbad9b8f014ff"
-        },
-        "head": {
-          "length": 118,
-          "sha256": "37d0e2a521785a9e1cd6f343922a4b425d87652e36de2deb936f56df78847787"
-        }
-      },
-      {
-        "v12": {
-          "length": 203,
-          "sha256": "cafff7d77a637ffcf79e0987c67bd88668cdb6c044db3d95f7751d0dd6262059"
-        },
-        "head": {
-          "length": 181,
-          "sha256": "60466d86b1e746183fafcd983a1395225e98f1d82f2907b0442dbea1842093da"
-        }
-      }
-    ],
-    "Docs.tsx": [
-      {
-        "v12": {
-          "length": 987,
-          "sha256": "1ea918f17f5788efddcb4cbb586919fcea13a76b212f184ae71b989a0595d581"
-        },
-        "head": {
-          "length": 89,
-          "sha256": "ceacdacbe3d3f8df9f3183a70bead66e5be708a56fc588f76ded9e39d53346f4"
-        }
-      }
-    ],
     "Flows.tsx": [
       {
         "v12": {
-          "length": 168,
-          "sha256": "063275e2e4f8f0ff0c4d30b4b7273328859abb14efc5e88dee55d6ff6d1fa01d"
+          "length": 330,
+          "sha256": "74d759739ad216670cd4e563f1eed75c60483be0f329cbddc13343d39235b07d"
         },
         "head": {
-          "length": 179,
-          "sha256": "9de72347490063a98344be6b6a4a7544e4f59d811a4d9dded74e95465217d5a7"
+          "length": 122,
+          "sha256": "7c7b23c330ce8b70a6b3fc662190965c2a59a896ee01bc8bd7ab9a9fc61f2647"
         }
       },
       {
         "v12": {
-          "length": 281,
-          "sha256": "0590ba88ba0ae71ea71bf9e8d83cb17745a4c75e322586d0909a98faf519a791"
+          "length": 731,
+          "sha256": "63574254b9c19da6063707209cd2d205dea9cfbbc3b34671885dfcae9973a970"
         },
         "head": {
-          "length": 360,
-          "sha256": "d9c5b2066e9190f3e822b6ed3ae025d6c26252096cc33aab0a9c6a9b5de2a7d1"
+          "length": 80,
+          "sha256": "4b1d95dd48a569c3eef9aefacb336258f60be7bbfecc5096591dc3adf3fb5c80"
         }
       },
       {
         "v12": {
-          "length": 217,
-          "sha256": "79cb3ec980e5a4e57f836fb4f2a1785819067556849ea09847a25aa048ade772"
+          "length": 1014,
+          "sha256": "717520d93d684315eb1c6f576ae992ee258bd1b91af9687f801caddaf9d5b0ce"
         },
         "head": {
-          "length": 612,
-          "sha256": "a91e240e51258f5588c404614c0861febd10d006651c023922e276fd5f98493a"
+          "length": 435,
+          "sha256": "7711b6fa5b7ef8682a208aabefdf4d860f3f3607c9fb84c7145fa505d527b3b0"
         }
       },
       {
         "v12": {
-          "length": 141,
-          "sha256": "bf3e013bc97cdefb3b00c21a5a248cb485381f19ec637e5aa2b2aeebc93c37ae"
+          "length": 123,
+          "sha256": "40a480ff80170a679aa32c29ba2d430d74240b16112f09d362e12f446a00bf0d"
         },
         "head": {
-          "length": 419,
-          "sha256": "2e61dec740ce19d5dd66adc462705440e5d1faca5d9de006604455c703cfb927"
-        }
-      },
-      {
-        "v12": {
-          "length": 468,
-          "sha256": "236310e49f0bcc9e344a04f847e562dac7020704a85f17143b7e6ad709fbebe0"
-        },
-        "head": {
-          "length": 606,
-          "sha256": "12aad2c2557b626ef7326e4095e8ed268fc698423069cdf150ecdb7ae0ff3070"
-        }
-      },
-      {
-        "v12": {
-          "length": 168,
-          "sha256": "9a307650185a1c7cb46d7eb491b1cc886414f4226fb29d6ed636eacb94115864"
-        },
-        "head": {
-          "length": 157,
-          "sha256": "eacf9fcba3f975049ac6f168f66f9d9fcd2f0321753b5d36f64d334738cf575e"
-        }
-      },
-      {
-        "v12": {
-          "length": 55,
-          "sha256": "2c1c2fe697eb09499fb725bef1c320e8410ab21329ce8c78c5a8c9af218e97c0"
-        },
-        "head": {
-          "length": 708,
-          "sha256": "c44cdbd618110b5765e4476972fe17b1f7144b30cabe465a991a87fb91370143"
-        }
-      },
-      {
-        "v12": {
-          "length": 2185,
-          "sha256": "1332973c061e2246bd66c23497d9fb8222f600639a302d340aa4642b9cef2dab"
-        },
-        "head": {
-          "length": 283,
-          "sha256": "e6f91b4f751887f4527f770e128071d26fc33c38ceb8df8f725b85d8e0b2b3e8"
-        }
-      },
-      {
-        "v12": {
-          "length": 227,
-          "sha256": "2184772824d35eaedebfd3a69f675b5aa6afee1e36c9f450e1815ff62a9ed5e2"
-        },
-        "head": {
-          "length": 221,
-          "sha256": "0e7d053d74dbe027eb2839288f4f42d50c4c8f48df67cf80384daf7a8eb26792"
-        }
-      },
-      {
-        "v12": {
-          "length": 82,
-          "sha256": "02fddaaba7fef8d1511a8a4dceb6a4640cfa58a410b6d72a070911a23876914f"
-        },
-        "head": {
-          "length": 312,
-          "sha256": "670026ee632c8d776a2322c31b6fbfe7bbbb15ebf2e97b491c8e7b58d6a4f665"
-        }
-      },
-      {
-        "v12": {
-          "length": 299,
-          "sha256": "b2cb2003810842bcc804e9a0778fc58d1a589afb91058a3b49e6f99dad799943"
-        },
-        "head": {
-          "length": 363,
-          "sha256": "50c79357047af23333192b42a5f3f7385bcce03f976ae2952d34c1945c347eac"
+          "length": 121,
+          "sha256": "4bcfd651213b9ad40ef378806ea8dabe34ca0be5953095f763daa380f656e8dd"
         }
       }
     ],
     "wallet.tsx": [
       {
         "v12": {
-          "length": 384,
-          "sha256": "91368f9e912c71cee562ec74bc00ff92a7beb56dc321452d9693b0c1c9397a38"
+          "length": 33,
+          "sha256": "2b0e44cf87d0952fcc748698450adf458e4fea636a87d70a859ca85b403a4427"
         },
         "head": {
-          "length": 223,
-          "sha256": "c6210fd01b30e6f9098b9f3639ca914c16fac3d153f099699cf5d67eba8c8572"
+          "length": 110,
+          "sha256": "b58dd8c4b5759d24d96a5107365230959d8568b19ddbb8252ca2b7c823cbe530"
         }
       },
       {
         "v12": {
-          "length": 146,
-          "sha256": "02a5d49c719ce48d99faa5d7aa74bef4f3b3545251b1d28551d4de680f753890"
+          "length": 141,
+          "sha256": "6b89ad63d061b67a926ada37fb0b465257594164d35cba6d93edeca3618a8ae9"
         },
         "head": {
-          "length": 100,
-          "sha256": "b5aeb73a4ee545f30109a513515d21a85951aee44723f177c5cc43778cc64b13"
-        }
-      },
-      {
-        "v12": {
-          "length": 230,
-          "sha256": "c88619ce49d566be41891d15ae0ef577148ba41fc3900720c1cce49f3d6e82b7"
-        },
-        "head": {
-          "length": 105,
-          "sha256": "bc3c424f441ec9e7f4d799c101c01b458ffa5c08ae6b7d154ee3e083df5fd7a6"
-        }
-      },
-      {
-        "v12": {
-          "length": 136,
-          "sha256": "6966e0eca766f0379dbcf958f2680392902e8bd162d280b7546b8d13b63376ef"
-        },
-        "head": {
-          "length": 106,
-          "sha256": "b3a656d13e03d753fc6c79a1a52349dfc344675a99e32f97d9369ac20e21acec"
-        }
-      },
-      {
-        "v12": {
-          "length": 720,
-          "sha256": "a98bb69838bb89b3c669be3586543aadfa7219b1c41b8a92d20ce96606e03a66"
-        },
-        "head": {
-          "length": 468,
-          "sha256": "e842b4e030b7c294fbec159d1616a05c4db117c2c1737487bf1c3ae74c44d424"
-        }
-      },
-      {
-        "v12": {
-          "length": 209,
-          "sha256": "b42d0bb7ae3155694b670c146caf14e8ca50d2c55752cb4dd53a57d96810ea55"
-        },
-        "head": {
-          "length": 206,
-          "sha256": "1daf4e0fd69ed93353152bfd65603f8ce94383f03f26d7a84abcad708f3a5744"
-        }
-      }
-    ],
-    "main.tsx": [
-      {
-        "v12": {
-          "length": 178,
-          "sha256": "eb58823eac4045d2c7cf7ef2cbeb3a3ac8e2a370e922726ee910795162584262"
-        },
-        "head": {
-          "length": 168,
-          "sha256": "183f33c92e6329fdab4aa4788eaed053affe5a2798ebb665cc296933ff95f318"
-        }
-      },
-      {
-        "v12": {
-          "length": 300,
-          "sha256": "197a3cf732acac4912cc6e9966ee4b8b43ea42dddc6656c44800847518a54ab3"
-        },
-        "head": {
-          "length": 213,
-          "sha256": "0ad3243b9b15639de7cb9acae6a9da5c6f56535199469909ad29f1e3aecee776"
+          "length": 219,
+          "sha256": "5da564b0535c17b72c7bfde85a3bcd8bfc27f0c30513e8ad8a8aeaed5984c2a9"
         }
       }
     ]
@@ -323,7 +95,7 @@
     },
     "Flows.tsx": {
       "guarded": 41,
-      "calls": 311,
+      "calls": 315,
       "attributes": 95
     },
     "Losses.tsx": {
@@ -388,23 +160,11 @@
     },
     "wallet.tsx": {
       "guarded": 31,
-      "calls": 141,
+      "calls": 140,
       "attributes": 0
     }
   },
   "documentedGuardedCallChanges": {
-    "Vault.tsx": {
-      "removed": [],
-      "added": []
-    },
-    "components.tsx": {
-      "removed": [],
-      "added": []
-    },
-    "Docs.tsx": {
-      "removed": [],
-      "added": []
-    },
     "Flows.tsx": {
       "removed": [],
       "added": []
@@ -412,89 +172,22 @@
     "wallet.tsx": {
       "removed": [],
       "added": []
-    },
-    "main.tsx": {
-      "removed": [],
-      "added": []
     }
   },
-  "documentedAttributeChanges": {
-    "Vault.tsx": {
-      "removed": [],
-      "added": [
-        "<svg> role=\"img\""
-      ],
-      "why": "each has its why in scripts/check-calldata.mjs"
-    }
-  },
+  "documentedAttributeChanges": {},
   "documentedCallChanges": {
-    "Vault.tsx": {
-      "why": "SPEC 1 and owner-approved short closure notice: the heading and removed sentence, compact Closed status on Vault, and Closed LED plus one sentence on Deposit. The exact local display tail uses the existing snapshot and settings; original r/reason/clock/closed calculations remain byte-identical. Normal, loading and reopening-boundary states show no notice; unreadable status retains Retry.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [
-        "reasonWords(Number(r.value[0]), s.globals.settings)",
-        "Number(r.value[0])",
-        "s.assets.find((a) => a.token.toLowerCase() === r.value[1].toLowerCase())",
-        "a.token.toLowerCase()",
-        "r.value[1].toLowerCase()",
-        "hoursLine(s.globals.settings)"
-      ],
-      "newUsesOfWatchedNames": []
-    },
-    "components.tsx": {
-      "why": "SPEC 1: PageTitle renders no empty paragraph when there are no children.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [],
-      "newUsesOfWatchedNames": []
-    },
-    "Docs.tsx": {
-      "why": "SPEC 2: four approved paragraphs in the existing panel.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [],
-      "newUsesOfWatchedNames": []
-    },
     "Flows.tsx": {
-      "why": "SPEC 3/4 and owner-approved presentation: direct Deposit paragraphs, the short DepositState sign notice, one-column Redeem, removed redundant wallet instruction lines and Claims presentation. The unused hoursLine import, display calls and r/reason declarations are removed; all transaction builders and reads stay byte-identical.",
+      "why": "v13 (owner decision 2026-10-13): while the Deposit form is empty (no wallet, or a wallet whose read balances hold no listed stock and no row) the stock list under the search is shown open across the panel, in a div with a plain heading line instead of the details fold, and it stays open for that account. One new local state (the account the list opened for), one display-only effect that sets it, and the display-only emptiness test; no call of HEAD is removed, no read, send, storage or network use is added.",
       "piecesPutBackInsideCalls": [],
-      "removed": [
-        "Number(r.value[0])",
-        "hoursLine(s.globals.settings)",
-        "w.account.slice(0, 6)",
-        "w.account.slice(-4)",
-        "s.assets.filter((a) => owed[a.token] === 0n)",
-        {
-          "start": "visible.map((a) => (<div className=\"receipt\" key={a.token}> <bdi>{a.symbol}</bdi",
-          "length": 633,
-          "sha256": "e922ebfb0b92639566d4b62edf76e90cc3d1598a12ec9d5b440e225c4c2f54df"
-        },
-        "zeros.map((a) => a.symbol).join(\", \")",
-        "zeros.map((a) => a.symbol)"
-      ],
+      "removed": [],
       "newUsesOfWatchedNames": []
     },
     "wallet.tsx": {
-      "why": "SPEC 6: a separate connection intent counter and mined-receipt hash propagation after the protected send head.",
+      "why": "v13 (owner decision 2026-10-13): the Claim all result detail no longer counts the stocks that are not owed; the unused zeros count (a filter over the already-read owed values) is removed. The send head, every state write and every request stay HEAD's.",
       "piecesPutBackInsideCalls": [],
       "removed": [
-        "setConfirmed({ hash: tx, functionName: s.functionName })",
-        "report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx })",
-        "report(key, { message: `${label}: Confirmed.`, hash: tx, detail })"
+        "values.filter((v) => v.ok && v.value === 0n)"
       ],
-      "newUsesOfWatchedNames": [
-        [
-          "setHash(mined)",
-          "useWallet > send"
-        ],
-        [
-          "setConfirmed({ hash: mined, functionName: s.functionName })",
-          "useWallet > send"
-        ]
-      ]
-    },
-    "main.tsx": {
-      "why": "Owner-approved persistence: React Activity keeps Claims mounted across navigation and pauses its effects while hidden.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [],
       "newUsesOfWatchedNames": []
     }
   },
@@ -535,20 +228,8 @@
       "headSha256": "4247a4ab77f71629f43cd7af26084e39f6e92fbce48175ebd637257b82b24238",
       "tailPieces": [
         {
-          "now": "      // After a Speed up the transaction is mined under another hash than the\n      // one the wallet returned: from here on the mined one is shown and read.\n      const mined = receipt.transactionHash;\n      sent = mined;\n      setHash(mined);\n",
-          "head": ""
-        },
-        {
-          "now": "setConfirmed({ hash: mined, functionName: s.functionName });",
-          "head": "setConfirmed({ hash: tx, functionName: s.functionName });"
-        },
-        {
-          "now": "report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });",
-          "head": "report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx });"
-        },
-        {
-          "now": "report(key, { message: `${label}: Confirmed.`, hash: mined, detail });",
-          "head": "report(key, { message: `${label}: Confirmed.`, hash: tx, detail });"
+          "now": "          detail =\n            `Still owed to ${creditor}: ` +\n            (fresh.complete\n              ? remaining.join(\"; \") || \"Nothing owed.\"\n              : \"Stock list unreadable — Retry vault.\");\n",
+          "head": "          const zeros = values.filter((v) => v.ok && v.value === 0n).length;\n          detail =\n            `Still owed to ${creditor}: ` +\n            (fresh.complete\n              ? (remaining.join(\"; \") || \"Nothing owed.\") +\n                (zeros ? ` Nothing owed for ${zeros} other stocks.` : \"\")\n              : \"Stock list unreadable — Retry vault.\");\n"
         }
       ]
     },
@@ -584,72 +265,26 @@
   },
   "browserStorageAddedInV12": {},
   "namesAddedAtTheTopOfAFile": {
-    "Vault.tsx": {
-      "DEPOSIT_LETTERS": "DEPOSIT_LETTERS: Record<string, string[]> = { O: [\"01110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"01110\"], E: [\"11111\", \"10000\", \"10000\", \"11110\", \"10000\", \"10000\", \"11111\"], C: [\"01111\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"01111\"], L: [\"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"11111\"], S: [\"01111\", \"10000\", \"10000\", \"01110\", \"00001\", \"00001\", \"11110\"], D: [\"11110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"11110\"], }",
-      "DepositLedSign": "function"
-    },
-    "components.tsx": {},
-    "Docs.tsx": {},
     "Flows.tsx": {},
-    "wallet.tsx": {},
-    "main.tsx": {
-      "Activity": "import Activity from \"react\""
-    }
+    "wallet.tsx": {}
   },
   "moduleDeclarationChanges": {
-    "Vault.tsx": [],
-    "components.tsx": [],
-    "Docs.tsx": [],
-    "Flows.tsx": [
-      {
-        "name": "hoursLine",
-        "head": [
-          "import hoursLine from \"./Vault\""
-        ],
-        "now": null
-      }
-    ],
-    "wallet.tsx": [],
-    "main.tsx": []
+    "Flows.tsx": [],
+    "wallet.tsx": []
   },
   "namesAddedInsideComponents": {
-    "Vault.tsx": {
-      "DepositState": [
-        "showSign",
-        "statusUnreadable",
-        "operational",
-        "issueReason",
-        "issue",
-        "weekendHours"
-      ]
-    },
     "Flows.tsx": {
-      "Claims": [
-        "visit",
-        "readStart",
-        "display",
-        "setDisplay"
-      ]
-    },
-    "wallet.tsx": {
-      "useWallet": [
-        "connectVersion"
+      "DepositPage": [
+        "listOpenFor",
+        "setListOpenFor",
+        "emptyForm",
+        "accountKey",
+        "listOpen",
+        "StockList"
       ]
     }
   },
   "transactionCode": {
-    "Vault.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
-    },
-    "components.tsx": {
-      "pieces": 1,
-      "namesDeclaredAroundThem": []
-    },
-    "Docs.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
-    },
     "Flows.tsx": {
       "pieces": 9,
       "namesDeclaredAroundThem": [
@@ -659,53 +294,25 @@
     "wallet.tsx": {
       "pieces": 1,
       "namesDeclaredAroundThem": []
-    },
-    "main.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
     }
   },
   "reviewedAddedCalls": {
-    "Vault.tsx": {
-      "sha256": "4f11db85cbd213b7a60ff309a42fc122b75f2408685534c1596c381656a0347d",
-      "callees": "toUpperCase flatMap flatMap map some split reasonWords"
-    },
-    "components.tsx": {
-      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "callees": ""
-    },
-    "Docs.tsx": {
-      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "callees": ""
-    },
     "Flows.tsx": {
-      "sha256": "a300e32681affcedb9a06c8a18f5f3278b503113fe7752c4b7f6705fcefc19f1",
-      "callees": "useRef useRef useLayoutEffect useState useLayoutEffect setDisplay some keys startsWith setDisplay map"
+      "sha256": "684589218caafbf91bde61f7f37ff05fb113369917cae3028fae03a1cdc5a4bd",
+      "callees": "useState some useEffect setListOpenFor"
     },
     "wallet.tsx": {
-      "sha256": "4aa092bccb8c851943d0ea97214d6e4be2efb19245eea9383a4a4380efdf23c8",
-      "callees": "useRef setHash setConfirmed report report"
-    },
-    "main.tsx": {
       "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
       "callees": ""
     }
   },
   "reviewedSourcePins": {
-    "Vault.tsx": "d8936edd240c7571e4e65bdf878f65bea73b889c5541873f8fe2b128633a7582",
-    "components.tsx": "d9ae83c4ad85ca3762e24914efd4669e22916bb5a2e29bbfd778bcdec5041730",
-    "Docs.tsx": "5f24a982beba7124f0af8e06496b5e64f79b052978ff37785ff6700279f984c5",
-    "Flows.tsx": "3b380cc8bcdf5d2cc81ed46fef7274e00a0ac83025200cdc046bf8fb18c49e3b",
-    "wallet.tsx": "488b62c80121b3302ea8cbdac7d23e0a32d8fc874082dfab6499388949b083de",
-    "main.tsx": "2745de3906186f90b599d7b3675d602be6cc5ed0ed055813de8b4dd7b0f0e04e"
+    "Flows.tsx": "8ec2d9af627b26797c2971eb12154262001c0e1e5aab7b8b723e9640e41fed6a",
+    "wallet.tsx": "564ce2be2ec1c9e79f55bfd13b26c87e0b0525915e131d32d4d983413e8b8bcf"
   },
   "transactionStateWrites": {
-    "Vault.tsx": 1,
-    "components.tsx": 0,
-    "Docs.tsx": 0,
     "Flows.tsx": 0,
-    "wallet.tsx": 0,
-    "main.tsx": 0
+    "wallet.tsx": 0
   },
   "protectedCode": {
     "sendTailWrites": [
@@ -734,18 +341,9 @@
       }
     ],
     "Vault DepositState": {
-      "headBytes": 1575,
-      "headSha256": "e524c39d5b3b81fe2b099ea100a5a1b3640154e70caa255f055d04da0efd648f",
-      "pieces": [
-        [
-          "export function DepositState({ snapshot: s, showSign = false }: { snapshot: Snapshot; showSign?: boolean }) {",
-          "export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {"
-        ],
-        [
-          "\n  // The owner wants a notice only for closed deposits or an unreadable status.\n  const statusUnreadable =\n    !s.complete || !r?.ok || s.globals.genesisFinalized === undefined;\n  const operational =\n    !statusUnreadable && reason === 0 && s.globals.genesisFinalized === true &&\n    s.assets.some((a) => a.open && !a.retired);\n  if (s.loading || operational || closed === mayBeOpen) return null;\n  const issueReason = s.globals.genesisFinalized === false ? 1\n    : !s.assets.length ? 4\n      : s.assets.every((a) => !a.open || a.retired) ? 5\n        : reason === 13 ? 9 : reason;\n  const issue = reasonWords(issueReason, s.globals.settings).split(\" (\")[0];\n  const weekendHours = reason === 3 &&\n    s.globals.settings?.hoursFrom === 72000n && s.globals.settings?.hoursTo === 504000n;\n  return (\n    <div className={showSign ? \"deposit-state deposit-notice\" : \"deposit-state\"}>\n      {statusUnreadable ? (\n        <>\n          {!showSign && <strong>Vault status:</strong>}\n          <p>unreadable — Retry vault</p>\n          <button onClick={s.retry}>Retry vault</button>\n        </>\n      ) : showSign ? (\n        <>\n          <DepositLedSign />\n          <p>{weekendHours\n            ? \"Deposits reopen when the stock feed prices update around 8pm on Sundays.\"\n            : `Deposits will be back open when “${issue}” is resolved.`}</p>\n        </>\n      ) : (\n        <><strong>Vault status:</strong><p>Closed</p></>\n      )}\n    </div>\n  );\n}",
-          "\n  return (\n    <div className=\"deposit-state\">\n      <strong>Vault deposit status</strong>\n      <p>\n        {s.loading\n          ? \"Reading...\"\n          : !s.assets.length &&\n              s.complete &&\n              s.globals.genesisFinalized === false\n            ? \"No Stock Tokens are listed yet. Deposits start after the owner finishes setup.\"\n            : s.assets.length > 0 &&\n                s.assets.every((a) => !a.open || a.retired) &&\n                s.globals.genesisFinalized\n              ? \"Every stock is closed. The owner must reopen a stock before deposits.\"\n              : !r || !r.ok\n                ? \"unreadable — Retry vault\"\n                : reasonWords(Number(r.value[0]), s.globals.settings)}\n      </p>\n      {r?.ok && r.value[1] !== zeroAddress && (\n        <p>\n          Stock at fault:{\" \"}\n          {s.assets.find(\n            (a) => a.token.toLowerCase() === r.value[1].toLowerCase(),\n          )?.symbol ?? r.value[1]}\n        </p>\n      )}\n      {closed && <p className=\"reopen\">{closed}</p>}\n      <p>Hours: {s.loading ? \"Reading...\" : hoursLine(s.globals.settings)}</p>\n      {!s.loading && (!r || !r.ok) && (\n        <button onClick={s.retry}>Retry vault</button>\n      )}\n    </div>\n  );\n}"
-        ]
-      ]
+      "headBytes": 1830,
+      "headSha256": "c4d18e62f36a4b4fa553b10b83105c802ea14c17f5c70b4120b682ddc1c04f0a",
+      "pieces": []
     },
     "depositSign": {
       "rawPins": {
@@ -1036,14 +634,7 @@
       "components.tsx": 5,
       "main.tsx": 14
     },
-    "equalToHeadExceptDisplayNames": {
-      "Vault.tsx": [
-        {
-          "text": "a.open",
-          "place": "DepositState"
-        }
-      ]
-    }
+    "equalToHeadExceptDisplayNames": {}
   },
   "pinnedV9Declarations": {
     "web/src/governance.ts": {

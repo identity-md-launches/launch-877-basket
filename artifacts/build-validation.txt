@@ -1,26 +1,21 @@
+2026-10-14 (Asia/Taipei) — v13 production build verification
+Base commit: 586998cf5eb2a6ccce05615ddf7f44874813042c
+Node v24.21.0; npm 11.19.0; locked Vite 7.1.9 and TypeScript 5.9.3.
 
-> basket-protocol-web@1.0.0 build
-> tsc --noEmit && vite build
+Commands run from web/:
+npm ci --cache /tmp/basket-v13-npm-cache — exit 0; 39 packages installed.
+npm run typecheck — exit 0.
+npm run build — exit 0; tsc --noEmit and Vite build; 1100 modules transformed.
+Vite build completed in 6.78 seconds. Existing >500 kB chunk advisory only.
+The first premature typecheck attempt ran before npm ci finished and could not find tsc; the completed install resolved it without changing dependencies.
+npm ci reported 1 moderate and 2 high dependency advisories; locked dependencies were preserved.
 
-vite v7.1.9 building for production...
-transforming...
-✓ 1100 modules transformed.
-rendering chunks...
-computing gzip size...
-../dist/index.html                     1.33 kB │ gzip:   0.56 kB
-../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
-../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
-../dist/assets/index-DMUMxJ0Z.css     41.27 kB │ gzip:   9.65 kB
-../dist/assets/ccip-DaOwsnsF.js        2.61 kB │ gzip:   1.24 kB
-../dist/assets/index-BFEYBx6O.js     575.30 kB │ gzip: 176.23 kB
+Produced files (all five requested SHA-256 values match):
+14991f60318eacd64a0070b0e1cb29b591ce744ecbbb3cce6a44101b7ee8a973  dist/assets/index-CFIsCDgK.js  (575499 bytes)
+de331fa183d2be573ade7f790289f8acfc79ee4a2322f3877520f9b4f349d281  dist/assets/index-93wOgsf7.css  (41337 bytes)
+0ed8570a07accffdac034dec8c85a73f16b158e1e2576cad29024e7197482e19  dist/assets/ccip-DK1SzuxE.js  (2610 bytes)
+416333c1c6fc7f8918e84e783bd95b82a0df99ebf868c25335cd4eea404e3a56  dist/index.html  (1330 bytes)
+dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85  dist/share-card.jpg  (44831 bytes)
 
-(!) Some chunks are larger than 500 kB after minification. Consider:
-- Using dynamic import() to code-split the application
-- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 5.04s
-npm notice
-npm notice New major version of npm available! 11.19.0 -> 12.2.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
-npm notice To update run: npm install -g npm@12.2.0
-npm notice
+Export uses relative script, stylesheet, favicon, font and art URLs.
+No contract, build configuration, package manifest or lockfile changed.

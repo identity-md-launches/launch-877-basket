@@ -423,12 +423,10 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
                 ? [`${a.symbol}: ${fmt(value.value, a.tokenDecimals)}`]
                 : [];
           });
-          const zeros = values.filter((v) => v.ok && v.value === 0n).length;
           detail =
             `Still owed to ${creditor}: ` +
             (fresh.complete
-              ? (remaining.join("; ") || "Nothing owed.") +
-                (zeros ? ` Nothing owed for ${zeros} other stocks.` : "")
+              ? remaining.join("; ") || "Nothing owed."
               : "Stock list unreadable — Retry vault.");
         }
       } catch {

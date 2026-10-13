@@ -1354,13 +1354,21 @@ button.quiet.small-toggle {
 .all-stocks summary:hover {
   text-decoration-thickness: 2px;
 }
-.all-stocks[open] {
+.all-stocks[open],
+.all-stocks.open-list {
   margin-bottom: 20px;
 }
 /* Clear of the focus ring of the line above it. */
 .all-stocks p {
   margin: 6px 0 10px;
   font-size: 14px;
+}
+/* v13: while the form is empty (no wallet, or a wallet without a listed stock)
+   the list is shown open across the panel, and its heading line is plain text
+   in the place of the fold's line, not a link. */
+.all-stocks .list-title {
+  margin: 0;
+  font-weight: 700;
 }
 /* Even columns that fill the line, so many tickers stay easy to scan. */
 .all-stocks ul {

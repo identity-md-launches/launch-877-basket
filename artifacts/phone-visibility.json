@@ -47,7 +47,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v12 Vault: exact replacement heading, sentence and paragraph removed, panel does not grow; exact capacity label with a smaller note underneath, unchanged figure value",
+      "v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -108,6 +108,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -169,7 +170,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v12 Redeem: one column, removed aside, exact quiet claims line and removed wallet-switch line; original first-screen form content stays on screen",
+      "v13 Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
@@ -240,7 +241,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v12 Docs: original paragraph unchanged; exactly four approved paragraphs; every later panel moves down by exactly their added height",
+      "v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],
@@ -398,7 +399,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v12 Vault: exact replacement heading, sentence and paragraph removed, panel does not grow; exact capacity label with a smaller note underneath, unchanged figure value",
+      "v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -449,6 +450,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -500,7 +502,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v12 Redeem: one column, removed aside, exact quiet claims line and removed wallet-switch line; original first-screen form content stays on screen",
+      "v13 Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
       "character picture starts on the first screen"
@@ -551,7 +553,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v12 Docs: original paragraph unchanged; exactly four approved paragraphs; every later panel moves down by exactly their added height",
+      "v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],
@@ -759,7 +761,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v12 Vault: exact replacement heading, sentence and paragraph removed, panel does not grow; exact capacity label with a smaller note underneath, unchanged figure value",
+      "v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -820,6 +822,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -860,7 +863,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v12 Vault: exact replacement heading, sentence and paragraph removed, panel does not grow; exact capacity label with a smaller note underneath, unchanged figure value",
+      "v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -911,6 +914,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -971,6 +975,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: exact single weekend sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -1021,6 +1026,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
+      "v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock",
       "Owner follow-up: exact single weekend sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",

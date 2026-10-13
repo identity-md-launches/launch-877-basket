@@ -467,6 +467,7 @@ try {
   let lastSent, lastMined, speedNext = false, repricing;
   let holdConnect = false, releaseConnect, emptyAccounts = false;
   const v12Checks = [];
+  const v13Checks = [];
   page.on("console", (m) => {
     if (m.type() === "error") consoleErrors.push(m.text());
   });
@@ -1599,6 +1600,90 @@ try {
   checks.push(
     "Disconnect: address gone, Connect wallet shown, the exact top message, still disconnected after a reload, Connect wallet brings the address back; Disconnect makes no wallet request or send",
   );
+  // v13: the stock list under the search. With a wallet that holds listed
+  // stock it is the closed fold (checked above); while the form is empty it is
+  // shown open across the panel, with its heading as a plain line and no
+  // details element, and it stays open for that account after a press. The
+  // list reads from the vault only: no wallet request and no send.
+  const openList = page.locator("div.all-stocks.open-list"),
+    listFacts = () =>
+      page.evaluate(() => {
+        const ul = document.querySelector(".all-stocks ul"),
+          title = document.querySelector(".all-stocks .list-title"),
+          panel = ul.closest("section.panel"),
+          cs = getComputedStyle(panel),
+          // The panel's content box: client width without its frame and padding.
+          inner = panel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
+          u = ul.getBoundingClientRect();
+        return {
+          title: title?.textContent,
+          titleTag: title?.tagName,
+          summaries: document.querySelectorAll(".all-stocks summary").length,
+          buttons: ul.querySelectorAll("button").length,
+          ratio: u.width / inner,
+          columns: getComputedStyle(ul).gridTemplateColumns.split(" ").length,
+          overflow: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+  const listRequests = asked.length, listSends = sends.length;
+  // No wallet: the Deposit page after a Disconnect (and after the reload above
+  // the page stayed disconnected). The owner's connected wallet above showed the
+  // fold closed again: the list stays open only for the account it opened for.
+  await page.getByRole("button", { name: "Disconnect", exact: true }).click();
+  await page
+    .getByText("Connect your wallet to see the stocks you hold.", { exact: true })
+    .waitFor();
+  await openList.waitFor();
+  assert.equal(await page.locator("details.all-stocks").count(), 0);
+  let facts = await listFacts();
+  assert.deepEqual(
+    [facts.title, facts.titleTag, facts.summaries, facts.buttons, facts.overflow],
+    ["All stocks you can deposit (25)", "P", 0, 25, false],
+    JSON.stringify(facts),
+  );
+  assert.ok(facts.ratio > 0.98 && facts.columns >= 8, JSON.stringify(facts));
+  await openList
+    .getByText("Press a stock to add it to your deposit.", { exact: true })
+    .waitFor();
+  // A wallet that holds no listed stock (the next owner's account, which never
+  // held one): the same open list; a press adds the row and the list stays open.
+  await walletAnswers(2, () =>
+    header.getByRole("button", { name: "Connect wallet", exact: true }).click(),
+  );
+  await address.waitFor();
+  await page.getByLabel("FIG amount", { exact: true }).waitFor();
+  assert.equal(await page.locator("details.all-stocks").count(), 1);
+  await page.evaluate((a) => window.__accounts([a]), nextOwner);
+  await page
+    .getByText("No open listed stock in this wallet.", { exact: true })
+    .waitFor();
+  await openList.waitFor();
+  assert.deepEqual(
+    [await page.locator(".deposit-row").count(), await page.locator("details.all-stocks").count()],
+    [0, 0],
+  );
+  facts = await listFacts();
+  assert.deepEqual([facts.title, facts.summaries, facts.buttons], ["All stocks you can deposit (25)", 0, 25]);
+  assert.ok(facts.ratio > 0.98 && facts.columns >= 8, JSON.stringify(facts));
+  await openList.getByRole("button", { name: "FIG", exact: true }).click();
+  await page.getByLabel("FIG amount", { exact: true }).waitFor();
+  assert.equal(await page.locator(":focus").getAttribute("aria-label"), "FIG amount");
+  assert.equal(await page.locator(".deposit-row").count(), 1);
+  assert.equal(await openList.count(), 1);
+  assert.equal(await openList.getByRole("button", { name: "FIG", exact: true }).isDisabled(), true);
+  assert.equal(await page.locator("details.all-stocks").count(), 0);
+  // Back to the owner's wallet: its rows, and the fold closed as before.
+  await page.evaluate((a) => window.__accounts([a]), owner);
+  await page.waitForFunction(() => document.querySelectorAll(".deposit-row").length === 25);
+  assert.equal(await openList.count(), 0);
+  assert.equal(await page.locator("details.all-stocks").count(), 1);
+  assert.equal(await page.locator("details.all-stocks").evaluate((d) => d.open), false);
+  assert.equal(sends.length, listSends);
+  assert.deepEqual([...new Set(asked.slice(listRequests))].sort(), ["eth_chainId", "eth_requestAccounts"]);
+  assert.deepEqual([issues, consoleErrors.slice(before[2])], [[], []]);
+  v13Checks.push(
+    "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send",
+  );
   // A Saturday: deposits refused (Hours) with the reopen time; redeem and claim still work.
   await warpTo(await saturday());
   assert.equal(await rv("insideHours"), false);
@@ -1698,6 +1783,12 @@ try {
   assert.equal(await page.locator("section.claims .claim-grid > .receipt").count(), 0);
   await page.waitForFunction(()=>document.querySelector("section.claims")?.textContent.includes("Confirmed."));
   v12Checks.push("Claims: one/two owed show panel with exact conditional note and no zero fold; last claim confirmation survives navigation");
+  // v13: the Claim all result line names what is still owed and no longer
+  // counts the stocks that are not.
+  const claimsText = await page.locator("section.claims").textContent();
+  assert.match(claimsText, /Still owed to 0x[0-9a-fA-F]{40}: Nothing owed\./, claimsText);
+  assert.ok(!/Nothing owed for \d+ other stocks/.test(claimsText), claimsText);
+  v13Checks.push("Claim all result: the Still owed line ends with Nothing owed. and carries no other-stocks count");
   // Immediate controls and each proposal form.
   await nav("Owner");
   const closeForm = action("Close a stock");
@@ -2068,7 +2159,7 @@ try {
     assert.ok(facts.natural>=240&&facts.lines>1&&facts.inside&&!facts.overflow,JSON.stringify(facts));assert.deepEqual(facts.bad,[]);
   }
   v12Checks.push("24/7 label: widened text wraps at whole words inside pill and panel at 661px on Deposit and Redeem");
-  checks.push(...v12Checks);
+  checks.push(...v12Checks, ...v13Checks);
   assert.deepEqual([...new Set(asked)].sort(),["eth_accounts","eth_chainId","eth_requestAccounts","eth_sendTransaction"]);
   assert.equal(revoked.length,0);
   assert.deepEqual(issues,[]);

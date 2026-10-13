@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8332390,
+  "uncompressedDeliveryBytes": 7989799,
   "fileCount": 231,
-  "productionExportBytes": 968913,
+  "productionExportBytes": 969187,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-DaOwsnsF.js": {
+    "dist/assets/ccip-DK1SzuxE.js": {
       "bytes": 2610,
-      "sha256": "1b46776c8efcfa1ab8458bb97b1e31acb5230bcd5d589cc80f33ac82f88f4164"
+      "sha256": "0ed8570a07accffdac034dec8c85a73f16b158e1e2576cad29024e7197482e19"
     },
-    "dist/assets/index-BFEYBx6O.js": {
-      "bytes": 575296,
-      "sha256": "c88a2cacd5068291197cc2526850ca31223184004fb827d37a52a169f745f7f6"
+    "dist/assets/index-93wOgsf7.css": {
+      "bytes": 41337,
+      "sha256": "de331fa183d2be573ade7f790289f8acfc79ee4a2322f3877520f9b4f349d281"
     },
-    "dist/assets/index-DMUMxJ0Z.css": {
-      "bytes": 41266,
-      "sha256": "0480e963e928ad5adf873a0fd9b6285aedf474e209d20f0881b508a5210087f8"
+    "dist/assets/index-CFIsCDgK.js": {
+      "bytes": 575499,
+      "sha256": "14991f60318eacd64a0070b0e1cb29b591ce744ecbbb3cce6a44101b7ee8a973"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -186,7 +186,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "a60077e0ad16890a0d21be2051b52d38153e202a69a1db6acb4c307ae2e1b6c9"
+      "sha256": "416333c1c6fc7f8918e84e783bd95b82a0df99ebf868c25335cd4eea404e3a56"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,
@@ -195,7 +195,7 @@
   },
   "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
-    "Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; v12 source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged",
+    "Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; v13 source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged",
     "No git submodules or nested dependency/cache/archive payloads",
     "24 required empty/25-stock JPEGs retained (quality 26 in v12, 32 in v11, 36 in v9/v10, 40 before); no additional artifact images",
     "Both copies of all 37 manifest assets included"

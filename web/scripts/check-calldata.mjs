@@ -11,12 +11,18 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v12 on HEAD=v11: the approved presentation changes, mined-receipt hash and connection intent guard.
-// Transactions and all chain reads remain HEAD's. main keeps Claims mounted by owner-approved Activity.
+// v13 on HEAD=v12: two owner decisions of 2026-10-13. Flows.tsx: the Deposit stock list is shown open across the
+// panel while the form is empty (no wallet, or a wallet without a listed stock) and then for that account.
+// wallet.tsx: the Claim all result detail loses its "Nothing owed for N other stocks." sentence. Transactions
+// and all chain reads remain HEAD's; every other web/src file is byte-identical to HEAD.
 const protectedFiles=[
+ "Docs.tsx",
  "Losses.tsx",
  "Owner.tsx",
  "Scenery.tsx",
+ "Vault.tsx",
+ "components.tsx",
+ "main.tsx",
  "chain.ts",
  "deployment.ts",
  "governance.ts",
@@ -26,146 +32,34 @@ const protectedFiles=[
  "vault.abi.json"
 ];
 for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src/'+f),f);
-// The v12 files: byte-identical to HEAD once their documented pieces [v12, HEAD] are put back (each exactly once), so
+// The v13 files: byte-identical to HEAD once their documented pieces [v13, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v12 pieces (generated from the difference to HEAD, not edited by hand)
+// >>> v13 pieces (generated from the difference to HEAD, not edited by hand)
 const editedFiles={
- "Vault.tsx": [
-  [
-   "  return now;\n}\n// Owner-approved display: no reads, requests or transaction state.\nconst DEPOSIT_LETTERS: Record<string, string[]> = {\n  O: [\"01110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"01110\"],\n  E: [\"11111\", \"10000\", \"10000\", \"11110\", \"10000\", \"10000\", \"11111\"],\n  C: [\"01111\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"01111\"],\n  L: [\"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"11111\"],\n  S: [\"01111\", \"10000\", \"10000\", \"01110\", \"00001\", \"00001\", \"11110\"],\n  D: [\"11110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"11110\"],\n};\n\nfunction DepositLedSign() {\n  const label = \"Closed\";\n  const word = label.toUpperCase();\n  const step = 4.8;\n  const start = (220 - ((word.length * 6 - 2) * step)) / 2;\n  return (\n    <svg className=\"deposit-led-sign\" viewBox=\"0 0 220 80\" width=\"220\" height=\"80\" role=\"img\" aria-label={label}>\n      <rect x=\"1\" y=\"1\" width=\"218\" height=\"78\" rx=\"14\" fill=\"#080b14\" stroke=\"#263144\" strokeWidth=\"2\" />\n      <rect className=\"deposit-led-border\" x=\"9\" y=\"9\" width=\"202\" height=\"62\" rx=\"9\" />\n      <rect className=\"deposit-led-chase\" x=\"9\" y=\"9\" width=\"202\" height=\"62\" rx=\"9\" />\n      <g className=\"deposit-led-letters\">\n        {[...word].flatMap((letter, index) => DEPOSIT_LETTERS[letter].flatMap((row, y) => [...row].map((on, x) => (\n          <circle key={`${index}-${y}-${x}`} cx={start + (index * 6 + x) * step} cy={25.6 + y * step} r=\"1.7\" fill={on === \"1\" ? \"#ff373d\" : \"#3e111c\"} />\n        ))))}\n      </g>\n    </svg>\n  );\n}\n\nexport function DepositState({ snapshot: s, showSign = false }: { snapshot: Snapshot; showSign?: boolean }) {\n  const r = s.status;\n  const reason = r?.ok && !s.loading ? Number(r.value[0]) : undefined;\n",
-   "  return now;\n}\nexport function DepositState({ snapshot: s }: { snapshot: Snapshot }) {\n  const r = s.status;\n  const reason = r?.ok && !s.loading ? Number(r.value[0]) : undefined;\n"
-  ],
-  [
-   "      ? closedWords(reason, s.globals.settings, s.blockTime, now)\n      : undefined;\n  // The owner wants a notice only for closed deposits or an unreadable status.\n  const statusUnreadable =\n    !s.complete || !r?.ok || s.globals.genesisFinalized === undefined;\n  const operational =\n    !statusUnreadable && reason === 0 && s.globals.genesisFinalized === true &&\n    s.assets.some((a) => a.open && !a.retired);\n  if (s.loading || operational || closed === mayBeOpen) return null;\n  const issueReason = s.globals.genesisFinalized === false ? 1\n    : !s.assets.length ? 4\n      : s.assets.every((a) => !a.open || a.retired) ? 5\n        : reason === 13 ? 9 : reason;\n  const issue = reasonWords(issueReason, s.globals.settings).split(\" (\")[0];\n  const weekendHours = reason === 3 &&\n    s.globals.settings?.hoursFrom === 72000n && s.globals.settings?.hoursTo === 504000n;\n  return (\n    <div className={showSign ? \"deposit-state deposit-notice\" : \"deposit-state\"}>\n      {statusUnreadable ? (\n        <>\n          {!showSign && <strong>Vault status:</strong>}\n          <p>unreadable — Retry vault</p>\n          <button onClick={s.retry}>Retry vault</button>\n        </>\n      ) : showSign ? (\n        <>\n          <DepositLedSign />\n          <p>{weekendHours\n            ? \"Deposits reopen when the stock feed prices update around 8pm on Sundays.\"\n            : `Deposits will be back open when “${issue}” is resolved.`}</p>\n        </>\n      ) : (\n        <><strong>Vault status:</strong><p>Closed</p></>\n      )}\n    </div>\n",
-   "      ? closedWords(reason, s.globals.settings, s.blockTime, now)\n      : undefined;\n  return (\n    <div className=\"deposit-state\">\n      <strong>Vault deposit status</strong>\n      <p>\n        {s.loading\n          ? \"Reading...\"\n          : !s.assets.length &&\n              s.complete &&\n              s.globals.genesisFinalized === false\n            ? \"No Stock Tokens are listed yet. Deposits start after the owner finishes setup.\"\n            : s.assets.length > 0 &&\n                s.assets.every((a) => !a.open || a.retired) &&\n                s.globals.genesisFinalized\n              ? \"Every stock is closed. The owner must reopen a stock before deposits.\"\n              : !r || !r.ok\n                ? \"unreadable — Retry vault\"\n                : reasonWords(Number(r.value[0]), s.globals.settings)}\n      </p>\n      {r?.ok && r.value[1] !== zeroAddress && (\n        <p>\n          Stock at fault:{\" \"}\n          {s.assets.find(\n            (a) => a.token.toLowerCase() === r.value[1].toLowerCase(),\n          )?.symbol ?? r.value[1]}\n        </p>\n      )}\n      {closed && <p className=\"reopen\">{closed}</p>}\n      <p>Hours: {s.loading ? \"Reading...\" : hoursLine(s.globals.settings)}</p>\n      {!s.loading && (!r || !r.ok) && (\n        <button onClick={s.retry}>Retry vault</button>\n      )}\n    </div>\n"
-  ],
-  [
-   "    <>\n      <PageTitle\n        title=\"Always in stock\"\n        character={{\n          kind: \"vault\",\n",
-   "    <>\n      <PageTitle\n        title=\"A basket of stocks.\"\n        character={{\n          kind: \"vault\",\n"
-  ],
-  [
-   "          line: \"I was hoping you would come through my aisle\",\n        }}\n      />\n      <section className=\"panel\">\n        <div className=\"section-heading\">\n",
-   "          line: \"I was hoping you would come through my aisle\",\n        }}\n      >\n        Meet Basket (BASK): your share of the Stock Tokens in this vault.\n      </PageTitle>\n      <section className=\"panel\">\n        <div className=\"section-heading\">\n"
-  ],
-  [
-   "          </div>\n          <div>\n            <span>Maximum Basket Capacity<small>(eligible to be raised)</small></span>\n            <strong>{s.loading ? \"Reading...\" : usd(s.globals.NAV_CAP)}</strong>\n          </div>\n",
-   "          </div>\n          <div>\n            <span>Size limit</span>\n            <strong>{s.loading ? \"Reading...\" : usd(s.globals.NAV_CAP)}</strong>\n          </div>\n"
-  ],
-  [
-   "        )}\n        <div className=\"two-col\">\n          <div className=\"deposit-summary\">\n            <DepositState snapshot={s} />\n          </div>\n          <div>\n            <strong>Fees</strong>\n",
-   "        )}\n        <div className=\"two-col\">\n          <DepositState snapshot={s} />\n          <div>\n            <strong>Fees</strong>\n"
-  ]
+ "Flows.tsx":[
+  ["  const [showSmall, setShowSmall] = useState(false);\n  // v13: the account (\"\" for none) for which the stock list under the search\n  // was shown open because the form was empty; it stays open for it.\n  const [listOpenFor, setListOpenFor] = useState<string>();\n  // The stock an Add button just added, until its row is on screen.\n",
+   "  const [showSmall, setShowSmall] = useState(false);\n  // The stock an Add button just added, until its row is on screen.\n"],
+  ["  });\n  // v13: the form is empty with no wallet, or with a wallet whose balances\n  // are read and hold no listed stock while no row is in the form. Then the\n  // stock list is shown open across the panel, and it stays open for that\n  // account until the account changes or the page is reloaded.\n  const emptyForm =\n    !w.account ||\n    (ready && !unread && !rows.length && !stocks.some((x) => x.inWallet));\n  const accountKey = w.account ?? \"\";\n  useEffect(() => {\n    if (emptyForm) setListOpenFor(accountKey);\n  }, [emptyForm, accountKey]);\n  const listOpen = emptyForm || listOpenFor === accountKey;\n  const StockList = listOpen ? \"div\" : \"details\";\n  // `focus` is false for Enter in the search box, which keeps the focus.\n",
+   "  });\n  // `focus` is false for Enter in the search box, which keeps the focus.\n"],
+  ["                </div>\n                {/* Every stock the vault takes now. Closed until pressed while\n                    the form has rows; shown open across the panel while the\n                    form is empty (no wallet, or a wallet without a listed\n                    stock), and then for the rest of the visit for that account\n                    (v13). A press is the same Add as in the search; a stock\n                    that has a row stays in the list, switched off. */}\n                <StockList\n                  className={listOpen ? \"all-stocks open-list\" : \"all-stocks\"}\n                >\n                  {listOpen ? (\n                    <p className=\"list-title\">\n                      All stocks you can deposit ({open.length})\n                    </p>\n                  ) : (\n                    <summary>\n                      All stocks you can deposit ({open.length})\n                    </summary>\n                  )}\n                  <p>Press a stock to add it to your deposit.</p>\n",
+   "                </div>\n                {/* Every stock the vault takes now, closed until pressed. A\n                    press is the same Add as in the search; a stock that has a\n                    row stays in the list, switched off. */}\n                <details className=\"all-stocks\">\n                  <summary>All stocks you can deposit ({open.length})</summary>\n                  <p>Press a stock to add it to your deposit.</p>\n"],
+  ["                  </ul>\n                </StockList>\n                {counted + badAmount.length + noPrice.length > 0 && (\n",
+   "                  </ul>\n                </details>\n                {counted + badAmount.length + noPrice.length > 0 && (\n"]
  ],
- "components.tsx": [
-  [
-   "  eyebrow?: string;\n  title: string;\n  children?: ReactNode;\n  character?: {\n    kind: \"vault\" | \"deposit\" | \"redeem\";\n",
-   "  eyebrow?: string;\n  title: string;\n  children: ReactNode;\n  character?: {\n    kind: \"vault\" | \"deposit\" | \"redeem\";\n"
-  ],
-  [
-   "      {eyebrow && <p className=\"eyebrow\">{eyebrow}</p>}\n      <h1 tabIndex={-1}>{title}</h1>\n      {children != null && <p>{children}</p>}\n      {character && (\n        <div className=\"title-character\">\n",
-   "      {eyebrow && <p className=\"eyebrow\">{eyebrow}</p>}\n      <h1 tabIndex={-1}>{title}</h1>\n      <p>{children}</p>\n      {character && (\n        <div className=\"title-character\">\n"
-  ]
- ],
- "Docs.tsx": [
-  [
-   "            vault.\n          </p>\n          <p>\n            The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.\n          </p>\n          <p>\n            BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.\n          </p>\n          <p>\n            The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.\n          </p>\n          <p>\n            ITEM is not live yet. Its address will be listed here when it is.\n          </p>\n        </section>\n        <section className=\"panel\">\n",
-   "            vault.\n          </p>\n        </section>\n        <section className=\"panel\">\n"
-  ]
- ],
- "Flows.tsx": [
-  [
-   "  Receiver,\n} from \"./components\";\nimport { DepositState } from \"./Vault\";\nimport type { Wallet } from \"./wallet\";\ntype Props = { snapshot: Snapshot; wallet: Wallet };\n",
-   "  Receiver,\n} from \"./components\";\nimport { DepositState, hoursLine } from \"./Vault\";\nimport type { Wallet } from \"./wallet\";\ntype Props = { snapshot: Snapshot; wallet: Wallet };\n"
-  ],
-  [
-   "  // From the last finished vault read, kept while a new read runs so the form\n  // does not jump; undefined before the first read or when unreadable.\n  // Dollar value of n units at the feed price of the last vault read, 18\n  // decimals; undefined when that price is unreadable.\n",
-   "  // From the last finished vault read, kept while a new read runs so the form\n  // does not jump; undefined before the first read or when unreadable.\n  const r = s.status;\n  const reason = r?.ok ? Number(r.value[0]) : undefined;\n  // Dollar value of n units at the feed price of the last vault read, 18\n  // decimals; undefined when that price is unreadable.\n"
-  ],
-  [
-   "        <section className=\"panel\">\n          <HoursTag />\n          <DepositState snapshot={s} showSign />\n          <p className=\"flow-steps\">\n            Choose amounts, preview, approve each stock, press Deposit.\n",
-   "        <section className=\"panel\">\n          <HoursTag />\n          {/* One line while the vault takes deposits; otherwise, and while the\n              status is unread or unreadable, the full box with its reason. */}\n          {reason === 0 && open.length > 0 ? (\n            <p className=\"deposit-open\">\n              <strong>Deposits are open.</strong> Hours:{\" \"}\n              {hoursLine(s.globals.settings)}\n            </p>\n          ) : (\n            <DepositState snapshot={s} />\n          )}\n          <p className=\"flow-steps\">\n            Choose amounts, preview, approve each stock, press Deposit.\n"
-  ],
-  [
-   "                  <>\n                    {!ready && <p>Reading your wallet...</p>}\n                    {unread ? (\n                      <p>\n",
-   "                  <>\n                    {!ready && <p>Reading your wallet...</p>}\n                    <p className=\"wallet-line\">\n                      Showing {w.account.slice(0, 6)}…{w.account.slice(-4)}. To\n                      use another wallet, switch the address in your wallet app:\n                      this page follows it.\n                    </p>\n                    {unread ? (\n                      <p>\n"
-  ],
-  [
-   "            subtracts this lock and any fee.\n          </p>\n          <p>\n            You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.\n          </p>\n          <p>\n            A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.\n          </p>\n          <Note warning>\n            Feeds lag the market. Issuer restrictions and pool checks can stop\n",
-   "            subtracts this lock and any fee.\n          </p>\n          <details>\n            <summary>Transaction details</summary>\n            <p>\n              Each short allowance is set to exactly that stock’s amount.\n              Approvals are separate wallet prompts; the deposit follows after\n              simulation.\n            </p>\n            <p>\n              The deadline is ten minutes from preparation. Your wallet receives\n              the BASK.\n            </p>\n          </details>\n          <Note warning>\n            Feeds lag the market. Issuer restrictions and pool checks can stop\n"
-  ],
-  [
-   "        Receive your share of every stock.\n      </PageTitle>\n      <div className=\"flow-layout one-column\">\n        <section className=\"panel\">\n          <HoursTag />\n",
-   "        Receive your share of every stock.\n      </PageTitle>\n      <div className=\"flow-layout\">\n        <section className=\"panel\">\n          <HoursTag />\n"
-  ],
-  [
-   "          </p>\n        </section>\n      </div>\n    </>\n",
-   "          </p>\n        </section>\n        <aside className=\"panel\">\n          <h2>Take your basket home</h2>\n          <details>\n            <summary>Transaction details</summary>\n            <p>\n              Minimum amounts are 0.1% below a fresh preview taken just before\n              sending, with zero kept as zero. They follow assetTokens order.\n            </p>\n            <p>\n              Removal of an empty retired stock can change that order before\n              execution. Minimums protect entitlements, not immediate payment.\n            </p>\n            <p>Deposit, redemption and claim gas is estimated, then increased by 30%.</p>\n          </details>\n        </aside>\n      </div>\n    </>\n"
-  ],
-  [
-   "    (a) => owed[a.token] !== undefined && owed[a.token]! > 0n,\n  );\n  const visible = [\n    ...claimable,\n    ...s.assets.filter((a) => owed[a.token] === undefined),\n  ];\n  // Presentation only: keep the last finished visibility through refreshes.\n  // Capture old account values so neither its owed result nor its status can\n  // reveal the new account's panel before that account's first read finishes.\n  const visit = useRef({ account: w.account, initialOwed: owed, progress: w.progress, error });\n  const readStart = useRef(owed);\n  useLayoutEffect(() => {\n    readStart.current = owed;\n  }, [w.account, s.loadedAt, retry]);\n  const [display, setDisplay] = useState({ account: w.account, finished: false, shown: false, items: [] as Asset[], count: 0 });\n  useLayoutEffect(() => {\n    if (visit.current.account !== w.account) {\n      visit.current = { account: w.account, initialOwed: owed, progress: w.progress, error };\n      setDisplay({ account: w.account, finished: false, shown: false, items: [], count: 0 });\n      return;\n    }\n    if (!w.account) return;\n    const finished = !reading && !s.loading && owed !== readStart.current;\n    const status = Object.keys(w.progress).some(\n      (key) => (key === \"claim-all\" || key.startsWith(\"Claim \")) &&\n        w.progress[key] !== visit.current.progress[key],\n    );\n    const shown = working || (error !== \"\" && error !== visit.current.error) || status ||\n      (finished && (!s.complete || visible.length > 0));\n    if (finished || shown)\n      setDisplay((old) => ({\n        account: w.account, finished: old.finished || finished, shown: old.shown || shown,\n        items: finished ? visible : old.items, count: finished ? claimable.length : old.count,\n      }));\n  }, [w.account, owed, reading, s.loading, s.complete, working, error, w.progress]);\n  if (!w.account)\n    return <p className=\"claims-quiet\">Connect the receiver wallet to read and claim its owed stocks.</p>;\n  if (display.account !== w.account || !display.shown)\n    return display.account === w.account && display.finished\n      ? <p className=\"claims-quiet\">Nothing is owed to this wallet.</p>\n      : null;\n  return (\n    <section className=\"panel claims\">\n",
-   "    (a) => owed[a.token] !== undefined && owed[a.token]! > 0n,\n  );\n  const zeros = s.assets.filter((a) => owed[a.token] === 0n);\n  const visible = [\n    ...claimable,\n    ...s.assets.filter((a) => owed[a.token] === undefined),\n  ];\n  return (\n    <section className=\"panel claims\">\n"
-  ],
-  [
-   "          <ActionStatus wallet={w} scope=\"claim-all\" />\n          <div className=\"claim-grid\">\n            {display.items.map((a) => (\n              <div className=\"receipt\" key={a.token}>\n                <bdi>{a.symbol}</bdi>\n",
-   "          <ActionStatus wallet={w} scope=\"claim-all\" />\n          <div className=\"claim-grid\">\n            {visible.map((a) => (\n              <div className=\"receipt\" key={a.token}>\n                <bdi>{a.symbol}</bdi>\n"
-  ],
-  [
-   "            ))}\n          </div>\n          {!s.assets.length && (\n            <p>\n",
-   "            ))}\n          </div>\n          {zeros.length > 0 && (\n            <details>\n              <summary>Nothing owed for {zeros.length} other stocks</summary>\n              <p>{zeros.map((a) => a.symbol).join(\", \")}</p>\n            </details>\n          )}\n          {!s.assets.length && (\n            <p>\n"
-  ],
-  [
-   "            </p>\n          )}\n          {display.count > 1 && (\n            <p>\n              Claim all collects up to 10 stocks per wallet prompt. If one stock can’t be paid, that batch stays owed: collect the others with their own Claim buttons.\n            </p>\n          )}\n        </>\n      )}\n",
-   "            </p>\n          )}\n          <p>\n            Batches of up to 10 stocks, with one wallet prompt per batch. If one\n            stock’s payment fails, the vault reverts that whole batch: nothing is\n            lost and every stock in it stays owed. Use each stock’s own Claim\n            button to collect the others.\n          </p>\n        </>\n      )}\n"
-  ]
- ],
- "wallet.tsx": [
-  [
-   "  const disconnected = useRef(savedDisconnected());\n  const accountVersion = useRef(0);\n  // Advanced by Connect wallet and Disconnect only: a Connect answer that\n  // arrives after a later Disconnect is dropped.\n  const connectVersion = useRef(0);\n  const [connecting, setConnecting] = useState(false);\n  const [progress, setProgress] = useState<Record<string, ActionProgress>>({});\n",
-   "  const disconnected = useRef(savedDisconnected());\n  const accountVersion = useRef(0);\n  const [connecting, setConnecting] = useState(false);\n  const [progress, setProgress] = useState<Record<string, ActionProgress>>({});\n"
-  ],
-  [
-   "    connectingLock.current = true;\n    accountVersion.current++;\n    const version = ++connectVersion.current;\n    setConnecting(true);\n    try {\n",
-   "    connectingLock.current = true;\n    accountVersion.current++;\n    setConnecting(true);\n    try {\n"
-  ],
-  [
-   "        method: \"eth_requestAccounts\",\n      });\n      // Disconnect was pressed while the wallet was asked: it stands.\n      if (version !== connectVersion.current) return;\n      if (a[0]) {\n        disconnected.current = false;\n",
-   "        method: \"eth_requestAccounts\",\n      });\n      if (a[0]) {\n        disconnected.current = false;\n"
-  ],
-  [
-   "    if (sending.current) return;\n    accountVersion.current++;\n    connectVersion.current++;\n    disconnected.current = true;\n    try {\n",
-   "    if (sending.current) return;\n    accountVersion.current++;\n    disconnected.current = true;\n    try {\n"
-  ],
-  [
-   "            : \"The transaction was replaced in the wallet by a different one; it did not run. Refresh the vault before retrying.\",\n        );\n      // After a Speed up the transaction is mined under another hash than the\n      // one the wallet returned: from here on the mined one is shown and read.\n      const mined = receipt.transactionHash;\n      sent = mined;\n      setHash(mined);\n      if (receipt.status !== \"success\")\n        throw new Error(\n          \"The transaction reverted. Refresh the data before retrying.\",\n        );\n      setConfirmed({ hash: mined, functionName: s.functionName });\n      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });\n      let detail = \"\";\n      try {\n",
-   "            : \"The transaction was replaced in the wallet by a different one; it did not run. Refresh the vault before retrying.\",\n        );\n      if (receipt.status !== \"success\")\n        throw new Error(\n          \"The transaction reverted. Refresh the data before retrying.\",\n        );\n      setConfirmed({ hash: tx, functionName: s.functionName });\n      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx });\n      let detail = \"\";\n      try {\n"
-  ],
-  [
-   "          \"Refresh unreadable. Retry vault / claims to read the confirmed result.\";\n      }\n      report(key, { message: `${label}: Confirmed.`, hash: mined, detail });\n      return receipt;\n    } catch (e) {\n",
-   "          \"Refresh unreadable. Retry vault / claims to read the confirmed result.\";\n      }\n      report(key, { message: `${label}: Confirmed.`, hash: tx, detail });\n      return receipt;\n    } catch (e) {\n"
-  ]
- ],
- "main.tsx": [
-  [
-   "import { Activity, useCallback, useEffect, useRef, useState } from \"react\";\nimport { createRoot } from \"react-dom/client\";\nimport { chain, verifyNetwork, VAULT } from \"./chain\";\n",
-   "import { useCallback, useEffect, useRef, useState } from \"react\";\nimport { createRoot } from \"react-dom/client\";\nimport { chain, verifyNetwork, VAULT } from \"./chain\";\n"
-  ],
-  [
-   "          <LossesPage snapshot={data} wallet={wallet} />\n        )}\n        <Activity mode={page === \"Redeem\" ? \"visible\" : \"hidden\"}>\n          <Claims key={wallet.account} snapshot={data} wallet={wallet} />\n        </Activity>\n      </main>\n      <div className=\"floor-strip\" aria-hidden=\"true\" />\n",
-   "          <LossesPage snapshot={data} wallet={wallet} />\n        )}\n        {page === \"Redeem\" && <Claims snapshot={data} wallet={wallet} />}\n      </main>\n      <div className=\"floor-strip\" aria-hidden=\"true\" />\n"
-  ]
+ "wallet.tsx":[
+  ["          });\n          detail =\n",
+   "          });\n          const zeros = values.filter((v) => v.ok && v.value === 0n).length;\n          detail =\n"],
+  ["            (fresh.complete\n              ? remaining.join(\"; \") || \"Nothing owed.\"\n              : \"Stock list unreadable — Retry vault.\");\n",
+   "            (fresh.complete\n              ? (remaining.join(\"; \") || \"Nothing owed.\") +\n                (zeros ? ` Nothing owed for ${zeros} other stocks.` : \"\")\n              : \"Stock list unreadable — Retry vault.\");\n"]
  ]
 };
-// <<< v12 pieces
+// <<< v13 pieces
 assert.deepEqual(Object.keys(editedFiles),[
- "Vault.tsx",
- "components.tsx",
- "Docs.tsx",
  "Flows.tsx",
- "wallet.tsx",
- "main.tsx"
-],'the v12 files');
+ "wallet.tsx"
+],'the v13 files');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -219,30 +113,13 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD. The v12 connection guard adds no guarded call or wallet request.
-// SPEC 1-6 add no guarded call: receipt reading and display amount parsing already belong to HEAD.
+// already part of HEAD. v13 adds no guarded call, wallet request or chain read.
 const expected={
- "Vault.tsx": {
-  "removed": [],
-  "added": []
- },
- "components.tsx": {
-  "removed": [],
-  "added": []
- },
- "Docs.tsx": {
-  "removed": [],
-  "added": []
- },
  "Flows.tsx": {
   "removed": [],
   "added": []
  },
  "wallet.tsx": {
-  "removed": [],
-  "added": []
- },
- "main.tsx": {
   "removed": [],
   "added": []
  }
@@ -251,20 +128,11 @@ const expected={
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v12 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v13 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
- "Vault.tsx": {
-  "removed": [],
-  "added": [
-   [
-    "svg",
-    "role=\"img\"",
-    "The owner-approved Deposit LED sign is an inline SVG image with an accessible Closed label, shown only for a known closure using the existing snapshot status. This role is presentation only and performs no action or read."
-   ]
-  ]
- }
+
 };
-// <<< v12 attributes
+// <<< v13 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -276,71 +144,20 @@ const attributeChanges={
 // read is added; the existing receipt read and answer handling are independently byte-pinned.
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
-// Reviewed v12 differences in calls and watched-name uses. Independent of the generated pieces.
+// Reviewed v13 differences in calls and watched-name uses. Independent of the generated pieces.
 const callChanges={
- "Vault.tsx": {
-  "why": "SPEC 1 and owner-approved short closure notice: the heading and removed sentence, compact Closed status on Vault, and Closed LED plus one sentence on Deposit. The exact local display tail uses the existing snapshot and settings; original r/reason/clock/closed calculations remain byte-identical. Normal, loading and reopening-boundary states show no notice; unreadable status retains Retry.",
-  "pieces": [],
-  "removed": [
-   "reasonWords(Number(r.value[0]), s.globals.settings)",
-   "Number(r.value[0])",
-   "s.assets.find((a) => a.token.toLowerCase() === r.value[1].toLowerCase())",
-   "a.token.toLowerCase()",
-   "r.value[1].toLowerCase()",
-   "hoursLine(s.globals.settings)"
-  ],
-  "uses": []
- },
- "components.tsx": {
-  "why": "SPEC 1: PageTitle renders no empty paragraph when there are no children.",
-  "pieces": [],
-  "removed": [],
-  "uses": []
- },
- "Docs.tsx": {
-  "why": "SPEC 2: four approved paragraphs in the existing panel.",
-  "pieces": [],
-  "removed": [],
-  "uses": []
- },
  "Flows.tsx": {
-  "why": "SPEC 3/4 and owner-approved presentation: direct Deposit paragraphs, the short DepositState sign notice, one-column Redeem, removed redundant wallet instruction lines and Claims presentation. The unused hoursLine import, display calls and r/reason declarations are removed; all transaction builders and reads stay byte-identical.",
+  "why": "v13 (owner decision 2026-10-13): while the Deposit form is empty (no wallet, or a wallet whose read balances hold no listed stock and no row) the stock list under the search is shown open across the panel, in a div with a plain heading line instead of the details fold, and it stays open for that account. One new local state (the account the list opened for), one display-only effect that sets it, and the display-only emptiness test; no call of HEAD is removed, no read, send, storage or network use is added.",
   "pieces": [],
-  "removed": [
-   "Number(r.value[0])",
-   "hoursLine(s.globals.settings)",
-   "w.account.slice(0, 6)",
-   "w.account.slice(-4)",
-   "s.assets.filter((a) => owed[a.token] === 0n)",
-   "visible.map((a) => (<div className=\"receipt\" key={a.token}> <bdi>{a.symbol}</bdi> <p> Still owed:{\" \"} {reading ? \"Reading...\" : fmt(owed[a.token], a.tokenDecimals)} </p> <Receiver value={to} wallet={w} claim/> <TxButton snapshot={s} wallet={w} label={`Claim ${a.symbol}`} scope={`Claim ${a.symbol} · ${a.token}`} disabled={working || owed[a.token] === undefined || owed[a.token] === 0n} disabledReason={reading ? \"Reading... Wait for owed balances.\" : owed[a.token] === undefined ? \"Owed balance unreadable. Retry claims above.\" : \"Nothing owed for this stock.\"} getSpec={() => vault(\"claim\", [[a.token], recipient(to)])}/> </div>))",
-   "zeros.map((a) => a.symbol).join(\", \")",
-   "zeros.map((a) => a.symbol)"
-  ],
+  "removed": [],
   "uses": []
  },
  "wallet.tsx": {
-  "why": "SPEC 6: a separate connection intent counter and mined-receipt hash propagation after the protected send head.",
+  "why": "v13 (owner decision 2026-10-13): the Claim all result detail no longer counts the stocks that are not owed; the unused zeros count (a filter over the already-read owed values) is removed. The send head, every state write and every request stay HEAD's.",
   "pieces": [],
   "removed": [
-   "setConfirmed({ hash: tx, functionName: s.functionName })",
-   "report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx })",
-   "report(key, { message: `${label}: Confirmed.`, hash: tx, detail })"
+   "values.filter((v) => v.ok && v.value === 0n)"
   ],
-  "uses": [
-   [
-    "setHash(mined)",
-    "useWallet > send"
-   ],
-   [
-    "setConfirmed({ hash: mined, functionName: s.functionName })",
-    "useWallet > send"
-   ]
-  ]
- },
- "main.tsx": {
-  "why": "Owner-approved persistence: React Activity keeps Claims mounted across navigation and pauses its effects while hidden.",
-  "pieces": [],
-  "removed": [],
   "uses": []
  }
 };
@@ -393,8 +210,8 @@ function localDeclarations(file,text,fn,list){
 }
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources].sort(),'No source file added or removed');
-// Every source is either frozen (byte-identical to HEAD) or a v12 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v12 file');
+// Every source is either frozen (byte-identical to HEAD) or a v13 file with its documented pieces (above).
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v13 file');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -418,40 +235,20 @@ if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
 const addedCallPins={
- "Vault.tsx": {
-  "sha256": "4f11db85cbd213b7a60ff309a42fc122b75f2408685534c1596c381656a0347d",
-  "callees": "toUpperCase flatMap flatMap map some split reasonWords"
- },
- "components.tsx": {
-  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "callees": ""
- },
- "Docs.tsx": {
-  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "callees": ""
- },
  "Flows.tsx": {
-  "sha256": "a300e32681affcedb9a06c8a18f5f3278b503113fe7752c4b7f6705fcefc19f1",
-  "callees": "useRef useRef useLayoutEffect useState useLayoutEffect setDisplay some keys startsWith setDisplay map"
+  "sha256": "684589218caafbf91bde61f7f37ff05fb113369917cae3028fae03a1cdc5a4bd",
+  "callees": "useState some useEffect setListOpenFor"
  },
  "wallet.tsx": {
-  "sha256": "4aa092bccb8c851943d0ea97214d6e4be2efb19245eea9383a4a4380efdf23c8",
-  "callees": "useRef setHash setConfirmed report report"
- },
- "main.tsx": {
   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "callees": ""
  }
 };
 // <<< reviewed calls
-// SPEC 1-6 and the owner's mounting decision: exact reviewed source, beyond either generated block.
+// v13: exact reviewed source of the two files, beyond either generated block.
 const reviewedSourcePins={
- "Vault.tsx": "d8936edd240c7571e4e65bdf878f65bea73b889c5541873f8fe2b128633a7582",
- "components.tsx": "d9ae83c4ad85ca3762e24914efd4669e22916bb5a2e29bbfd778bcdec5041730",
- "Docs.tsx": "5f24a982beba7124f0af8e06496b5e64f79b052978ff37785ff6700279f984c5",
- "Flows.tsx": "3b380cc8bcdf5d2cc81ed46fef7274e00a0ac83025200cdc046bf8fb18c49e3b",
- "wallet.tsx": "488b62c80121b3302ea8cbdac7d23e0a32d8fc874082dfab6499388949b083de",
- "main.tsx": "2745de3906186f90b599d7b3675d602be6cc5ed0ed055813de8b4dd7b0f0e04e"
+ "Flows.tsx": "8ec2d9af627b26797c2971eb12154262001c0e1e5aab7b8b723e9640e41fed6a",
+ "wallet.tsx": "564ce2be2ec1c9e79f55bfd13b26c87e0b0525915e131d32d4d983413e8b8bcf"
 };
 for(const f of Object.keys(editedFiles)){
  const {now,all}=scans[f],list=all.added.map(i=>[now.all[i].text,now.all[i].place]);
@@ -603,7 +400,7 @@ assert.deepEqual(sendUses['components.tsx'].filter(x=>/\(/.test(x)),['wallet.sen
 // names in LOADS, written as a name, a property or a plain string (folded across +): a picture, sound or worker made
 // in script; the address bar, the history and the navigator; a new window; an element or HTML built in script; a
 // src, href, action or style set in script. Then every JSX attribute in LOAD_ATTRIBUTES (any letter case) with its
-// whole value, and every spread of attributes onto an element. Every file equals HEAD, with no exception: v12 adds no
+// whole value, and every spread of attributes onto an element. Every file equals HEAD, with no exception: v13 adds no
 // link, picture, frame, style attribute or navigation. `open` alone is the list of open stocks in Flows.tsx, so it
 // counts only as a property (window.open) or when it is called. This is a list of known ways, not a proof that no
 // other way exists.
@@ -622,9 +419,8 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// The retained scanner treats the asset flag a.open as a load name. This one new display-only
-// entry belongs to the independently raw-pinned operational declaration; no network sink is exempted.
-const loadDisplayAdded={'Vault.tsx':[{text:'a.open',place:'DepositState'}]};
+// v13 adds nothing a page loads or opens: every file equals HEAD here.
+const loadDisplayAdded={};
 const loadUses={};
 for(const f of sources){
  const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f);
@@ -693,15 +489,14 @@ function sendParts(text){
 }
 const headSend=sendParts(baseline('web/src/wallet.tsx')),nowSend=sendParts(read('web/src/wallet.tsx'));
 assert.equal(nowSend.head,headSend.head,'wallet.tsx send(): byte-identical head through receipt wait');
-// SPEC 6: mined hash, sent error-link hash, top link, confirmation record and both Confirmed reports.
-// These exact replacements are independent of both regeneration blocks and each must occur exactly once.
+// v13: the Claim all result detail loses the "Nothing owed for N other stocks." sentence and its unused count.
+// This exact replacement is independent of both regeneration blocks and must occur exactly once; the mined-hash
+// statements of v12 are part of HEAD now and are pinned by sendTailWrites below.
 const SEND_TAIL_PIECES=[
- ['      // After a Speed up the transaction is mined under another hash than the\n      // one the wallet returned: from here on the mined one is shown and read.\n      const mined = receipt.transactionHash;\n      sent = mined;\n      setHash(mined);\n',''],
- ['setConfirmed({ hash: mined, functionName: s.functionName });','setConfirmed({ hash: tx, functionName: s.functionName });'],
- ['report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });','report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx });'],
- ['report(key, { message: `${label}: Confirmed.`, hash: mined, detail });','report(key, { message: `${label}: Confirmed.`, hash: tx, detail });'],
+ ['          detail =\n            `Still owed to ${creditor}: ` +\n            (fresh.complete\n              ? remaining.join("; ") || "Nothing owed."\n              : "Stock list unreadable — Retry vault.");\n',
+  '          const zeros = values.filter((v) => v.ok && v.value === 0n).length;\n          detail =\n            `Still owed to ${creditor}: ` +\n            (fresh.complete\n              ? (remaining.join("; ") || "Nothing owed.") +\n                (zeros ? ` Nothing owed for ${zeros} other stocks.` : "")\n              : "Stock list unreadable — Retry vault.");\n'],
 ];
-assert.equal(putBack(nowSend.tail,SEND_TAIL_PIECES,'wallet.tsx send() tail'),headSend.tail,'wallet.tsx send(): only exact receipt-hash tail replacements');
+assert.equal(putBack(nowSend.tail,SEND_TAIL_PIECES,'wallet.tsx send() tail'),headSend.tail,'wallet.tsx send(): only the exact v13 detail replacement in the tail');
 pinnedFunctions['wallet.tsx send()']={headEqualToHead:true,headBytes:Buffer.byteLength(nowSend.head,'utf8'),headSha256:sha256(nowSend.head),tailPieces:SEND_TAIL_PIECES.map(([now,head])=>({now,head}))};
 // An explicit ordered pin of the changed transaction-status statements, independent of the piece list.
 const sendTailWrites=[];
@@ -760,17 +555,8 @@ function rawProtected(label,file,select,count=1){
  protectedCode[label]=h.map(x=>({bytes:Buffer.byteLength(x,'utf8'),sha256:sha256(x)}));
 }
 for(const name of ['switchChain','listingPending','waitPending'])rawProtected('wallet '+name,'wallet.tsx',n=>ts.isFunctionDeclaration(n)&&n.name?.text===name);
-// Owner-approved issue-only notice and Deposit-only Closed LED: only these exact pieces may differ.
-// Every original calculation, status branch, clock use and Retry handler restores byte-for-byte to HEAD.
+// Vault.tsx is frozen in v13 (byte-identical to HEAD above); DepositState keeps its raw pin with no piece.
 const DEPOSIT_STATE_PIECES=[
- [
-  "export function DepositState({ snapshot: s, showSign = false }: { snapshot: Snapshot; showSign?: boolean }) {",
-  "export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {"
- ],
- [
-  "\n  // The owner wants a notice only for closed deposits or an unreadable status.\n  const statusUnreadable =\n    !s.complete || !r?.ok || s.globals.genesisFinalized === undefined;\n  const operational =\n    !statusUnreadable && reason === 0 && s.globals.genesisFinalized === true &&\n    s.assets.some((a) => a.open && !a.retired);\n  if (s.loading || operational || closed === mayBeOpen) return null;\n  const issueReason = s.globals.genesisFinalized === false ? 1\n    : !s.assets.length ? 4\n      : s.assets.every((a) => !a.open || a.retired) ? 5\n        : reason === 13 ? 9 : reason;\n  const issue = reasonWords(issueReason, s.globals.settings).split(\" (\")[0];\n  const weekendHours = reason === 3 &&\n    s.globals.settings?.hoursFrom === 72000n && s.globals.settings?.hoursTo === 504000n;\n  return (\n    <div className={showSign ? \"deposit-state deposit-notice\" : \"deposit-state\"}>\n      {statusUnreadable ? (\n        <>\n          {!showSign && <strong>Vault status:</strong>}\n          <p>unreadable — Retry vault</p>\n          <button onClick={s.retry}>Retry vault</button>\n        </>\n      ) : showSign ? (\n        <>\n          <DepositLedSign />\n          <p>{weekendHours\n            ? \"Deposits reopen when the stock feed prices update around 8pm on Sundays.\"\n            : `Deposits will be back open when “${issue}” is resolved.`}</p>\n        </>\n      ) : (\n        <><strong>Vault status:</strong><p>Closed</p></>\n      )}\n    </div>\n  );\n}",
-  "\n  return (\n    <div className=\"deposit-state\">\n      <strong>Vault deposit status</strong>\n      <p>\n        {s.loading\n          ? \"Reading...\"\n          : !s.assets.length &&\n              s.complete &&\n              s.globals.genesisFinalized === false\n            ? \"No Stock Tokens are listed yet. Deposits start after the owner finishes setup.\"\n            : s.assets.length > 0 &&\n                s.assets.every((a) => !a.open || a.retired) &&\n                s.globals.genesisFinalized\n              ? \"Every stock is closed. The owner must reopen a stock before deposits.\"\n              : !r || !r.ok\n                ? \"unreadable — Retry vault\"\n                : reasonWords(Number(r.value[0]), s.globals.settings)}\n      </p>\n      {r?.ok && r.value[1] !== zeroAddress && (\n        <p>\n          Stock at fault:{\" \"}\n          {s.assets.find(\n            (a) => a.token.toLowerCase() === r.value[1].toLowerCase(),\n          )?.symbol ?? r.value[1]}\n        </p>\n      )}\n      {closed && <p className=\"reopen\">{closed}</p>}\n      <p>Hours: {s.loading ? \"Reading...\" : hoursLine(s.globals.settings)}</p>\n      {!s.loading && (!r || !r.ok) && (\n        <button onClick={s.retry}>Retry vault</button>\n      )}\n    </div>\n  );\n}"
- ]
 ];
 const headDepositState=rawFunction(baseline('web/src/Vault.tsx'),'Vault.tsx','DepositState').text;
 const nowDepositState=rawFunction(read('web/src/Vault.tsx'),'Vault.tsx','DepositState').text;
@@ -805,7 +591,7 @@ for(const name of ['short','approvals'])rawProtected('Deposit '+name,'Flows.tsx'
 // component or hook (parameters included) is still declared there once, by the same text: the same import, the same
 // useState or useRef, the same expression. So `vault`, `token`, `amount`, `depositArgs`, `VAULT`, `quote`, `inputs`,
 // `open`, `approvals`, `account` and every other name the pinned transaction code uses still mean what they meant at
-// HEAD. The names v12 adds at the top of a file are listed here; a name v12 adds at the top of a component or hook
+// HEAD. The names v13 adds at the top of a file are listed here (none); a name v13 adds at the top of a component or hook
 // must be new there and must not hide a name declared at the top of the file.
 function scopes(text,file){
  const tree=parse(text,file),print=printerOf(tree),module=Object.create(null),functions=Object.create(null);
@@ -867,120 +653,18 @@ for(const f of Object.keys(editedFiles)){
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
 const namesAdded={
- "Vault.tsx": {
-  "DEPOSIT_LETTERS": "DEPOSIT_LETTERS: Record<string, string[]> = { O: [\"01110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"01110\"], E: [\"11111\", \"10000\", \"10000\", \"11110\", \"10000\", \"10000\", \"11111\"], C: [\"01111\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"01111\"], L: [\"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"10000\", \"11111\"], S: [\"01111\", \"10000\", \"10000\", \"01110\", \"00001\", \"00001\", \"11110\"], D: [\"11110\", \"10001\", \"10001\", \"10001\", \"10001\", \"10001\", \"11110\"], }",
-  "DepositLedSign": "function"
- },
- "components.tsx": {},
- "Docs.tsx": {},
  "Flows.tsx": {},
- "wallet.tsx": {},
- "main.tsx": {
-  "Activity": "import Activity from \"react\""
- }
+ "wallet.tsx": {}
 };
-// Exact removal of the unused display-only hoursLine import for the owner-approved status move.
+// v13 changes no declaration at the top of either file.
 const moduleChanges={
- "Vault.tsx": [],
- "components.tsx": [],
- "Docs.tsx": [],
- "Flows.tsx": [
-  {
-   "name": "hoursLine",
-   "head": [
-    "import hoursLine from \"./Vault\""
-   ],
-   "now": null
-  }
- ],
- "wallet.tsx": [],
- "main.tsx": []
+ "Flows.tsx": [],
+ "wallet.tsx": []
 };
-// Narrow exact declarations changed by SPEC 1/4 and the owner-approved status move; never generated by put-pieces.
+// v13 changes no declaration at the top of a component or hook; never generated by put-pieces.
 const scopeChanges={
- "Vault.tsx": [
-  {
-   "function": "DepositState",
-   "name": "s",
-   "head": [
-    "parameter { snapshot: s }: { snapshot: Snapshot; }"
-   ],
-   "now": [
-    "parameter { snapshot: s, showSign = false }: { snapshot: Snapshot; showSign?: boolean; }"
-   ]
-  }
- ],
- "components.tsx": [
-  {
-   "function": "PageTitle",
-   "name": "eyebrow",
-   "head": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ],
-   "now": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children?: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ]
-  },
-  {
-   "function": "PageTitle",
-   "name": "title",
-   "head": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ],
-   "now": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children?: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ]
-  },
-  {
-   "function": "PageTitle",
-   "name": "children",
-   "head": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ],
-   "now": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children?: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ]
-  },
-  {
-   "function": "PageTitle",
-   "name": "character",
-   "head": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ],
-   "now": [
-    "parameter { eyebrow, title, children, character, }: { eyebrow?: string; title: string; children?: ReactNode; character?: { kind: \"vault\" | \"deposit\" | \"redeem\"; src: string; width: number; height: number; alt: string; line: string; }; }"
-   ]
-  }
- ],
- "Docs.tsx": [],
- "Flows.tsx": [
-  {
-   "function": "DepositPage",
-   "name": "r",
-   "head": [
-    "r = s.status"
-   ],
-   "now": null
-  },
-  {
-   "function": "DepositPage",
-   "name": "reason",
-   "head": [
-    "reason = r?.ok ? Number(r.value[0]) : undefined"
-   ],
-   "now": null
-  },
-  {
-   "function": "Claims",
-   "name": "zeros",
-   "head": [
-    "zeros = s.assets.filter((a) => owed[a.token] === 0n)"
-   ],
-   "now": null
-  }
- ],
- "wallet.tsx": [],
- "main.tsx": []
+ "Flows.tsx": [],
+ "wallet.tsx": []
 };
 const newNames={};
 for(const f of Object.keys(editedFiles)){
@@ -1005,7 +689,7 @@ for(const f of Object.keys(editedFiles)){
  }
 }
 // The whole-source digest is additional to the specific structural assertions above.
-for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed v12 source differs; regeneration does not authorize source edits');
+for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed v13 source differs; regeneration does not authorize source edits');
 // Differential encoding: HEAD and current governance/model/chain bundled side by side. For the same inputs the
 // calldata must be byte-identical whenever the current page accepts; v12 adds no refusal, never accepts what HEAD
 // refused, and refuses with HEAD's words (model.ts, chain.ts and governance.ts are byte-identical to HEAD in v12).

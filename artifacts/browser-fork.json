@@ -13,7 +13,7 @@
     "Deposit form keeps a balance under one cent behind Show small balances (1)",
     "Deposit search: Add buttons only while text is typed, at most six, never for a stock on screen",
     "One updated feed reopens deposits after the holiday",
-    "Deposit status: one line while deposits are open, the full Vault deposit status box while closed",
+    "Deposit status: no normal notice; Closed sign and one approved closure sentence",
     "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
     "Greyed row: a stock failing its own check (feed too old) says why; amount box and Max off, Remove and Refresh on; Refresh clears it once the feed is back",
     "Exact full stock balance and chosen amount retained while searching",
@@ -70,13 +70,25 @@
     "removeRetired",
     "lowerNAVCap",
     "unpauseDeposits",
-    "Saturday after the Hours change shows Deposits reopen Monday 9:30 am",
+    "Saturday after the Hours change shows the approved short outside-hours closure notice",
     "propose",
     "cancel",
     "flagDeficit",
     "recognizeLoss",
     "transferOwnership",
-    "acceptOwnership"
+    "acceptOwnership",
+    "Vault: Always in stock, no sentence or empty paragraph; compact deposit status shows existing label and status only",
+    "Docs: original paragraph and four approved paragraphs, word for word",
+    "Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill",
+    "Redeem: one column, removed aside and no wallet instruction line",
+    "Claims: connected empty wallet shows quiet line without panel",
+    "Link preview: served approved share tags and 1200x630 JPEG",
+    "Speed up: existing deposit repriced with same nonce/to/data; Confirmed, received event amount, status and top links use mined hash",
+    "Claims: one/two owed show panel with exact conditional note and no zero fold; last claim confirmation survives navigation",
+    "Late Connect: early account event, Disconnect, held reply dropped without request; normal Connect then succeeds; no-wallet quiet claims line",
+    "24/7 label: widened text wraps at whole words inside pill and panel at 661px on Deposit and Redeem",
+    "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send",
+    "Claim all result: the Still owed line ends with Nothing owed. and carries no other-stocks count"
   ],
   "sends": [
     {
@@ -398,7 +410,7 @@
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "5969999005000000000000",
-        "1791520652"
+        "1791520662"
       ],
       "gas": "0x17d63b"
     },
@@ -435,7 +447,7 @@
           "0",
           "0"
         ],
-        "1791677446"
+        "1791677447"
       ],
       "gas": "0x43918"
     },
@@ -483,7 +495,7 @@
           "0",
           "0"
         ],
-        "1791677448"
+        "1791677450"
       ],
       "gas": "0x4d886"
     },
@@ -886,7 +898,7 @@
     "stocks25-owner-375.jpg",
     "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 3747,
+  "rpcCalls": 3626,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",

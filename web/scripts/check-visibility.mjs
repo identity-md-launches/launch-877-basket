@@ -46,12 +46,16 @@ const base=`http://127.0.0.1:${server.address().port}`;
 const b=await chromium.launch(),page=await b.newPage({viewport:{width:375,height:812},reducedMotion:'reduce'});
 const results=[];
 
-// v12 SPEC 1-4 permits only the named text/layout changes below. All prior
+// v13 on the v12 baseline: the only permitted first-screen change is on the
+// Deposit page, where the stock list under the search is shown open across the
+// panel while the form is empty (both variants here: no wallet, and the
+// synthetic account that holds nothing): the fold line becomes a plain heading
+// line with the same words in the same place, and what follows moves down by
+// exactly the open list's height. Every v12 state (Vault heading, Docs
+// paragraphs, Redeem layout, status notices) must equal the baseline. All prior
 // first-screen elements otherwise retain their words and remain on screen.
 // The header, slogan strip, and start of each title character stay pinned.
 const characterPages=['vault','deposit','redeem'];
-const removedVault='Meet Basket (BASK): your share of the Stock Tokens in this vault.';
-const removedWalletLine='Showing 0x0000…11ce. To use another wallet, switch the address in your wallet app: this page follows it.';
 const docsAdded=[
   'The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.',
   'BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.',
@@ -187,6 +191,12 @@ function layoutSnapshot() {
     })),
     depositOpen:document.querySelector('.deposit-open')?{text:document.querySelector('.deposit-open').textContent.replace(/\s+/g,' ').trim(),...box('.deposit-open')}:null,
     flowSteps:document.querySelector('.flow-steps')?{text:document.querySelector('.flow-steps').textContent.replace(/\s+/g,' ').trim(),...box('.flow-steps')}:null,
+    // v13: the stock list under the Deposit search (the closed fold at the baseline; the open list in v13's empty states).
+    stockList:{open:!!document.querySelector('.all-stocks.open-list'),summary:!!document.querySelector('.all-stocks summary'),
+      title:document.querySelector('.all-stocks .list-title, .all-stocks summary')?.textContent.replace(/\s+/g,' ').trim()??null,
+      ...box('.all-stocks'),
+      width:(()=>{const ul=document.querySelector('.all-stocks ul'),panel=ul?.closest('section.panel');if(!ul||!panel)return null;const cs=getComputedStyle(panel),inner=panel.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);return ul.getBoundingClientRect().width/inner;})(),
+      buttons:document.querySelectorAll('.all-stocks ul button').length},
     depositSummary:box('.deposit-summary'),
     led:ledGeometry(),
     sideways:document.documentElement.scrollWidth>innerWidth,
@@ -246,15 +256,16 @@ try {
     const docsGrowth=newLayout.docsAddedHeight;
     if(name==='vault') {
       assert.equal(newLayout.heading,'Always in stock');
-      assert.deepEqual(oldLayout.titleParagraphs,[removedVault]);
+      assert.equal(oldLayout.heading,newLayout.heading,'Vault heading equals the v12 baseline');
+      assert.deepEqual(oldLayout.titleParagraphs,[]);
       assert.deepEqual(newLayout.titleParagraphs,[]);
       assert.ok(newLayout.title.height<=oldLayout.title.height+0.5,'Vault panel must not get taller');
-      assert.equal(oldLayout.capacity.label,'Size limit','Baseline retains the old capacity label');
-      assert.equal(newLayout.capacity.value,oldLayout.capacity.value,'Capacity figure value remains unchanged');
-      checks.push('v12 Vault: exact replacement heading, sentence and paragraph removed, panel does not grow; exact capacity label with a smaller note underneath, unchanged figure value');
+      assert.equal(oldLayout.capacity.label,'Maximum Basket Capacity','Baseline carries the v12 capacity label');
+      assert.deepEqual(newLayout.capacity,oldLayout.capacity,'Capacity label and figure value remain unchanged');
+      checks.push('v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline');
     }
     assert.ok(statusFixtureReads>beforeFixtureReads,'State comparison consumes the existing depositStatus fixture');
-    assert.equal(oldLayout.led.signs.length,0,'Baseline has no LED sign');
+    assert.equal(oldLayout.led.signs.length,newLayout.led.signs.length,'Baseline and v13 carry the same sign count');
     if(statusCase==='normal') {
       assert.equal(newLayout.depositStatus.length,0,'Normal operation has no extra status area');
       assert.equal(newLayout.led.signs.length,0,'Normal operation has no sign');
@@ -271,8 +282,10 @@ try {
       assert.equal(status.compact,name==='vault','Compact display is scoped to Vault');
       assert.equal(newLayout.led.reopening,null,'Old reopening/countdown paragraphs are absent');
       assert.equal(newLayout.depositOpen,null,'Deposit no longer uses the open-only line');
-      if(statusCase==='closed')assert.equal(oldLayout.depositStatus[0].paragraphs[0].text,'too few fresh prices','Baseline proves the same reason fixture');
+      if(statusCase==='closed')assert.equal(oldLayout.depositStatus[0].paragraphs[0].text,name==='vault'?'Closed':ISSUE_NOTICE,'Baseline proves the same reason fixture');
       else assert.ok(weekendBlockReads>beforeBlocks,'Weekend comparison uses the public-block timestamp fixture');
+      assert.deepEqual(newLayout.depositStatus,oldLayout.depositStatus,'v13: the status area equals the v12 baseline');
+      assert.deepEqual(newLayout.led,oldLayout.led,'v13: the sign geometry equals the v12 baseline');
       assert.equal(newLayout.led.signs.length,name==='deposit'?1:0,'Only Deposit has the known-closed sign');
       if(name==='deposit') {
         const sign=newLayout.led.signs[0];
@@ -286,45 +299,49 @@ try {
       assert.equal(newLayout.walletLine,null,'Owner removed the wallet-switch instruction from Deposit');
       assert.equal(newLayout.flowSteps.text,oldLayout.flowSteps.text,'Task instructions keep their words');
       if(oldLayout.flowSteps.bottom<=812)assert.ok(newLayout.flowSteps.bottom<=812,'Previously visible Deposit task instructions remain on the first screen');
+      // v13: both variants are empty forms (no wallet; the synthetic account holds nothing), so the list is open
+      // across the panel with the fold's words as a plain heading line in the fold line's place; the baseline shows the closed fold.
+      assert.deepEqual([oldLayout.stockList.open,oldLayout.stockList.summary,newLayout.stockList.open,newLayout.stockList.summary],[false,true,true,false],'v13: the open list replaces the closed fold in the empty states');
+      assert.equal(newLayout.stockList.title,oldLayout.stockList.title,'The list heading keeps the fold line\'s words');
+      assert.match(newLayout.stockList.title,/^All stocks you can deposit \(\d+\)$/);
+      assert.ok(near(newLayout.stockList.top,oldLayout.stockList.top),'The list starts where the fold line started');
+      assert.ok(newLayout.stockList.width>0.98,'The open list spans the panel: '+newLayout.stockList.width);
+      assert.ok(newLayout.stockList.buttons>0&&newLayout.stockList.title.endsWith('('+newLayout.stockList.buttons+')'),'Every open stock has its button');
+      checks.push('v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock');
     }
     checks.push(statusCase==='normal'?'Owner follow-up: no normal status area/sign':'Owner follow-up: exact single '+statusCase+' sentence, compact Vault Closed notice, Deposit-only CLOSED sign');
     if(name==='docs') {
-      assert.equal(oldLayout.docsParagraphs.length,1);
+      assert.equal(oldLayout.docsParagraphs.length,5);
       assert.equal(newLayout.docsParagraphs.length,5);
-      assert.deepEqual(newLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded);
-      assert.equal(newLayout.docsParagraphs[0].text,oldLayout.docsParagraphs[0].text);
-      assert.ok(near(newLayout.docsParagraphs[0].top,oldLayout.docsParagraphs[0].top)&&near(newLayout.docsParagraphs[0].height,oldLayout.docsParagraphs[0].height),'Docs existing paragraph keeps its geometry');
-      assert.ok(docsGrowth>0&&near(newLayout.docs[0].height-oldLayout.docs[0].height,docsGrowth),'Docs grows only by the four paragraphs including their spacing');
+      assert.deepEqual(oldLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded,'Baseline carries the four v12 paragraphs');
+      assert.deepEqual(newLayout.docsParagraphs.map(p=>p.text),oldLayout.docsParagraphs.map(p=>p.text),'Docs paragraphs equal the baseline word for word');
       assert.equal(newLayout.docs.length,oldLayout.docs.length);
-      for(let i=1;i<oldLayout.docs.length;i++) {
-        assert.ok(near(newLayout.docs[i].top-oldLayout.docs[i].top,docsGrowth),'Docs panel displacement is exactly the added paragraph height');
-        assert.ok(near(newLayout.docs[i].height,oldLayout.docs[i].height),'Every other Docs panel keeps its height');
-      }
-      checks.push('v12 Docs: original paragraph unchanged; exactly four approved paragraphs; every later panel moves down by exactly their added height');
+      for(let i=0;i<oldLayout.docs.length;i++) assert.ok(near(newLayout.docs[i].top,oldLayout.docs[i].top)&&near(newLayout.docs[i].height,oldLayout.docs[i].height),'Every Docs panel keeps its place and height');
+      checks.push('v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height');
     }
     if(name==='redeem') {
-      assert.equal(oldLayout.redeemAside,'Take your basket home');
+      assert.equal(oldLayout.redeemAside,null);
       assert.equal(newLayout.redeemAside,null);
       assert.equal(newLayout.oneColumn,true);
-      assert.equal(oldLayout.claims,1);
+      assert.equal(oldLayout.claims,0);
       assert.equal(newLayout.claims,0);
       assert.equal(newLayout.quiet,variant==='connected'?'Nothing is owed to this wallet.':'Connect the receiver wallet to read and claim its owed stocks.');
-      assert.equal(newLayout.walletLine,null,'Owner removed the wallet-switch instruction');
-      checks.push('v12 Redeem: one column, removed aside, exact quiet claims line and removed wallet-switch line; original first-screen form content stays on screen');
+      assert.equal(newLayout.quiet,oldLayout.quiet,'Quiet claims line equals the baseline');
+      assert.equal(newLayout.walletLine,null,'No wallet-switch instruction');
+      checks.push('v13 Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line');
     }
+    // v13: on Deposit everything after the fold line moves down by exactly the open list's added height.
+    const listGrowth=name==='deposit'?newLayout.stockList.height-oldLayout.stockList.height:0;
+    if(name==='deposit')assert.ok(listGrowth>0,'The open list is taller than the fold line');
     for(const x of prior) {
       const y=counterpart(x);
-      if(['deposit','redeem'].includes(name)&&x.tag==='P'&&normalize(x.text)===removedWalletLine) {
-        assert.equal(y,null,'The exact owner-removed wallet-switch line is absent');exceptions.push({reason:'Owner removed wallet-switch instruction',element:x});continue;
+      if(name==='deposit'&&x.tag==='SUMMARY'&&/^All stocks you can deposit \(\d+\)$/.test(normalize(x.text))) {
+        const line=now.find(z=>z.tag==='P'&&words(z.text)===words(x.text));
+        assert.ok(line&&near(line.y,x.y),'v13: the fold line is a plain heading line with the same words in the same place');
+        exceptions.push({reason:'v13 open stock list: heading line in the place of the fold line',element:x,now:line});continue;
       }
-      if(name==='vault'&&x.inTitle&&x.tag==='P'&&normalize(x.text)===removedVault) {
-        assert.equal(y,null,'The exact removed Vault sentence is absent');exceptions.push({reason:'SPEC 1 removed Vault sentence',element:x});continue;
-      }
-      if(name==='redeem'&&(x.inRedeemAside||x.inClaims)) {
-        exceptions.push({reason:x.inRedeemAside?'SPEC 4 removed Redeem aside':'SPEC 4 claims panel absent when nothing owed',element:x});continue;
-      }
-      if(name==='docs'&&x.docsIndex>0&&y&&near(y.y-x.y,docsGrowth)&&near(y.bottom-x.bottom,docsGrowth)) {
-        exceptions.push({reason:'SPEC 2 exact added-paragraph displacement',element:x,now:y});continue;
+      if(name==='deposit'&&x.y>=oldLayout.stockList.top-0.5&&y&&near(y.y-x.y,listGrowth)&&near(y.bottom-x.bottom,listGrowth)) {
+        exceptions.push({reason:'v13 open stock list: exact displacement by the open list height',element:x,now:y});continue;
       }
       if(y&&y.bottom<=812) {
         if(name==='vault'&&(y.y>x.y+0.5||y.bottom>x.bottom+0.5))regressions.push({...x,now:y,reason:'Vault content moved downward'});
@@ -333,7 +350,7 @@ try {
       regressions.push({...x,now:y});
     }
     // Original slogan-strip and title-character assertions, with explicit header
-    // height and overflow pins added. No v12 exception applies to these parts.
+    // height and overflow pins added. No v13 exception applies to these parts.
     checks.push('header retains its exact position and height');
     if(!near(newLayout.header.top,oldLayout.header.top)||!near(newLayout.header.height,oldLayout.header.height))regressions.push({tag:'HEADER',text:'header',old:oldLayout.header,now:newLayout.header});
     checks.push('slogan strip in the same place and size, still and full under reduced motion');
@@ -352,6 +369,6 @@ try {
   }
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements preserved except exact named v12 removals and Docs displacement; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements preserved except the exact named v13 Deposit list heading and displacement; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}
