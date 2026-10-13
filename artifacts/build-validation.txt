@@ -1,32 +1,57 @@
-2026-10-13 (UTC) — v14 production build verification (Docs tabs, ITEM/Tokenomics/BASK, desktop Deposit columns)
-Base commit: 2b7d55b (imd dded6848-bcfa-4c7c-a23d-21d6b5f29cc8)
-Node v22.23.3; npm 10.9.9; locked Vite 7.1.9 and TypeScript 5.9.3; Anvil 1.8.3; solc 0.8.26.
+2026-10-13 UTC — v15 build and check record
+Baseline: c05c174f639d352fb6184636bcc6e083031daa65
+Exact patch: 97146 bytes; SHA-256 8649818fb6f06658c236fbd6e7bf3cff7b0b918c4cc3d3cf38845a7c1115ad86
+All nine patched files match reconstructed baseline plus patch.
+Initial npm ci: EROFS at default cache; npm_config_cache=/tmp/basket-v15-npm-cache npm ci passed.
+Protected dependency/build/contract/ignore files unchanged.
 
-Patch: https://gateway.pinata.cloud/ipfs/bafkreiaice3ri4pdev6ymhqjeplnugtimckifg4jjyabiyjzinm6ags7gu
-  195568 bytes, SHA-256 0811371471e3257d861e0923d6da1a686094829b894e001461394359e01a5f35 (both as specified).
-  git apply --check on 2b7d55b — exit 0; git apply — exit 0; 21 files, 1484 insertions, 187 deletions, as listed.
-  No patched file was edited afterwards.
 
-Commands run from web/:
-npm ci — exit 0 (lockfile unchanged; 32 top-level packages).
-npm run typecheck — exit 0.
-npm run build — exit 0; tsc --noEmit and Vite build; built in 3.45 s. Existing >500 kB chunk advisory only.
+> basket-protocol-web@1.0.0 typecheck
+> tsc --noEmit
 
-Produced files:
-90cc85c37c1eb0985da14ef1223c4bdb6dd6415e0f3cd7d3eed7b3a2ac9280c1  dist/assets/index-Umm6XolT.js  (604230 bytes)
-77f5e778fea7f585123a742b1eb4f06e7f89e9e07c62aa555637f4a4de619218  dist/assets/index-Dreu644d.css  (48240 bytes)
-283f8f98859d87c0aa4418dc2d8a116f3865ee23a1521b323c99a1a2408207ce  dist/assets/ccip-ICDF8oEy.js  (2610 bytes)
-f356259d028b318947983a3842ac603552bb2707b2e7f0cf79f64c916d14aaf5  dist/index.html  (1330 bytes)
-dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85  dist/share-card.jpg  (44831 bytes, unchanged)
 
-Deviation from the task's expected hashes: the task expected index-Ci2_uPd-.js, index-C-PJiW18.css,
-ccip-DNB2G4hs.js and index.html 2ee5b100…. This machine produced the four files above instead; share-card.jpg
-matches. The build is deterministic here: the untouched 2b7d55b sources rebuilt with the same node_modules
-reproduce the committed 2b7d55b dist byte for byte (index-CFIsCDgK.js 14991f60…, index-93wOgsf7.css de331fa1…,
-ccip-DK1SzuxE.js 0ed8570a…). dist/index.html differs from 2b7d55b only in the three hashed asset names.
-The patched sources are byte-identical to the patch (git apply applied cleanly, check-calldata's reviewed
-digests and check-bundle's source scope passed), so the difference is in the build environment that produced
-the expected values, not in the applied sources.
 
-Export uses relative script, stylesheet, favicon, font and art URLs; complete export 1,004,821 bytes.
-No contract, build configuration, package manifest or lockfile changed.
+> basket-protocol-web@1.0.0 build
+> tsc --noEmit && vite build
+
+vite v7.1.9 building for production...
+transforming...
+✓ 1104 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                     1.33 kB │ gzip:   0.55 kB
+../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
+../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
+../dist/assets/index-BRdefnhV.css     48.90 kB │ gzip:  11.10 kB
+../dist/assets/ccip-DYKMBxXZ.js        2.61 kB │ gzip:   1.23 kB
+../dist/assets/index-Ilfw5yUx.js     604.23 kB │ gzip: 185.75 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.69s
+
+npx --no-install tsx scripts/check-tokenomics.tsx: exit 0; PASS — allocation/supply/schedule arithmetic, null guards, configured reader and formatting.
+node scripts/check-tokenomics-live.mjs: exit 0; PASS — five null mounts, mocked configured success/failure/Retry; zero external requests.
+npx --no-install tsx scripts/check-bask-guide.tsx: exit 0; PASS — audited arithmetic, flywheel figures, five examples, exact canonical prose/formulas/tables.
+npm run validate: exit 0; PASS — live verifyNetwork, ABI and code hash, snapshot, status, all 11 proposal kinds; block 87872980.
+node scripts/check-preservation.mjs: exit 0; PASS — protected files, send checks, ABI invariants, wording, obsolete integration scan.
+npx --no-install tsx scripts/check-interface.ts: exit 0; PASS — arithmetic, parser, exact balances and setting units.
+node scripts/check-calldata.mjs: exit 0; PASS — c05c174 baseline, every application script frozen, exact CSS append pin; 496 identical encodings and 1,773 mutually refused cases, no new refusal.
+node scripts/check-art.mjs: exit 0; PASS — 74 manifest asset copies and 56 layout groups, Chromium and WebKit, 320–2560px title sweep, baseline comparison, focus-marker checks and rejection of the old look.
+node scripts/check-motion.mjs: exit 1; FAIL — check-motion.mjs:314, “Loop ends 1920”: events=2, expected 0; both reset boundaries crossed. Identical failure on the untouched baseline. See diagnosis below.
+node scripts/inspect-export.mjs: exit 0; PASS — 24 page/viewport checks, zero issues; fonts, keyboard, subpath, reduced motion and seven solid contrast pairs.
+node scripts/check-guards.mjs: exit 0; PASS — four pre-send guards, zero wallet sends.
+node scripts/check-fixes.mjs: exit 0; PASS — 34 site-fix regressions.
+node scripts/check-visibility.mjs: exit 0; PASS — c05c174 dist, 375×812, six routes without/with mock account; all 70 prior first-screen elements retain words and vertical place, no exception.
+node scripts/check-bundle.mjs: exit 0; PASS — complete candidate including tracked lib, required assets and screenshots below 8,388,608 bytes; re-run after this entry.
+
+Fork walkthrough: archive refused historical state at block 83874298; no current wallet sends or screenshot set. Motion failure reproduced on c05c174 baseline; observer identified the approved CLOSED sign animations. Full details: artifacts/validation.md and artifacts/validation-v15.json.
+87776ebd6738dc3ab4f15f6a3a8f591ce5549e120fffe48a1e110046f352ef34  dist/assets/index-Ilfw5yUx.js
+6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80  dist/assets/index-BRdefnhV.css
+c2ba7ecb68f43ee4c208425c879b63d3a4c2ca346111396c24850bc327171e60  dist/assets/ccip-DYKMBxXZ.js
+e73b2083579cda0f83ed66fefbff058f62204911182f5e57bfdfe7c119e0ecb1  dist/index.html
+dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85  dist/share-card.jpg
+
+Direct git add/commit attempt: git add failed before staging, unable to create .git/index.lock (Read-only file system). No commit created; complete files remain in the working tree.

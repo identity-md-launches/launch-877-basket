@@ -2211,17 +2211,10 @@ try {
     // The existing fork clock advances with real elapsed time. Only its derived deadlines vary by run.
     // The gate separately compares exact calldata/deadlines at six fixed clocks; send capture checks live clock above.
     const normalized=records=>records.map(record=>['deposit','redeem'].includes(record.functionName)?{...record,args:[...record.args.slice(0,-1),'browser-clock-plus-600']}:record);
-    assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal v13 apart from wall-clock-derived deadlines');
-    const currentChecks=checks.filter(c=>!c.startsWith('Tokenomics:')&&!c.startsWith('BASK:')&&!v14Checks.includes(c));
-    // v14's authorized label replacements (owner decisions: desktop columns, the notes under the form, the new note).
-    const renamed={
-      'Docs: original paragraph and four approved paragraphs, word for word':'Docs: original paragraph and approved live-oriented copy, word for word',
-      "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box":"All stocks you can deposit (25): open in the right-hand column on desktop with the notes under the form, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
-      'Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill':'Deposit: Before you deposit under the form on desktop shows both approved paragraphs and the approved note without a fold; full deposit status follows the 24/7 pill',
-      "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send":"Deposit stock list on desktop: always open in the right-hand column with a plain heading and no fold (no wallet; a wallet without a listed stock; the owner's wallet), a press adds the row and the list stays open; no wallet request or send",
-    };
-    const previousChecks=previous.checks.map(c=>renamed[c]??c);
-    assert.deepEqual(currentChecks,previousChecks,'Every prior page check retained in order');
+    assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal v14 apart from wall-clock-derived deadlines');
+    // v15 changes style rules for phones only: the previous record is the v14 walk, and every one of its checks is
+    // here under the same name in the same order, with none added, renamed or left out.
+    assert.deepEqual(checks,previous.checks,'Every v14 page check retained under its name, in order, and none added');
     assert.deepEqual(shots,previous.shots,'Every prior screenshot retained in order');
   }
   assert.equal(revoked.length,0);

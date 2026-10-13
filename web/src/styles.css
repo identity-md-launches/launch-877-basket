@@ -2982,3 +2982,42 @@ button.quiet.small-toggle {
   font-weight: 700;
   color: var(--royal);
 }
+/* v15: on phones the Vault title picture stands in the middle of the panel
+   (before, she and her bubble were centred as one group, which left her in
+   the left half). Her bubble keeps its three lines beside her head; on the
+   narrowest phones she stands only as far left of the middle as the bubble
+   needs to stay 4px inside the frame. Her shelf line runs across the whole
+   panel and the heading is centred under her. Deposit and Redeem keep their
+   side-by-side layout. */
+@media (max-width: 660px) {
+  .page-title.has-character.character-vault {
+    --bw: 138px;
+  }
+  .page-title.character-vault .title-character {
+    --gx: max(
+      0px,
+      min(
+        calc((100% - var(--w)) / 2),
+        calc(100% + var(--pad) - 4px - var(--w) * var(--bx) - var(--bw))
+      )
+    );
+  }
+  .page-title.character-vault .title-character:after {
+    right: calc(-1 * var(--pad));
+    width: auto;
+  }
+  .page-title.character-vault > h1 {
+    text-align: center;
+  }
+}
+/* v15: Deposit and Redeem on phones. iPhone browsers draw the focus marker
+   around the heading after a tab is tapped. While it is drawn, her shelf line
+   sits 3px lower and ends at the marker's outer edge, so the line runs into
+   the marker's lower left corner as one line. */
+@media (max-width: 660px) and (forced-colors: none) {
+  .page-title.character-deposit:has(> h1:focus-visible) .title-character:after,
+  .page-title.character-redeem:has(> h1:focus-visible) .title-character:after {
+    bottom: -6px;
+    width: calc(var(--pad) + var(--gx) + var(--w) + var(--col-gap) - 6px);
+  }
+}

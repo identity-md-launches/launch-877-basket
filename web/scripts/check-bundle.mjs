@@ -6,9 +6,9 @@ import {createHash} from 'node:crypto';
 const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const changed=git(['diff','--name-only','HEAD']).trim().split('\n').filter(Boolean);
-// v14 (owner decisions of 2026-10-13: the Docs module and ITEM panels, the Deposit desktop columns, two word changes): only these sources may change.
-// check-calldata independently pins each reviewed source and every protected transaction block.
-const v14Source=['Docs.tsx','Flows.tsx','Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts','styles.css'].map(f=>'web/src/'+f);
+// v15 (owner decisions of 2026-10-13: the Vault title picture centred on phones; the shelf line meeting the heading's focus marker on Deposit and Redeem): only the style sheet may change.
+// check-calldata independently freezes every script source and pins the added style rules.
+const v15Source=['styles.css'].map(f=>'web/src/'+f);
 const SHELL_SHA256='82f66899a0c19f61299254c0005ee5117af0a912b97e8e57d249288e9dbc962d';
 const SHARE_SHA256='dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85';
 // The new favicon: red panel, yellow frame, the header's basket in yellow.
@@ -23,12 +23,12 @@ for(const p of changed){
  // v12 section 5: the exact page shell is pinned below; build configuration and validation fixtures stay unchanged.
  assert.ok(!['web/vite.config.ts','web/tsconfig.json'].includes(p)&&(!p.startsWith('web/validation/')||p==='web/validation/README.md'),'Page shell, build configuration or validation fixture changed: '+p);
  assert.ok(!/(^|\/)(lib|node_modules|\.github|\.git)(\/|$)|(^|\/)\.env(?:\.|$)|(^|\/)(foundry\.toml|foundry\.lock|remappings\.txt|\.gitmodules|package\.json|[^/]*lock[^/]*)$/.test(p),'Protected path changed: '+p);
- if(p.startsWith('web/src/'))assert.ok(v14Source.includes(p),'Source outside the v14 scope changed: '+p);
+ if(p.startsWith('web/src/'))assert.ok(v15Source.includes(p),'Source outside the v15 scope changed: '+p);
  assert.ok(!p.startsWith('src/'),'Root contract source changed');
 }
-// Tokenomics: exactly four new sources; no new public asset.
+// v15: no new source and no new public asset.
 const untracked=git(['ls-files','--others','--exclude-standard','--','web/src','web/public']).trim().split('\n').filter(Boolean);
-assert.deepEqual(untracked,['web/src/BaskGuide.tsx','web/src/Tokenomics.tsx','web/src/baskGuideData.ts','web/src/tokenomicsData.ts'],'New files in web/src or web/public');
+assert.deepEqual(untracked,[],'New files in web/src or web/public');
 assert.equal(sha256('web/index.html'),SHELL_SHA256,'exact v12 source shell');
 for(const p of ['web/public/share-card.jpg','dist/share-card.jpg']) {
  assert.equal(sha256(p),SHARE_SHA256,'exact v12 link picture: '+p);

@@ -46,25 +46,27 @@ const base=`http://127.0.0.1:${server.address().port}`;
 const b=await chromium.launch(),page=await b.newPage({viewport:{width:375,height:812},reducedMotion:'reduce'});
 const results=[];
 
-// v13 on the v12 baseline: the only permitted first-screen change is on the
-// Deposit page, where the stock list under the search is shown open across the
-// panel while the form is empty (both variants here: no wallet, and the
-// synthetic account that holds nothing): the fold line becomes a plain heading
-// line with the same words in the same place, and what follows moves down by
-// exactly the open list's height. Every v12 state (Vault heading, Docs
-// paragraphs, Redeem layout, status notices) must equal the baseline. All prior
-// first-screen elements otherwise retain their words and remain on screen.
-// The header, slogan strip, and start of each title character stay pinned.
+// v15 on the v14 baseline (the live site): no first-screen element changes its
+// words or its vertical place on any page; nothing is excepted. The one decided
+// difference is across the Vault title panel on phones: the picture stands in
+// the middle (it stood left of it), her bubble keeps its place beside her head,
+// her shelf line runs across the panel and the heading is centred. The Deposit
+// and Redeem titles equal the baseline (no heading focus marker is shown here:
+// the pages are opened directly; check-art covers the marker). Every earlier
+// state (Vault heading, Docs paragraphs and panels, the open Deposit stock list,
+// Redeem layout, status notices) must equal the baseline. The header, slogan
+// strip, and start of each title character stay pinned.
 const characterPages=['vault','deposit','redeem'];
 const docsAdded=[
   'The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.',
   'BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.',
-  'The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.',
-  'ITEM is not live yet. Its address will be listed here when it is.',
+  'The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM.',
 ];
+const ITEM_PANELS=['ITEM','Earn ITEM by providing liquidity','Earn BASK by staking ITEM','Rewards FAQ','ITEM risks'];
 const words=t=>String(t).replace(/\s+/g,'');
 const normalize=t=>String(t).replace(/\s+/g,' ').trim();
 const near=(a,b)=>Math.abs(a-b)<=0.5;
+const rounded=x=>JSON.parse(JSON.stringify(x,(k,v)=>typeof v==='number'?Math.round(v*100)/100:v));
 await page.addInitScript(({account})=>{
   if(location.search.includes('connected')) window.ethereum={
     request:async({method})=>{
@@ -200,6 +202,15 @@ function layoutSnapshot() {
       sentences:[...document.querySelectorAll('.all-stocks p')].map(e=>e.textContent.replace(/\s+/g,' ').trim()),
       grey:(()=>{const p=[...document.querySelectorAll('.all-stocks p')].find(e=>e.textContent.trim()==='Grey stocks are already in the form above.');if(!p)return null;const cs=getComputedStyle(p);return {height:p.getBoundingClientRect().height,marginTop:parseFloat(cs.marginTop),marginBottom:parseFloat(cs.marginBottom)};})()},
     depositSummary:box('.deposit-summary'),
+    // v15: where the title picture, her bubble and the heading sit across the panel, and her shelf line (the holder's ::after).
+    across:(()=>{
+      const t=document.querySelector('main .page-title'),h=t?.querySelector(':scope > .title-character');if(!h)return null;
+      const R=e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right};},line=getComputedStyle(h,'::after'),hr=h.getBoundingClientRect(),bw=parseFloat(getComputedStyle(t).borderLeftWidth),tr=t.getBoundingClientRect(),h1=t.querySelector(':scope > h1');
+      const rg=document.createRange();rg.selectNodeContents(h1);const hs=[...rg.getClientRects()].filter(x=>x.width>0);
+      return {frame:{left:tr.left+bw,right:tr.right-bw},picture:R(h.querySelector('img.character-picture')),bubble:R(h.querySelector('p.speech-bubble')),heading:R(h1),headingText:{left:Math.min(...hs.map(x=>x.left)),right:Math.max(...hs.map(x=>x.right))},headingAlign:getComputedStyle(h1).textAlign,
+        marker:h1.matches(':focus-visible'),
+        shelf:line.content==='none'?null:{left:hr.left+parseFloat(line.left),right:hr.left+parseFloat(line.left)+parseFloat(line.width),bottom:parseFloat(line.bottom),height:parseFloat(line.height)}};
+    })(),
     led:ledGeometry(),
     sideways:document.documentElement.scrollWidth>innerWidth,
   };
@@ -258,16 +269,38 @@ try {
     const docsGrowth=newLayout.docsAddedHeight;
     if(name==='vault') {
       assert.equal(newLayout.heading,'Always in stock');
-      assert.equal(oldLayout.heading,newLayout.heading,'Vault heading equals the v12 baseline');
+      assert.equal(oldLayout.heading,newLayout.heading,'Vault heading equals the baseline');
       assert.deepEqual(oldLayout.titleParagraphs,[]);
       assert.deepEqual(newLayout.titleParagraphs,[]);
       assert.ok(newLayout.title.height<=oldLayout.title.height+0.5,'Vault panel must not get taller');
       assert.equal(oldLayout.capacity.label,'Maximum Basket Capacity','Baseline carries the v12 capacity label');
       assert.deepEqual(newLayout.capacity,oldLayout.capacity,'Capacity label and figure value remain unchanged');
-      checks.push('v13 Vault: unchanged; heading, empty title paragraphs, panel height, capacity label and figure value equal the v12 baseline');
+      checks.push('Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline');
+      // v15 (owner, 2026-10-13: "the graphic on mobile is off to the left and doesnt look good"; he chose the picture
+      // centred with the heading centred): across the panel only. The baseline proves the look it replaces.
+      const mid=a=>(a.frame.left+a.frame.right)/2,centre=r=>(r.left+r.right)/2,o=oldLayout.across,n=newLayout.across;
+      assert.ok(near(centre(n.picture),mid(n)),'v15: the Vault picture stands in the middle of the panel: '+(mid(n)-centre(n.picture)));
+      assert.ok(mid(o)-centre(o.picture)>10,'Baseline carries the picture left of the middle');
+      assert.ok(near(n.bubble.left-n.picture.left,o.bubble.left-o.picture.left),'v15: the bubble keeps its place beside her head');
+      assert.ok(n.bubble.right<=n.frame.right-3.5&&n.bubble.left>=n.frame.left,'v15: the bubble stays 4 px inside the frame');
+      assert.ok(near(n.shelf.left,n.frame.left)&&near(n.shelf.right,n.frame.right),'v15: her shelf line runs across the panel');
+      assert.ok(near(o.shelf.left,o.frame.left)&&o.shelf.right<o.frame.right-40,'Baseline carries the short shelf line');
+      assert.deepEqual([n.shelf.bottom,n.shelf.height],[o.shelf.bottom,o.shelf.height],'v15: the shelf line keeps its level and thickness');
+      assert.equal(n.headingAlign,'center','v15: the Vault heading is centred');
+      assert.ok(Math.abs(centre(n.headingText)-mid(n))<0.75,'v15: the heading words stand in the middle');
+      assert.ok(o.headingAlign!=='center'&&mid(o)-centre(o.headingText)>10,'Baseline carries the heading at the left');
+      assert.deepEqual(rounded([n.frame,n.heading]),rounded([o.frame,o.heading]),'v15: the panel and the heading box are where they were');
+      assert.deepEqual(rounded([newLayout.title,newLayout.picture]),rounded([oldLayout.title,oldLayout.picture]),'v15: the Vault title panel and picture keep their vertical place and height');
+      checks.push('v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline');
+    }
+    if(name==='deposit'||name==='redeem') {
+      assert.equal(newLayout.across.marker,false,'No heading focus marker when the page is opened directly');
+      assert.deepEqual(rounded(newLayout.across),rounded(oldLayout.across),'v15: the '+name+' title equals the baseline across the panel');
+      assert.deepEqual(rounded([newLayout.title,newLayout.picture]),rounded([oldLayout.title,oldLayout.picture]),'v15: the '+name+' title panel and picture equal the baseline');
+      checks.push('v15 '+name+': the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker');
     }
     assert.ok(statusFixtureReads>beforeFixtureReads,'State comparison consumes the existing depositStatus fixture');
-    assert.equal(oldLayout.led.signs.length,newLayout.led.signs.length,'Baseline and v13 carry the same sign count');
+    assert.equal(oldLayout.led.signs.length,newLayout.led.signs.length,'Baseline and v15 carry the same sign count');
     if(statusCase==='normal') {
       assert.equal(newLayout.depositStatus.length,0,'Normal operation has no extra status area');
       assert.equal(newLayout.led.signs.length,0,'Normal operation has no sign');
@@ -286,8 +319,8 @@ try {
       assert.equal(newLayout.depositOpen,null,'Deposit no longer uses the open-only line');
       if(statusCase==='closed')assert.equal(oldLayout.depositStatus[0].paragraphs[0].text,name==='vault'?'Closed':ISSUE_NOTICE,'Baseline proves the same reason fixture');
       else assert.ok(weekendBlockReads>beforeBlocks,'Weekend comparison uses the public-block timestamp fixture');
-      assert.deepEqual(newLayout.depositStatus,oldLayout.depositStatus,'v13: the status area equals the v12 baseline');
-      assert.deepEqual(newLayout.led,oldLayout.led,'v13: the sign geometry equals the v12 baseline');
+      assert.deepEqual(newLayout.depositStatus,oldLayout.depositStatus,'The status area equals the baseline');
+      assert.deepEqual(newLayout.led,oldLayout.led,'The sign geometry equals the baseline');
       assert.equal(newLayout.led.signs.length,name==='deposit'?1:0,'Only Deposit has the known-closed sign');
       if(name==='deposit') {
         const sign=newLayout.led.signs[0];
@@ -301,37 +334,30 @@ try {
       assert.equal(newLayout.walletLine,null,'Owner removed the wallet-switch instruction from Deposit');
       assert.equal(newLayout.flowSteps.text,oldLayout.flowSteps.text,'Task instructions keep their words');
       if(oldLayout.flowSteps.bottom<=812)assert.ok(newLayout.flowSteps.bottom<=812,'Previously visible Deposit task instructions remain on the first screen');
-      // v13: both variants are empty forms (no wallet; the synthetic account holds nothing), so the list is open
-      // across the panel with the fold's words as a plain heading line in the fold line's place; the baseline shows the closed fold.
-      assert.deepEqual([oldLayout.stockList.open,oldLayout.stockList.summary,newLayout.stockList.open,newLayout.stockList.summary],[true,false,true,false],'v13: the open list replaces the closed fold in the empty states');
-      assert.equal(newLayout.stockList.title,oldLayout.stockList.title,'The list heading keeps the fold line\'s words');
+      // Both variants are empty forms (no wallet; the synthetic account holds nothing), so the list is open across
+      // the panel with its plain heading line (v13); the baseline shows the same list.
+      assert.deepEqual([oldLayout.stockList.open,oldLayout.stockList.summary,newLayout.stockList.open,newLayout.stockList.summary],[true,false,true,false],'The open list, not the closed fold, in the empty states');
+      assert.equal(newLayout.stockList.title,oldLayout.stockList.title,'The list heading keeps its words');
       assert.match(newLayout.stockList.title,/^All stocks you can deposit \(\d+\)$/);
       assert.ok(near(newLayout.stockList.top,oldLayout.stockList.top),'The list starts where the fold line started');
       assert.ok(newLayout.stockList.width>0.98,'The open list spans the panel: '+newLayout.stockList.width);
       assert.ok(newLayout.stockList.buttons>0&&newLayout.stockList.title.endsWith('('+newLayout.stockList.buttons+')'),'Every open stock has its button');
-      checks.push('v13 Deposit: open stock list across the panel in both empty states, heading words and start unchanged, no fold, one button per open stock');
+      assert.deepEqual(rounded(newLayout.stockList),rounded(oldLayout.stockList),'The whole stock list equals the baseline');
+      checks.push('Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline');
     }
     checks.push(statusCase==='normal'?'Owner follow-up: no normal status area/sign':'Owner follow-up: exact single '+statusCase+' sentence, compact Vault Closed notice, Deposit-only CLOSED sign');
     if(name==='docs') {
-      assert.equal(oldLayout.docsParagraphs.length,5);
+      // The v14 Docs tab equals the baseline: the four paragraphs of "What Basket is" (the live fee sentence last, no
+      // not-live sentence), the five ITEM panels between Risks and Find Basket, every panel in its place with its size.
+      assert.equal(oldLayout.docsParagraphs.length,4);
       assert.equal(newLayout.docsParagraphs.length,4);
-      assert.deepEqual(oldLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded,'Baseline carries the four v12 paragraphs');
-      assert.deepEqual(newLayout.docsParagraphs.map(p=>p.text),oldLayout.docsParagraphs.slice(0,4).map(p=>p.text.replace('is set to go to ITEM staking once ITEM is live','goes to ITEM staking')),'Only approved live-oriented Docs edits');
-      // v14: five ITEM panels are inserted after "Risks" and before "Find Basket"; every retained panel is matched by its
-      // title, keeps its height, and moves down only by the tab row, the copy change and (Find Basket) the inserted panels.
-      const ITEM_PANELS=['ITEM','Earn ITEM by providing liquidity','Earn BASK by staking ITEM','Rewards FAQ','ITEM risks'];
-      assert.deepEqual(oldLayout.docsTitles.slice(-2),['Risks','Find Basket'],'Baseline ends with Risks and Find Basket');
-      assert.deepEqual(newLayout.docsTitles,[...oldLayout.docsTitles.slice(0,-1),...ITEM_PANELS,'Find Basket'],'v14: the five ITEM panels sit between Risks and Find Basket');
-      const tabShift=newLayout.docs[0].top-oldLayout.docs[0].top;
-      assert.ok(tabShift>0&&tabShift<100,'Only a small local tab row displaces Docs');
-      const copyDelta=newLayout.docs[0].height-oldLayout.docs[0].height;
-      const at=t=>newLayout.docs[newLayout.docsTitles.indexOf(t)];
-      for(let i=1;i<oldLayout.docs.length-1;i++){const n=at(oldLayout.docsTitles[i]);assert.ok(near(n.top-oldLayout.docs[i].top,tabShift+copyDelta)&&near(n.height,oldLayout.docs[i].height),'Retained Docs panel keeps its size and exact tab/copy displacement: '+oldLayout.docsTitles[i]);}
-      const inserted=at('Find Basket').top-at('Risks').bottom-(oldLayout.docs.at(-1).top-oldLayout.docs.at(-2).bottom);
-      assert.ok(inserted>0,'The five ITEM panels take room between Risks and Find Basket');
-      assert.ok(near(at('Find Basket').top-oldLayout.docs.at(-1).top,tabShift+copyDelta+inserted)&&near(at('Find Basket').height,oldLayout.docs.at(-1).height),'Find Basket keeps its size and moves down by exactly the tab row, the copy change and the inserted panels');
-      for(const t of ITEM_PANELS)assert.ok(at(t).height>0,'ITEM panel rendered: '+t);
-      checks.push('v14 Docs: the four v12 paragraphs with the live fee sentence; five ITEM panels between Risks and Find Basket; every retained panel keeps its size, displaced only by the tab row, the copy change and the inserted panels');
+      assert.deepEqual(oldLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded,'Baseline carries the two v12 paragraphs and the live fee sentence');
+      assert.deepEqual(rounded(newLayout.docsParagraphs),rounded(oldLayout.docsParagraphs),'The Docs paragraphs equal the baseline');
+      assert.deepEqual(newLayout.docsTitles.slice(-7),['Risks',...ITEM_PANELS,'Find Basket'],'The five ITEM panels sit between Risks and Find Basket');
+      assert.deepEqual(newLayout.docsTitles,oldLayout.docsTitles,'The Docs panels equal the baseline, in order');
+      assert.deepEqual(rounded(newLayout.docs),rounded(oldLayout.docs),'Every Docs panel keeps its place and size');
+      for(const d of newLayout.docs)assert.ok(d.height>0,'Docs panel rendered');
+      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; every panel equals the baseline in place and size');
     }
     if(name==='redeem') {
       assert.equal(oldLayout.redeemAside,null);
@@ -342,43 +368,26 @@ try {
       assert.equal(newLayout.quiet,variant==='connected'?'Nothing is owed to this wallet.':'Connect the receiver wallet to read and claim its owed stocks.');
       assert.equal(newLayout.quiet,oldLayout.quiet,'Quiet claims line equals the baseline');
       assert.equal(newLayout.walletLine,null,'No wallet-switch instruction');
-      checks.push('v13 Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line');
+      checks.push('Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line');
     }
-    // v13: on Deposit everything after the fold line moves down by exactly the open list's added height.
+    // The stock list has the baseline's height and words; the sentence v14 removed is in neither.
     const listGrowth=name==='deposit'?newLayout.stockList.height-oldLayout.stockList.height:0;
     if(name==='deposit'){
-      // v14: the sentence about grey stocks is removed from the list; the list is shorter by exactly that line (its box plus the bottom margin that no longer separates it from the buttons).
-      assert.ok(oldLayout.stockList.grey&&!newLayout.stockList.grey,'v14: the grey-stocks sentence is gone from the list');
-      assert.deepEqual(newLayout.stockList.sentences,oldLayout.stockList.sentences.filter(t=>t!=='Grey stocks are already in the form above.'),'v14: the list keeps its other words');
-      assert.ok(near(listGrowth,-(oldLayout.stockList.grey.height+oldLayout.stockList.grey.marginBottom)),'v14: the list is shorter by exactly the removed sentence: '+listGrowth);
+      assert.ok(!oldLayout.stockList.grey&&!newLayout.stockList.grey,'The grey-stocks sentence (removed in v14) is in neither list');
+      assert.deepEqual(newLayout.stockList.sentences,oldLayout.stockList.sentences,'The list keeps its words');
+      assert.ok(near(listGrowth,0),'The list keeps its height: '+listGrowth);
     }
     for(const x of prior) {
       const y=counterpart(x);
-      // Owner selected Docs-local tabs and the two exact copy edits. Name only these consequences.
-      if(name==='docs'&&x.docsIndex>=0){
-        if(words(x.text)===words(docsAdded[3])){assert(!now.some(z=>words(z.text)===words(x.text)));exceptions.push({reason:'Approved not-live sentence removal',element:x});continue;}
-        const target=y??now.find(z=>words(z.text)===words(x.text.replace('is set to go to ITEM staking once ITEM is live','goes to ITEM staking')));
-        assert(target,'Every retained Docs first-screen word remains');
-        const tabShift=newLayout.docs[0].top-oldLayout.docs[0].top;
-        assert.ok(near(target.y-x.y,tabShift+(x.docsIndex>0?newLayout.docs[0].height-oldLayout.docs[0].height:0)),'Exact local tab/copy displacement');
-        exceptions.push({reason:'Approved Docs local tab row and exact copy layout',element:x,now:target});continue;
-      }
-      if(name==='deposit'&&x.tag==='SUMMARY'&&/^All stocks you can deposit \(\d+\)$/.test(normalize(x.text))) {
-        const line=now.find(z=>z.tag==='P'&&words(z.text)===words(x.text));
-        assert.ok(line&&near(line.y,x.y),'v13: the fold line is a plain heading line with the same words in the same place');
-        exceptions.push({reason:'v13 open stock list: heading line in the place of the fold line',element:x,now:line});continue;
-      }
-      if(name==='deposit'&&x.y>=oldLayout.stockList.top-0.5&&y&&near(y.y-x.y,listGrowth)&&near(y.bottom-x.bottom,listGrowth)) {
-        exceptions.push({reason:'v13 open stock list: exact displacement by the open list height',element:x,now:y});continue;
-      }
+      // v15 changes no word and no vertical place: every prior first-screen element is there, where it was. No exception.
       if(y&&y.bottom<=812) {
-        if(name==='vault'&&(y.y>x.y+0.5||y.bottom>x.bottom+0.5))regressions.push({...x,now:y,reason:'Vault content moved downward'});
+        if(!near(y.y,x.y)||!near(y.bottom,x.bottom))regressions.push({...x,now:y,reason:'First-screen content moved vertically'});
         continue;
       }
       regressions.push({...x,now:y});
     }
     // Original slogan-strip and title-character assertions, with explicit header
-    // height and overflow pins added. No v13 exception applies to these parts.
+    // height and overflow pins added. No exception applies to these parts.
     checks.push('header retains its exact position and height');
     if(!near(newLayout.header.top,oldLayout.header.top)||!near(newLayout.header.height,oldLayout.header.height))regressions.push({tag:'HEADER',text:'header',old:oldLayout.header,now:newLayout.header});
     checks.push('slogan strip in the same place and size, still and full under reduced motion');
@@ -397,6 +406,6 @@ try {
   }
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements preserved except the exact approved Docs tab row and copy edits; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements with their words in the same vertical place, no exception; the Vault title across the panel as decided in v15, the Deposit and Redeem titles equal to the baseline; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}

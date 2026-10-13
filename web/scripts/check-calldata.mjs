@@ -11,35 +11,41 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v14 on HEAD=v13: the owner's decisions of 2026-10-13. Flows.tsx (DepositPage only): on desktop the stock list is
-// always open in a right-hand column and the "Before you deposit" notes sit under the form; one sentence removed and
-// the warning note re-worded. Docs.tsx: the Docs-local Tokenomics and BASK tabs (four new display-only sources,
-// pinned by reviewed digests below), the live fee sentence, and five ITEM panels in the default tab. Transactions
-// and all chain reads remain HEAD's; wallet.tsx and every other web/src file are byte-identical to HEAD.
+// v15 on HEAD=v14: the owner's two phone decisions of 2026-10-13, both style rules only. styles.css gains rules after
+// HEAD's text (the Vault title picture centred on phones; on Deposit and Redeem the shelf line meets the heading's
+// focus marker). No script changes: every web/src file except styles.css is byte-identical to HEAD, the two v14 files
+// (Docs.tsx, Flows.tsx) and the four Docs module files included. Transactions and all chain reads remain HEAD's.
 const protectedFiles=[
+ "BaskGuide.tsx",
+ "Docs.tsx",
+ "Flows.tsx",
  "Losses.tsx",
  "Owner.tsx",
  "Scenery.tsx",
+ "Tokenomics.tsx",
  "Vault.tsx",
  "components.tsx",
  "main.tsx",
  "wallet.tsx",
+ "baskGuideData.ts",
  "chain.ts",
  "deployment.ts",
  "governance.ts",
  "model.ts",
  "newYork.ts",
  "poolMath.ts",
+ "tokenomicsData.ts",
  "vault.abi.json"
 ];
 for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src/'+f),f);
-// The Docs module (owner approved A and Docs-local tabs): exactly four new display-only sources, each pinned by an
-// independently reviewed digest and scanned for wallet, storage, network and send sinks; the ITEM statistics read is
-// behind the null-address guard. styles.css starts with HEAD's text followed by the exact approved module CSS; v14's
-// Deposit desktop rules are appended after that prefix.
-const NEW_SOURCES=['Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts'];
+// v15 adds no source file. The Docs module of v14 (four display-only sources) is part of HEAD now: frozen above, and
+// still pinned by its independently reviewed digests and scanned for wallet, storage, network and send sinks; the
+// ITEM statistics read stays behind the null-address guard. styles.css starts with HEAD's whole text (its first 63880
+// bytes are still the exact approved module CSS); the v15 rules are appended after it and pinned below.
+const NEW_SOURCES=[];
+const MODULE_SOURCES=['Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts'];
 const allSources=fs.readdirSync(path.join(root,'web/src'),{recursive:true}).filter(p=>fs.statSync(path.join(root,'web/src',p)).isFile()).map(p=>p.replaceAll('\\','/')).sort();
-assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'exactly four new sources');
+assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'no new source');
 const modulePins={
   "Tokenomics.tsx": "9090a62ee2c36373beb7712fea6489ba6aa5f4852ba110be71beb1c11c27f1f6",
   "tokenomicsData.ts": "18c92542419fcde454a8640705ebe2b1579d3e01eaa88cbf5edfb1e7053eccfe",
@@ -47,7 +53,7 @@ const modulePins={
   "baskGuideData.ts": "009ed45d5af35bbb34bc62c89bcc90b46253894d2aca60f793ec3e4ac465b169",
 };
 for(const [f,digest] of Object.entries(modulePins))assert.equal(sha256(read('web/src/'+f)),digest,'independent reviewed module pin: '+f);
-for(const f of NEW_SOURCES){
+for(const f of MODULE_SOURCES){
  const s=read('web/src/'+f);
  assert.ok(!/ethereum|\b(?:fetch|localStorage|sessionStorage|indexedDB|sendTransaction|writeContract|sendRawTransaction|eth_call)\b|\.request\s*\(/.test(s),f+': no wallet, storage, raw network or send sink');
  assert.deepEqual([...s.matchAll(/https?:[^\s\x60"']+/g)].map(m=>m[0]),f==='Tokenomics.tsx'?['https://robin.etherscan.io/address/${address}']:[],'only explorer link pattern');
@@ -55,46 +61,24 @@ for(const f of NEW_SOURCES){
 assert.match(read('web/src/Tokenomics.tsx'),/if \(!hasAddresses\(addresses\)\) return null;[\s\S]*const results = await reader/,'null guard before the sole optional existing many reader');
 assert.ok(read('web/src/styles.css').startsWith(baseline('web/src/styles.css')),'CSS additions only');
 assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(0,63880)),'556616a829d32cd47a07e81280a030b9adcd49ffa1a665776ca894c63e593ad8','entire approved module CSS is an exact prefix; v14 Deposit rules follow it');
-// The v14 files: byte-identical to HEAD once their documented pieces [v14, HEAD] are put back (each exactly once), so
+// v15: the only source difference is the text after HEAD's styles.css. It is pinned whole by a reviewed digest, and
+// it can load nothing, name no file and run nothing: no url(), @import, @font-face, image-set(), src, expression or
+// content, no backslash escape (which could spell one of those), and only the two phone media queries.
+const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8'),cssRules=cssTail.replace(/\/\*[\s\S]*?\*\//g,'');
+assert.equal(sha256(cssTail),'75e11c77094ccfe8889f6a224e973cf9091a289e99b30cf34e81ecc7d9cadd1a','v15: the reviewed style rules after the text of HEAD');
+assert.ok(!/url\s*\(|@import|@font-face|@namespace|image-set|\bsrc\b|expression|javascript:|behavior|content\s*:|\\|<|http/i.test(cssRules),'v15 style rules: nothing that loads, names a file or runs');
+assert.deepEqual([...cssRules.matchAll(/@[a-z-]+[^{]*/g)].map(m=>m[0].trim()),['@media (max-width: 660px)','@media (max-width: 660px) and (forced-colors: none)'],'v15 style rules: phones only');
+assert.deepEqual([...new Set([...cssRules.matchAll(/^\s*(--[a-z-]+|[a-z-]+)\s*:/gm)].map(m=>m[1]))].sort(),['--bw','--gx','bottom','right','text-align','width'],'v15 style rules: only these properties');
+// v15 edits no script file, so this list is empty and every source is frozen above. (For an edited file it holds the
+// documented pieces [now, HEAD]: byte-identical to HEAD once they are put back, each exactly once, so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
-// out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v14 pieces (generated from the difference to HEAD, not edited by hand)
+// out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.)
+// >>> v15 pieces (generated from the difference to HEAD, not edited by hand)
 const editedFiles={
- "Docs.tsx":[
-  ["import { useRef, useState, type KeyboardEvent } from \"react\";\nimport { Tokenomics } from \"./Tokenomics\";\nimport { BaskGuide } from \"./BaskGuide\";\nimport { PageTitle, AddressLink } from \"./components\";\n",
-   "import { PageTitle, AddressLink } from \"./components\";\n"],
-  ["export function DocsPage() {\n  const [tab, setTab] = useState(0);\n  const buttons = useRef<(HTMLButtonElement | null)[]>([]);\n  function move(event: KeyboardEvent<HTMLButtonElement>) {\n    const next = event.key === \"Home\" ? 0 : event.key === \"End\" ? 2 : event.key === \"ArrowRight\" ? (tab + 1) % 3 : event.key === \"ArrowLeft\" ? (tab + 2) % 3 : undefined;\n    if (next === undefined) return;\n    event.preventDefault();\n    setTab(next);\n    buttons.current[next]?.focus();\n  }\n  return (\n",
-   "export function DocsPage() {\n  return (\n"],
-  ["      </PageTitle>\n      <div className=\"docs-tabs\" role=\"tablist\" aria-label=\"Docs\">\n        {[\"Docs\", \"Tokenomics\", \"BASK\"].map((label, index) => (\n          <button key={label} ref={node => { buttons.current[index] = node; }} type=\"button\" role=\"tab\" id={\"docs-tab-\" + index} aria-controls={\"docs-panel-\" + index} aria-selected={tab === index} tabIndex={tab === index ? 0 : -1} onClick={() => setTab(index)} onKeyDown={move}>{label}</button>\n        ))}\n      </div>\n      <div id=\"docs-panel-0\" role=\"tabpanel\" aria-labelledby=\"docs-tab-0\" hidden={tab !== 0}>\n      <div className=\"docs-grid\">\n",
-   "      </PageTitle>\n      <div className=\"docs-grid\">\n"],
-  ["          <p>\n            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM.\n          </p>\n",
-   "          <p>\n            The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.\n          </p>\n          <p>\n            ITEM is not live yet. Its address will be listed here when it is.\n          </p>\n"],
-  ["        </section>\n        <section className=\"panel\">\n          <h2>ITEM</h2>\n          <p>\n            ITEM is Basket's reward token. It has two jobs: it pays the people who provide liquidity for BASK and ITEM, and staking it earns the vault's fees. Its supply is fixed at 1,000,000,000 and its reward schedules are written into contracts that have no owner, no pause and no upgrade. Nobody can change the amounts, speed them up or stop them.\n          </p>\n        </section>\n        <section className=\"panel\">\n          <h2>Earn ITEM by providing liquidity</h2>\n          <p>\n            Add liquidity to one of the two Uniswap v2 pools, BASK/USDG or ITEM/ETH, and stake the pool token you receive on the Earn page. From that moment ITEM accrues to you every second, in proportion to your share of everything staked in that pool's gauge.\n          </p>\n          <p>\n            There is no lock and no minimum time. Stake more, withdraw some or all, and claim whenever you like, in any order. Claiming pays everything you have earned so far and resets nothing. Unclaimed ITEM stays yours. Withdrawing moves only your pool token, so it always works, even if a claim could not go through.\n          </p>\n          <p>\n            The schedule is fixed and front loaded. Each gauge releases its allocation over four years, fastest at the start and slowing in a straight line to zero at the end. The clock only runs while at least one person is staked, so an empty gauge releases nothing and loses nothing.\n          </p>\n          <div className=\"item-table\">\n            <table className=\"item-gauges\">\n              <thead>\n                <tr>\n                  <th>Gauge</th>\n                  <th>Total ITEM</th>\n                  <th>Year 1</th>\n                  <th>Year 2</th>\n                  <th>Year 3</th>\n                  <th>Year 4</th>\n                </tr>\n              </thead>\n              <tbody>\n                <tr>\n                  <th>BASK/USDG</th>\n                  <td>490,000,000</td>\n                  <td>43.75%</td>\n                  <td>31.25%</td>\n                  <td>18.75%</td>\n                  <td>6.25%</td>\n                </tr>\n                <tr>\n                  <th>ITEM/ETH</th>\n                  <td>210,000,000</td>\n                  <td>43.75%</td>\n                  <td>31.25%</td>\n                  <td>18.75%</td>\n                  <td>6.25%</td>\n                </tr>\n              </tbody>\n            </table>\n          </div>\n          <p>\n            Rewards are shared among everyone staked at the time. Fewer stakers means a larger share each; more stakers means a smaller one.\n          </p>\n        </section>\n        <section className=\"panel\">\n          <h2>Earn BASK by staking ITEM</h2>\n          <p>\n            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on the Earn page and you receive those fees in BASK, in proportion to your stake. The staking contract can also receive USDG and WETH, so other income can be sent to stakers the same way.\n          </p>\n          <p>\n            Fees are not paid out the moment they arrive. Each batch is streamed to stakers evenly over 7 days, second by second, and you earn only for the time you are staked. This stops anyone from staking just before a large fee lands and leaving with it. While one stream is running, new fees wait and start their own 7-day stream when it ends.\n          </p>\n          <p>\n            Stake and unstake at any time, with no lock or cooldown. Claim is per token: BASK, USDG and WETH are claimed separately, each paying what you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.\n          </p>\n        </section>\n        <section className=\"panel\">\n          <h2>Rewards FAQ</h2>\n          <h3>Can I claim whenever I want?</h3>\n          <p>Yes. Every claim pays what has accrued to that second.</p>\n          <h3>Is anything locked?</h3>\n          <p>No. Staked pool tokens and staked ITEM can be withdrawn at any time.</p>\n          <h3>What if nobody uses the vault?</h3>\n          <p>\n            Then no fees are collected and ITEM stakers earn nothing for that time. Liquidity rewards keep running as long as someone is staked. Nothing is lost either way.\n          </p>\n          <h3>Do rewards expire?</h3>\n          <p>No. Unclaimed rewards wait for you.</p>\n          <h3>Can the team change the rewards?</h3>\n          <p>No. The allocations, schedules and the 7-day stream are fixed in the contracts.</p>\n        </section>\n        <section className=\"panel\">\n          <h2>ITEM risks</h2>\n          <p>\n            Rewards depend on use. Liquidity rewards fall every day by design, and fee rewards are zero when nobody deposits or redeems. Providing liquidity carries the usual pool risk: if the two tokens move apart in price, you can end up with less value than holding them. ITEM's price can fall. The contracts cannot be changed or paused, which also means a defect could not be fixed.\n          </p>\n        </section>\n        <section className=\"panel\">\n",
-   "        </section>\n        <section className=\"panel\">\n"],
-  ["      </div>\n      </div>\n      <div id=\"docs-panel-1\" role=\"tabpanel\" aria-labelledby=\"docs-tab-1\" hidden={tab !== 1}>\n        {tab === 1 && <Tokenomics />}\n      </div>\n      <div id=\"docs-panel-2\" role=\"tabpanel\" aria-labelledby=\"docs-tab-2\" hidden={tab !== 2}>\n        {tab === 2 && <BaskGuide />}\n      </div>\n    </>\n",
-   "      </div>\n    </>\n"]
- ],
- "Flows.tsx":[
-  ["  const [listOpenFor, setListOpenFor] = useState<string>();\n  // v14: wider than 960px the panel has two columns (the form left, the stock\n  // list always open on the right); phones and tablets keep the one column.\n  const [desktop, setDesktop] = useState(\n    () => window.matchMedia(\"(min-width: 961px)\").matches,\n  );\n  useEffect(() => {\n    const query = window.matchMedia(\"(min-width: 961px)\");\n    const update = () => setDesktop(query.matches);\n    query.addEventListener(\"change\", update);\n    return () => query.removeEventListener(\"change\", update);\n  }, []);\n  // The stock an Add button just added, until its row is on screen.\n",
-   "  const [listOpenFor, setListOpenFor] = useState<string>();\n  // The stock an Add button just added, until its row is on screen.\n"],
-  ["  }, [emptyForm, accountKey]);\n  const listOpen = desktop || emptyForm || listOpenFor === accountKey;\n  const StockList = listOpen ? \"div\" : \"details\";\n",
-   "  }, [emptyForm, accountKey]);\n  const listOpen = emptyForm || listOpenFor === accountKey;\n  const StockList = listOpen ? \"div\" : \"details\";\n"],
-  ["  }\n  // Every stock the vault takes now. On phones: inside the form, closed until\n  // pressed while the form has rows, open across the panel while the form is\n  // empty (no wallet, or a wallet without a listed stock) and then for the\n  // rest of the visit for that account (v13). On desktop: always open, in the\n  // right-hand column (v14). A press is the same Add as in the search; a stock\n  // that has a row stays in the list, switched off.\n  const stockList = (\n    <StockList className={listOpen ? \"all-stocks open-list\" : \"all-stocks\"}>\n      {listOpen ? (\n        <p className=\"list-title\">All stocks you can deposit ({open.length})</p>\n      ) : (\n        <summary>All stocks you can deposit ({open.length})</summary>\n      )}\n      <p>Press a stock to add it to your deposit.</p>\n      <ul>\n        {listed.map((a) => (\n          <li key={a.token} className={a.symbol.length > 5 ? \"wide\" : undefined}>\n            <button\n              type=\"button\"\n              className=\"quiet\"\n              disabled={\n                working || w.busy || rows.some((x) => x.a.token === a.token)\n              }\n              onClick={() => add(a.token)}\n            >\n              <bdi>{a.symbol}</bdi>\n            </button>\n          </li>\n        ))}\n      </ul>\n    </StockList>\n  );\n  // \"Before you deposit\": its own panel under the form on phones, under the\n  // form inside the panel on desktop (v14).\n  const notes = (\n    <>\n      <h2>Before you deposit</h2>\n      <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>\n      <p>\n        First deposit: 0.001 BASK is locked forever. The preview already\n        subtracts this lock and any fee.\n      </p>\n      <p>\n        You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.\n      </p>\n      <p>\n        A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.\n      </p>\n      <Note warning>\n        Issuer restrictions and pool checks can temporarily halt deposits.\n      </Note>\n    </>\n  );\n  return (\n",
-   "  }\n  return (\n"],
-  ["          <h2>Make a deposit</h2>\n          {/* v14: two columns on desktop (the form, its preview and buttons and\n              the notes left; the stock list right), one column otherwise. */}\n          <div className=\"deposit-columns\">\n          <div className=\"deposit-main\">\n          {!open.length ? (\n",
-   "          <h2>Make a deposit</h2>\n          {!open.length ? (\n"],
-  ["                </div>\n                {/* The stock list (above): in the form on phones, in the\n                    right-hand column on desktop. */}\n                {!desktop && stockList}\n                {counted + badAmount.length + noPrice.length > 0 && (\n",
-   "                </div>\n                {/* Every stock the vault takes now. Closed until pressed while\n                    the form has rows; shown open across the panel while the\n                    form is empty (no wallet, or a wallet without a listed\n                    stock), and then for the rest of the visit for that account\n                    (v13). A press is the same Add as in the search; a stock\n                    that has a row stays in the list, switched off. */}\n                <StockList\n                  className={listOpen ? \"all-stocks open-list\" : \"all-stocks\"}\n                >\n                  {listOpen ? (\n                    <p className=\"list-title\">\n                      All stocks you can deposit ({open.length})\n                    </p>\n                  ) : (\n                    <summary>\n                      All stocks you can deposit ({open.length})\n                    </summary>\n                  )}\n                  <p>Press a stock to add it to your deposit.</p>\n                  <p>Grey stocks are already in the form above.</p>\n                  <ul>\n                    {listed.map((a) => (\n                      <li\n                        key={a.token}\n                        className={a.symbol.length > 5 ? \"wide\" : undefined}\n                      >\n                        <button\n                          type=\"button\"\n                          className=\"quiet\"\n                          disabled={\n                            working ||\n                            w.busy ||\n                            rows.some((x) => x.a.token === a.token)\n                          }\n                          onClick={() => add(a.token)}\n                        >\n                          <bdi>{a.symbol}</bdi>\n                        </button>\n                      </li>\n                    ))}\n                  </ul>\n                </StockList>\n                {counted + badAmount.length + noPrice.length > 0 && (\n"],
-  ["          </p>\n          {desktop && <div className=\"deposit-notes\">{notes}</div>}\n          </div>\n          {desktop && open.length > 0 && (\n            <div className=\"deposit-right\">{stockList}</div>\n          )}\n          </div>\n        </section>\n        {!desktop && <aside className=\"panel\">{notes}</aside>}\n      </div>\n",
-   "          </p>\n        </section>\n        <aside className=\"panel\">\n          <h2>Before you deposit</h2>\n          <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>\n          <p>\n            First deposit: 0.001 BASK is locked forever. The preview already\n            subtracts this lock and any fee.\n          </p>\n          <p>\n            You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.\n          </p>\n          <p>\n            A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.\n          </p>\n          <Note warning>\n            Feeds lag the market. Issuer restrictions and pool checks can stop\n            deposits.\n          </Note>\n        </aside>\n      </div>\n"]
- ]
 };
-// <<< v14 pieces
-assert.deepEqual(Object.keys(editedFiles),[
- "Docs.tsx",
- "Flows.tsx"
-],'the v14 files');
+// <<< v15 pieces
+assert.deepEqual(Object.keys(editedFiles),[],'v15 edits no script file');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -148,53 +132,16 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD. v14 adds no guarded call, wallet request or chain read.
-const expected={
- "Docs.tsx": {
-  "removed": [],
-  "added": []
- },
- "Flows.tsx": {
-  "removed": [],
-  "added": []
- }
-};
+// already part of HEAD. v15 adds no call at all: no script file changes.
+const expected={};
 // Action attributes: the exact differences from HEAD, in page order, each [element, attribute, why]. Everything else
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v14 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v15 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
- "Docs.tsx":{
-  removed:[],
-  added:[
-   ["div","role=\"tablist\"",
-    "Docs module (owner approved Docs-local tabs): the tab row is marked as a tablist for assistive technology. Presentation only; no action, read or request."],
-   ["button","role=\"tab\"",
-    "Docs module: each of the three local tab buttons (Docs, Tokenomics, BASK) is marked as a tab for assistive technology. Presentation only."],
-   ["button","onClick={() => setTab(index)}",
-    "Docs module: pressing a tab button sets the local tab state (which of the three Docs panels is shown). Display state only; no read, send, storage or network use."],
-   ["button","onKeyDown={move}",
-    "Docs module: arrow, Home and End keys move between the three tab buttons (focus and the local tab state). Display only; no read, send, storage or network use."],
-   ["div","role=\"tabpanel\"",
-    "Docs module: each of the three panels (the default Docs grid, Tokenomics, BASK) is marked as a tabpanel linked to its tab. Presentation only."],
-   ["div","role=\"tabpanel\"",
-    "Docs module: each of the three panels (the default Docs grid, Tokenomics, BASK) is marked as a tabpanel linked to its tab. Presentation only."],
-   ["div","role=\"tabpanel\"",
-    "Docs module: each of the three panels (the default Docs grid, Tokenomics, BASK) is marked as a tabpanel linked to its tab. Presentation only."]]},
- "Flows.tsx":{
-  removed:[
-   ["button","disabled={working || w.busy || rows.some((x) => x.a.token === a.token)}",
-    "v14: the stock list's buttons moved unchanged into a JSX constant rendered either inside the form (phones) or in the right-hand column (desktop); the disabled rule is HEAD's text, character for character."],
-   ["button","onClick={() => add(a.token)}",
-    "v14: the stock list's buttons moved unchanged into a JSX constant rendered either inside the form (phones) or in the right-hand column (desktop); the press is HEAD's add(), character for character, which only adds a row to the form."]],
-  added:[
-   ["button","disabled={working || w.busy || rows.some((x) => x.a.token === a.token)}",
-    "v14: the stock list's buttons moved unchanged into a JSX constant rendered either inside the form (phones) or in the right-hand column (desktop); the disabled rule is HEAD's text, character for character."],
-   ["button","onClick={() => add(a.token)}",
-    "v14: the stock list's buttons moved unchanged into a JSX constant rendered either inside the form (phones) or in the right-hand column (desktop); the press is HEAD's add(), character for character, which only adds a row to the form."]]}
 };
-// <<< v14 attributes
+// <<< v15 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -206,26 +153,8 @@ const attributeChanges={
 // read is added; the existing receipt read and answer handling are independently byte-pinned.
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
-// Reviewed v14 differences in calls and watched-name uses. Independent of the generated pieces.
-const callChanges={
- "Docs.tsx": {
-  "why": "Docs module (owner approved A and Docs-local tabs) and the five ITEM panels: a local tab state and its keyboard handler, the two display-only tab components, the live fee sentence and the removed not-live sentence, five new section panels of text. No read, send, storage or network use is added; the module files are pinned by reviewed digests above.",
-  "pieces": [],
-  "removed": [],
-  "uses": []
- },
- "Flows.tsx": {
-  "why": "v14 (owner decision 2026-10-13): on desktop (wider than 960px, read once through matchMedia and kept in one display-only state) the Deposit panel is two columns: the form, its preview and transaction buttons and the Before-you-deposit notes on the left, the stock list always open on the right; on phones the v13 layout and behaviour are unchanged. The sentence about grey stocks is removed and the warning note re-worded. No call of HEAD is removed beyond the documented moves; no read, send, storage or network use is added.",
-  "pieces": [],
-  "removed": [
-   "listed.map((a) => (<li key={a.token} className={a.symbol.length > 5 ? \"wide\" : undefined}> <button type=\"button\" className=\"quiet\" disabled={working || w.busy || rows.some((x) => x.a.token === a.token)} onClick={() => add(a.token)}> <bdi>{a.symbol}</bdi> </button> </li>))",
-   "rows.some((x) => x.a.token === a.token)",
-   "add(a.token)",
-   "usd(s.globals.NAV_CAP)"
-  ],
-  "uses": []
- }
-};
+// Reviewed differences in calls and watched-name uses: none in v15. Independent of the generated pieces.
+const callChanges={};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
 function stateNames(text,file){
@@ -274,9 +203,9 @@ function localDeclarations(file,text,fn,list){
  return out;
 }
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
-assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed beyond the four module files');
-// Every source is either frozen (byte-identical to HEAD) or a v14 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v14 file');
+assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
+// Every source is frozen (byte-identical to HEAD): v15 has no edited script file.
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -299,18 +228,10 @@ if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,
 // ordered callee names make the list readable without repeating large nested JSX bodies. No regeneration block
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
-const addedCallPins={
- "Docs.tsx": {
-  "sha256": "07495e37aa44c937913a52d41cb024b6f39ca041e9e3889f9bf99fb1bec5f184",
-  "callees": "useState useRef preventDefault setTab focus map setTab"
- },
- "Flows.tsx": {
-  "sha256": "9420ba314dc7417826b92076310403045ce72c76fd871e45203c121a6da4ff78",
-  "callees": "useState matchMedia useEffect matchMedia setDesktop addEventListener removeEventListener map some add usd"
- }
-};
+const addedCallPins={};
 // <<< reviewed calls
-// v14: exact reviewed source of the two edited files, beyond either generated block (the four module files are pinned above).
+// The exact reviewed source of the two v14 files, kept as a second pin beside the frozen-file comparison with HEAD
+// (the four module files are pinned above).
 const reviewedSourcePins={
  "Docs.tsx": "6c9cc7e308109e50b7b9a6e5c861fc4d9feec927e7d568f4c238e9a807930e77",
  "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309"
@@ -484,7 +405,7 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v14 adds nothing a page loads or opens in the HEAD sources: every file equals HEAD here (the module files are scanned above).
+// v15 adds nothing a page loads or opens: every file equals HEAD here (the module files are scanned above too).
 const loadDisplayAdded={};
 const loadUses={};
 for(const f of sources){
@@ -554,7 +475,7 @@ function sendParts(text){
 }
 const headSend=sendParts(baseline('web/src/wallet.tsx')),nowSend=sendParts(read('web/src/wallet.tsx'));
 assert.equal(nowSend.head,headSend.head,'wallet.tsx send(): byte-identical head through receipt wait');
-// v14 does not touch wallet.tsx: send() is byte-identical to HEAD, head and tail (no piece); the mined-hash
+// v15 does not touch wallet.tsx: send() is byte-identical to HEAD, head and tail (no piece); the mined-hash
 // statements are pinned by sendTailWrites below as well.
 const SEND_TAIL_PIECES=[
 ];
@@ -653,7 +574,7 @@ for(const name of ['short','approvals'])rawProtected('Deposit '+name,'Flows.tsx'
 // component or hook (parameters included) is still declared there once, by the same text: the same import, the same
 // useState or useRef, the same expression. So `vault`, `token`, `amount`, `depositArgs`, `VAULT`, `quote`, `inputs`,
 // `open`, `approvals`, `account` and every other name the pinned transaction code uses still mean what they meant at
-// HEAD. The names v14 adds at the top of a file are listed here (the Docs module imports); a name v14 adds at the top of a component or hook
+// HEAD. The names an update adds at the top of a file are listed here (none in v15); a name it adds at the top of a component or hook
 // must be new there and must not hide a name declared at the top of the file.
 function scopes(text,file){
  const tree=parse(text,file),print=printerOf(tree),module=Object.create(null),functions=Object.create(null);
@@ -714,37 +635,11 @@ for(const f of Object.keys(editedFiles)){
  assert.deepEqual(n,h,f+': a name used by the transaction code is declared around it differently from HEAD');
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
-const namesAdded={
- "Docs.tsx": {
-  "BaskGuide": "import BaskGuide from \"./BaskGuide\"",
-  "KeyboardEvent": "import type KeyboardEvent from \"react\"",
-  "Tokenomics": "import Tokenomics from \"./Tokenomics\"",
-  "useRef": "import useRef from \"react\"",
-  "useState": "import useState from \"react\""
- },
- "Flows.tsx": {}
-};
-// v14 changes no declaration at the top of either file.
-const moduleChanges={
- "Docs.tsx": [],
- "Flows.tsx": []
-};
-// v14 changes one declaration at the top of DepositPage: the list is also open on desktop; never generated by put-pieces.
-const scopeChanges={
- "Docs.tsx": [],
- "Flows.tsx": [
-  {
-   "function": "DepositPage",
-   "name": "listOpen",
-   "head": [
-    "listOpen = emptyForm || listOpenFor === accountKey"
-   ],
-   "now": [
-    "listOpen = desktop || emptyForm || listOpenFor === accountKey"
-   ]
-  }
- ]
-};
+const namesAdded={};
+// v15 changes no declaration at the top of a file.
+const moduleChanges={};
+// v15 changes no declaration at the top of a component or hook; never generated by put-pieces.
+const scopeChanges={};
 const newNames={};
 for(const f of Object.keys(editedFiles)){
  const h=scopes(baseline('web/src/'+f),f),n=scopes(read('web/src/'+f),f);
@@ -768,7 +663,7 @@ for(const f of Object.keys(editedFiles)){
  }
 }
 // The whole-source digest is additional to the specific structural assertions above.
-for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed v14 source differs; regeneration does not authorize source edits');
+for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed source differs; regeneration does not authorize source edits');
 // Differential encoding: HEAD and current governance/model/chain bundled side by side. For the same inputs the
 // calldata must be byte-identical whenever the current page accepts; v12 adds no refusal, never accepts what HEAD
 // refused, and refuses with HEAD's words (model.ts, chain.ts and governance.ts are byte-identical to HEAD in v12).

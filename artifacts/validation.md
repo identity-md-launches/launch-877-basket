@@ -1,3 +1,92 @@
+# 2026-10-13 — v15 exact phone-layout patch, vault 6
+
+This entry describes this Codex run in UTC. Historical entries and artifacts are not evidence that a check ran in this session. The owner-provided patch is unchanged. No contract, dependency, lockfile, build configuration or ignore file changed; no live transaction or publication occurred.
+
+## Patch and export integrity
+
+Baseline: clean `c05c174f639d352fb6184636bcc6e083031daa65`. The Pinata download was 97,146 bytes with SHA-256 `8649818fb6f06658c236fbd6e7bf3cff7b0b918c4cc3d3cf38845a7c1115ad86`. `git apply --check` and `git apply` succeeded. All nine patched files were independently reconstructed from baseline plus the downloaded patch and compared byte for byte. Reverse-application checking also passed. Only `web/src/styles.css` changed in application source: exactly 39 appended lines. Every other tracked `web/src` file equals the baseline; no assertion, pin, wording, art or application script was edited after patch application.
+
+`npm ci`, `npm run typecheck` and `npm run build` succeeded using the unchanged lockfile, Node 22.23.3, npm 10.9.9, TypeScript 5.9.3 and Vite 7.1.9. The initial npm install could not write its default cache (EROFS); rerunning with `npm_config_cache=/tmp/basket-v15-npm-cache` succeeded. Vite retains its existing large-chunk advisory. All five requested filenames and hashes match exactly:
+
+| Production file | SHA-256 |
+| --- | --- |
+| `dist/assets/index-Ilfw5yUx.js` | `87776ebd6738dc3ab4f15f6a3a8f591ce5549e120fffe48a1e110046f352ef34` |
+| `dist/assets/index-BRdefnhV.css` | `6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80` |
+| `dist/assets/ccip-DYKMBxXZ.js` | `c2ba7ecb68f43ee4c208425c879b63d3a4c2ca346111396c24850bc327171e60` |
+| `dist/index.html` | `e73b2083579cda0f83ed66fefbff058f62204911182f5e57bfdfe7c119e0ecb1` |
+| `dist/share-card.jpg` | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` |
+
+The export keeps relative script, stylesheet, favicon, font and art URLs and hash navigation. Title, description, favicon, og:title and og:image are present. README retains install, preview and rebuild steps. DESIGN.md retains the implemented tokens, typography and components and the patch's exact v15 responsive documentation.
+
+## Fork walkthrough exception
+
+The unchanged `node scripts/run-browser.mjs` was attempted before other checks. Plain Node 22 cannot resolve the extensionless TypeScript imports, so it was rerun with the installed `tsx` loader (`node --import tsx scripts/run-browser.mjs`). Anvil 1.8.3 failed to create genesis through the runner's read-only proxy at the required block 83874298. The archive endpoint `https://robinhood.api.pocket.network` returned `historical state 9ea3fbd1957abec5df2d9a4417b6cad5709e75647b2fe94e7af00e623cfe86d0 is not available`. Repeated runner attempts, including with Node's environment-proxy support, failed before a browser or any wallet send. A direct read-only Anvil fork reproduced the archive refusal. A temporary wrapper redirected Anvil's silent-mode stdout errors to stderr solely so the runner could record the underlying error. No block, state, assertion, fork bytecode or response value was substituted.
+
+The brief explicitly permits delivery with the other checks passing if the archive refuses this block. **This run does not claim 91/92 successful walkthrough checks, 70 sends or 24 regenerated screenshots.** `browser-fork.json`, the 24 empty/stocks25 JPEGs and screenshot-packaging record remain the inherited c05c174 evidence; they describe the previous build. The failed attempt produced no new walkthrough screenshots. The required screenshot files are retained. Fresh art/layout, motion, visibility, export and unit results below concern this build. No archive workaround or scratch tooling is shipped.
+
+## Verification environment
+
+The original c05c174 `dist/` was extracted with `git archive` and supplied as `BASKET_BASELINE_DIST` to both comparison suites. Checks ran from `web/` with their patched scripts unchanged. Browser tools are external Playwright 1.64, Chromium 154.0.8037.0 and WebKit 26.6. A scratch `PLAYWRIGHT_MODULE` re-exports Playwright with `chromium.launch` selecting its full Chromium build (`channel: chromium`) to preserve fractional font metrics, as documented by prior runs. XDG browser caches are in `/tmp`. WebKit's runtime libraries were downloaded and extracted outside the repository; its launcher retains that library search path. No browser package, binary, cache, library archive or tooling shim is submitted.
+
+## Actual check results
+
+All fourteen checks below were run, without removing or changing any assertion. Thirteen passed; the motion check failed.
+
+| Command in `web/` | Actual result |
+| --- | --- |
+| `npx --no-install tsx scripts/check-tokenomics.tsx` | PASS — allocation/supply/schedule arithmetic, null guards, configured reader and formatting. |
+| `node scripts/check-tokenomics-live.mjs` | PASS — five null mounts, mocked configured success/failure/Retry; zero external requests. |
+| `npx --no-install tsx scripts/check-bask-guide.tsx` | PASS — audited arithmetic, flywheel figures, five examples, exact canonical prose/formulas/tables. |
+| `npm run validate` | PASS — live verifyNetwork, ABI and code hash, snapshot, status, all 11 proposal kinds; block 87872980. |
+| `node scripts/check-preservation.mjs` | PASS — protected files, send checks, ABI invariants, wording, obsolete integration scan. |
+| `npx --no-install tsx scripts/check-interface.ts` | PASS — arithmetic, parser, exact balances and setting units. |
+| `node scripts/check-calldata.mjs` | PASS — c05c174 baseline, every application script frozen, exact CSS append pin; 496 identical encodings and 1,773 mutually refused cases, no new refusal. |
+| `node scripts/check-art.mjs` | PASS — 74 manifest asset copies and 56 layout groups, Chromium and WebKit, 320–2560px title sweep, baseline comparison, focus-marker checks and rejection of the old look. |
+| `node scripts/check-motion.mjs` | FAIL — check-motion.mjs:314, “Loop ends 1920”: events=2, expected 0; both reset boundaries crossed. Identical failure on the untouched baseline. See diagnosis below. |
+| `node scripts/inspect-export.mjs` | PASS — 24 page/viewport checks, zero issues; fonts, keyboard, subpath, reduced motion and seven solid contrast pairs. |
+| `node scripts/check-guards.mjs` | PASS — four pre-send guards, zero wallet sends. |
+| `node scripts/check-fixes.mjs` | PASS — 34 site-fix regressions. |
+| `node scripts/check-visibility.mjs` | PASS — c05c174 dist, 375×812, six routes without/with mock account; all 70 prior first-screen elements retain words and vertical place, no exception. |
+| `node scripts/check-bundle.mjs` | PASS — complete candidate including tracked lib, required assets and screenshots below 8,388,608 bytes; re-run after this entry. |
+
+
+### Motion failure reproduced and isolated
+
+`web/scripts/check-motion.mjs:299` attaches its iteration counter to `document`, then `:314` expects zero events while playing the marquee through its two reset boundaries. This run rendered the approved CLOSED sign. Its independent CSS animations `deposit-led-chase` and `deposit-led-glow` (`web/src/styles.css:528`, `:531`) each emitted an event, producing `{events:2,crossed:[true,true]}` at 1920px. A read-only event observer in a scratch Playwright wrapper identified both names and their sign elements on `#deposit`; it did not change styles, application state, event propagation, time or assertions. The same unchanged check against the untouched c05c174 export failed at the same assertion with the same result. This is inherited behavior, not a change introduced by the 39-line phone patch.
+
+The exact-patch instruction says to report a failed check instead of changing the patched code or look, and forbids loosening checks. Neither the test nor the approved sign was changed, and the failed run is not counted as a pass. The freshly passing art suite separately verifies marquee resets, geometry, the sign and reduced-motion behavior in both engines, but does not replace the failed motion gate. `motion-validation.json` remains historical; it was not regenerated by the failing script. Only `redeem-title-dpr-1.png` was regenerated before failure; the 1.25 and 1.5 captures remain inherited. No full 39-check motion pass is claimed for this run.
+
+## Better Interface review
+
+Applied the supplied workflow and core principles for accessibility, layout, writing, typography, colors and UI to this exact patch. The site remains a Basket Protocol vault interface presented as a 1990s supermarket flyer. The explicit owner decisions take priority: centered phone Vault picture/heading and full shelf; unchanged focus marker joined by the shelf; unchanged desktop; local Docs tabs and live-product ITEM/Tokenomics/BASK copy without addresses; the desktop Deposit stock list open at right; Vault heading alone; character before phone vault figures; no Change wallet button; claims hidden when nothing is owed; no OPEN sign or normal-operation status line. No design preference was used to alter the patch.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — Checked | Keyboard-generated heading focus and blur on the three title routes; visible focused Deposit/Redeem captures inspected; unchanged focus outline and forced-colors guard at `web/src/styles.css:3017`; keyboard/label/target and reduced-motion checks in the supplied suites. Physical-device and screen-reader sessions were not performed. |
+| Layout — Checked | Vault centering, 138px three-line bubble, 4px minimum frame clearance, full-width shelf and heading alignment at `web/src/styles.css:2992`; unchanged heights and vertical positions against c05c174; both engine width sweeps and six-route phone comparison. Fresh 390px first screen shows brand, Connect wallet, Vault/Deposit/Redeem/Docs navigation and the character panel; financial figures remain below the owner-approved character. Native 200% browser zoom and RTL are unverified. |
+| Writing — Checked | Every application source except the stylesheet equals c05c174. Bubble words and other copy remain pinned by existing tests. ITEM/Tokenomics/BASK unit tests check canonical text and examples; no words were changed. |
+| Typography — Checked | Local Flyer/Anton and Pixel/VT323 WOFF2, system body stack and 16px inputs are preserved. Three-line Vault bubble and whole-word wrapping verified in rendered titles. The inherited larger type inventory is recorded by the taste probe rather than rewritten. |
+| Colors — Checked | No palette token changed. The focus band retains the shelf's yellow, outline remains ink; the art checks measure the actual computed colors and dimensions. Export review checks seven named solid-color pairs. Taste's measured text pairs pass; one image/gradient-backed text box is unmeasured. No dark theme is implemented. |
+| UI — Checked | Navigation, walletless prompt, focus, empty/read-failure states, guard and Claims regressions covered by the supplied checks; updated mobile title surfaces viewed directly. Motion/reduced-motion behavior retained. Real wallet transactions and the archive-backed walkthrough could not be exercised in this run; no claim of those successes is made. |
+
+The two requested layout findings are addressed by the supplied changes: `web/src/styles.css:2992` corrects the Vault's horizontal title composition; `web/src/styles.css:3017` moves only the focused Deposit/Redeem shelf down 3px and ends it at the marker edge. The new checks also reject the previous look and compare the live baseline geometry. No new applicable defect was observed in the inspected changed surfaces; the inherited motion-gate failure above remains unresolved under the exact-patch constraint.
+
+The unmodified design probe `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste`, with `IMD_PLAYWRIGHT` naming the external browser shim, completed **10/16 checks**. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy-budget, motion and share passed. There was no horizontal overflow, text overlap, clipped text, obscured control, script error or missing local resource at 320/390/1440. All 44 measured controls meet the probe's 24px-or-spacing rule; 26 are below the comfortable 44px guideline. It measured 60 first-screen prose words at 390 and 86 at 1440. Both endless animations stop under reduced motion.
+
+The six flags are inherited presentation choices: uppercase headings/stock symbols (`web/src/styles.css:108`), tracked figure labels (`:398`), type-size inventory and four families (`:26`, `:105`, `:186`, `:635`), repeated Pixel marquee (`:1100`), and border-plus-shadow flyer surfaces (`:221`). The exact-patch rule expressly outranks this design bar. No source, text, look, assertion or check threshold was changed to make the probe pass.
+
+Rendered evidence was made with actual Playwright Chromium and WebKit. The separate MCP browser transport closed while attempting preview access; direct browser scripts provided the rendered checks and captures instead. Inspected fresh captures include `test/scratch/taste/shots/390.png`, `1440.png`, Chromium's 375px Vault and Deposit titles, 375px Deposit focus marker, 320px Redeem focus marker, and WebKit's 375px Vault title and 375px Deposit focus marker. Scratch captures are disposable and are not the inherited walkthrough JPEGs. Physical iPhone behavior, native Windows display scaling, a screen-reader walk, forced-colors screenshots, native zoom, RTL/localization stress and 10%-speed animation-panel inspection were not performed. These limits do not establish accessibility certification.
+
+## Completion and delivery
+
+Direct Git delivery limitation: `git add` could not create `.git/index.lock` because repository metadata is mounted read-only. No commit was created, no Git metadata or permissions were changed, and no alternate Git directory was used. All completed source/export/artifact changes remain in the working tree for the submission system.
+
+The exact requested implementation and rebuilt static export are complete. Validation is **incomplete**: the archive-backed walkthrough could not start, and the inherited motion gate fails as detailed above. All 13 other requested checks pass. The archive exception is expressly allowed by the brief; the additional motion failure is reported without altering the patch or any check. These are worker observations, not independent certification.
+
+Fresh regenerated artifacts and this dated record accompany the exact patched sources and production export. The older walkthrough JPEGs/record and motion artifacts identified above are retained as historical evidence, not relabeled as current successes. The license notices are preserved. Dependency/cache directories, tooling, downloaded archives, preview captures, baseline extraction and diagnostics remain outside the submission or in disposable `test/scratch/`. No ignore rule changed. A final candidate-byte scan covers all submitted files, including root contracts, libraries and binary assets; no vault 1–5 address fragment is present. `bundle-check.json` records the final full delivery size and production-file hashes after documentation.
+
+---
+
 # 2026-10-13 — v14 exact patch, vault 6 (Docs tabs, ITEM, Tokenomics, BASK, desktop Deposit columns)
 
 This entry records the current run (commands ran on 2026-10-13 UTC on a Claude seat). Older entries below are historical. The requested patch, the rebuilt export and every regenerated artifact are prepared for the submission system. Git metadata was not modified. No contract or protected dependency/build file changed; no live transaction or publication occurred.

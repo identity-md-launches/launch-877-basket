@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 7908115,
-  "fileCount": 265,
-  "productionExportBytes": 1004821,
+  "uncompressedDeliveryBytes": 7935467,
+  "fileCount": 243,
+  "productionExportBytes": 1005484,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-ICDF8oEy.js": {
+    "dist/assets/ccip-DYKMBxXZ.js": {
       "bytes": 2610,
-      "sha256": "283f8f98859d87c0aa4418dc2d8a116f3865ee23a1521b323c99a1a2408207ce"
+      "sha256": "c2ba7ecb68f43ee4c208425c879b63d3a4c2ca346111396c24850bc327171e60"
     },
-    "dist/assets/index-Dreu644d.css": {
-      "bytes": 48240,
-      "sha256": "77f5e778fea7f585123a742b1eb4f06e7f89e9e07c62aa555637f4a4de619218"
+    "dist/assets/index-BRdefnhV.css": {
+      "bytes": 48903,
+      "sha256": "6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80"
     },
-    "dist/assets/index-Umm6XolT.js": {
+    "dist/assets/index-Ilfw5yUx.js": {
       "bytes": 604230,
-      "sha256": "90cc85c37c1eb0985da14ef1223c4bdb6dd6415e0f3cd7d3eed7b3a2ac9280c1"
+      "sha256": "87776ebd6738dc3ab4f15f6a3a8f591ce5549e120fffe48a1e110046f352ef34"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -186,7 +186,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "f356259d028b318947983a3842ac603552bb2707b2e7f0cf79f64c916d14aaf5"
+      "sha256": "e73b2083579cda0f83ed66fefbff058f62204911182f5e57bfdfe7c119e0ecb1"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,

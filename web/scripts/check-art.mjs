@@ -272,8 +272,56 @@ function titleGeometry({R, name, pixels}) {
     out.tailCovers = scan({left: Math.min(tip.x, ox), top: Math.min(tip.y, b1.y), right: Math.max(tip.x, ox), bottom: b2.y}, inTail);
     out.textCovers = textRects.reduce((n, x) => n + Object.values(scan(x)).reduce((s, v) => s + v, 0), 0);
   }
+  // v15: where the picture, the bubble, the heading and her shelf line (the holder's ::after, phones only) sit across
+  // the panel, and whether the heading shows the focus marker.
+  const h1 = title.querySelector(":scope > h1"), hr = r(holder), H = r(h1), hcs = getComputedStyle(h1), line = getComputedStyle(holder, "::after");
+  out.width = innerWidth;
+  out.titleTop = T.top;
+  out.frame = {left: T.left + bw, right: T.right - bw};
+  out.pictureOff = (T.left + T.right) / 2 - (D.x + D.w / 2);
+  out.bubbleGap = T.right - bw - br.right;
+  out.bubbleFromPicture = br.left - D.x;
+  out.headingAlign = hcs.textAlign;
+  out.headingOff = (T.left + T.right) / 2 - (Math.min(...headingRects.map(x => x.left)) + Math.max(...headingRects.map(x => x.right))) / 2;
+  out.h1 = {left: H.left, right: H.right, top: H.top, bottom: H.bottom};
+  out.ring = {shown: h1.matches(":focus-visible"), outline: `${hcs.outlineStyle} ${hcs.outlineWidth} ${hcs.outlineColor}`, shadow: hcs.boxShadow, ink: getComputedStyle(bubble).borderLeftColor};
+  const drawn = line.content !== "none" && line.display !== "none";
+  out.shelf = !drawn ? null : {left: hr.left + parseFloat(line.left), right: hr.left + parseFloat(line.left) + parseFloat(line.width), top: hr.bottom - parseFloat(line.bottom) - parseFloat(line.height), bottom: hr.bottom - parseFloat(line.bottom), colour: line.backgroundColor};
   return out;
 }
+// v15 (owner, 2026-10-13: "the graphic on mobile is off to the left and doesnt look good"; he chose the picture
+// centred with the heading centred). On phones the Vault picture stands in the middle of the panel, at 375 px and
+// wider exactly; narrower, only as far left of the middle as her three-line bubble needs to stay 4 px inside the
+// frame. Her shelf line runs across the panel inside the frame and the heading is centred.
+function assertVaultPhone(g, label) {
+  assert.equal(g.bubbleLines, 3, `${label}: v15 Vault bubble keeps three lines`);
+  assert.ok(g.bubbleGap >= 3.5, `${label}: v15 bubble closer than 4 px to the frame (${g.bubbleGap})`);
+  assert.ok(g.pictureOff > -0.5 && (Math.abs(g.pictureOff) < 0.5 || Math.abs(g.bubbleGap - 4) < 0.5), `${label}: v15 picture neither in the middle nor as near it as her bubble allows (off ${g.pictureOff}, bubble gap ${g.bubbleGap})`);
+  if (g.width >= 375) assert.ok(Math.abs(g.pictureOff) < 0.5, `${label}: v15 picture not in the middle (${g.pictureOff})`);
+  assert.ok(g.shelf && Math.abs(g.shelf.left - g.frame.left) < 0.5 && Math.abs(g.shelf.right - g.frame.right) < 0.5, `${label}: v15 shelf line not across the panel ${JSON.stringify([g.shelf, g.frame])}`);
+  assert.equal(g.headingAlign, "center", `${label}: v15 heading not centred`);
+  assert.ok(Math.abs(g.headingOff) < 0.75, `${label}: v15 heading off the middle (${g.headingOff})`);
+}
+// v15 (owner, 2026-10-13: "the corner of this graphic is slightly off with the yellow line"; he chose the box stays
+// and the line meets its corner). While the Deposit or Redeem heading shows the focus marker on a phone (a 3 px ink
+// outline inside a 6 px yellow band), her shelf line is that band's own height and colour, runs from the frame to the
+// marker's outer left edge, and lies exactly on the band's bottom strip: one line into the corner.
+function assertShelfMeetsMarker(g, label) {
+  assert.equal(g.ring.shown, true, `${label}: the heading does not show the focus marker`);
+  assert.equal(g.ring.outline, `solid 3px ${g.ring.ink}`, `${label}: marker outline`);
+  assert.equal(g.ring.shadow, `${g.shelf.colour} 0px 0px 0px 6px`, `${label}: marker band is not 6 px of the shelf line's yellow`);
+  assert.ok(Math.abs(g.shelf.left - g.frame.left) < 0.5, `${label}: shelf line does not start at the frame (${g.shelf.left})`);
+  assert.ok(Math.abs(g.shelf.right - (g.h1.left - 6)) < 0.5, `${label}: shelf line does not end at the marker's outer edge (${g.shelf.right} against ${g.h1.left - 6})`);
+  assert.ok(Math.abs(g.shelf.top - (g.h1.bottom + 3)) < 0.5 && Math.abs(g.shelf.bottom - (g.h1.bottom + 6)) < 0.5, `${label}: shelf line is not on the marker's bottom band (${g.shelf.top} to ${g.shelf.bottom}, heading bottom ${g.h1.bottom})`);
+}
+// What v15 may not move: the placing of everything in a title panel, to a hundredth of a pixel. Across the page as
+// measured; down the page from the panel's own top edge (what stands above the panel depends on the chain reads,
+// which the reference page does not make).
+const placed = g => {
+  const y = v => v - g.titleTop;
+  return JSON.parse(JSON.stringify({picture: {...g.picture, y: y(g.picture.y)}, bubble: {...g.bubble, y: y(g.bubble.y)}, bubbleLines: g.bubbleLines, h1: {...g.h1, top: y(g.h1.top), bottom: y(g.h1.bottom)},
+    shelf: g.shelf && {...g.shelf, top: y(g.shelf.top), bottom: y(g.shelf.bottom)}, headingAlign: g.headingAlign, titleHeight: g.titleHeight}, (k, v) => typeof v === "number" ? Math.round(v * 100) / 100 : v));
+};
 function assertGeometry(g, label, pixels) {
   assert.equal(g.overflow, false, `${label} overflow`);
   assert.deepEqual(g.split, [], `${label}: a bubble word is split`);
@@ -294,6 +342,8 @@ function assertGeometry(g, label, pixels) {
   assert.deepEqual(g.clipped, [], `${label}: picture clipped`);
   assert.ok(g.walletGap >= 8, `${label}: wallet hint gap ${g.walletGap}`);
   assert.equal(g.walletInside, true, `${label}: wallet hint outside its box`);
+  if (g.phone && g.name === "vault") assertVaultPhone(g, label);
+  if (!g.phone) assert.equal(g.shelf, null, `${label}: a shelf line above phone widths`);
   if (pixels) {
     assert.deepEqual(g.bubbleCovers, {}, `${label}: bubble covers the picture`);
     assert.deepEqual(Object.keys(g.tailCovers).filter(k => k !== "other"), [], `${label}: tail covers face, hands or held item`);
@@ -796,9 +846,10 @@ try {
       await page.evaluate(()=>document.getElementById('wide-label-test').remove());
       checks.push(label+': one-line width at least 240 px; wraps at word boundaries inside pill and panel, clear of character/bubble; identical check rejects v11 nowrap');
     }
-    // v12 SPEC 1: compare the Vault height at every width with the live v11
+    // v12 SPEC 1: compare the Vault height at every width with the live
     // title. Its public data does not affect title sizing, so this second page
-    // loads only local files and never adds a public RPC read.
+    // loads only local files and never adds a public RPC read. v15: the same
+    // page (the live v14 site) is the reference for the placing of every title.
     baselinePage=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
     await baselinePage.route('**/*',route=>route.request().url().startsWith(base+'/')?route.continue():route.abort());
     await baselinePage.goto(base+'/baseline/#vault');
@@ -813,20 +864,96 @@ try {
       await page.waitForFunction(routeShown,name);
       await page.evaluate(()=>document.fonts.ready);
       await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
-      const lines={};
+      await baselinePage.setViewportSize({width:1440,height:1000});
+      await baselinePage.goto(base+'/baseline/#'+name);
+      await baselinePage.waitForFunction(routeShown,name);
+      await baselinePage.evaluate(()=>document.fonts.ready);
+      await baselinePage.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+      // No focus marker in this sweep (the page moves the focus to the heading on a change of page, and WebKit
+      // draws the marker for that focus): it has its own check below.
+      for(const p of [page,baselinePage]) await p.evaluate(()=>document.activeElement?.blur?.());
+      const lines={};let compared=0,centred=0,nearest=0;
       for(let width=320;width<=2560;width++) {
         await page.setViewportSize({width,height:1000});
         const g=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:width%40===0});
         assertGeometry(g,`${engine} ${name} ${width}`,width%40===0);
-        if(name==='vault') {
+        assert.equal(g.ring.shown,false,`${engine} ${name} ${width}: a focus marker in the sweep`);
+        // v15: the live v14 title at the same width (Vault: every width; Deposit and Redeem: every phone width and
+        // every 40 px above). Above phones nothing moved. On phones the Deposit and Redeem titles are where they
+        // were while the heading has no focus marker; the Vault title moved only as decided: the picture and its
+        // bubble sideways together towards the middle, the bubble narrower, the shelf line longer, the heading
+        // centred; no height or vertical place changed.
+        if(name==='vault'||width<=660||width%40===0) {
           await baselinePage.setViewportSize({width,height:1000});
-          const previous=await baselinePage.locator('.page-title').evaluate(e=>e.getBoundingClientRect().height);
-          assert.ok(g.titleHeight<=previous+0.5,engine+' vault '+width+': title grew from '+previous+' to '+g.titleHeight);
+          const was=await baselinePage.evaluate(titleGeometry,{R:REGIONS,name,pixels:false}),label=`${engine} ${name} ${width}`;
+          if(name==='vault') assert.ok(g.titleHeight<=was.titleHeight+0.5,engine+' vault '+width+': title grew from '+was.titleHeight+' to '+g.titleHeight);
+          if(name!=='vault'||width>660) assert.deepEqual(placed(g),placed(was),label+': v15 moved something in the title');
+          else {
+            const a=placed(g),b=placed(was);
+            assert.deepEqual([a.picture.y,a.picture.w,a.picture.h,a.bubble.y,a.bubble.h,a.bubbleLines,a.h1,a.titleHeight,a.shelf.top,a.shelf.bottom,a.shelf.left,a.shelf.colour],[b.picture.y,b.picture.w,b.picture.h,b.bubble.y,b.bubble.h,b.bubbleLines,b.h1,b.titleHeight,b.shelf.top,b.shelf.bottom,b.shelf.left,b.shelf.colour],label+': v15 changed a height or a vertical place in the Vault title');
+            assert.ok(Math.abs(g.bubbleFromPicture-was.bubbleFromPicture)<0.05,label+': the bubble left its place beside her head (layout places snap to 1/64 px) '+(g.bubbleFromPicture-was.bubbleFromPicture));
+            assert.ok(was.pictureOff>g.pictureOff+10&&was.shelf.right<g.shelf.right-40&&was.headingAlign!=='center',label+': the live page does not show the look v15 replaces '+JSON.stringify([was.pictureOff,g.pictureOff,was.shelf.right,g.shelf.right,was.headingAlign]));
+            assert.throws(()=>assertVaultPhone(was,label+' live v14'),{name:'AssertionError'},label+': the v15 check accepts the live v14 look');
+            Math.abs(g.pictureOff)<0.5?centred++:nearest++;
+          }
+          compared++;
         }
         lines[g.bubbleLines]=(lines[g.bubbleLines]||0)+1;
       }
+      checks.push(name==='vault'
+        ?`${engine} vault v15: on phones (320-660 px) the picture stands in the middle of the panel at ${centred} widths and, on the ${nearest} narrowest, as near it as her three-line bubble allows 4 px inside the frame; shelf line across the panel, heading centred; the bubble keeps its place beside her head; no height or vertical place differs from the live v14 title, which the same check rejects; above 660 px the title equals the live v14 title at every width`
+        :`${engine} ${name} v15: the title equals the live v14 title (picture, bubble, heading, shelf line) at every phone width and every 40 px above (${compared} widths) while the heading has no focus marker`);
       checks.push(`${engine} ${name}: every width 320-2560 px keeps whole bubble words (bubble lines ${JSON.stringify(lines)}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px`);
     }
+    // v15: the heading's focus marker. A key press first, so that the focus the page itself moves to the heading
+    // on a change of page counts as keyboard focus in every engine (iPhone browsers draw the marker after a tap too).
+    for(const name of ['deposit','redeem','vault']) for(const width of [661,660,430,393,375,360,359,320]) {
+      const label=`${engine} ${name} ${width} focus marker`;
+      await page.setViewportSize({width,height:1000});
+      await page.goto(base+'/preview/#'+name);
+      await page.waitForFunction(routeShown,name);
+      await page.evaluate(()=>document.fonts.ready);
+      await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+      // Opening the page from another page already moved the focus to the heading: take it away for the plain state.
+      await page.evaluate(()=>document.activeElement?.blur?.());
+      const plain=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
+      assert.equal(plain.ring.shown,false,label+': marker shown without focus');
+      await page.goto(base+'/preview/#docs');
+      await page.waitForFunction(routeShown,'docs');
+      await page.keyboard.press('Tab');
+      await page.evaluate(n=>{location.hash='#'+n;},name);
+      await page.waitForFunction(routeShown,name);
+      await page.waitForFunction(()=>document.activeElement?.tagName==='H1');
+      await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+      const marked=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
+      assert.equal(marked.ring.shown,true,label+': the heading does not show the marker after keyboard focus');
+      if(width>660) assert.equal(marked.shelf,null,label+': a shelf line above phone widths');
+      else if(name==='vault') {
+        // Vault: the line is 17 px above the heading; the marker's band stays clear of it and nothing moves.
+        assert.deepEqual(placed(marked),placed(plain),label+': the Vault title moved with the marker');
+        assert.ok(marked.h1.top-6-marked.shelf.bottom>=7.5,label+': the marker touches the shelf line');
+      } else {
+        assertShelfMeetsMarker(marked,label);
+        assert.deepEqual({...placed(marked),shelf:null},{...placed(plain),shelf:null},label+': something besides the shelf line moved with the marker');
+        // The live v14 line (ending at the heading's own edge, 3 px above the band) put back: the same check rejects it.
+        const legacy=await page.addStyleTag({content:'.page-title .title-character:after{bottom:-3px!important;width:calc(var(--pad) + var(--gx) + var(--w) + 12px)!important}'});
+        const old=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
+        assert.throws(()=>assertShelfMeetsMarker(old,label+' with the v14 line'),{name:'AssertionError'},label+': the check accepts the v14 corner');
+        assert.deepEqual(old.shelf,plain.shelf,label+': the put-back line is not the line without a marker');
+        await legacy.evaluate(e=>e.remove());
+        assertShelfMeetsMarker(await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false}),label+' restored');
+        if([430,375,320].includes(width)) {
+          const clip=await page.evaluate(()=>{const t=document.querySelector('.page-title').getBoundingClientRect(),i=document.querySelector('.character-picture').getBoundingClientRect(),top=Math.max(0,Math.min(t.top,i.top)+scrollY-12);return {x:0,y:top,width:innerWidth,height:t.bottom+scrollY+12-top};});
+          await page.screenshot({path:path.join(captures,`${engine}-${name}-${width}-focus-marker.png`),clip,fullPage:true});
+        }
+      }
+      // Focus gone: the line is back where it is without a marker.
+      await page.evaluate(()=>document.activeElement.blur());
+      const after=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
+      assert.equal(after.ring.shown,false,label+': marker still shown after blur');
+      assert.deepEqual(placed(after),placed(plain),label+': the title is not back in place after blur');
+    }
+    checks.push(`${engine} v15 focus marker (keyboard focus moved to the heading by a change of page) at 660, 430, 393, 375, 360, 359 and 320 px: on Deposit and Redeem her shelf line runs from the frame to the marker's outer left edge on the marker's bottom band, same height and colour, and nothing else moves; the same check rejects the live v14 line put back; without the marker and after blur the line is the live v14 line; on Vault the marker stays clear of the line; at 661 px there is no shelf line`);
     await baselinePage.close();baselinePage=undefined;
     await browser.close();browser=undefined;
   }

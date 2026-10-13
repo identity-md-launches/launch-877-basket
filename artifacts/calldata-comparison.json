@@ -1,153 +1,36 @@
 {
   "result": "PASS",
-  "baseline": "2b7d55bc32d09610fed936d963d9a8c492f4eecf",
+  "baseline": "c05c174f639d352fb6184636bcc6e083031daa65",
   "protectedFiles": [
+    "BaskGuide.tsx",
+    "Docs.tsx",
+    "Flows.tsx",
     "Losses.tsx",
     "Owner.tsx",
     "Scenery.tsx",
+    "Tokenomics.tsx",
     "Vault.tsx",
     "components.tsx",
     "main.tsx",
     "wallet.tsx",
+    "baskGuideData.ts",
     "chain.ts",
     "deployment.ts",
     "governance.ts",
     "model.ts",
     "newYork.ts",
     "poolMath.ts",
+    "tokenomicsData.ts",
     "vault.abi.json"
   ],
-  "editedFiles": {
-    "Docs.tsx": "6 documented pieces [v12, HEAD]",
-    "Flows.tsx": "6 documented pieces [v12, HEAD]"
-  },
-  "v12Pieces": {
-    "Docs.tsx": [
-      {
-        "v12": {
-          "length": 201,
-          "sha256": "96ff4fb1202b620f05b3f3ef6c5fe65b0e8de4207c75c8de1dfa2847a8807352"
-        },
-        "head": {
-          "length": 55,
-          "sha256": "ede65f18ad61821c6d3df5bb07d2dd0a463c004a81ee4123a0df04f2b904f13e"
-        }
-      },
-      {
-        "v12": {
-          "length": 488,
-          "sha256": "2947d5e45ac00320c3cb2a9cb0dfa04c27f6f682d45247e0b439edb5c74801ce"
-        },
-        "head": {
-          "length": 40,
-          "sha256": "ee8b056d3d6fb5783ac679fa5cda1dcb6d04e3f3575326494296cc6a5f596681"
-        }
-      },
-      {
-        "v12": {
-          "length": 598,
-          "sha256": "dbe768a300164c83c6cb1200314904f962e0c5d01b50f30d051b82d5f75f5c47"
-        },
-        "head": {
-          "length": 53,
-          "sha256": "dbb2a17daaf3291c70a99956b07d934f55d0c443f5b263910a0b27a9b5d1b17f"
-        }
-      },
-      {
-        "v12": {
-          "length": 167,
-          "sha256": "7e3dc0a4bd625c0e6d0ea8a874ad252f05f8311c7516fde15595b7576c5a7712"
-        },
-        "head": {
-          "length": 300,
-          "sha256": "de05be6e634cfe49693f24b9c125e497f067e869ac53795e41f2cd1cf9817684"
-        }
-      },
-      {
-        "v12": {
-          "length": 5333,
-          "sha256": "eb38ca77c5ff2843e1ab1659a2beb3d0d54c1f6e7326165fd92731925d8482f5"
-        },
-        "head": {
-          "length": 55,
-          "sha256": "e84f60dcace87056fb0517fd5e376d52099f2e78f5fb032105a8a74fcfaeb391"
-        }
-      },
-      {
-        "v12": {
-          "length": 323,
-          "sha256": "0a33452e256c911ca5bc694e155e88b8f92ef7ef587a1a22cdbfd9502cb5286f"
-        },
-        "head": {
-          "length": 21,
-          "sha256": "3be86afc60da71b174984ada7951fdcf6f99c58298982400660a424a73100958"
-        }
-      }
-    ],
-    "Flows.tsx": [
-      {
-        "v12": {
-          "length": 640,
-          "sha256": "78d873d139f37c0a720c189b7e9c7deaf2b33357d8e27326717386fcf88e7d38"
-        },
-        "head": {
-          "length": 129,
-          "sha256": "68a285dd3fd3bf75c7953afbaddc2390ec3d5a2a913f34c50aac6db8c98f8cdf"
-        }
-      },
-      {
-        "v12": {
-          "length": 152,
-          "sha256": "b7171f31f1d4a6e0af7b4e3b0c5963d87f5a2fdfcf974a6f47b2d4d599630be6"
-        },
-        "head": {
-          "length": 141,
-          "sha256": "02c6d936309872e5f4399e1f7f981f32d8a6dc7952d08afecf8ed0e220615a14"
-        }
-      },
-      {
-        "v12": {
-          "length": 2072,
-          "sha256": "ab88ee5e5f1c757de611608b1f6c9d48b0876b5712410e8fed17b6e1386db2e8"
-        },
-        "head": {
-          "length": 15,
-          "sha256": "eeb13b47f1fe6b6e49de274b63d69e8319e0fd523916f0b9f914576c79774f29"
-        }
-      },
-      {
-        "v12": {
-          "length": 307,
-          "sha256": "29480281faf3ae69a4c23a7fff2811989b01b1fb4b6f85fd2e8da13bd9822044"
-        },
-        "head": {
-          "length": 62,
-          "sha256": "1de2604563eb6daa2c1cb246cbf6a6bb7fe9f654999845eccd068d883f0810d8"
-        }
-      },
-      {
-        "v12": {
-          "length": 261,
-          "sha256": "4bd65ee7b62021ad78aea5da53a6630d245516e3ebf0602752b8c14073768f51"
-        },
-        "head": {
-          "length": 1975,
-          "sha256": "755c9bd0271d711abc398a4811ca00d41660738887e9f0f6daf4d4373d0c357c"
-        }
-      },
-      {
-        "v12": {
-          "length": 329,
-          "sha256": "7b1c95e23c918b7c1e055ee5e5cfcf3f54519cf219288ab14255162ff28910a0"
-        },
-        "head": {
-          "length": 790,
-          "sha256": "32dfffd6eff0b56200a7ed6e5bdcdd38d0bd2b5f42f72566aef9e3d17c2f2e66"
-        }
-      }
-    ]
-  },
+  "editedFiles": {},
+  "v12Pieces": {},
   "counts": {
+    "BaskGuide.tsx": {
+      "guarded": 0,
+      "calls": 6,
+      "attributes": 2
+    },
     "Docs.tsx": {
       "guarded": 0,
       "calls": 7,
@@ -173,10 +56,20 @@
       "calls": 28,
       "attributes": 0
     },
+    "Tokenomics.tsx": {
+      "guarded": 0,
+      "calls": 70,
+      "attributes": 5
+    },
     "Vault.tsx": {
       "guarded": 0,
       "calls": 168,
       "attributes": 20
+    },
+    "baskGuideData.ts": {
+      "guarded": 0,
+      "calls": 98,
+      "attributes": 0
     },
     "chain.ts": {
       "guarded": 13,
@@ -218,71 +111,20 @@
       "calls": 9,
       "attributes": 0
     },
+    "tokenomicsData.ts": {
+      "guarded": 0,
+      "calls": 29,
+      "attributes": 0
+    },
     "wallet.tsx": {
       "guarded": 31,
       "calls": 140,
       "attributes": 0
     }
   },
-  "documentedGuardedCallChanges": {
-    "Docs.tsx": {
-      "removed": [],
-      "added": []
-    },
-    "Flows.tsx": {
-      "removed": [],
-      "added": []
-    }
-  },
-  "documentedAttributeChanges": {
-    "Docs.tsx": {
-      "removed": [],
-      "added": [
-        "<div> role=\"tablist\"",
-        "<button> role=\"tab\"",
-        "<button> onClick={() => setTab(index)}",
-        "<button> onKeyDown={move}",
-        "<div> role=\"tabpanel\"",
-        "<div> role=\"tabpanel\"",
-        "<div> role=\"tabpanel\""
-      ],
-      "why": "each has its why in scripts/check-calldata.mjs"
-    },
-    "Flows.tsx": {
-      "removed": [
-        "<button> disabled={working || w.busy || rows.some((x) => x.a.token === a.token)}",
-        "<button> onClick={() => add(a.token)}"
-      ],
-      "added": [
-        "<button> disabled={working || w.busy || rows.some((x) => x.a.token === a.token)}",
-        "<button> onClick={() => add(a.token)}"
-      ],
-      "why": "each has its why in scripts/check-calldata.mjs"
-    }
-  },
-  "documentedCallChanges": {
-    "Docs.tsx": {
-      "why": "Docs module (owner approved A and Docs-local tabs) and the five ITEM panels: a local tab state and its keyboard handler, the two display-only tab components, the live fee sentence and the removed not-live sentence, five new section panels of text. No read, send, storage or network use is added; the module files are pinned by reviewed digests above.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [],
-      "newUsesOfWatchedNames": []
-    },
-    "Flows.tsx": {
-      "why": "v14 (owner decision 2026-10-13): on desktop (wider than 960px, read once through matchMedia and kept in one display-only state) the Deposit panel is two columns: the form, its preview and transaction buttons and the Before-you-deposit notes on the left, the stock list always open on the right; on phones the v13 layout and behaviour are unchanged. The sentence about grey stocks is removed and the warning note re-worded. No call of HEAD is removed beyond the documented moves; no read, send, storage or network use is added.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [
-        {
-          "start": "listed.map((a) => (<li key={a.token} className={a.symbol.length > 5 ? \"wide\" : u",
-          "length": 272,
-          "sha256": "7c2cc2dd3edf1346e964572dee86e26de839adf34beb9add3dd9d182820daefd"
-        },
-        "rows.some((x) => x.a.token === a.token)",
-        "add(a.token)",
-        "usd(s.globals.NAV_CAP)"
-      ],
-      "newUsesOfWatchedNames": []
-    }
-  },
+  "documentedGuardedCallChanges": {},
+  "documentedAttributeChanges": {},
+  "documentedCallChanges": {},
   "vaultStockShelves": {
     "attributes": [
       "role=\"img\"",
@@ -351,68 +193,16 @@
     "addedInV12": []
   },
   "browserStorageAddedInV12": {},
-  "namesAddedAtTheTopOfAFile": {
-    "Docs.tsx": {
-      "BaskGuide": "import BaskGuide from \"./BaskGuide\"",
-      "KeyboardEvent": "import type KeyboardEvent from \"react\"",
-      "Tokenomics": "import Tokenomics from \"./Tokenomics\"",
-      "useRef": "import useRef from \"react\"",
-      "useState": "import useState from \"react\""
-    },
-    "Flows.tsx": {}
-  },
-  "moduleDeclarationChanges": {
-    "Docs.tsx": [],
-    "Flows.tsx": []
-  },
-  "namesAddedInsideComponents": {
-    "Docs.tsx": {
-      "DocsPage": [
-        "tab",
-        "setTab",
-        "buttons",
-        "move"
-      ]
-    },
-    "Flows.tsx": {
-      "DepositPage": [
-        "desktop",
-        "setDesktop",
-        "stockList",
-        "notes"
-      ]
-    }
-  },
-  "transactionCode": {
-    "Docs.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
-    },
-    "Flows.tsx": {
-      "pieces": 9,
-      "namesDeclaredAroundThem": [
-        "#9 Claims getSpec: a is declared around it by a"
-      ]
-    }
-  },
-  "reviewedAddedCalls": {
-    "Docs.tsx": {
-      "sha256": "07495e37aa44c937913a52d41cb024b6f39ca041e9e3889f9bf99fb1bec5f184",
-      "callees": "useState useRef preventDefault setTab focus map setTab"
-    },
-    "Flows.tsx": {
-      "sha256": "9420ba314dc7417826b92076310403045ce72c76fd871e45203c121a6da4ff78",
-      "callees": "useState matchMedia useEffect matchMedia setDesktop addEventListener removeEventListener map some add usd"
-    }
-  },
+  "namesAddedAtTheTopOfAFile": {},
+  "moduleDeclarationChanges": {},
+  "namesAddedInsideComponents": {},
+  "transactionCode": {},
+  "reviewedAddedCalls": {},
   "reviewedSourcePins": {
     "Docs.tsx": "6c9cc7e308109e50b7b9a6e5c861fc4d9feec927e7d568f4c238e9a807930e77",
     "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309"
   },
-  "transactionStateWrites": {
-    "Docs.tsx": 0,
-    "Flows.tsx": 0
-  },
+  "transactionStateWrites": {},
   "protectedCode": {
     "sendTailWrites": [
       "sent = mined;",
@@ -729,6 +519,7 @@
       "Flows.tsx": 3,
       "Owner.tsx": 28,
       "Scenery.tsx": 1,
+      "Tokenomics.tsx": 2,
       "Vault.tsx": 17,
       "components.tsx": 5,
       "main.tsx": 14
