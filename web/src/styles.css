@@ -481,6 +481,9 @@ main {
   display: block;
   font-size: 14px;
 }
+.stats small {
+  font-size: 12px;
+}
 .stats strong {
   font-size: 26px;
   display: block;
@@ -502,6 +505,45 @@ main {
 .docs-grid > .panel {
   margin-block: 0 24px;
 }
+/* Owner-approved Deposit sign; keep its words still with reduced motion. */
+.deposit-led-sign {
+  display: block;
+  width: 176px;
+  margin: 0 0 12px;
+  max-width: 100%;
+  height: auto;
+  flex: 0 0 auto;
+}
+.deposit-led-border,
+.deposit-led-chase {
+  fill: none;
+  stroke: #296bcc;
+  stroke-width: 2.8px;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 7.9;
+}
+.deposit-led-chase {
+  stroke: #80b8ff;
+  stroke-dasharray: 0.1 31.9;
+  animation: deposit-led-chase 3.2s linear infinite;
+}
+.deposit-led-letters {
+  animation: deposit-led-glow 3.2s ease-in-out infinite;
+}
+@keyframes deposit-led-chase {
+  to { stroke-dashoffset: -32px; }
+}
+@keyframes deposit-led-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deposit-led-chase,
+  .deposit-led-letters {
+    animation: none;
+  }
+}
+
 .deposit-state {
   padding: 16px;
   background: var(--subtle);
@@ -509,6 +551,30 @@ main {
 }
 .deposit-state p {
   margin-block: 8px 0;
+}
+.deposit-notice {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+/* The full deposit status lives on Deposit; Vault keeps a compact summary. */
+.deposit-summary > .deposit-state {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.deposit-summary:empty {
+  display: none;
+}
+.deposit-summary > .deposit-state > strong {
+  margin-right: 8px;
+}
+.deposit-summary > .deposit-state > p:first-of-type {
+  display: inline;
+  margin: 0;
+}
+.deposit-summary > .deposit-state > p:not(:first-of-type) {
+  display: none;
 }
 /* "Redemptions are open 24/7" at the top of the Deposit and Redeem forms: a
    small royal-blue pill tag (white text 7.5:1), calm, never a warning; round,
@@ -526,9 +592,9 @@ main {
   line-height: 1.4;
   text-wrap: pretty;
 }
-/* when it wraps, each sentence starts its own line */
+/* Each sentence starts its own line when needed; the bold sentence can also wrap between words. */
 .hours-tag strong {
-  white-space: nowrap;
+  white-space: normal;
 }
 .hours-tag span {
   display: inline-block;
@@ -1148,10 +1214,6 @@ summary {
 .flow-layout.one-column {
   grid-template-columns: minmax(0, 1fr);
 }
-.deposit-open {
-  padding-left: 12px;
-  border-left: 4px solid var(--royal);
-}
 .wallet-connect {
   display: flex;
   flex-wrap: wrap;
@@ -1626,7 +1688,7 @@ button.quiet.small-toggle {
 /* Per page: picture ratio, bubble left edge (share of picture width), tail tip x (share of width,
    just outside the cheek), mouth height (share of picture height), bubble width, heading width in em
    on one line (em1) and its longer line when balanced over two (em2). */
-.page-title.character-vault   { --ratio: 0.606; --bx: 0.635; --tx: 0.50;  --mouth: 0.176; --bw: var(--bw-vault); --em1: 8.1;  --em2: 4.45; }
+.page-title.character-vault   { --ratio: 0.606; --bx: 0.635; --tx: 0.50;  --mouth: 0.176; --bw: var(--bw-vault); --em1: 6.3;  --em2: 3.3; }
 .page-title.character-deposit { --ratio: 0.313; --bx: 0.94;  --tx: 0.675; --mouth: 0.168; --bw: 124px; --em1: 8.78; --em2: 5.6; }
 .page-title.character-redeem  { --ratio: 0.484; --bx: 0.93;  --tx: 0.775; --mouth: 0.18;  --bw: 226px; --em1: 5.34; --em2: 3.1; --h1-max: 108px; --h2-max: 56px; }
 
@@ -2731,4 +2793,10 @@ button.quiet.small-toggle {
   .sa-mark {
     background: CanvasText;
   }
+}
+
+/* v12: the Vault heading alone takes the former heading-and-sentence space. */
+.page-title.character-vault > h1 { margin-bottom: auto; }
+@media (max-width: 660px) {
+  .page-title.character-vault > h1 { margin-bottom: 0; }
 }

@@ -1,3 +1,75 @@
+# 2026-10-13 — v12 exact patch, vault 6 (incomplete fork verification)
+
+**Incomplete:** the patch and production export are exact, and the independent checks below pass, but the required fork walkthrough could not complete because the archive RPC refused historical state. This run does **not** establish 84/85 browser checks, 70 wallet sends or 24 newly captured fork screenshots. `browser-fork.json` and the 24 `empty-*.jpg` / `stocks25-*.jpg` images retain the preceding run's evidence; their old 74-check result is not a result for this update. No live transaction or publication occurred. Git metadata was not modified, as required; these files are prepared for the submission system.
+
+## Patch and export
+
+Applied to clean `a6e1b4d2eb5988ab8eb7cfc404161f035aa96d84`. The Pinata download for CID `bafybeifqld4r6jdqr4ncmwqhzp53o5bpadu73l2mrx6alwhak3paypnnr4` was **395,142 bytes**, SHA-256 **`881cb6eb0973fca89e36e9df2a72502e319b7b83557f57036a32718d39029230`**. `git apply --check`, `git apply`, and subsequent reverse-application checking passed. SHA-256 values captured immediately after application still match all **18** patched paths. Nothing in the patch was reworded, restyled or rewritten; no check or preservation pin was loosened. Contracts, dependencies, lockfiles, build configuration, pinned integration and ignore files remain unchanged.
+
+`npm ci --cache /tmp/basket-v12-npm-cache`, `npm run typecheck`, and `npm run build` passed in `web/`. The build log is `build-validation.txt`. All five requested production filenames and SHA-256 values match exactly:
+
+| Production file | SHA-256 |
+| --- | --- |
+| `dist/assets/index-BFEYBx6O.js` | `c88a2cacd5068291197cc2526850ca31223184004fb827d37a52a169f745f7f6` |
+| `dist/assets/index-DMUMxJ0Z.css` | `0480e963e928ad5adf873a0fd9b6285aedf474e209d20f0881b508a5210087f8` |
+| `dist/assets/ccip-DaOwsnsF.js` | `1b46776c8efcfa1ab8458bb97b1e31acb5230bcd5d589cc80f33ac82f88f4164` |
+| `dist/index.html` | `a60077e0ad16890a0d21be2051b52d38153e202a69a1db6acb4c307ae2e1b6c9` |
+| `dist/share-card.jpg` | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` |
+
+The complete export is **968,913 bytes**, with relative runtime asset URLs, local fonts, favicon, all manifest art and licenses. The source and export share cards are both 44,831 bytes and 1200×630. README installation/preview/rebuild instructions and DESIGN.md's implemented tokens, typography, components and responsive behavior were reviewed against the source and retained exactly as patched. Vite's existing >500 kB chunk advisory remains. npm reported one moderate and two high dependency advisories; the authorized locked dependencies were not changed.
+
+## Actual check results
+
+The unchanged `node scripts/run-browser.mjs` was attempted before the following gates. A pristine copy of **a6e1b4d's dist** was saved before the build and supplied as `BASKET_BASELINE_DIST` to the comparisons. Commands ran from `web/`, with the existing locked TypeScript loader (`NODE_OPTIONS='--import tsx'`) and external browser/compiler selections.
+
+| Command | This run |
+| --- | --- |
+| `node scripts/run-browser.mjs` | **FAIL during fork setup**, before UI sends/captures; archive failure detailed below |
+| `npm run validate` | PASS: unit cases, canonical ABI, live **verifyNetwork**, runtime hash, snapshot/status, all 11 proposal kinds; block **87341707**, 25 assets |
+| `node scripts/check-preservation.mjs` | PASS: protected paths, integration/send invariants, obsolete-address scan |
+| `node scripts/check-interface.ts` | PASS: arithmetic, parsing, balances and setting units |
+| `node scripts/check-calldata.mjs` | PASS against a6e1b4d: seven source restorations and all other sources pinned; transaction builders, requests, storage and network sinks preserved; **496** identical encodings and **1,773** mutually refused cases; no new refusal |
+| `node scripts/check-art.mjs` | PASS in Chromium and WebKit: **74** manifest asset copies, **48** layout groups; exact status/copy, full-width title sweeps, fallback-font wrapping, strip and shelf geometry |
+| `node scripts/check-motion.mjs` | PASS: **39** checks, DPR 1 / 1.25 / 1.5, timing/reset geometry and reduced motion |
+| `node scripts/inspect-export.mjs` | PASS: **24** page/viewport checks; six routes at 320 / 375 / 800 / 1440; subpath loading, fonts, keyboard smoke checks, seven contrast pairs, zero recorded issues |
+| `node scripts/check-guards.mjs` | PASS: four send guards, zero sends |
+| `node scripts/check-fixes.mjs` | PASS: **34** deterministic wallet-hook/Claims regressions; synthetic reads/sends, no external requests |
+| `BASKET_BASELINE_DIST=<saved a6e1b4d dist> node scripts/check-visibility.mjs` | PASS: six routes, 375×812, no-wallet and connected; **67** prior first-screen elements considered with only the exact named v12 removals/Docs displacement; normal, freshness and weekend cases |
+| `node scripts/check-bundle.mjs` | Initially FAIL at **8,460,795 bytes** with the old screenshot encodings. Final **PASS** after lossless artifact packaging; exact accounting is in `bundle-check.json`. Source/checks/runtime assets unchanged. |
+
+## Archive/tooling limitation
+
+Node 24.21.0, npm 11.19.0, Anvil 1.8.3, solc 0.8.26, full Chromium 153.0.8010.12 and WebKit 26.6 were used. The direct fork attempt failed to create genesis: the archive returned `historical state … is not available`. Disposable scratch adapters retained the runner's read-only proxy and pinned block **83874298**, translated hash references through genuine block responses, limited concurrency, coalesced/cached genuine successful reads and used bounded retries. Later attempts reached account/storage warming but failed with `RPC backend unavailable`, unavailable historical state, connection resets or the unchanged runner's timeout. Preloading the exact required storage reads also exhausted retries. No proof, account, storage value, bytecode or receipt was invented or substituted.
+
+The specified Pocket endpoint and official mainnet RPC both refused a required historical storage read. PublicNode returned HTTP 403: `Archive requests require a personal token`. No credential was guessed or requested. These setup attempts do not count as successful browser validation. In particular the new Speed up receipt/link and delayed Connect/Disconnect walkthrough assertions were not executed here. Transaction equivalence is supported by the passing static/differential gate, not by a new 70-send trace.
+
+Browser tooling and its shared libraries live outside the delivery under `/tmp`; the temporary launchers and adapters are disposable scratch. The browser MCP could not launch because `/opt/google/chrome/chrome` is absent; the actual rendered checks used local Playwright directly. WebKit's external launcher supplies its extracted libraries and Mesa paths. The visibility script's existing transport fallback handled HTTP 403 responses from the first public endpoint. No site asset or test assertion was changed for these environment conditions.
+
+## Better Interface review
+
+Read and applied the pinned workflow, all six domain cores and documentation method within the exact-patch scope. The site's visual idea remains a supermarket flyer around readable vault data and wallet controls. The following is worker-side evidence, not independent certification.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — Checked | Native labels/buttons, conditional Claims text (`web/src/Flows.tsx:1141`), keyboard skip-link/focus smoke tests, target geometry and reduced motion. No screen-reader session, comprehensive accessibility audit or full keyboard-only wallet journey. |
+| Layout — Checked | Export widths, both engines' 320–2560 title sweeps, 375 baseline comparisons and manually viewed 390×844 probe screenshot. Brand, Connect wallet and Deposit/Redeem navigation are visible on that first screen. Native 200% zoom, RTL and physical phones untested. |
+| Writing — Checked | Exact standalone Vault heading/capacity (`web/src/Vault.tsx:199`, `:236`), direct Deposit guidance (`web/src/Flows.tsx:842`), Docs paragraphs (`web/src/Docs.tsx:19`) and quiet Claims state. Owner wording preserved. |
+| Typography — Checked | Local Flyer/Pixel fonts load; inputs are 16 px; whole-word 24/7 fallback wrapping passes in both engines (`web/src/styles.css:596`). Native Windows font rasterization/scaling remains unverified. |
+| Colors — Checked | Seven measured solid pairs pass: minimum 4.7987:1 for white/red; white/royal 7.4656:1. Probe contrast passes, with one image/gradient box unmeasured. Not every image pixel or focus/background combination was audited. One light theme; dark theme not applicable. |
+| UI — Checked | No normal-operation status, CLOSED-only known-closure states, unknown-status retry, direct guidance, Claims visibility/persistence/reset/retry states and guarded sends exercised by the passing gates. Full fork transaction journey and DevTools 10% motion playback remain unperformed. |
+
+The unmodified taste probe ran with `IMD_PLAYWRIGHT=<scratch launcher> node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste`: **10/16 checks passed**. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget, reduced motion and share metadata passed. No horizontal overflow, text overlap or clipped text was reported at 320/390/1440. First-screen prose: 60 words at 390, 86 at 1440. Six style flags remain in the prescribed design: uppercase headings (`styles.css:108`), tracked figure label (`:393`), the established type sizes/families, repeated Pixel marquee (`:1100`) and border/shadow flyer surfaces (`:221`). These are recorded exceptions to the general design bar; the explicit exact-patch rule prevents restyling them. No new source fix was made for a design preference.
+
+Manually inspected the actual 390 and 1440 probe screenshots, the Chromium Deposit and WebKit Redeem 375 title captures, the live export captures and the supplied share card. Those new review captures remain scratch and are not replacements for the required fork captures. Accepted owner decisions are retained: standalone Vault heading; character before figures on phones; no Change wallet button; ITEM wording and not-live status; hidden zero-owed Claims panel; no OPEN sign or normal-operation status line.
+
+## Delivery packaging and evidence boundary
+
+The initial bundle failure was repaired without changing a pixel: the **24 historical screenshots** were losslessly repacked with `jpegtran -copy all -optimize -progressive`, saving **149,896 bytes**. Before repacking each source JPEG was checked against a6e1b4d; decoded PPM bytes were then compared exactly before/after. `screenshot-packaging.json` records original, packed and decoded-pixel SHA-256 values. Their original quality/content is preserved; they are **not** the requested new quality-26 fork screenshots. The bundle gate's static quality-26 description does not establish that regeneration happened.
+
+All required source, runtime assets, screenshots, prior validation entries and regenerated passing reports are retained. No dependency/cache directory, browser/compiler binary, registry mirror or submodule is delivered. Final patch/export hashes, protected-path checks and a byte scan of every candidate file (tracked libraries included; task inputs and scratch excluded) were rechecked. No vault 1–5 address fragment was found. The complete byte count is in `bundle-check.json` and includes this entry and the packaging evidence. The remaining blocker is the required fork walkthrough and its regenerated trace/screenshots, not a requester design decision.
+
+---
+
 # 2026-10-13 — v11 exact patch delivered on vault 6
 
 Complete for the stated scope, subject to the owner's explicitly accepted findings below. This entry records this run (Europe/Berlin date; machine logs begin on 2026-10-12 UTC). Applied the supplied patch unchanged to `507f2b164160ed7b1361bac55b67bac76a0f3d38`. Source, rebuilt `dist/`, and regenerated artifacts are prepared for the submission commit. Git metadata was not modified. No contract was changed, deployed, replaced or re-minted; no live transaction or publication occurred. Older entries below describe earlier runs only.

@@ -79,7 +79,7 @@ export function PageTitle({
 }: {
   eyebrow?: string;
   title: string;
-  children: ReactNode;
+  children?: ReactNode;
   character?: {
     kind: "vault" | "deposit" | "redeem";
     src: string;
@@ -99,7 +99,7 @@ export function PageTitle({
     >
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1 tabIndex={-1}>{title}</h1>
-      <p>{children}</p>
+      {children != null && <p>{children}</p>}
       {character && (
         <div className="title-character">
           <img

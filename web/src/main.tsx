@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Activity, useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { chain, verifyNetwork, VAULT } from "./chain";
 import { initial, loadSnapshot } from "./model";
@@ -256,7 +256,9 @@ function App() {
         ) : (
           <LossesPage snapshot={data} wallet={wallet} />
         )}
-        {page === "Redeem" && <Claims snapshot={data} wallet={wallet} />}
+        <Activity mode={page === "Redeem" ? "visible" : "hidden"}>
+          <Claims key={wallet.account} snapshot={data} wallet={wallet} />
+        </Activity>
       </main>
       <div className="floor-strip" aria-hidden="true" />
       <footer>

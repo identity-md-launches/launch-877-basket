@@ -66,6 +66,9 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   // Mirrors the saved flag, so Disconnect also holds without storage.
   const disconnected = useRef(savedDisconnected());
   const accountVersion = useRef(0);
+  // Advanced by Connect wallet and Disconnect only: a Connect answer that
+  // arrives after a later Disconnect is dropped.
+  const connectVersion = useRef(0);
   const [connecting, setConnecting] = useState(false);
   const [progress, setProgress] = useState<Record<string, ActionProgress>>({});
   const pendingRef = useRef<PendingTx | undefined>(savedPending());
@@ -203,6 +206,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     if (connectingLock.current) return;
     connectingLock.current = true;
     accountVersion.current++;
+    const version = ++connectVersion.current;
     setConnecting(true);
     try {
       if (!window.ethereum)
@@ -210,6 +214,8 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       const a = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
+      // Disconnect was pressed while the wallet was asked: it stands.
+      if (version !== connectVersion.current) return;
       if (a[0]) {
         disconnected.current = false;
         try {
@@ -234,6 +240,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
   function disconnect() {
     if (sending.current) return;
     accountVersion.current++;
+    connectVersion.current++;
     disconnected.current = true;
     try {
       localStorage.setItem(disconnectedKey, "1");
@@ -369,12 +376,17 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
             ? "The transaction was cancelled in the wallet; it did not run. Refresh the vault before retrying."
             : "The transaction was replaced in the wallet by a different one; it did not run. Refresh the vault before retrying.",
         );
+      // After a Speed up the transaction is mined under another hash than the
+      // one the wallet returned: from here on the mined one is shown and read.
+      const mined = receipt.transactionHash;
+      sent = mined;
+      setHash(mined);
       if (receipt.status !== "success")
         throw new Error(
           "The transaction reverted. Refresh the data before retrying.",
         );
-      setConfirmed({ hash: tx, functionName: s.functionName });
-      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: tx });
+      setConfirmed({ hash: mined, functionName: s.functionName });
+      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });
       let detail = "";
       try {
         const fresh = await refresh();
@@ -423,7 +435,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         detail =
           "Refresh unreadable. Retry vault / claims to read the confirmed result.";
       }
-      report(key, { message: `${label}: Confirmed.`, hash: tx, detail });
+      report(key, { message: `${label}: Confirmed.`, hash: mined, detail });
       return receipt;
     } catch (e) {
       if (e instanceof TransactionCancelled) {

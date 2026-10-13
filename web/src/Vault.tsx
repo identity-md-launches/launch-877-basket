@@ -118,7 +118,36 @@ function useVaultClock(s: Snapshot, closedForHours: boolean) {
   });
   return now;
 }
-export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
+// Owner-approved display: no reads, requests or transaction state.
+const DEPOSIT_LETTERS: Record<string, string[]> = {
+  O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+  E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+  C: ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+  L: ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+  S: ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+  D: ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+};
+
+function DepositLedSign() {
+  const label = "Closed";
+  const word = label.toUpperCase();
+  const step = 4.8;
+  const start = (220 - ((word.length * 6 - 2) * step)) / 2;
+  return (
+    <svg className="deposit-led-sign" viewBox="0 0 220 80" width="220" height="80" role="img" aria-label={label}>
+      <rect x="1" y="1" width="218" height="78" rx="14" fill="#080b14" stroke="#263144" strokeWidth="2" />
+      <rect className="deposit-led-border" x="9" y="9" width="202" height="62" rx="9" />
+      <rect className="deposit-led-chase" x="9" y="9" width="202" height="62" rx="9" />
+      <g className="deposit-led-letters">
+        {[...word].flatMap((letter, index) => DEPOSIT_LETTERS[letter].flatMap((row, y) => [...row].map((on, x) => (
+          <circle key={`${index}-${y}-${x}`} cx={start + (index * 6 + x) * step} cy={25.6 + y * step} r="1.7" fill={on === "1" ? "#ff373d" : "#3e111c"} />
+        ))))}
+      </g>
+    </svg>
+  );
+}
+
+export function DepositState({ snapshot: s, showSign = false }: { snapshot: Snapshot; showSign?: boolean }) {
   const r = s.status;
   const reason = r?.ok && !s.loading ? Number(r.value[0]) : undefined;
   const now = useVaultClock(s, reason === 3);
@@ -126,36 +155,37 @@ export function DepositState({ snapshot: s }: { snapshot: Snapshot }) {
     reason !== undefined
       ? closedWords(reason, s.globals.settings, s.blockTime, now)
       : undefined;
+  // The owner wants a notice only for closed deposits or an unreadable status.
+  const statusUnreadable =
+    !s.complete || !r?.ok || s.globals.genesisFinalized === undefined;
+  const operational =
+    !statusUnreadable && reason === 0 && s.globals.genesisFinalized === true &&
+    s.assets.some((a) => a.open && !a.retired);
+  if (s.loading || operational || closed === mayBeOpen) return null;
+  const issueReason = s.globals.genesisFinalized === false ? 1
+    : !s.assets.length ? 4
+      : s.assets.every((a) => !a.open || a.retired) ? 5
+        : reason === 13 ? 9 : reason;
+  const issue = reasonWords(issueReason, s.globals.settings).split(" (")[0];
+  const weekendHours = reason === 3 &&
+    s.globals.settings?.hoursFrom === 72000n && s.globals.settings?.hoursTo === 504000n;
   return (
-    <div className="deposit-state">
-      <strong>Vault deposit status</strong>
-      <p>
-        {s.loading
-          ? "Reading..."
-          : !s.assets.length &&
-              s.complete &&
-              s.globals.genesisFinalized === false
-            ? "No Stock Tokens are listed yet. Deposits start after the owner finishes setup."
-            : s.assets.length > 0 &&
-                s.assets.every((a) => !a.open || a.retired) &&
-                s.globals.genesisFinalized
-              ? "Every stock is closed. The owner must reopen a stock before deposits."
-              : !r || !r.ok
-                ? "unreadable — Retry vault"
-                : reasonWords(Number(r.value[0]), s.globals.settings)}
-      </p>
-      {r?.ok && r.value[1] !== zeroAddress && (
-        <p>
-          Stock at fault:{" "}
-          {s.assets.find(
-            (a) => a.token.toLowerCase() === r.value[1].toLowerCase(),
-          )?.symbol ?? r.value[1]}
-        </p>
-      )}
-      {closed && <p className="reopen">{closed}</p>}
-      <p>Hours: {s.loading ? "Reading..." : hoursLine(s.globals.settings)}</p>
-      {!s.loading && (!r || !r.ok) && (
-        <button onClick={s.retry}>Retry vault</button>
+    <div className={showSign ? "deposit-state deposit-notice" : "deposit-state"}>
+      {statusUnreadable ? (
+        <>
+          {!showSign && <strong>Vault status:</strong>}
+          <p>unreadable — Retry vault</p>
+          <button onClick={s.retry}>Retry vault</button>
+        </>
+      ) : showSign ? (
+        <>
+          <DepositLedSign />
+          <p>{weekendHours
+            ? "Deposits reopen when the stock feed prices update around 8pm on Sundays."
+            : `Deposits will be back open when “${issue}” is resolved.`}</p>
+        </>
+      ) : (
+        <><strong>Vault status:</strong><p>Closed</p></>
       )}
     </div>
   );
@@ -166,7 +196,7 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
   return (
     <>
       <PageTitle
-        title="A basket of stocks."
+        title="Always in stock"
         character={{
           kind: "vault",
           src: "./art/character/vault.webp",
@@ -175,9 +205,7 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
           alt: "Cheerful store worker beside a produce crate",
           line: "I was hoping you would come through my aisle",
         }}
-      >
-        Meet Basket (BASK): your share of the Stock Tokens in this vault.
-      </PageTitle>
+      />
       <section className="panel">
         <div className="section-heading">
           <h2>Inside the basket</h2>
@@ -205,7 +233,7 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
             <strong>{s.loading ? "Reading..." : fmt(supply)}</strong>
           </div>
           <div>
-            <span>Size limit</span>
+            <span>Maximum Basket Capacity<small>(eligible to be raised)</small></span>
             <strong>{s.loading ? "Reading..." : usd(s.globals.NAV_CAP)}</strong>
           </div>
         </div>
@@ -216,7 +244,9 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
           </Note>
         )}
         <div className="two-col">
-          <DepositState snapshot={s} />
+          <div className="deposit-summary">
+            <DepositState snapshot={s} />
+          </div>
           <div>
             <strong>Fees</strong>
             <p>

@@ -1,0 +1,201 @@
+{
+  "status": "Historical screenshots only; the current fork walkthrough did not complete. These are not new v12 captures.",
+  "sourceCommit": "a6e1b4d2eb5988ab8eb7cfc404161f035aa96d84",
+  "method": "jpegtran -copy all -optimize -progressive; no re-quantization; djpeg decoded PPM bytes identical for each before/after pair.",
+  "count": 24,
+  "savedBytes": 149896,
+  "files": [
+    {
+      "file": "artifacts/empty-deposit-1440.jpg",
+      "beforeBytes": 184719,
+      "afterBytes": 178350,
+      "beforeSha256": "109ecb2f151fcbb91ee4a256d8b722d93087c84c037849eb3e951baadf317c61",
+      "afterSha256": "95b79c5bdeaa6968596a4e4eacc539b34f7143e856b53b85dd0d9d1119e1f7a6",
+      "decodedPixelSha256": "387e18dcb24b727f5a97ac871c1f278d63fd8d0bf348962f4c32d2518562b7b8"
+    },
+    {
+      "file": "artifacts/empty-deposit-375.jpg",
+      "beforeBytes": 91634,
+      "afterBytes": 89451,
+      "beforeSha256": "24f2faddd21b5b70ed931dfa81c2901a7984dd0e275f81327eb25eb031ca3c0b",
+      "afterSha256": "c18d1d02099a61a0b5dc057381bae9d3b5467a871a6a76a2d3f41dd95279d126",
+      "decodedPixelSha256": "8f657e7baa6fca483b8417356f10a2ec574da86c51195f4e2492bd2cc9334d85"
+    },
+    {
+      "file": "artifacts/empty-docs-1440.jpg",
+      "beforeBytes": 302026,
+      "afterBytes": 287024,
+      "beforeSha256": "d7309a68ca36b82f8c75fdb84f05eaa6d3a170d3ee31bb7633d5f33ef8862a94",
+      "afterSha256": "a1f243f69ed98670219f0f53bf04a6d5b97d2dbaadf134c4d8799b554cd9bf74",
+      "decodedPixelSha256": "f0cdcd7e29eb08fd0097a617dbd5cffb90eb5a22159a9a565653a6c61b5d4bc8"
+    },
+    {
+      "file": "artifacts/empty-docs-375.jpg",
+      "beforeBytes": 203876,
+      "afterBytes": 197296,
+      "beforeSha256": "265359557f23eda082049de13ce38d0cbaaa97c0c2f3ece097e37f8a7765bfee",
+      "afterSha256": "3abd93a42324650ddb07ba5dde5ae2a9623cd7b79e2f88853cf455f1f43ac4ef",
+      "decodedPixelSha256": "064a23e9e31f8c11b013904d5ea6675cb1fa5f41647d808387bc251942e35ceb"
+    },
+    {
+      "file": "artifacts/empty-losses-1440.jpg",
+      "beforeBytes": 135266,
+      "afterBytes": 129675,
+      "beforeSha256": "c9092746ef13b2de7658a6aafd1030c56043e0a275e6c92da6192207080328f1",
+      "afterSha256": "f76782da1ab8eb0e2efd1c35c499296b2569da60413faaba15ac59d67b36b790",
+      "decodedPixelSha256": "5facdb48504ad4c42654bd1553c7aca7f00ea426c7a4c677aa22467459517695"
+    },
+    {
+      "file": "artifacts/empty-losses-375.jpg",
+      "beforeBytes": 59090,
+      "afterBytes": 57419,
+      "beforeSha256": "eb2dfc8838f3c2c7bbb8034dbc94a3f0d34ad8daa9466778f93cfcb8f8ce40bc",
+      "afterSha256": "fa8d23743d9aceec10a761b8af5bc1eebaccd77503f7b3d563ae6069a183a567",
+      "decodedPixelSha256": "f9428f7332da4e2a473fb0d15008c94a01440478227079b00d4f54d6ee696cce"
+    },
+    {
+      "file": "artifacts/empty-owner-1440.jpg",
+      "beforeBytes": 314889,
+      "afterBytes": 305405,
+      "beforeSha256": "4bccfa1530ae89aea41e7ed70c5a756a4b113efbe293274d54e6cba2aeb2f4bc",
+      "afterSha256": "739d10100382494cebcceb88e28d3fe1c0abbed80a8e3b7552b16852ab5d50fd",
+      "decodedPixelSha256": "547f93fb4a6fc118f590dfcf872980e092c883d046a72f0cec021b30239eba05"
+    },
+    {
+      "file": "artifacts/empty-owner-375.jpg",
+      "beforeBytes": 195366,
+      "afterBytes": 191872,
+      "beforeSha256": "4f7be2211cb15daaafad1571f83f210dd38a75ca993f8eac368384334cfbd836",
+      "afterSha256": "507155a2d94b7767338fbea599ea896b6864566494c8f10cae64623382a55466",
+      "decodedPixelSha256": "acbec76ba053712989ce2499de5adba377b0f43826c41c9e9ff802346e892552"
+    },
+    {
+      "file": "artifacts/empty-redeem-1440.jpg",
+      "beforeBytes": 201012,
+      "afterBytes": 194308,
+      "beforeSha256": "52961d4d029cde3956e44987d3939b06cbf4a6e2536aa3e1beff702aadcc9dd4",
+      "afterSha256": "7c829e4c9c53e5471aaff00c94f2cde014d09ffe5fcaf058ff8ffdba12f12527",
+      "decodedPixelSha256": "69506cf251e2b80028e9a46e613f1960c74aa784ebcb5892e21e52aac26156c3"
+    },
+    {
+      "file": "artifacts/empty-redeem-375.jpg",
+      "beforeBytes": 105379,
+      "afterBytes": 102612,
+      "beforeSha256": "21e4dca7013ea94df91e0e8b3197ecf8abb4f4f20ea2d7a7cc9b6508d70791ad",
+      "afterSha256": "6eb5d5722ccf602c4aa0cee9e68a2bc881076bee82f283bd88c9726b925a8176",
+      "decodedPixelSha256": "c251d7c86045476305bff4d661f1d6a889065b76a5782e47fe00b06824055366"
+    },
+    {
+      "file": "artifacts/empty-vault-1440.jpg",
+      "beforeBytes": 191658,
+      "afterBytes": 185680,
+      "beforeSha256": "166f380ba73da0970d3dbdbb364027bbf4834fbd86a1c308fb0e311f51ef7359",
+      "afterSha256": "4c88a60a0844419787424047450baa5a555685b1df99eb6fc410cf8cf407434f",
+      "decodedPixelSha256": "c065090c2bc1aec9e2c8dc614bfd4199ab304166a1f9dc42dd7603dd75cd47ee"
+    },
+    {
+      "file": "artifacts/empty-vault-375.jpg",
+      "beforeBytes": 92359,
+      "afterBytes": 90636,
+      "beforeSha256": "613aa39fa86c948f2be96e00f4c79d3afe053a7f0d4a47dd7e93c3b1da31547b",
+      "afterSha256": "35913a3a611afc958f1a76956f0a9439f9c38b7acedd0a0d76daa73e5eb5913a",
+      "decodedPixelSha256": "c6e87d81d772d10a25539defd2075300d3f9be24674478692e8b4c87436ee816"
+    },
+    {
+      "file": "artifacts/stocks25-deposit-1440.jpg",
+      "beforeBytes": 316096,
+      "afterBytes": 308088,
+      "beforeSha256": "8f08e1c9c89426972d86d93c2df551cb35c78ecaabc07b17f742e0409de8b512",
+      "afterSha256": "ec3ea46ec7199e89820a60a00b2409e485be7ddd6339bb2acc27c3530c4f8144",
+      "decodedPixelSha256": "cc7b87956f35f85ecfc119bdab55bfc5355bdc7ea455847bc1496e4381cca1d0"
+    },
+    {
+      "file": "artifacts/stocks25-deposit-375.jpg",
+      "beforeBytes": 184005,
+      "afterBytes": 180752,
+      "beforeSha256": "b0966f9715926f08d00261e6ac151cc485edc00a6721b8db202ead279ce8ac86",
+      "afterSha256": "c2014f25626126a4565637c91ad09e107d379e1dbd985d77f9c0888cbd670c3a",
+      "decodedPixelSha256": "83ceb1a6e0de8000e9496dfb541a027c5b2cbbece65a56faf2f7486cdc6e470d"
+    },
+    {
+      "file": "artifacts/stocks25-docs-1440.jpg",
+      "beforeBytes": 308139,
+      "afterBytes": 294400,
+      "beforeSha256": "a86a4707432aa6ba4d18cea7a041f5d85b690c0adbfdebf980604083f4d62b4f",
+      "afterSha256": "07fd9e59618839e795e17071e4705867b010c52cf88fe7ac9351723b69c00b35",
+      "decodedPixelSha256": "77d2eafac3cf7fcca8839b10f6fb5972ad5cb86debbdda51e4f3c8c1900665a6"
+    },
+    {
+      "file": "artifacts/stocks25-docs-375.jpg",
+      "beforeBytes": 202773,
+      "afterBytes": 195687,
+      "beforeSha256": "7a15a59d364285d1268cce335a7dce269686e646b0aafe23694bcbb711908492",
+      "afterSha256": "de0347ac3b53ba1f51c8cf386e883b5e4674d1a6733769fefc687644a1d8e166",
+      "decodedPixelSha256": "5818b01563e5d51d410fa7d857f61ed1c29e06a04180b18265d4f3f458b34f10"
+    },
+    {
+      "file": "artifacts/stocks25-losses-1440.jpg",
+      "beforeBytes": 137775,
+      "afterBytes": 132698,
+      "beforeSha256": "322c400c83d897c2a4ee1140e105293ba3af223c8b5f78a984d25faf1e8616ae",
+      "afterSha256": "e9c83591d10726d9e1e70373d603081257a78a47a9c0853fd873b0a1da3dda44",
+      "decodedPixelSha256": "20929b2b034b158dba3f84ed86749370e5a0c48001a414ea3cf61eb7c3abb968"
+    },
+    {
+      "file": "artifacts/stocks25-losses-375.jpg",
+      "beforeBytes": 57547,
+      "afterBytes": 55958,
+      "beforeSha256": "3d11550af3bad3912912f15a6be699ebfaeb074722aed60a3147df9d6d1c9f5c",
+      "afterSha256": "f5eddd23a7cc12229628ec120ffdb1428aa5fe58335567460f7dbd88bb79788c",
+      "decodedPixelSha256": "737ba61c92b9a2999b84f0176ea302836e12ddfa489ef6183fdcb2c887129426"
+    },
+    {
+      "file": "artifacts/stocks25-owner-1440.jpg",
+      "beforeBytes": 487974,
+      "afterBytes": 471511,
+      "beforeSha256": "07ef063cdb5108eca3885b3d3725bfdf4f066134ae1b75351429e311f6cd40ac",
+      "afterSha256": "b3a5ffb6936ae6c22a02a44110d9ba1df894ef879fc6bc6311e17a9bf3ebe218",
+      "decodedPixelSha256": "a156c9a5a62707c7ca3dba89186d9f682645ebc972a436276825e740c85bb03a"
+    },
+    {
+      "file": "artifacts/stocks25-owner-375.jpg",
+      "beforeBytes": 368656,
+      "afterBytes": 361010,
+      "beforeSha256": "c4835cb6ce4408c26d057e7932c213b34cbaee1478c93c1193cae737d5e30c86",
+      "afterSha256": "828883b3234bc9bbb4bef927f3c1d7f6476185b8e76a39e63b5693bbbd8cc1a8",
+      "decodedPixelSha256": "c5918877ea24cbfd3da4cf398ce72e4ed26a774de31bb8259e73249b576e5d66"
+    },
+    {
+      "file": "artifacts/stocks25-redeem-1440.jpg",
+      "beforeBytes": 225372,
+      "afterBytes": 216993,
+      "beforeSha256": "8750beabc363994e41e2d1d8298e6372e89e3bff08c33032ef9b6da8cf36bdbb",
+      "afterSha256": "d5d9a3f797520f4a29fd63b8bea20bcf27da6e78f27b49914aa2916d3f1cc3db",
+      "decodedPixelSha256": "16864c618852e27ce75f82a88aa04ee80b411f6a79b27866a9980ff14b00cdcd"
+    },
+    {
+      "file": "artifacts/stocks25-redeem-375.jpg",
+      "beforeBytes": 126395,
+      "afterBytes": 122843,
+      "beforeSha256": "132dc88edddb11de01c7a27d17b9e34e57c6609d24527e57ed4edb1928adcf86",
+      "afterSha256": "fc68f575d1c9f112c13eef8dff28a2e06049a03aa448a2846adeecb61441427d",
+      "decodedPixelSha256": "2d677798b34cf03907978a1a3142cbc3ac4744884cd29281e2f7dbd0829ee46d"
+    },
+    {
+      "file": "artifacts/stocks25-vault-1440.jpg",
+      "beforeBytes": 275887,
+      "afterBytes": 269945,
+      "beforeSha256": "13bf555206d5dc698a667046dd8d2f25f4178ab300a143e36b7d5412a4022633",
+      "afterSha256": "3394e7fd3caa4ed05d77c0aebeb3489fc9473be5a3362e26dbb3a079dc7a4155",
+      "decodedPixelSha256": "d192f04b968441a974fe295956a041fa267f93569459ad121b8d4f311b21b74e"
+    },
+    {
+      "file": "artifacts/stocks25-vault-375.jpg",
+      "beforeBytes": 156960,
+      "afterBytes": 155344,
+      "beforeSha256": "328b959a7bbd3c03532d6abef19b964e046ca972569cd1c6398804092655e6ec",
+      "afterSha256": "a55bb6fc85be0d21ebe4cbf444194d975758c00e8f575984d9ff411be48e73e1",
+      "decodedPixelSha256": "ec7d59af4a2787c0232ffc7a9bf3a53e6fd22628606666e122ec88c91cf70600"
+    }
+  ]
+}

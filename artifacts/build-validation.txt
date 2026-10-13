@@ -1,13 +1,4 @@
 
-> basket-protocol-web@1.0.0 typecheck
-> tsc --noEmit
-
-npm notice
-npm notice New major version of npm available! 11.19.0 -> 12.2.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
-npm notice To update run: npm install -g npm@12.2.0
-npm notice
-
 > basket-protocol-web@1.0.0 build
 > tsc --noEmit && vite build
 
@@ -16,18 +7,18 @@ transforming...
 ✓ 1100 modules transformed.
 rendering chunks...
 computing gzip size...
-../dist/index.html                     0.66 kB │ gzip:   0.39 kB
+../dist/index.html                     1.33 kB │ gzip:   0.56 kB
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
-../dist/assets/index-D1E9mcXX.css     40.21 kB │ gzip:   9.37 kB
-../dist/assets/ccip-CT0s-mGH.js        2.61 kB │ gzip:   1.23 kB
-../dist/assets/index-O9B-ydQc.js     573.31 kB │ gzip: 175.32 kB
+../dist/assets/index-DMUMxJ0Z.css     41.27 kB │ gzip:   9.65 kB
+../dist/assets/ccip-DaOwsnsF.js        2.61 kB │ gzip:   1.24 kB
+../dist/assets/index-BFEYBx6O.js     575.30 kB │ gzip: 176.23 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 4.56s
+✓ built in 5.04s
 npm notice
 npm notice New major version of npm available! 11.19.0 -> 12.2.0
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0

@@ -36,7 +36,7 @@ import {
   actionReason,
   Receiver,
 } from "./components";
-import { DepositState, hoursLine } from "./Vault";
+import { DepositState } from "./Vault";
 import type { Wallet } from "./wallet";
 type Props = { snapshot: Snapshot; wallet: Wallet };
 // Always shown at the top of the Deposit and Redeem forms (open or closed), so
@@ -260,8 +260,6 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   }
   // From the last finished vault read, kept while a new read runs so the form
   // does not jump; undefined before the first read or when unreadable.
-  const r = s.status;
-  const reason = r?.ok ? Number(r.value[0]) : undefined;
   // Dollar value of n units at the feed price of the last vault read, 18
   // decimals; undefined when that price is unreadable.
   const worth = (a: Asset, n: bigint) =>
@@ -406,16 +404,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       <div className="flow-layout one-column">
         <section className="panel">
           <HoursTag />
-          {/* One line while the vault takes deposits; otherwise, and while the
-              status is unread or unreadable, the full box with its reason. */}
-          {reason === 0 && open.length > 0 ? (
-            <p className="deposit-open">
-              <strong>Deposits are open.</strong> Hours:{" "}
-              {hoursLine(s.globals.settings)}
-            </p>
-          ) : (
-            <DepositState snapshot={s} />
-          )}
+          <DepositState snapshot={s} showSign />
           <p className="flow-steps">
             Choose amounts, preview, approve each stock, press Deposit.
           </p>
@@ -493,11 +482,6 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                 ) : (
                   <>
                     {!ready && <p>Reading your wallet...</p>}
-                    <p className="wallet-line">
-                      Showing {w.account.slice(0, 6)}…{w.account.slice(-4)}. To
-                      use another wallet, switch the address in your wallet app:
-                      this page follows it.
-                    </p>
                     {unread ? (
                       <p>
                         Some balances could not be read. Press Retry balances
@@ -861,18 +845,12 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
             First deposit: 0.001 BASK is locked forever. The preview already
             subtracts this lock and any fee.
           </p>
-          <details>
-            <summary>Transaction details</summary>
-            <p>
-              Each short allowance is set to exactly that stock’s amount.
-              Approvals are separate wallet prompts; the deposit follows after
-              simulation.
-            </p>
-            <p>
-              The deadline is ten minutes from preparation. Your wallet receives
-              the BASK.
-            </p>
-          </details>
+          <p>
+            You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.
+          </p>
+          <p>
+            A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.
+          </p>
           <Note warning>
             Feeds lag the market. Issuer restrictions and pool checks can stop
             deposits.
@@ -940,7 +918,7 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
       >
         Receive your share of every stock.
       </PageTitle>
-      <div className="flow-layout">
+      <div className="flow-layout one-column">
         <section className="panel">
           <HoursTag />
           <h2>Redeem shares</h2>
@@ -1086,21 +1064,6 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
             {error}
           </p>
         </section>
-        <aside className="panel">
-          <h2>Take your basket home</h2>
-          <details>
-            <summary>Transaction details</summary>
-            <p>
-              Minimum amounts are 0.1% below a fresh preview taken just before
-              sending, with zero kept as zero. They follow assetTokens order.
-            </p>
-            <p>
-              Removal of an empty retired stock can change that order before
-              execution. Minimums protect entitlements, not immediate payment.
-            </p>
-            <p>Deposit, redemption and claim gas is estimated, then increased by 30%.</p>
-          </details>
-        </aside>
       </div>
     </>
   );
@@ -1141,11 +1104,45 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
   const claimable = s.assets.filter(
     (a) => owed[a.token] !== undefined && owed[a.token]! > 0n,
   );
-  const zeros = s.assets.filter((a) => owed[a.token] === 0n);
   const visible = [
     ...claimable,
     ...s.assets.filter((a) => owed[a.token] === undefined),
   ];
+  // Presentation only: keep the last finished visibility through refreshes.
+  // Capture old account values so neither its owed result nor its status can
+  // reveal the new account's panel before that account's first read finishes.
+  const visit = useRef({ account: w.account, initialOwed: owed, progress: w.progress, error });
+  const readStart = useRef(owed);
+  useLayoutEffect(() => {
+    readStart.current = owed;
+  }, [w.account, s.loadedAt, retry]);
+  const [display, setDisplay] = useState({ account: w.account, finished: false, shown: false, items: [] as Asset[], count: 0 });
+  useLayoutEffect(() => {
+    if (visit.current.account !== w.account) {
+      visit.current = { account: w.account, initialOwed: owed, progress: w.progress, error };
+      setDisplay({ account: w.account, finished: false, shown: false, items: [], count: 0 });
+      return;
+    }
+    if (!w.account) return;
+    const finished = !reading && !s.loading && owed !== readStart.current;
+    const status = Object.keys(w.progress).some(
+      (key) => (key === "claim-all" || key.startsWith("Claim ")) &&
+        w.progress[key] !== visit.current.progress[key],
+    );
+    const shown = working || (error !== "" && error !== visit.current.error) || status ||
+      (finished && (!s.complete || visible.length > 0));
+    if (finished || shown)
+      setDisplay((old) => ({
+        account: w.account, finished: old.finished || finished, shown: old.shown || shown,
+        items: finished ? visible : old.items, count: finished ? claimable.length : old.count,
+      }));
+  }, [w.account, owed, reading, s.loading, s.complete, working, error, w.progress]);
+  if (!w.account)
+    return <p className="claims-quiet">Connect the receiver wallet to read and claim its owed stocks.</p>;
+  if (display.account !== w.account || !display.shown)
+    return display.account === w.account && display.finished
+      ? <p className="claims-quiet">Nothing is owed to this wallet.</p>
+      : null;
   return (
     <section className="panel claims">
       <h2>Claim owed stocks</h2>
@@ -1230,7 +1227,7 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
           />
           <ActionStatus wallet={w} scope="claim-all" />
           <div className="claim-grid">
-            {visible.map((a) => (
+            {display.items.map((a) => (
               <div className="receipt" key={a.token}>
                 <bdi>{a.symbol}</bdi>
                 <p>
@@ -1260,12 +1257,6 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
               </div>
             ))}
           </div>
-          {zeros.length > 0 && (
-            <details>
-              <summary>Nothing owed for {zeros.length} other stocks</summary>
-              <p>{zeros.map((a) => a.symbol).join(", ")}</p>
-            </details>
-          )}
           {!s.assets.length && (
             <p>
               {s.loading
@@ -1275,12 +1266,11 @@ export function Claims({ snapshot: s, wallet: w }: Props) {
                   : "Listed stocks unreadable. Retry the vault."}
             </p>
           )}
-          <p>
-            Batches of up to 10 stocks, with one wallet prompt per batch. If one
-            stock’s payment fails, the vault reverts that whole batch: nothing is
-            lost and every stock in it stays owed. Use each stock’s own Claim
-            button to collect the others.
-          </p>
+          {display.count > 1 && (
+            <p>
+              Claim all collects up to 10 stocks per wallet prompt. If one stock can’t be paid, that batch stays owed: collect the others with their own Claim buttons.
+            </p>
+          )}
         </>
       )}
       {Object.keys(w.progress)

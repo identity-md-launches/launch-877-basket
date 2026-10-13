@@ -15,6 +15,18 @@ export function DocsPage() {
             and receive BASK. Redeeming BASK pays a share of every stock in the
             vault.
           </p>
+          <p>
+            The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.
+          </p>
+          <p>
+            BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.
+          </p>
+          <p>
+            The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.
+          </p>
+          <p>
+            ITEM is not live yet. Its address will be listed here when it is.
+          </p>
         </section>
         <section className="panel">
           <h2>Deposits</h2>

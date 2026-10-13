@@ -46,11 +46,38 @@ const styles = fs.readdirSync(path.join(root, "dist/assets")).filter(f => f.ends
 for (const text of ["Redemptions are open 24/7.", "Deposit hours apply to deposits only.", "Deposits open Sunday 8 pm to Friday 8 pm New York time", "old price", '"sa-old"', "Feed price"]) assert.ok(bundle.includes(text), "v10 text in the bundle: " + text);
 for (const gone of ["Redemption is always open.", "deposits open Sunday", "Feed price / age", "just now", "Less than 1 min ago", " min ago", "m ago", "days ago", "price time: ", "Future timestamp", "sa-clock", "sa-upd", "sa-when"]) assert.ok(!(bundle + styles).includes(gone), "removed from the bundle (v10): " + gone);
 assert.ok(styles.includes(".hours-tag"), "v10 tag style");
-// v11: the fixed words of the rebuilt Deposit form (the search label, the small-balances switch, the one-line status),
+// v11 form words remain except the owner-removed normal-operation status sentence.
 // of the line under a confirmed deposit and of the header's Disconnect button are in the scripts; the old search label
 // is gone from scripts and styles.
-for (const text of ["Add another stock", "Disconnect", "Show small balances", "You received", "Deposits are open.", "All stocks you can deposit", "Press a stock to add it to your deposit."]) assert.ok(bundle.includes(text), "v11 text in the bundle: " + text);
+for (const text of ["Add another stock", "Disconnect", "Show small balances", "You received", "All stocks you can deposit", "Press a stock to add it to your deposit."]) assert.ok(bundle.includes(text), "v11 text in the bundle: " + text);
 for (const gone of ["Search to add stocks"]) assert.ok(!(bundle + styles).includes(gone), "removed from the bundle (v11): " + gone);
+for(const text of ['Vault status:',"Deposits reopen when the stock feed prices update around 8pm on Sundays.",'Deposits will be back open when “','” is resolved.']) assert.ok(bundle.includes(text),'Owner short-notice wording '+text);
+assert.ok(!bundle.includes('Deposits are open.'),'Owner status placement removes the old Deposit open-only sentence');
+assert.ok(styles.includes('.deposit-summary'),'Vault has a scoped compact deposit status');
+assert.ok(!bundle.includes('Vault deposit status'),'Owner replaces the old status label');
+for(const text of ['Maximum Basket Capacity','(eligible to be raised)'])assert.ok(bundle.includes(text),'Owner capacity wording: '+text);
+assert.ok(!bundle.includes('To use another wallet, switch the address in your wallet app: this page follows it.'),'Owner removes the Deposit and Redeem wallet-switch instruction');
+// v12 SPEC sections 1-5: exact approved additions and removals; all earlier word pins remain.
+const V12_DOCS = [
+  "One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.",
+  "The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.",
+  "BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.",
+  "The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.",
+  "ITEM is not live yet. Its address will be listed here when it is."
+];
+const V12_DEPOSIT = [
+  "You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.",
+  "A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet."
+];
+for (const text of ['Always in stock', ...V12_DOCS.slice(1), ...V12_DEPOSIT,
+  'Nothing is owed to this wallet.',
+  'Claim all collects up to 10 stocks per wallet prompt. If one stock can’t be paid, that batch stays owed: collect the others with their own Claim buttons.'])
+  assert.ok(bundle.includes(text), 'v12 text in the bundle: ' + text);
+for (const gone of ['A basket of stocks.', 'Meet Basket (BASK): your share of the Stock Tokens in this vault.',
+  'Each short allowance is set to exactly that stock’s amount.', 'Approvals are separate wallet prompts; the deposit follows after simulation.',
+  'The deadline is ten minutes from preparation. Your wallet receives the BASK.', 'Take your basket home',
+  'Batches of up to 10 stocks, with one wallet prompt per batch.'])
+  assert.ok(!bundle.includes(gone), 'removed from the bundle (v12): ' + gone);
 // Words on the shelves that would be a price time.
 const PRICE_TIME = /\bago\b|just now|price updated|price time|less than 1 min|future timestamp|\d+h \d+m/i;
 // v9 A4: the old tagline is gone from the whole built site (page, scripts, styles, icon), in any letter case.
@@ -139,7 +166,7 @@ function assertStripStyles(g, label) {
 }
 const server = http.createServer((req,res) => {
   const parts = req.url.split("/");
-  const dir = parts[1] === "baseline" ? process.env.BASKET_BASELINE_DIST : path.join(root,"dist");
+  const dir = parts[1] === "baseline" ? path.resolve(process.env.BASKET_BASELINE_DIST) : path.join(root,"dist");
   const p = path.resolve(dir, parts.slice(2).join("/") || "index.html");
   if (!p.startsWith(dir+path.sep)) return res.writeHead(403).end();
   try {
@@ -175,7 +202,15 @@ function titleGeometry({R, name, pixels}) {
   const firstText = title.querySelector(":scope > .eyebrow") ?? title.querySelector(":scope > h1");
   out.firstText = firstText.tagName;
   out.textAbove = r(firstText).top - (T.top + bw + parseFloat(getComputedStyle(title).paddingTop));
-  out.textBelow = stripTop - parseFloat(after.marginTop) - r(title.querySelector(":scope > p:last-of-type")).bottom;
+  // v12 SPEC 1 removes Vault's sentence. Its heading is now the last title text;
+  // retain the same centering measurement and tolerance used for every other title.
+  const lastText = title.querySelector(":scope > p:last-of-type") ?? title.querySelector(":scope > h1");
+  out.textBelow = stripTop - parseFloat(after.marginTop) - r(lastText).bottom;
+  out.titleHeight = T.height;
+  const headingRange = document.createRange(); headingRange.selectNodeContents(title.querySelector(":scope > h1"));
+  const headingRects = [...headingRange.getClientRects()].filter(x => x.width > 0);
+  out.headingLines = new Set(headingRects.map(x => Math.round(x.top))).size;
+  out.headingInFrame = headingRects.every(x => x.left >= T.left + bw - 0.5 && x.right <= T.right - bw + 0.5 && x.top >= T.top + bw - 0.5 && x.bottom <= stripTop - 12);
   out.textUnderHolder = r(firstText).top - r(holder).bottom;
   out.phone = innerWidth <= 660;
   out.name = name;
@@ -248,6 +283,10 @@ function assertGeometry(g, label, pixels) {
   assert.equal(g.firstText, g.name === "vault" ? "H1" : "P", `${label}: the Vault title has no eyebrow, the others keep theirs`);
   if (!g.phone) assert.ok(Math.abs(g.textAbove - g.textBelow) < 0.5, `${label}: title text not centred beside her (${g.textAbove} above, ${g.textBelow} below)`);
   else if (g.name === "vault") assert.ok(Math.abs(g.textUnderHolder - 17) < 0.5, `${label}: Vault heading not 17 px under her shelf (${g.textUnderHolder})`);
+  if (g.name === 'vault') {
+    assert.ok(g.headingLines >= 1 && g.headingLines <= 2, label+': Vault heading must use one or two lines');
+    assert.equal(g.headingInFrame, true, label+': Vault heading outside the frame');
+  }
   assert.equal(g.bubbleInFrame, true, `${label}: bubble outside the title frame`);
   assert.equal(g.textOnBubble, false, `${label}: title text under the bubble`);
   assert.deepEqual(g.bubbleOnRegions, [], `${label}: bubble on face, hands or held item`);
@@ -262,16 +301,98 @@ function assertGeometry(g, label, pixels) {
     assert.equal(g.textCovers, 0, `${label}: title text on the figure`);
   }
 }
+// v12 SPEC 6: unchanged text/colour/placement pins plus whole-word geometry.
+function wideLabelGeometry() {
+  const ts=[...document.querySelectorAll('.hours-tag')],t=ts[0],panel=t.parentElement;
+  const R=e=>e.getBoundingClientRect(),r=R(t),pr=R(panel),cs=getComputedStyle(t),pcs=getComputedStyle(panel),split=[],outside=[],strongTops=new Set();
+  const inner={left:r.left+parseFloat(cs.borderLeftWidth)+parseFloat(cs.paddingLeft),right:r.right-parseFloat(cs.borderRightWidth)-parseFloat(cs.paddingRight),top:r.top+parseFloat(cs.borderTopWidth),bottom:r.bottom-parseFloat(cs.borderBottomWidth)};
+  const walker=document.createTreeWalker(t,NodeFilter.SHOW_TEXT);
+  for(let n;(n=walker.nextNode());) for(const m of n.textContent.matchAll(/\S+/g)) {
+    const rg=document.createRange();rg.setStart(n,m.index);rg.setEnd(n,m.index+m[0].length);
+    const boxes=[...rg.getClientRects()].filter(b=>b.width>0),tops=new Set(boxes.map(b=>Math.round(b.top)));
+    if(tops.size!==1)split.push(m[0]);
+    if(n.parentElement.closest('strong')) for(const top of tops)strongTops.add(top);
+    const b=rg.getBoundingClientRect();
+    if(b.left<inner.left-0.5||b.right>inner.right+0.5||b.top<inner.top-0.5||b.bottom>inner.bottom+0.5)outside.push(m[0]);
+  }
+  const hit=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
+  return {count:ts.length,text:t.textContent,first:panel.firstElementChild===t,inForm:panel.matches('.flow-layout > section.panel'),font:parseFloat(cs.fontSize),color:cs.color,background:cs.backgroundColor,
+    inside:r.left>=pr.left+parseFloat(pcs.borderLeftWidth)-0.5&&r.right<=pr.right-parseFloat(pcs.borderRightWidth)+0.5&&r.top>=pr.top+parseFloat(pcs.borderTopWidth)-0.5&&r.bottom<=pr.bottom-parseFloat(pcs.borderBottomWidth)+0.5,
+    split,outside,strongLines:strongTops.size,overlap:[...document.querySelectorAll('.title-character img, .speech-bubble')].filter(e=>hit(R(e),r)).length,overflow:document.documentElement.scrollWidth>innerWidth};
+}
+function assertWideLabel(tag,label) {
+  assert.equal(tag.count,1,label+': one tag');assert.equal(tag.text,V10_TAG,label+': words');
+  assert.equal(tag.first&&tag.inForm,true,label+': first in form');assert.ok(tag.font>=14,label+': font');
+  assert.deepEqual([tag.color,tag.background],['rgb(255, 255, 255)','rgb(23, 75, 193)'],label+': colours');
+  assert.equal(tag.inside,true,label+': pill inside panel');assert.deepEqual(tag.split,[],label+': whole words');
+  assert.deepEqual(tag.outside,[],label+': words inside pill');assert.equal(tag.overlap,0,label+': clear of character/bubble');assert.equal(tag.overflow,false,label+': no horizontal scroll');
+}
 // A hash change re-renders asynchronously: wait until the requested route is the current page before measuring it.
 const routeShown = name => !!document.querySelector(`a[aria-current="page"][href="#${name}"]`);
-const checks=[], visibility=[], bubbles=[], shelfCounts=[];
-let browser;
+
+function capacityGeometry() {
+  const cells=[...document.querySelectorAll('.stats > div')],cell=cells[3],label=cell?.querySelector(':scope > span'),note=label?.querySelector('small'),value=cell?.querySelector(':scope > strong');
+  if(!cell||!label||!note||!value)return {count:cells.length,label:label?.textContent??null};
+  const r=cell.getBoundingClientRect(),s=getComputedStyle(cell),split=[],outside=[];
+  const labelRange=document.createRange();labelRange.selectNode(label.firstChild);
+  const labelBox=labelRange.getBoundingClientRect(),noteBox=note.getBoundingClientRect(),valueBox=value.getBoundingClientRect();
+  const walker=document.createTreeWalker(label,NodeFilter.SHOW_TEXT);
+  for(let node;(node=walker.nextNode());)for(const word of node.textContent.matchAll(/\S+/g)) {
+    const range=document.createRange();range.setStart(node,word.index);range.setEnd(node,word.index+word[0].length);
+    const box=range.getBoundingClientRect();
+    if(new Set([...range.getClientRects()].filter(x=>x.width>0).map(x=>Math.round(x.top))).size!==1)split.push(word[0]);
+    if(box.left<r.left+parseFloat(s.borderLeftWidth)-0.5||box.right>r.right-parseFloat(s.borderRightWidth)+0.5||box.top<r.top+parseFloat(s.borderTopWidth)-0.5||box.bottom>r.bottom-parseFloat(s.borderBottomWidth)+0.5)outside.push(word[0]);
+  }
+  return {count:cells.length,label:label.firstChild.textContent.trim(),note:note.textContent,noteCount:label.querySelectorAll('small').length,labelFont:parseFloat(getComputedStyle(label).fontSize),noteFont:parseFloat(getComputedStyle(note).fontSize),noteBelow:noteBox.top>=labelBox.bottom-0.5,valueBelow:valueBox.top>=noteBox.bottom-0.5,value:value.textContent,split,outside};
+}
+function assertCapacity(g) {
+  assert.equal(g.count,4,'Vault keeps all four figures');
+  assert.deepEqual([g.label,g.note],['Maximum Basket Capacity','(eligible to be raised)'],'Exact owner capacity wording');
+  assert.equal(g.noteCount,1,'Capacity has one smaller note');
+  assert.ok(g.labelFont>=14&&g.noteFont>=12&&g.noteFont<g.labelFont,'Capacity note remains readable and smaller than its label');
+  assert.equal(g.noteBelow&&g.valueBelow,true,'Capacity note is below the label and above the value');
+  assert.deepEqual(g.split,[],'Capacity words are not split');
+  assert.deepEqual(g.outside,[],'Capacity wording stays inside its figure box');
+}
+function ledGeometry() {
+  const state=document.querySelector('.flow-layout .deposit-state'),first=state?.querySelector(':scope > p');
+  const signs=[...document.querySelectorAll('.deposit-led-sign')].map(e=>{
+    const r=e.getBoundingClientRect(),p=e.closest('.deposit-state')?.getBoundingClientRect(),rect=e.querySelector('rect');
+    const border=e.querySelector('.deposit-led-border'),chase=e.querySelector('.deposit-led-chase'),letters=e.querySelector('.deposit-led-letters');
+    return {label:e.getAttribute('aria-label'),role:e.getAttribute('role'),inline:e.tagName.toLowerCase()==='svg',onDeposit:!!e.closest('.flow-layout > section.panel .deposit-state'),
+      width:r.width,height:r.height,inside:!!p&&r.left>=p.left&&r.right<=p.right&&r.top>=p.top&&r.bottom<=p.bottom,
+      black:rect?.getAttribute('fill'),blue:border?getComputedStyle(border).stroke:null,red:!!e.querySelector('circle[fill="#ff373d"]'),
+      circles:e.querySelectorAll('circle').length,animations:e.getAnimations({subtree:true}).length,
+      offset:chase?getComputedStyle(chase).strokeDashoffset:null,glow:letters?getComputedStyle(letters).opacity:null};
+  });
+  return {status:first?.textContent.replace(/\s+/g,' ').trim()??null,reopening:state?.querySelector('.reopen')?.textContent??null,readIssues:document.querySelectorAll('.read-errors').length,signs};
+}
+// Replace only the existing empty-token depositStatus read; other public reads stay live.
+let statusFixture=0,statusFixtureReads=0;
+function fixtureStatus(call) {
+  const tx=call?.params?.[0];
+  if(call?.method!=='eth_call'||tx?.to?.toLowerCase()!=='0x739fd5b653aa092a434534fa1ade67c1770b5a5b'||tx.data?.toLowerCase()!=='0x6a6ccbd800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000')return undefined;
+  statusFixtureReads++;
+  return {jsonrpc:'2.0',id:call.id,result:'0x'+statusFixture.toString(16).padStart(64,'0')+'0'.repeat(64)};
+}
+
+const WEEKEND_NOTICE="Deposits reopen when the stock feed prices update around 8pm on Sundays.", ISSUE_NOTICE="Deposits will be back open when “too few fresh prices” is resolved.";
+let weekendBlockReads=0;
+function fixtureBlock(call,answer) {
+  if(statusFixture!==3||call.method!=='eth_getBlockByNumber')return answer;
+  assert.ok(answer.result&&typeof answer.result.timestamp==='string','Weekend proof starts with an actual public block');
+  weekendBlockReads++;
+  return {...answer,result:{...answer.result,timestamp:'0x'+Math.floor(Date.parse('2026-10-10T12:00:00Z')/1000).toString(16)}};
+}
+const checks=[], visibility=[], bubbles=[], shelfCounts=[], wideLabels=[];
+let browser, baselinePage;
 try {
   for (const [engine, launcher] of [["Chromium",chromium],["WebKit",webkit]]) {
     browser=await launcher.launch({headless:true});
     const page=await browser.newPage({viewport:{width:1440,height:1000}});
+    let ledMotionProofs=0;statusFixture=0;
     await page.route(/https:\/\/(rpc\.mainnet\.chain\.robinhood\.com|robinhood-rpc\.publicnode\.com)\/?$/, async route=> {
-      try { const res=await fetch(route.request().url(), {method:"POST",headers:{"content-type":"application/json"},body:route.request().postData(),signal:AbortSignal.timeout(20000)}); await route.fulfill({body:await res.text(),contentType:"application/json"}); }
+      try { const call=route.request().postDataJSON(),fixed=fixtureStatus(call);if(fixed){await route.fulfill({body:JSON.stringify(fixed),contentType:'application/json'});return;} const res=await fetch(route.request().url(), {method:"POST",headers:{"content-type":"application/json"},body:route.request().postData(),signal:AbortSignal.timeout(20000)}); const body=await res.text(); await route.fulfill({body:statusFixture===3&&call.method==='eth_getBlockByNumber'?JSON.stringify(fixtureBlock(call,JSON.parse(body))):body,contentType:"application/json"}); }
       catch {await route.abort();}
     });
     const strips=[];
@@ -370,7 +491,7 @@ try {
     }
     checks.push(`${engine} slogan strip, width:lines per half/half px/cycle [${strips.join(' ')}]: eight lines in the markup of each half, the first k shown (k = the fewest 720 px lines covering the viewport), identical halves; v10 loop: the track stays put and the only moving blocks are the two halves (k lines each, at most the viewport plus one line), each its own endless linear Web Animation translateX(100%) to translateX(-100%) on one shared clock, no CSS animation, will-change or 3D in the strip and no endless CSS animation on the page; speed exactly 16 px/s (64 px/s at 660 px and below), two half widths per cycle; at ${STRIP_PHASES.length} loop phases (just before, at and just after each half's reset among them) the halves sit edge to edge across the window at their expected places, each jumping back only while wholly off screen, line boxes edge to edge and every line join and the seam with the normal word gap; so no animationiteration event can fire (that event comes only from CSS animations); reduced motion: no animation (cancelled), a still, full strip from the left edge; motion back when it is turned off`);
     await page.emulateMedia({reducedMotion:"reduce"});
-    for(const width of [1440,1000,999,960,800,720,661,660,375,360,359,320]) {
+    for(const width of [2560,1440,1000,999,960,800,720,661,660,375,360,359,320]) {
       await page.setViewportSize({width,height:width===375?812:1000});
       for(const name of ["vault","deposit","redeem","docs","owner","losses"]) {
         await page.goto(base+"/preview/#"+name);
@@ -481,6 +602,35 @@ try {
         } else {
           assert.equal(await page.locator('.page-title.has-character, .title-character, .character-picture, .speech-bubble').count(),0,`${engine} ${name} no character`);
         }
+        // v12 SPEC 1-4: assert exact requested text/structure on every route width.
+        if(name==='vault') {
+          assert.equal(await page.locator('.page-title > h1').textContent(), 'Always in stock');
+          assertCapacity(await page.evaluate(capacityGeometry));
+          assert.equal(await page.locator('.page-title > p').count(), 0, 'Vault has neither a title sentence nor an empty paragraph');
+        }
+        if(['vault','deposit'].includes(name)) {
+          await page.waitForFunction(()=>!document.querySelector('button.refresh')?.disabled);
+          assert.equal(await page.locator('.read-errors').count(),0,'Normal-state proof requires readable public vault data');
+          assert.equal(await page.locator('.deposit-state').count(),0,'Known normal operation has no status area');
+          assert.equal(await page.locator('.deposit-open').count(),0,'The old open-only Deposit line is absent');
+          if(name==='vault')assert.equal(await page.locator('.deposit-summary').evaluate(e=>e.getBoundingClientRect().height),0,'Empty Vault status wrapper takes no space');
+        }
+        assert.equal(await page.locator('.deposit-led-sign').count(),0,'Normal operation and other routes have no sign');
+        if(name==='deposit') {
+          const aside=page.locator('.flow-layout > aside.panel');
+          assert.equal(await aside.locator('details').count(),0);
+          assert.deepEqual((await aside.locator(':scope > p').allTextContents()).slice(2).map(t=>t.replace(/\s+/g,' ').trim()),V12_DEPOSIT);
+        }
+        if(name==='redeem') {
+          assert.equal(await page.locator('.flow-layout.one-column').count(),1);
+          assert.equal(await page.getByText('Take your basket home',{exact:true}).count(),0);
+          assert.equal(await page.locator('.claims').count(),0,'No-wallet Redeem has no claims panel');
+          assert.equal(await page.getByText('Connect the receiver wallet to read and claim its owed stocks.',{exact:true}).count(),1);
+        }
+        if(name==='docs') {
+          const first=page.locator('.docs-grid > .panel').filter({has:page.getByRole('heading',{name:'What Basket is',exact:true})});
+          assert.deepEqual((await first.locator(':scope > p').allTextContents()).map(t=>t.replace(/\s+/g,' ').trim()),V12_DOCS);
+        }
         if(name==='redeem') assert.equal(await page.getByText(/Unsent stocks are owed/).count(),0,`${engine} redeem receiver note`);
         // v10: the 24/7 redemption tag is the first thing in the Deposit and Redeem forms (shown open or closed): exact
         // words, at least 14 px, white on royal blue, inside its panel with whole words, clear of the title character
@@ -519,6 +669,136 @@ try {
       }
       checks.push(`${engine} ${width}: six routes without overflow; both shelf rows filled with ordered square images (the Stock shelves unit on Vault shows its first row only, by design); Stock shelves: one shelf-edge label per listed stock (${shelfCounts.at(-1)?.split(':')[1]}) with ticker, price, status and Details, inside the shelf unit, labels/filters/search at least 44 px, no old stock cards, still under reduced motion; title character inside the title panel with exact speech and picture height, head above the panel, bubble clear of the picture, tail clear of face/hands/items, whole bubble words, strip clear of the text, wallet hint gap; no old frames or WOW!, Fresh! kept; Docs FAQ; no Redeem receiver note; v10: the 24/7 redemption tag first in the Deposit and Redeem forms (exact words, at least 14 px, white on royal blue, inside its panel, whole words, clear of the character and her bubble), the Redeem title without it, the capitalised Docs deposits sentence, no price time on any Stock shelves label or in the drawer (reason 9 keeps only its "old price" tag); no tagline on the page, Vault title without eyebrow (text centred beside her, or 17 px under her on phones), other eyebrows kept, footer icon/name/links`);
     }
+    // Owner follow-up: known closure has exactly one short notice; CLOSED sign at every selected width.
+    statusFixture=14;
+    for(const width of [2560,1440,1000,999,960,800,720,661,660,375,360,359,320])for(const name of ['vault','deposit']) {
+      const beforeFixtureReads=statusFixtureReads;
+      await page.setViewportSize({width,height:width===375?812:1000});
+      await page.goto(base+'/preview/#'+name);await page.reload();
+      await page.waitForFunction(routeShown,name);
+      await page.evaluate(()=>document.fonts.ready);
+      await page.waitForFunction(()=>!document.querySelector('button.refresh')?.disabled);
+      assert.ok(statusFixtureReads>beforeFixtureReads,'Closed proof consumed the exact existing depositStatus fixture');
+      assert.equal(await page.locator('.read-errors').count(),0,'Closed proof requires readable public vault data');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Closed state has no horizontal overflow');
+      if(name==='vault')assertCapacity(await page.evaluate(capacityGeometry));
+      assert.equal(await page.locator('.deposit-state > p').first().textContent(),name==='deposit'?ISSUE_NOTICE:'Closed','Exact owner-approved issue notice');
+        if(['vault','deposit'].includes(name)) {
+          const status=await page.locator('.deposit-state').evaluateAll(es=>es.map(e=>{
+            const visible=n=>!!n&&n.getBoundingClientRect().height>0&&getComputedStyle(n).visibility!=='hidden';
+            return {compact:!!e.closest('.deposit-summary'),label:e.querySelector(':scope > strong')?.textContent,labelVisible:visible(e.querySelector(':scope > strong')),paragraphs:[...e.querySelectorAll(':scope > p')].map(p=>({text:p.textContent,visible:visible(p)}))};
+          }));
+          assert.equal(status.length,1,'Exactly one deposit status on '+name);
+          assert.equal(status[0].label,name==='vault'?'Vault status:':undefined,'Only Vault has the compact status label');
+          assert.equal(status[0].labelVisible,name==='vault');
+          assert.equal(status[0].paragraphs.length,1,'Exactly one status paragraph; old hours/reason detail is absent');
+          assert.equal(status[0].paragraphs[0].visible,true,'Current status is visible');
+          assert.equal(status[0].compact,name==='vault','Only Vault scopes the compact status');
+          assert.equal(await page.locator('.deposit-state .reopen, .deposit-state .why').count(),0,'No old detailed status paragraphs');
+          assert.equal(await page.locator('.deposit-open').count(),0,'The old open-only Deposit line is absent');
+        }
+        if(name==='deposit')await page.waitForFunction(()=>!document.querySelector('button.refresh')?.disabled);
+        const led=await page.evaluate(ledGeometry);
+        const unknown=!led.status||/^(Reading\.\.\.|unreadable)/.test(led.status)||led.reopening==='Deposits may be open now. Press Refresh vault.';
+        if(name!=='deposit'||unknown)assert.equal(led.signs.length,0,'LED is absent off Deposit and for unreadable/reopening status');
+        else if(!led.readIssues)assert.equal(led.signs.length,1,'Readable Deposit status has exactly one LED sign');
+        else assert.ok(led.signs.length<=1,'Partial reads never duplicate the sign');
+        if(led.signs.length) {
+          const sign=led.signs[0];
+          assert.equal(sign.label,'Closed','The only owner-approved LED state is Closed');
+          assert.equal(sign.role,'img');
+          assert.equal(sign.inline&&sign.onDeposit&&sign.inside,true,'LED is inline SVG contained in the Deposit status box');
+          assert.ok(sign.width>0&&sign.width<=220&&sign.height>0,'LED keeps its small approved dimensions');
+          assert.equal(sign.black,'#080b14');assert.equal(sign.blue,'rgb(41, 107, 204)');assert.equal(sign.red,true);
+          assert.equal(sign.circles,210,'LED keeps the complete CLOSED dot word');
+          assert.equal(sign.animations,0,'LED is still under reduced motion');
+          if([1440,375].includes(width)) {
+            await page.emulateMedia({reducedMotion:'no-preference'});
+            await page.waitForFunction(()=>document.querySelector('.deposit-led-sign').getAnimations({subtree:true}).length===2);
+            const moving=await page.evaluate(ledGeometry);
+            await page.waitForTimeout(120);
+            const moved=await page.evaluate(ledGeometry);
+            assert.equal(moved.signs[0].label,sign.label,'Animation never changes the status word');
+            assert.notEqual(moved.signs[0].offset,moving.signs[0].offset,'Approved border animation moves');
+            await page.emulateMedia({reducedMotion:'reduce'});
+            await page.waitForFunction(()=>document.querySelector('.deposit-led-sign').getAnimations({subtree:true}).length===0);
+            assert.equal((await page.evaluate(ledGeometry)).signs[0].animations,0,'Reduced motion cancels LED animations');
+            ledMotionProofs++;
+          }
+        }
+    }
+    statusFixture=3;
+    for(const width of [1440,375]) {
+      const beforeBlocks=weekendBlockReads,beforeStatus=statusFixtureReads;
+      await page.setViewportSize({width,height:width===375?812:1000});
+      await page.goto(base+'/preview/#deposit');await page.reload();
+      await page.waitForFunction(routeShown,'deposit');
+      await page.evaluate(()=>document.fonts.ready);
+      await page.waitForFunction(()=>!document.querySelector('button.refresh')?.disabled);
+      assert.ok(weekendBlockReads>beforeBlocks&&statusFixtureReads>beforeStatus,'Weekend proof consumes both exact status and public-block timestamp fixtures');
+      assert.equal(await page.locator('.read-errors').count(),0,'Weekend proof requires readable public vault data');
+      assert.deepEqual(await page.locator('.deposit-state > p').allTextContents(),[WEEKEND_NOTICE],'Weekend notice is exactly the one owner sentence');
+      assert.equal(await page.locator('.deposit-state > strong, .deposit-state .reopen, .deposit-state .why').count(),0,'Weekend has no extra label or detail');
+      const led=await page.evaluate(ledGeometry);
+      assert.equal(led.signs.length,1);assert.equal(led.signs[0].label,'Closed');
+      assert.equal(led.signs[0].inside,true);assert.equal(led.signs[0].animations,0);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Weekend notice has no horizontal overflow');
+    }
+    statusFixture=0;
+    assert.equal(ledMotionProofs,2,'Both desktop and phone prove LED movement and reduced-motion cancellation');
+    checks.push(engine+': normal status area absent; exact single issue paragraph, compact Vault Closed notice, Deposit-only CLOSED LED at all 13 selected widths; desktop/phone exact weekend sentence, motion and reduced-motion cancellation');
+    // v12 SPEC 6: portable wide-font stress. Measure a one-line clone, widen only
+    // the tag with letter spacing, and make its first sentence at least 240 px and
+    // wider than the available text area. No installed fallback font is assumed.
+    for(const name of ['deposit','redeem']) for(const width of [661,375,320]) {
+      await page.setViewportSize({width,height:1000});
+      await page.goto(base+'/preview/#'+name);
+      await page.waitForFunction(routeShown,name);
+      await page.evaluate(()=>document.fonts.ready);
+      await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+      const stress=await page.evaluate(()=>{
+        document.getElementById('wide-label-test')?.remove();
+        const tag=document.querySelector('.hours-tag'),strong=tag.querySelector('strong');
+        const style=document.createElement('style'); style.id='wide-label-test'; document.head.append(style);
+        const probe=strong.cloneNode(true);
+        probe.style.cssText='position:absolute;visibility:hidden;white-space:nowrap!important;width:max-content;max-width:none;';
+        tag.append(probe);
+        const tc=getComputedStyle(tag),box=tag.parentElement.getBoundingClientRect(),pc=getComputedStyle(tag.parentElement);
+        const room=box.width-parseFloat(pc.borderLeftWidth)-parseFloat(pc.borderRightWidth)-parseFloat(pc.paddingLeft)-parseFloat(pc.paddingRight)-parseFloat(tc.borderLeftWidth)-parseFloat(tc.borderRightWidth)-parseFloat(tc.paddingLeft)-parseFloat(tc.paddingRight);
+        const target=Math.max(240,room+16);
+        let spacing=0,oneLine=probe.getBoundingClientRect().width;
+        while(oneLine<target&&spacing<30) {spacing+=0.25;style.textContent='.hours-tag{letter-spacing:'+spacing+'px!important}';oneLine=probe.getBoundingClientRect().width;}
+        probe.remove(); return {spacing,oneLine,room,target};
+      });
+      const label=engine+' '+name+' '+width+' wide label';
+      assert.ok(stress.oneLine>=240&&stress.oneLine>stress.room,label+': stress sentence reached the measured width');
+      const current=await page.evaluate(wideLabelGeometry);
+      assertWideLabel(current,label);
+      assert.ok(current.strongLines>=2,label+': first sentence wraps at whole words');
+      // Put back the exact v11 defect on the same page and available width. The
+      // same geometry assertion must now reject it; then v12 must pass again.
+      const legacy=await page.addStyleTag({content:'.hours-tag strong{white-space:nowrap!important}'});
+      const old=await page.evaluate(wideLabelGeometry);
+      assert.throws(()=>assertWideLabel(old,label+' with v11 nowrap'),{name:'AssertionError'});
+      assert.ok(old.outside.length>0,label+': failure is an actual word outside the pill');
+      await legacy.evaluate(e=>e.remove());
+      assertWideLabel(await page.evaluate(wideLabelGeometry),label+' restored');
+      // Measurements are asserted above; retain bounded evidence, not duplicate
+      // full geometry, in the delivery's validation report.
+      wideLabels.push({engine,name,width,...stress,strongLines:current.strongLines,v11Outside:old.outside});
+      await page.locator('.hours-tag').screenshot({path:path.join(captures,engine+'-'+name+'-'+width+'-wide-label.png')});
+      await page.evaluate(()=>document.getElementById('wide-label-test').remove());
+      checks.push(label+': one-line width at least 240 px; wraps at word boundaries inside pill and panel, clear of character/bubble; identical check rejects v11 nowrap');
+    }
+    // v12 SPEC 1: compare the Vault height at every width with the live v11
+    // title. Its public data does not affect title sizing, so this second page
+    // loads only local files and never adds a public RPC read.
+    baselinePage=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+    await baselinePage.route('**/*',route=>route.request().url().startsWith(base+'/')?route.continue():route.abort());
+    await baselinePage.goto(base+'/baseline/#vault');
+    await baselinePage.waitForFunction(routeShown,'vault');
+    await baselinePage.evaluate(()=>document.fonts.ready);
+    await baselinePage.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
     // Every width from 320 to 2560 px: whole bubble words inside the bubble, the strip clear of the title text, the bubble in
     // its frame and off the picture's face/hands/item boxes, no overflow and a wallet hint gap of at least 8 px.
     for(const name of ["vault","deposit","redeem"]) {
@@ -532,12 +812,18 @@ try {
         await page.setViewportSize({width,height:1000});
         const g=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:width%40===0});
         assertGeometry(g,`${engine} ${name} ${width}`,width%40===0);
+        if(name==='vault') {
+          await baselinePage.setViewportSize({width,height:1000});
+          const previous=await baselinePage.locator('.page-title').evaluate(e=>e.getBoundingClientRect().height);
+          assert.ok(g.titleHeight<=previous+0.5,engine+' vault '+width+': title grew from '+previous+' to '+g.titleHeight);
+        }
         lines[g.bubbleLines]=(lines[g.bubbleLines]||0)+1;
       }
       checks.push(`${engine} ${name}: every width 320-2560 px keeps whole bubble words (bubble lines ${JSON.stringify(lines)}), the strip clear of the title text, the title text centred beside her (Vault heading 17 px under her on phones), the bubble in its frame and the wallet hint gap; picture pixels checked every 40 px`);
     }
+    await baselinePage.close();baselinePage=undefined;
     await browser.close();browser=undefined;
   }
-  fs.writeFileSync(path.join(root,'artifacts/art-validation.json'),JSON.stringify({hashes,checks,bubbles,limitations:['Linux browser engines; physical iPhone not tested. Rendered screenshots reviewed separately.']},null,2)+'\n');
+  fs.writeFileSync(path.join(root,'artifacts/art-validation.json'),JSON.stringify({hashes,checks,bubbles,wideLabels,limitations:['Linux browser engines; physical iPhone not tested. Rendered screenshots reviewed separately.']},null,2)+'\n');
   console.log('PASS art hashes and browser layout',hashes.length,checks.length);
 } finally {await browser?.close();await new Promise(r=>server.close(r));}

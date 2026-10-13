@@ -464,7 +464,9 @@ try {
   const consoleErrors = [],
     asked = [],
     revoked = [];
-  let lastSent;
+  let lastSent, lastMined, speedNext = false, repricing;
+  let holdConnect = false, releaseConnect, emptyAccounts = false;
+  const v12Checks = [];
   page.on("console", (m) => {
     if (m.type() === "error") consoleErrors.push(m.text());
   });
@@ -476,8 +478,10 @@ try {
     pendingNext = false;
   await page.exposeFunction("testWallet", async ({ method, params }) => {
     asked.push(method);
+    if (method === "eth_requestAccounts" && holdConnect)
+      return new Promise((resolve) => { releaseConnect = () => resolve([currentAccount]); });
     if (method === "eth_accounts" || method === "eth_requestAccounts")
-      return [currentAccount];
+      return emptyAccounts ? [] : [currentAccount];
     if (method === "eth_chainId") return currentChain;
     if (method === "wallet_switchEthereumChain") {
       currentChain = "0x1237";
@@ -501,7 +505,18 @@ try {
       const decoded = decodeFunctionData({ abi, data: t.data });
       assert.equal(await raw("eth_chainId"), "0x1237");
       sends.push({ to: t.to, ...decoded, gas: t.gas });
-      return (lastSent = await raw(method, params));
+      // v12: reprice one existing deposit in the mock, without adding a page send.
+      if (speedNext) {
+        speedNext = false;
+        await raw("evm_setAutomine", [false]);
+        const nonce = await raw("eth_getTransactionCount", [t.from, "pending"]);
+        const gasPrice = BigInt(await raw("eth_gasPrice")) * 2n;
+        const original = await raw(method, [{ ...t, nonce, gasPrice: toHex(gasPrice) }]);
+        repricing = { original, t, nonce, gasPrice, scheduled: false };
+        return (lastSent = original);
+      }
+      lastMined = lastSent = await raw(method, params);
+      return lastSent;
     }
     if (method === "wallet_revokePermissions") {
       // Disconnect is local to this page and must never make this request.
@@ -533,6 +548,8 @@ try {
       // v11: the count of answered wallet requests lets a step wait until the
       // page has had the wallet's answer. The page still gets the same result
       // or the same error, and an error it does not catch is still reported.
+      const listeners = new Map();
+      window.__accounts = (a) => listeners.get("accountsChanged")?.(a);
       window.ethereum = {
         request: async (a) => {
           try {
@@ -541,8 +558,8 @@ try {
             window.__walletAnswers = (window.__walletAnswers ?? 0) + 1;
           }
         },
-        on() {},
-        removeListener() {},
+        on(event, fn) { listeners.set(event, fn); },
+        removeListener(event, fn) { if (listeners.get(event) === fn) listeners.delete(event); },
       };
     },
     { now },
@@ -578,6 +595,19 @@ try {
             b.params?.[0]?.data?.slice(0, 10),
             response.error,
           );
+        // Wait until viem has asked for the original pending transaction, so it
+        // can identify the same-nonce replacement on the next mined block.
+        if (repricing && !repricing.scheduled && b.method === "eth_getTransactionByHash" && b.params[0] === repricing.original) {
+          repricing.scheduled = true;
+          setTimeout(async () => {
+            try {
+              const r = repricing;
+              lastMined = await raw("eth_sendTransaction", [{ ...r.t, nonce: r.nonce, gasPrice: toHex(r.gasPrice * 2n) }]);
+              await raw("evm_mine");
+              await raw("evm_setAutomine", [true]);
+            } catch (e) { issues.push("Speed up fixture: " + e.message); }
+          }, 500);
+        }
         return response;
       };
       const result = Array.isArray(body)
@@ -720,15 +750,24 @@ try {
         false,
       name,
     );
-  // The status at the top of the Deposit form: the one line while the vault
-  // takes deposits, otherwise the lines of the full box. Never both.
-  async function statusShown() {
+  // Latest owner decision: no normal notice; retain the full closure/issue box.
+  async function statusShown(shown = true) {
     const line = page.locator(".flow-layout .deposit-open"),
-      box = page.locator(".flow-layout .deposit-state");
-    assert.equal((await line.count()) + (await box.count()), 1);
-    return (await line.count())
-      ? [await line.innerText()]
-      : box.locator("strong, p").allInnerTexts();
+      box = page.locator(".flow-layout > section.panel > .deposit-state");
+    assert.equal(await line.count(), 0);
+    if (!shown) {
+      assert.equal(await box.count(), 0, "normal deposits show no status box");
+      assert.equal(await page.locator(".deposit-led-sign").count(), 0, "normal deposits show no sign");
+      return [];
+    }
+    await box.waitFor();
+    assert.equal(await box.count(), 1);
+    const words = await box.locator("strong, p").allInnerTexts();
+    const sign = box.locator(".deposit-led-sign");
+    assert.equal(await sign.count(), 1, "known deposit status has its approved sign");
+    assert.equal(await sign.getAttribute("role"), "img");
+    assert.equal(await sign.getAttribute("aria-label"), "Closed", "only a known closure displays the Closed sign");
+    return words;
   }
   // previewDeposit reads the page has made so far.
   const previewDeposit = encodeFunctionData({
@@ -792,14 +831,13 @@ try {
           `${state} ${name} overflow ${width}`,
         );
         const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
-        // Quality 32 (36 in v9 and v10, 40 before): the v11 Deposit form has a
-        // row for every stock in the wallet, so the two "stocks25" Deposit
-        // pictures are much taller. The quality-36 set is about 310 KB larger
-        // than this one and no longer fits the 8 MiB delivery budget.
+        // Quality 26 in v12 (32 in v11, 36 in v9/v10, 40 before): the 24
+        // readable full-page screenshots leave at least 250,000 bytes within
+        // the 8 MiB delivery budget, including the two share-picture copies.
         await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
-          quality: 32,
+          quality: 26,
           fullPage: true,
         });
         shots.push(file);
@@ -810,6 +848,70 @@ try {
   console.log("Taking empty screenshots");
   await screenshots("empty");
   console.log("Empty screenshots complete");
+  // v12 SPEC sections 1-5: exact visitor words and structure on real pages.
+  await nav("Vault");
+  await page.getByRole("heading", { name: "Always in stock", exact: true }).waitFor();
+  assert.equal(await page.locator("h1").textContent(), "Always in stock");
+  assert.equal(await page.locator(".page-title > p").count(), 0);
+  assert.equal(await page.locator(".page-title p:empty").count(), 0);
+  const capacityLabel = page.locator(".stats > div").nth(3).locator("span");
+  assert.equal(await capacityLabel.evaluate(element => [...element.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join("")), "Maximum Basket Capacity");
+  assert.equal(await capacityLabel.locator("small").innerText(), "(eligible to be raised)");
+  assert.ok(await capacityLabel.locator("small").evaluate(element => getComputedStyle(element).display === "block" && parseFloat(getComputedStyle(element).fontSize) < parseFloat(getComputedStyle(element.parentElement).fontSize)), "capacity qualification is a smaller separate line");
+  const compactStatus = page.locator(".deposit-summary > .deposit-state");
+  await compactStatus.waitFor();
+  assert.equal(await compactStatus.count(), 1);
+  assert.equal(await page.locator(".deposit-led-sign").count(), 0, "approved sign belongs only on Deposit");
+  assert.equal(await compactStatus.locator(":scope > strong").innerText(), "Vault status:");
+  const compactParagraphs = await compactStatus.locator(":scope > p").evaluateAll(elements => elements.map(element => ({text:element.textContent,visible:element.getClientRects().length > 0})));
+  assert.equal(compactParagraphs.length, 1, "compact Vault has one plain closure paragraph");
+  assert.deepEqual(compactParagraphs[0], {text:"Closed",visible:true}, "compact Vault uses the approved plain Closed notice");
+  assert.ok(compactParagraphs.slice(1).every(paragraph => !paragraph.visible), "only the first status paragraph is visible on Vault");
+  if (await compactStatus.locator(":scope > button").count()) assert.ok(await compactStatus.locator(":scope > button").isVisible(), "Retry vault remains visible");
+  v12Checks.push("Vault: Always in stock, no sentence or empty paragraph; compact deposit status shows existing label and status only");
+  await nav("Docs");
+  await page.getByRole("heading", { name: "Docs", exact: true }).waitFor();
+  assert.deepEqual(await page.locator(".docs-grid > section").first().locator("p").allTextContents().then(xs => xs.map(x => x.replace(/\s+/g, " ").trim())), ["One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.","The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.","BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.","The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.","ITEM is not live yet. Its address will be listed here when it is."]);
+  v12Checks.push("Docs: original paragraph and four approved paragraphs, word for word");
+  await nav("Deposit");
+  await page.getByRole("heading", { name: "Deposit Stock Tokens", exact: true }).waitFor();
+  const beforeDeposit = page.locator("aside.panel");
+  assert.equal(await beforeDeposit.locator("details").count(), 0);
+  assert.equal(await beforeDeposit.getByText(/^Size limit: /).count(), 1, "Deposit aside retains Size limit");
+  for (const text of ["You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.", "A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet."])
+    assert.equal(await beforeDeposit.getByText(text, {exact:true}).count(), 1);
+  const fullDepositStatus = page.locator(".flow-layout > section.panel > .deposit-state");
+  await fullDepositStatus.waitFor();
+  assert.equal(await fullDepositStatus.count(), 1);
+  await fullDepositStatus.getByRole("img", {name:"Closed",exact:true}).waitFor();
+  assert.equal(await fullDepositStatus.locator(".deposit-led-sign").count(), 1, "unfinalized initial fixture shows Closed");
+  assert.equal(await page.locator(".flow-layout .deposit-open").count(), 0);
+  assert.equal(await page.locator(".deposit-summary").count(), 0);
+  assert.equal(await page.locator(".wallet-line").count(), 0, "owner removed the Deposit wallet instruction line");
+  assert.equal(await fullDepositStatus.locator(":scope > strong").count(), 0, "Deposit notice has only its Closed sign and sentence");
+  assert.ok(await fullDepositStatus.evaluate(element => element.previousElementSibling?.classList.contains("hours-tag") && element.parentElement.firstElementChild === element.previousElementSibling), "full deposit status follows the unchanged first-child 24/7 pill");
+  assert.deepEqual(await fullDepositStatus.locator(":scope > p").allInnerTexts(), ["Deposits will be back open when “genesis not finished” is resolved."], "initial setup has exactly one approved issue sentence");
+  v12Checks.push("Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill");
+  await nav("Redeem");
+  await page.getByRole("heading", { name: "Redeem BASK", exact: true }).waitFor();
+  assert.equal(await page.locator(".flow-layout.one-column").count(), 1);
+  assert.equal(await page.getByRole("heading", {name:"Take your basket home",exact:true}).count(), 0);
+  assert.equal(await page.locator(".wallet-line").count(), 0, "owner removed the Redeem wallet instruction line");
+  v12Checks.push("Redeem: one column, removed aside and no wallet instruction line");
+  await page.getByText("Nothing is owed to this wallet.", {exact:true}).waitFor();
+  assert.equal(await page.locator("section.claims").count(), 0);
+  v12Checks.push("Claims: connected empty wallet shows quiet line without panel");
+  const shell = await (await page.request.get(url)).text();
+  assert.deepEqual(await page.evaluate(html => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return ["og:title", "og:description", "og:image", "twitter:card"].map(key =>
+      doc.querySelector('meta[property="'+key+'"],meta[name="'+key+'"]')?.getAttribute("content"));
+  }, shell), ["Basket Protocol", "Basket Protocol. View the BASK vault, deposit Stock Tokens, redeem and manage claims.", "https://basket-protocol.sites.imd.fun/share-card.jpg", "summary_large_image"]);
+  const jpeg = Buffer.from(await (await page.request.get(url+"share-card.jpg")).body());
+  assert.equal(jpeg.readUInt16BE(0), 0xffd8);
+  assert.ok(jpeg.length <= 45000);
+  assert.deepEqual(await page.evaluate(async (src) => {const i=new Image(); i.src=src; await i.decode(); return [i.naturalWidth,i.naturalHeight];}, url+"share-card.jpg"),[1200,630]);
+  v12Checks.push("Link preview: served approved share tags and 1200x630 JPEG");
   await nav("Owner");
   const indices = stocks.map((_, i) => i).filter((i) => i !== 3);
   const lines = indices
@@ -982,19 +1084,15 @@ try {
   const hoursTag = "Redemptions are open 24/7. Deposit hours apply to deposits only.";
   await nav("Deposit");
   await refresh();
-  await page.getByText(/^Deposits are closed until stock prices update \(at least 1 must have updated in the last 1 hour\(s\), e\.g\. a US market holiday\); no set time\. Redemptions are always open\.$/).waitFor();
+  await page.getByText("Deposits will be back open when “too few fresh prices” is resolved.", {exact:true}).waitFor();
   await page.getByText(hoursTag, { exact: true }).waitFor();
   assert.equal(await page.getByText(/Deposits reopen /).count(), 0, "no reopen time on a holiday");
-  // v11: closed, so the status is the full box: title, reason, when it
-  // reopens, hours.
+  // Latest owner wording: Closed sign and one short issue sentence.
   const closedBox = await statusShown();
-  assert.deepEqual(closedBox.slice(0, 2), [
-    "Vault deposit status",
-    "too few fresh prices",
-  ]);
-  assert.match(closedBox[2], /^Deposits are closed until stock prices update /);
-  assert.match(closedBox[3], /^Hours: \S/);
-  assert.equal(closedBox.length, 4);
+  assert.deepEqual(closedBox, ["Deposits will be back open when “too few fresh prices” is resolved."]);
+  assert.equal(await page.locator(".flow-layout .deposit-state > strong").count(), 0);
+  assert.equal(await page.locator(".flow-layout .deposit-state").getByText(/^Hours:/).count(), 0);
+  assert.equal(closedBox.length, 1);
   // v11: the wallet's stocks are rows from the start, in the vault's order
   // while their values are equal (v10 had to press "Add FIG" here).
   await page.getByLabel("FIG amount", { exact: true }).waitFor();
@@ -1074,15 +1172,13 @@ try {
   assert.equal(Number((await rv("depositStatus", [[]]))[0]), 0);
   await refresh();
   checks.push("One updated feed reopens deposits after the holiday");
-  // v11: open, so the status is one line, with the same hours. After this read
-  // S22 is a row (the wallet holds it now) and a removed row stays removed.
-  assert.deepEqual(await statusShown(), [
-    "Deposits are open. " + closedBox[3],
-  ]);
+  // The latest owner decision removes the normal status notice. S22 is a row
+  // now, and a removed row stays removed.
+  assert.deepEqual(await statusShown(false), []);
   await page.getByLabel("S22 amount", { exact: true }).waitFor();
   assert.equal(await page.getByLabel("S10 amount", { exact: true }).count(), 0);
   checks.push(
-    "Deposit status: one line while deposits are open, the full Vault deposit status box while closed",
+    "Deposit status: no normal notice; Closed sign and one approved closure sentence",
   );
   // v11: the list under the search, closed until pressed, holds every stock
   // the vault takes now. A stock that has a row is switched off; S10 to S16
@@ -1197,9 +1293,7 @@ try {
   const greyed = await look("S03");
   assert.ok(greyed[0] !== plain[0] && greyed[1] !== plain[1], "muted look");
   assert.deepEqual(await look("S02"), plain);
-  assert.deepEqual(await statusShown(), [
-    "Deposits are open. " + closedBox[3],
-  ]);
+  assert.deepEqual(await statusShown(false), []);
   // Undo it on the chain; the row's own Refresh reads the vault again.
   await tx(feeds[grey], compiled.TestFeed.abi, "setLag", [lagBefore]);
   assert.equal(await pc.readContract(feedLag), lagBefore);
@@ -1350,6 +1444,7 @@ try {
       { exact: true },
     )
     .waitFor({ timeout: 30000 });
+  speedNext = true;
   await sendClick(
     page.getByRole("button", { name: "Deposit", exact: true }),
     "deposit",
@@ -1396,7 +1491,7 @@ try {
   );
   // v11: "You received" is the shares of the Deposit event in the receipt of
   // that same transaction, read and decoded here.
-  const minted = (await pc.getTransactionReceipt({ hash: lastSent })).logs
+  const minted = (await pc.getTransactionReceipt({ hash: lastMined })).logs
     .filter((l) => l.address.toLowerCase() === VAULT)
     .map((l) => {
       try {
@@ -1420,6 +1515,19 @@ try {
   checks.push(
     `"You received ${fmt(minted.args.shares)} BASK." equals the shares of the Deposit event in the deposit's receipt`,
   );
+  assert.ok(repricing?.scheduled && lastSent !== lastMined);
+  await page.getByText("Deposit: Confirmed.", { exact:true }).waitFor();
+  assert.ok((await page.locator(".wallet-status a").getAttribute("href")).endsWith(lastMined));
+  const links = await page.locator("main a[href*='/tx/']").evaluateAll(es=>es.map(e=>e.getAttribute("href")));
+  assert.ok(links.some(x=>x.endsWith(lastMined)));
+  assert.ok(links.every(x=>!x.endsWith(lastSent)));
+  const replacedTx = await pc.getTransaction({hash:lastMined});
+  assert.equal(replacedTx.to.toLowerCase(), repricing.t.to.toLowerCase());
+  assert.equal(replacedTx.input, repricing.t.data);
+  assert.equal(replacedTx.nonce, Number(BigInt(repricing.nonce)));
+  assert.ok(replacedTx.gasPrice > repricing.gasPrice);
+  assert.equal(await raw("eth_getTransactionReceipt", [lastSent]), null);
+  v12Checks.push("Speed up: existing deposit repriced with same nonce/to/data; Confirmed, received event amount, status and top links use mined hash");
   // v11 Disconnect: the page forgets the wallet and stays so across a reload,
   // until Connect wallet. It makes no wallet request or send, so no delayed
   // revocation from this page can undo a later connection.
@@ -1498,14 +1606,11 @@ try {
   await page.reload();
   await nav("Deposit");
   await refresh();
-  await page.getByText(/^Deposits reopen Sunday 8:00 pm New York time \(Sunday, .* in \d+ h \d+ min; your time .*\)\. On a US market holiday they reopen when prices update\. Redemptions are always open\.$/).waitFor();
+  await page.getByText("Deposits reopen when the stock feed prices update around 8pm on Sundays.", {exact:true}).waitFor();
   await page.getByText(hoursTag, { exact: true }).waitFor();
   // v11: closed, so the full status box again. The wallet is still connected
   // after this reload and FIG has its row (v10 pressed "Add FIG" here).
-  assert.deepEqual((await statusShown()).slice(0, 2), [
-    "Vault deposit status",
-    "outside deposit hours",
-  ]);
+  assert.deepEqual(await statusShown(), ["Deposits reopen when the stock feed prices update around 8pm on Sundays."]);
   assert.equal(await address.innerText(), short);
   await page.getByLabel("FIG amount", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Preview deposit", exact: true }).click();
@@ -1544,6 +1649,12 @@ try {
   checks.push("Redeem: the BASK amount box is empty after a confirmed redeem");
   assert.ok(sends.at(-1).gas);
   assert.ok((await rv("owed", [owner, stocks[0]])) > 0n);
+  // v12 SPEC 4: Claims finishes its own owed read after the wallet's vault refresh.
+  // Wait for the newly owed stock before asserting the finished presentation.
+  await page.getByRole("button", { name: "Claim FIG", exact: true }).waitFor();
+  assert.equal(await page.locator("section.claims").count(),1);
+  assert.equal(await page.locator("section.claims details").count(),0);
+  assert.equal(await page.getByText(/^Claim all collects up to 10/).count(),0);
   await tx(stocks[0], compiled.TestStock.abi, "setFail", [false]);
   await refresh();
   await sendClick(
@@ -1566,6 +1677,8 @@ try {
     await page.getByLabel("BASK amount", { exact: true }).inputValue(),
     "",
   );
+  await page.getByText("Claim all collects up to 10 stocks per wallet prompt. If one stock can’t be paid, that batch stays owed: collect the others with their own Claim buttons.", {exact:true}).waitFor();
+  assert.equal(await page.locator("section.claims details").count(),0);
   for (const t of stocks.slice(0, 2))
     await tx(t, compiled.TestStock.abi, "setFail", [false]);
   await refresh();
@@ -1575,6 +1688,16 @@ try {
   );
   assert.equal(sends.at(-1).args[0].length, 2);
   checks.push("Saturday redeem, single claim and Claim all succeed outside deposit hours");
+  await page.locator("section.claims").getByText("Nothing is owed to your connected wallet.", { exact: true }).waitFor();
+  assert.equal(await page.locator("section.claims .claim-grid > .receipt").count(), 0);
+  await page.waitForFunction(()=>document.querySelector("section.claims")?.textContent.includes("Confirmed."));
+  assert.deepEqual(await Promise.all(stocks.slice(0,2).map(t=>rv("owed",[owner,t]))),[0n,0n]);
+  await page.locator('nav a[href="#docs"]').click();
+  await page.locator('nav a[href="#redeem"]').click();
+  await page.locator("section.claims").getByText("Nothing is owed to your connected wallet.", { exact: true }).waitFor();
+  assert.equal(await page.locator("section.claims .claim-grid > .receipt").count(), 0);
+  await page.waitForFunction(()=>document.querySelector("section.claims")?.textContent.includes("Confirmed."));
+  v12Checks.push("Claims: one/two owed show panel with exact conditional note and no zero fold; last claim confirmation survives navigation");
   // Immediate controls and each proposal form.
   await nav("Owner");
   const closeForm = action("Close a stock");
@@ -1818,19 +1941,16 @@ try {
     page.getByRole("button", { name: "Unpause deposits", exact: true }),
     "unpauseDeposits",
   );
-  // A Saturday under the new hours (deposits unpaused) shows the Monday 9:30 am reopening (UTC-5).
+  // Changed Hours/Dst still govern the chain; the notice uses the approved short issue sentence.
   await warpTo(await saturday());
   assert.equal(Number((await rv("depositStatus", [[]]))[0]), 3);
   await page.reload();
   await nav("Deposit");
   await refresh();
-  await page.getByText(/^Deposits reopen Monday 9:30 am UTC-5 \(Monday, /).waitFor();
+  await page.getByText("Deposits will be back open when “outside deposit hours” is resolved.", {exact:true}).waitFor();
   // v11: closed, so the full status box.
-  assert.deepEqual((await statusShown()).slice(0, 2), [
-    "Vault deposit status",
-    "outside deposit hours",
-  ]);
-  checks.push("Saturday after the Hours change shows Deposits reopen Monday 9:30 am");
+  assert.deepEqual(await statusShown(), ["Deposits will be back open when “outside deposit hours” is resolved."]);
+  checks.push("Saturday after the Hours change shows the approved short outside-hours closure notice");
   await nav("Owner");
   // Cancel owner and guardian proposal boundaries, without changing the deployed roles.
   await form("Recentre", { "Stock Token": stocks[0] }, "Propose Recentre");
@@ -1904,6 +2024,54 @@ try {
     ],
   );
   assert.equal(revoked.length, 0);
+  // v12: late account answer may not undo a later Disconnect, even when an
+  // accountsChanged event arrived first. No transaction is sent by this case.
+  emptyAccounts = true;
+  await page.evaluate(()=>localStorage.removeItem("basket-disconnected-4663"));
+  await page.reload();
+  await page.waitForFunction(()=>window.__walletAnswers>=2);
+  await page.locator('nav a[href="#redeem"]').click();
+  await page.getByText("Connect the receiver wallet to read and claim its owed stocks.",{exact:true}).waitFor();
+  assert.equal(await page.locator("section.claims").count(),0);
+  emptyAccounts = false;
+  holdConnect = true;
+  await page.getByRole("button",{name:"Connect wallet",exact:true}).click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("button")].some(b=>b.textContent.includes("Connecting")));
+  await page.evaluate(a=>window.__accounts([a]),currentAccount);
+  await page.getByRole("button",{name:"Disconnect",exact:true}).click();
+  const requestsAfterDisconnect=asked.length;
+  assert.equal(typeof releaseConnect,"function");
+  releaseConnect(); holdConnect=false;
+  await page.getByRole("button",{name:"Connect wallet",exact:true}).waitFor();
+  await page.waitForFunction(()=>![...document.querySelectorAll("button")].find(b=>b.textContent==="Connect wallet")?.disabled);
+  assert.equal(await page.locator(".connected-address").count(),0);
+  assert.equal(await page.evaluate(()=>localStorage.getItem("basket-disconnected-4663")),"1");
+  assert.equal(asked.length,requestsAfterDisconnect);
+  assert.match(await page.locator(".wallet-status").innerText(),/^Wallet disconnected from this page/);
+  await walletAnswers(2,()=>page.getByRole("button",{name:"Connect wallet",exact:true}).click());
+  await page.locator(".connected-address").waitFor();
+  assert.equal(await page.evaluate(()=>localStorage.getItem("basket-disconnected-4663")),null);
+  v12Checks.push("Late Connect: early account event, Disconnect, held reply dropped without request; normal Connect then succeeds; no-wallet quiet claims line");
+  // v12 portable wide-font stress: force the complete bold line wider than
+  // its available space, then require whole words inside the pill and panel.
+  for(const name of ["Deposit","Redeem"]) {
+    await nav(name); await page.setViewportSize({width:661,height:1000});
+    const facts=await page.evaluate(()=>{
+      const tag=document.querySelector(".hours-tag"),strong=tag.querySelector("strong"),panel=tag.closest("section.panel");
+      const probe=strong.cloneNode(true);probe.style.cssText="position:fixed;white-space:nowrap;width:max-content;visibility:hidden";tag.append(probe);
+      let spacing=0;while(probe.getBoundingClientRect().width<Math.max(240,tag.getBoundingClientRect().width+30)&&spacing<20){spacing+=0.25;tag.style.letterSpacing=spacing+"px";}
+      const natural=probe.getBoundingClientRect().width;probe.remove();
+      const r=tag.getBoundingClientRect(),p=panel.getBoundingClientRect(),tops=new Set(),bad=[];
+      for(const m of strong.firstChild.textContent.matchAll(/\S+/g)){const range=document.createRange();range.setStart(strong.firstChild,m.index);range.setEnd(strong.firstChild,m.index+m[0].length);const rects=[...range.getClientRects()].filter(x=>x.width);rects.forEach(x=>tops.add(x.top));if(new Set(rects.map(x=>x.top)).size!==1||rects.some(x=>x.left<r.left||x.right>r.right||x.top<r.top||x.bottom>r.bottom))bad.push(m[0]);}
+      return {natural,lines:tops.size,bad,inside:r.left>=p.left&&r.right<=p.right,overflow:document.documentElement.scrollWidth>innerWidth};
+    });
+    assert.ok(facts.natural>=240&&facts.lines>1&&facts.inside&&!facts.overflow,JSON.stringify(facts));assert.deepEqual(facts.bad,[]);
+  }
+  v12Checks.push("24/7 label: widened text wraps at whole words inside pill and panel at 661px on Deposit and Redeem");
+  checks.push(...v12Checks);
+  assert.deepEqual([...new Set(asked)].sort(),["eth_accounts","eth_chainId","eth_requestAccounts","eth_sendTransaction"]);
+  assert.equal(revoked.length,0);
+  assert.deepEqual(issues,[]);
   fs.writeFileSync(
     path.join(artifacts, "browser-fork.json"),
     JSON.stringify(
