@@ -1,21 +1,32 @@
-2026-10-14 (Asia/Taipei) — v13 production build verification
-Base commit: 586998cf5eb2a6ccce05615ddf7f44874813042c
-Node v24.21.0; npm 11.19.0; locked Vite 7.1.9 and TypeScript 5.9.3.
+2026-10-13 (UTC) — v14 production build verification (Docs tabs, ITEM/Tokenomics/BASK, desktop Deposit columns)
+Base commit: 2b7d55b (imd dded6848-bcfa-4c7c-a23d-21d6b5f29cc8)
+Node v22.23.3; npm 10.9.9; locked Vite 7.1.9 and TypeScript 5.9.3; Anvil 1.8.3; solc 0.8.26.
+
+Patch: https://gateway.pinata.cloud/ipfs/bafkreiaice3ri4pdev6ymhqjeplnugtimckifg4jjyabiyjzinm6ags7gu
+  195568 bytes, SHA-256 0811371471e3257d861e0923d6da1a686094829b894e001461394359e01a5f35 (both as specified).
+  git apply --check on 2b7d55b — exit 0; git apply — exit 0; 21 files, 1484 insertions, 187 deletions, as listed.
+  No patched file was edited afterwards.
 
 Commands run from web/:
-npm ci --cache /tmp/basket-v13-npm-cache — exit 0; 39 packages installed.
+npm ci — exit 0 (lockfile unchanged; 32 top-level packages).
 npm run typecheck — exit 0.
-npm run build — exit 0; tsc --noEmit and Vite build; 1100 modules transformed.
-Vite build completed in 6.78 seconds. Existing >500 kB chunk advisory only.
-The first premature typecheck attempt ran before npm ci finished and could not find tsc; the completed install resolved it without changing dependencies.
-npm ci reported 1 moderate and 2 high dependency advisories; locked dependencies were preserved.
+npm run build — exit 0; tsc --noEmit and Vite build; built in 3.45 s. Existing >500 kB chunk advisory only.
 
-Produced files (all five requested SHA-256 values match):
-14991f60318eacd64a0070b0e1cb29b591ce744ecbbb3cce6a44101b7ee8a973  dist/assets/index-CFIsCDgK.js  (575499 bytes)
-de331fa183d2be573ade7f790289f8acfc79ee4a2322f3877520f9b4f349d281  dist/assets/index-93wOgsf7.css  (41337 bytes)
-0ed8570a07accffdac034dec8c85a73f16b158e1e2576cad29024e7197482e19  dist/assets/ccip-DK1SzuxE.js  (2610 bytes)
-416333c1c6fc7f8918e84e783bd95b82a0df99ebf868c25335cd4eea404e3a56  dist/index.html  (1330 bytes)
-dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85  dist/share-card.jpg  (44831 bytes)
+Produced files:
+90cc85c37c1eb0985da14ef1223c4bdb6dd6415e0f3cd7d3eed7b3a2ac9280c1  dist/assets/index-Umm6XolT.js  (604230 bytes)
+77f5e778fea7f585123a742b1eb4f06e7f89e9e07c62aa555637f4a4de619218  dist/assets/index-Dreu644d.css  (48240 bytes)
+283f8f98859d87c0aa4418dc2d8a116f3865ee23a1521b323c99a1a2408207ce  dist/assets/ccip-ICDF8oEy.js  (2610 bytes)
+f356259d028b318947983a3842ac603552bb2707b2e7f0cf79f64c916d14aaf5  dist/index.html  (1330 bytes)
+dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85  dist/share-card.jpg  (44831 bytes, unchanged)
 
-Export uses relative script, stylesheet, favicon, font and art URLs.
+Deviation from the task's expected hashes: the task expected index-Ci2_uPd-.js, index-C-PJiW18.css,
+ccip-DNB2G4hs.js and index.html 2ee5b100…. This machine produced the four files above instead; share-card.jpg
+matches. The build is deterministic here: the untouched 2b7d55b sources rebuilt with the same node_modules
+reproduce the committed 2b7d55b dist byte for byte (index-CFIsCDgK.js 14991f60…, index-93wOgsf7.css de331fa1…,
+ccip-DK1SzuxE.js 0ed8570a…). dist/index.html differs from 2b7d55b only in the three hashed asset names.
+The patched sources are byte-identical to the patch (git apply applied cleanly, check-calldata's reviewed
+digests and check-bundle's source scope passed), so the difference is in the build environment that produced
+the expected values, not in the applied sources.
+
+Export uses relative script, stylesheet, favicon, font and art URLs; complete export 1,004,821 bytes.
 No contract, build configuration, package manifest or lockfile changed.

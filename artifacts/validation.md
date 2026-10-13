@@ -1,3 +1,71 @@
+# 2026-10-13 — v14 exact patch, vault 6 (Docs tabs, ITEM, Tokenomics, BASK, desktop Deposit columns)
+
+This entry records the current run (commands ran on 2026-10-13 UTC on a Claude seat). Older entries below are historical. The requested patch, the rebuilt export and every regenerated artifact are prepared for the submission system. Git metadata was not modified. No contract or protected dependency/build file changed; no live transaction or publication occurred.
+
+## Patch and build integrity
+
+Applied to clean `2b7d55b`. The specified Pinata download was exactly **195,568 bytes**, SHA-256 **`0811371471e3257d861e0923d6da1a686094829b894e001461394359e01a5f35`**. `git apply --check` and `git apply` passed on 2b7d55b: 21 files, 1,484 insertions, 187 deletions, the seventeen listed paths changed and the four `web/src` modules plus six `web/scripts` files created. No patched file was edited afterwards; no wording, style, assertion or pin was changed to make a check pass.
+
+`npm ci`, `npm run typecheck` and `npm run build` passed from `web/` (Node 22.23.3, npm 10.9.9, locked Vite 7.1.9 and TypeScript 5.9.3). `build-validation.txt` records the actual outcomes. **The produced hashes differ from the ones the task expected**:
+
+| Production file | SHA-256 here | Expected by the task |
+| --- | --- | --- |
+| `dist/assets/index-Umm6XolT.js` (604,230 bytes) | `90cc85c37c1eb0985da14ef1223c4bdb6dd6415e0f3cd7d3eed7b3a2ac9280c1` | `index-Ci2_uPd-.js` `d2ff471d…` |
+| `dist/assets/index-Dreu644d.css` (48,240 bytes) | `77f5e778fea7f585123a742b1eb4f06e7f89e9e07c62aa555637f4a4de619218` | `index-C-PJiW18.css` `cd80da1b…` |
+| `dist/assets/ccip-ICDF8oEy.js` (2,610 bytes) | `283f8f98859d87c0aa4418dc2d8a116f3865ee23a1521b323c99a1a2408207ce` | `ccip-DNB2G4hs.js` `3385feaf…` |
+| `dist/index.html` (1,330 bytes) | `f356259d028b318947983a3842ac603552bb2707b2e7f0cf79f64c916d14aaf5` | `2ee5b100…` |
+| `dist/share-card.jpg` (44,831 bytes) | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` | matches |
+
+How it differs: the untouched 2b7d55b sources, rebuilt here with the same `node_modules`, reproduce the committed 2b7d55b export byte for byte (`index-CFIsCDgK.js`, `index-93wOgsf7.css`, `ccip-DK1SzuxE.js`), so this machine's build is deterministic and matches the previous accepted build environment. `dist/index.html` differs from 2b7d55b only in the three hashed asset names. The applied sources are byte-identical to the patch, and check-calldata's reviewed digests for the four new modules and check-bundle's source scope passed, so the expected values came from a different build of the same sources (not from a source difference). The committed export is the one built here from the patched sources. The export is **1,004,821 bytes**, with relative script, stylesheet, favicon, font and art URLs and hash navigation. Title, description, favicon, og:title and og:image are present.
+
+## Actual verification
+
+The patched `scripts/run-browser.mjs` ran first, unchanged, with the `tsx` loader (`node --import tsx`), Anvil 1.8.3, solc 0.8.26 and external Playwright 1.64 (Chromium 154.0.8037.0). It **passed 91 checks, 70 wallet sends and 24 screenshots** at fork block **83874298**, zero recorded issues, 3,804 fork RPC calls, zero Docs storage writes, and the Tokenomics statistics block made no request (15 RPC and 2 wallet requests before and after the tab). The run began inside the vault's deposit hours, so no extra time-warp check was added. The 24 JPEGs were captured in their original names and order at the patch's quality 18. `browser-fork.json` and `rpc-debug.json` (empty, written by the runner) are this run's results.
+
+Archive access: the runner's upstream, `https://robinhood.api.pocket.network`, is load-balanced and answered the pinned block on about half of its nodes (`historical state … is not available`, `missing trie node`, `metadata is not found`); the two public RPCs in `network.json` refuse archive reads outright. The first attempts failed at genesis. The successful run set the runner's documented `BASKET_RPC` to a disposable local relay (`test/scratch/relay.mjs`, not delivered) that forwards every request to the same Pocket endpoint and retries those answers; the runner's own read-only proxy, block, hash and assertions were untouched. The relay served 2,930 requests with 2,712 retries.
+
+A pristine 2b7d55b `dist` was extracted before rebuilding and supplied as `BASKET_BASELINE_DIST` to check-visibility and check-art. Required commands below ran from `web/`.
+
+| Command | Actual result |
+| --- | --- |
+| `node --import tsx scripts/check-tokenomics.tsx` | PASS: brief parsing, supply, schedule, cliff, four annual rows, every-null guard, absent live block, configured multicall, rejected read, formatting |
+| `node scripts/check-tokenomics-live.mjs` | PASS: five null mounts, absent/zero reads, mocked success and explorer rows, failure-only notice, Retry, zero external requests |
+| `node --import tsx scripts/check-bask-guide.tsx` | PASS: audited integer rounding, locked supply, mint/redeem/fee arithmetic, flywheel figures, five examples, exact canonical copy from the shipped `bask-guide-content.md` |
+| `npm run validate` | PASS: live verifyNetwork, canonical ABI, live code hash, snapshot, status and all 11 proposal kinds; block 87798566 |
+| `node scripts/check-preservation.mjs` | PASS: protected source/configuration, send checks, ABI invariants, wording, obsolete integration scan (no vault 1–5 address fragment); 7,683,724 bytes excluding lib and Git metadata. Ran in a clean clone overlaid with the staged tree because the seat's sandbox mounts unreadable device nodes (`.bash_profile` etc.) at the workspace root that the walker cannot open; those nodes are not files of the tree |
+| `node --import tsx scripts/check-interface.ts` | PASS: arithmetic, parser, exact balances and setting units |
+| `node scripts/check-calldata.mjs` | PASS against 2b7d55b: every source outside Docs/Flows byte-identical, both restored through their pieces, four modules pinned by digest and sink-scanned, send/connect/disconnect/approveAll/onSubmit/getSpec/Claim all/owed read equal; 496 identical encodings and 1,773 mutually refused cases, no new refusal |
+| `node scripts/check-art.mjs` | PASS in Chromium 154 and WebKit 26.6 against the 2b7d55b baseline: 74 manifest copies, 48 layout groups, titles, strip and shelves across the widths, the pinned desktop and ITEM words; completed in 4 min 40 s (see the font-metrics note below) |
+| `node scripts/check-motion.mjs` | PASS: 39 motion/layout checks at DPR 1 / 1.25 / 1.5 and reduced motion |
+| `node scripts/inspect-export.mjs` | PASS: 24 page/viewport checks, zero issues, seven passing contrast pairs |
+| `node scripts/check-guards.mjs` | PASS: four send guards; zero sends |
+| `node scripts/check-fixes.mjs` | PASS: 34 site-fix regressions |
+| `node scripts/check-visibility.mjs` | PASS at 375x812 against 2b7d55b: six pages, no-wallet and connected, 67 prior first-screen elements preserved; only the approved Docs tab row and copy edits displace content; header, strip and character retained |
+| `node scripts/check-bundle.mjs` | PASS: complete bundle 7,893,994 / 8,388,608 bytes before this entry (lib included); re-run after documentation, see Completion |
+
+Chromium font metrics: Playwright 1.64's Chromium 154 headless shell lays the 24px Pixel slogan line out at whole-pixel advances (750 px per line instead of 720), identically on the untouched 2b7d55b export and on this one, with both web fonts reported loaded; so check-art's and check-motion's first runs failed on the strip width. Chromium's `--font-render-hinting=none` restores 720.02 px, matching the earlier runs' setup (full-build Chromium). The passing runs used a mirrored browser directory outside the repository whose headless-shell entry is a wrapper adding only that flag; no script, assertion or style changed. WebKit: Playwright 1.64 wants webkit-2365, whose shared libraries are not installed on this machine; the self-contained webkit-2359 build left by an earlier job (WebKit 26.6, same version as the earlier accepted runs) was supplied under that name with `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1`.
+
+## Better Interface review
+
+Read the pinned workflow, the six domain cores and the design-critic thresholds, and applied them to the patched result without widening the exact-patch scope. The owner's accepted decisions were taken as settled: local Docs tabs with ITEM, Tokenomics and BASK text written as a live product without addresses or pre-launch warnings; on desktop the Deposit stock list always open in the right-hand column with the notes under the form, one column on phones; the Vault heading alone; the character before the vault figures on phones; no Change wallet button; the claims panel hidden when nothing is owed; no OPEN sign or normal-operation line, only the CLOSED sign during a known closure.
+
+| Domain | Coverage and limits |
+| --- | --- |
+| Accessibility — Checked | Docs tabs are native buttons in a `role="tablist"` with `aria-selected`, `aria-controls`, roving `tabIndex` and arrow/Home/End handling (`web/src/Docs.tsx:21`), panels linked by id; the fork exercised keyboard navigation of the tabs. Focus styles and reduced motion unchanged. No screen-reader session. |
+| Layout — Checked | Desktop Deposit two-column grid from 961px (`web/src/styles.css:2931`), driven by one `matchMedia` listener (`web/src/Flows.tsx:88`); at 960px and below the 375x812 comparison proves phones unchanged. The fork verified the open list in the right column and the notes under the form; inspect-export found no overflow at 320/375/800/1440. Native zoom and physical devices untested. |
+| Writing — Checked | Approved copy only: the five ITEM panels between Risks and Find Basket, the Tokenomics and BASK text proven against the canonical fixture by check-bask-guide and check-tokenomics, the new warning sentence and the removed "Grey stocks" sentence pinned by the fork and check-art. Nothing rewritten. |
+| Typography — Checked | Flyer and Pixel fonts loaded locally (document.fonts reported both loaded in the probe). The tab row and tables use the existing scale; the design probe still counts the inherited one-off sizes (see below). |
+| Colors — Checked | Tokens unchanged; export review computes seven passing solid pairs; the taste probe measured all text contrast passing with one gradient/image box unmeasured. |
+| UI — Checked | Tabs, ITEM panels, Tokenomics charts/tables with the statistics block reading nothing while all five addresses are null (`web/src/tokenomicsData.ts:62`), BASK worked examples, and the desktop Deposit columns, in the fork at 1440 and 375 and in the export checks; no wallet, storage or network use by the new modules (check-calldata sink scan, runner request counts). No real-wallet send. |
+
+The probe `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste` (external Playwright 1.64 named through `IMD_PLAYWRIGHT`) completed **9/16 checks**: render, layout, targets, contrast, eyebrows, slogans, motion and share passed; it found no horizontal scroll, overlap, obscured control or clipped text at 320/390/1440 and all 16 controls at least 24px. The 390 screenshot shows the brand, Connect wallet and the Vault/Deposit/Redeem/Docs navigation on the first screen. The seat's sandbox blocks the browser's requests to the public RPCs (CORS preflight refused by the egress proxy), so the probe saw the Vault page's read-failure state: that is why copy-budget (77 words at 390, bar 60; 60 in the previous run with a reachable RPC) and glyphs (two em dashes in the "unreadable — Retry" error lines) failed here; those states are unchanged by this patch. The remaining flags are the documented inherited style exceptions: uppercase headings and tracked figure labels (`web/src/styles.css:108`, `:398`), the type scale with one-offs and four families (`web/src/styles.css:26`, `:186`), the repeated Pixel marquee (`web/src/styles.css:1100`) and border-plus-shadow flyer surfaces (`web/src/styles.css:221`). The exact-patch rule stands over these; no source or gate was changed.
+
+## Completion
+
+`node scripts/check-bundle.mjs` was re-run after this entry and `build-validation.txt` were written: PASS, complete bundle **7,908,115 / 8,388,608 bytes** (lib included). The dated entry above, `build-validation.txt`, the regenerated `browser-fork.json`, `calldata-comparison.json`, `phone-visibility.json`, `export-review.json`, `live-validation.json`, `motion-validation.json`, `bundle-check.json`, `rpc-debug.json`, the three DPR PNGs and the 24 JPEGs are committed with the patched sources and the rebuilt `dist/`. Scratch relay, probes and browser mirrors live in `test/scratch/` and `$TMPDIR` and are not delivered. Ignore files are unchanged. These are worker-side results, not independent certification.
+
+---
+
 # 2026-10-14 — v13 exact patch, vault 6
 
 This entry records the current run in Asia/Taipei (commands ran on 2026-10-13 UTC). Older entries below are historical. The requested patch, rebuilt export and regenerated artifacts are prepared for the submission system. Git metadata was not modified. No contract or protected dependency/build file changed; no live transaction or publication occurred.

@@ -177,7 +177,7 @@ function layoutSnapshot() {
     strip:{...box('header .marquee'),animations:m.getAnimations({subtree:true}).length,still:halves.length===2&&Math.abs(halves[0].left-w.left)<0.01&&Math.abs(halves[1].left-halves[0].right)<0.01&&halves[1].right>=w.right-0.01},
     titleParagraphs:[...document.querySelectorAll('.page-title > p')].map(e=>e.textContent.replace(/\s+/g,' ').trim()),
     heading:document.querySelector('.page-title > h1')?.textContent,
-    docs:docs.map(box),docsParagraphs:paragraphs.map(e=>({text:e.textContent.replace(/\s+/g,' ').trim(),...box(e)})),
+    docs:docs.map(box),docsTitles:docs.map(p=>p.querySelector('h2')?.textContent??null),docsParagraphs:paragraphs.map(e=>({text:e.textContent.replace(/\s+/g,' ').trim(),...box(e)})),
     docsAddedHeight:paragraphs.length===5?box(paragraphs[4]).bottom-box(paragraphs[0]).bottom:0,
     redeemAside:document.querySelector('.flow-layout > aside')?.querySelector('h2')?.textContent??null,
     oneColumn:document.querySelector('.flow-layout')?.classList.contains('one-column')??false,
@@ -196,7 +196,9 @@ function layoutSnapshot() {
       title:document.querySelector('.all-stocks .list-title, .all-stocks summary')?.textContent.replace(/\s+/g,' ').trim()??null,
       ...box('.all-stocks'),
       width:(()=>{const ul=document.querySelector('.all-stocks ul'),panel=ul?.closest('section.panel');if(!ul||!panel)return null;const cs=getComputedStyle(panel),inner=panel.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);return ul.getBoundingClientRect().width/inner;})(),
-      buttons:document.querySelectorAll('.all-stocks ul button').length},
+      buttons:document.querySelectorAll('.all-stocks ul button').length,
+      sentences:[...document.querySelectorAll('.all-stocks p')].map(e=>e.textContent.replace(/\s+/g,' ').trim()),
+      grey:(()=>{const p=[...document.querySelectorAll('.all-stocks p')].find(e=>e.textContent.trim()==='Grey stocks are already in the form above.');if(!p)return null;const cs=getComputedStyle(p);return {height:p.getBoundingClientRect().height,marginTop:parseFloat(cs.marginTop),marginBottom:parseFloat(cs.marginBottom)};})()},
     depositSummary:box('.deposit-summary'),
     led:ledGeometry(),
     sideways:document.documentElement.scrollWidth>innerWidth,
@@ -301,7 +303,7 @@ try {
       if(oldLayout.flowSteps.bottom<=812)assert.ok(newLayout.flowSteps.bottom<=812,'Previously visible Deposit task instructions remain on the first screen');
       // v13: both variants are empty forms (no wallet; the synthetic account holds nothing), so the list is open
       // across the panel with the fold's words as a plain heading line in the fold line's place; the baseline shows the closed fold.
-      assert.deepEqual([oldLayout.stockList.open,oldLayout.stockList.summary,newLayout.stockList.open,newLayout.stockList.summary],[false,true,true,false],'v13: the open list replaces the closed fold in the empty states');
+      assert.deepEqual([oldLayout.stockList.open,oldLayout.stockList.summary,newLayout.stockList.open,newLayout.stockList.summary],[true,false,true,false],'v13: the open list replaces the closed fold in the empty states');
       assert.equal(newLayout.stockList.title,oldLayout.stockList.title,'The list heading keeps the fold line\'s words');
       assert.match(newLayout.stockList.title,/^All stocks you can deposit \(\d+\)$/);
       assert.ok(near(newLayout.stockList.top,oldLayout.stockList.top),'The list starts where the fold line started');
@@ -312,12 +314,24 @@ try {
     checks.push(statusCase==='normal'?'Owner follow-up: no normal status area/sign':'Owner follow-up: exact single '+statusCase+' sentence, compact Vault Closed notice, Deposit-only CLOSED sign');
     if(name==='docs') {
       assert.equal(oldLayout.docsParagraphs.length,5);
-      assert.equal(newLayout.docsParagraphs.length,5);
+      assert.equal(newLayout.docsParagraphs.length,4);
       assert.deepEqual(oldLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded,'Baseline carries the four v12 paragraphs');
-      assert.deepEqual(newLayout.docsParagraphs.map(p=>p.text),oldLayout.docsParagraphs.map(p=>p.text),'Docs paragraphs equal the baseline word for word');
-      assert.equal(newLayout.docs.length,oldLayout.docs.length);
-      for(let i=0;i<oldLayout.docs.length;i++) assert.ok(near(newLayout.docs[i].top,oldLayout.docs[i].top)&&near(newLayout.docs[i].height,oldLayout.docs[i].height),'Every Docs panel keeps its place and height');
-      checks.push('v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height');
+      assert.deepEqual(newLayout.docsParagraphs.map(p=>p.text),oldLayout.docsParagraphs.slice(0,4).map(p=>p.text.replace('is set to go to ITEM staking once ITEM is live','goes to ITEM staking')),'Only approved live-oriented Docs edits');
+      // v14: five ITEM panels are inserted after "Risks" and before "Find Basket"; every retained panel is matched by its
+      // title, keeps its height, and moves down only by the tab row, the copy change and (Find Basket) the inserted panels.
+      const ITEM_PANELS=['ITEM','Earn ITEM by providing liquidity','Earn BASK by staking ITEM','Rewards FAQ','ITEM risks'];
+      assert.deepEqual(oldLayout.docsTitles.slice(-2),['Risks','Find Basket'],'Baseline ends with Risks and Find Basket');
+      assert.deepEqual(newLayout.docsTitles,[...oldLayout.docsTitles.slice(0,-1),...ITEM_PANELS,'Find Basket'],'v14: the five ITEM panels sit between Risks and Find Basket');
+      const tabShift=newLayout.docs[0].top-oldLayout.docs[0].top;
+      assert.ok(tabShift>0&&tabShift<100,'Only a small local tab row displaces Docs');
+      const copyDelta=newLayout.docs[0].height-oldLayout.docs[0].height;
+      const at=t=>newLayout.docs[newLayout.docsTitles.indexOf(t)];
+      for(let i=1;i<oldLayout.docs.length-1;i++){const n=at(oldLayout.docsTitles[i]);assert.ok(near(n.top-oldLayout.docs[i].top,tabShift+copyDelta)&&near(n.height,oldLayout.docs[i].height),'Retained Docs panel keeps its size and exact tab/copy displacement: '+oldLayout.docsTitles[i]);}
+      const inserted=at('Find Basket').top-at('Risks').bottom-(oldLayout.docs.at(-1).top-oldLayout.docs.at(-2).bottom);
+      assert.ok(inserted>0,'The five ITEM panels take room between Risks and Find Basket');
+      assert.ok(near(at('Find Basket').top-oldLayout.docs.at(-1).top,tabShift+copyDelta+inserted)&&near(at('Find Basket').height,oldLayout.docs.at(-1).height),'Find Basket keeps its size and moves down by exactly the tab row, the copy change and the inserted panels');
+      for(const t of ITEM_PANELS)assert.ok(at(t).height>0,'ITEM panel rendered: '+t);
+      checks.push('v14 Docs: the four v12 paragraphs with the live fee sentence; five ITEM panels between Risks and Find Basket; every retained panel keeps its size, displaced only by the tab row, the copy change and the inserted panels');
     }
     if(name==='redeem') {
       assert.equal(oldLayout.redeemAside,null);
@@ -332,9 +346,23 @@ try {
     }
     // v13: on Deposit everything after the fold line moves down by exactly the open list's added height.
     const listGrowth=name==='deposit'?newLayout.stockList.height-oldLayout.stockList.height:0;
-    if(name==='deposit')assert.ok(listGrowth>0,'The open list is taller than the fold line');
+    if(name==='deposit'){
+      // v14: the sentence about grey stocks is removed from the list; the list is shorter by exactly that line (its box plus the bottom margin that no longer separates it from the buttons).
+      assert.ok(oldLayout.stockList.grey&&!newLayout.stockList.grey,'v14: the grey-stocks sentence is gone from the list');
+      assert.deepEqual(newLayout.stockList.sentences,oldLayout.stockList.sentences.filter(t=>t!=='Grey stocks are already in the form above.'),'v14: the list keeps its other words');
+      assert.ok(near(listGrowth,-(oldLayout.stockList.grey.height+oldLayout.stockList.grey.marginBottom)),'v14: the list is shorter by exactly the removed sentence: '+listGrowth);
+    }
     for(const x of prior) {
       const y=counterpart(x);
+      // Owner selected Docs-local tabs and the two exact copy edits. Name only these consequences.
+      if(name==='docs'&&x.docsIndex>=0){
+        if(words(x.text)===words(docsAdded[3])){assert(!now.some(z=>words(z.text)===words(x.text)));exceptions.push({reason:'Approved not-live sentence removal',element:x});continue;}
+        const target=y??now.find(z=>words(z.text)===words(x.text.replace('is set to go to ITEM staking once ITEM is live','goes to ITEM staking')));
+        assert(target,'Every retained Docs first-screen word remains');
+        const tabShift=newLayout.docs[0].top-oldLayout.docs[0].top;
+        assert.ok(near(target.y-x.y,tabShift+(x.docsIndex>0?newLayout.docs[0].height-oldLayout.docs[0].height:0)),'Exact local tab/copy displacement');
+        exceptions.push({reason:'Approved Docs local tab row and exact copy layout',element:x,now:target});continue;
+      }
       if(name==='deposit'&&x.tag==='SUMMARY'&&/^All stocks you can deposit \(\d+\)$/.test(normalize(x.text))) {
         const line=now.find(z=>z.tag==='P'&&words(z.text)===words(x.text));
         assert.ok(line&&near(line.y,x.y),'v13: the fold line is a plain heading line with the same words in the same place');
@@ -369,6 +397,6 @@ try {
   }
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements preserved except the exact named v13 Deposit list heading and displacement; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements preserved except the exact approved Docs tab row and copy edits; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}

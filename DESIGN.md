@@ -74,3 +74,19 @@ The link preview is a 1200×630 JPEG of the blue framed panel, red Basket Protoc
 ## v13 presentation details
 
 On the Deposit page the list under the search, "All stocks you can deposit (N)", is shown open while the form is empty: with no wallet connected, or with a connected wallet whose read balances hold no listed open stock while no row is in the form. It is then a div in the fold's place with the same words as a plain bold 14px heading line (no underline, no marker), the same two sentences, and the same stock buttons in the existing auto-fill grid, which fills the whole panel width (as many even columns as fit, left-aligned, nothing centred; a long ticker still takes two columns and wraps inside its button). Once shown for an account it stays open for that account until the account changes or the page is reloaded, also after a press has added a row. With a wallet that holds listed stock the list is the closed fold as before. Nothing moves above the list; what follows it (the Preview deposit button and, below the panel, the "Before you deposit" box) moves down by the list's height. On phones the open list is the same grid with fewer columns.
+
+## ITEM tokenomics presentation
+
+The existing Docs route contains local Docs and Tokenomics tabs, with Docs selected initially. The tokenomics panel retains the selected full-width layout, yellow title rule, supply bar, two-column legend, release curves and both tables. At 660px and below, table records stack and the plot uses the compact SVG. The three prose lead phrases retain their approved emphasis. Figures have descriptive accessible labels; semantic tables carry the same numbers. There is no chart animation.
+
+The present-tense presentation describes the intended operating state. It does not configure deployment addresses. Five null addresses hide every part of the live block. The existing many() helper handles configured reads; a failed read shows only the approved error and Retry control.
+
+## BASK educational tab
+
+The local Docs tab row contains Docs, Tokenomics and BASK on one line down to 320px. The original ITEM module is unchanged. The new BASK panel follows its yellow heading rule, blue emphasis, pale formula areas and site typography. Mint examples sit side by side above 900px and stack below; stock tables keep semantic row/column headers and show labeled records on phones. All four worked examples and their equations use one integer data module. Inactive documentation modules unmount. No global navigation, transaction form or price-read behavior changes.
+
+## v14 presentation details
+
+Deposit, wider than 960px: the panel's body under the "Make a deposit" heading is a two-column grid (equal columns, 40px gap, items aligned to the top). The left column holds the form as before (rows, search, total, Preview deposit), the preview box and its buttons, the status lines, and then, under a thin line, the "Before you deposit" notes with their heading; the right column holds the stock list, always open: the heading line "All stocks you can deposit (N)" as plain bold text, the sentence "Press a stock to add it to your deposit." and the stock buttons in an auto-fill grid of at least 84px columns. At 960px and below the markup and look are v13's: one column, the list inside the form (open while the form is empty, a closed fold when the wallet holds stock), the notes as a separate panel below. The sentence about grey stocks is gone on every width; the warning note reads "Issuer restrictions and pool checks can temporarily halt deposits."
+
+Docs, default tab: five more panels in the same grid between "Risks" and "Find Basket" (ITEM; Earn ITEM by providing liquidity, with a gauge table in the module's table style; Earn BASK by staking ITEM; Rewards FAQ with its questions as h3 like the FAQ panel; ITEM risks). BASK tab: two more sections and a fifth worked example in the module's own blocks (paragraphs, bold formula lines, a two-column table).

@@ -241,7 +241,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height",
+      "v14 Docs: the four v12 paragraphs with the live fee sentence; five ITEM panels between Risks and Find Basket; every retained panel keeps its size, displaced only by the tab row, the copy change and the inserted panels",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],
@@ -251,7 +251,7 @@
       267.375,
       267.375
     ],
-    "docsAddedHeight": 544
+    "docsAddedHeight": 0
   },
   {
     "statusCase": "normal",
@@ -553,7 +553,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "v13 Docs: unchanged; the four v12 paragraphs word for word and every panel in its place and height",
+      "v14 Docs: the four v12 paragraphs with the live fee sentence; five ITEM panels between Risks and Find Basket; every retained panel keeps its size, displaced only by the tab row, the copy change and the inserted panels",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],
@@ -563,7 +563,7 @@
       245.375,
       245.375
     ],
-    "docsAddedHeight": 544
+    "docsAddedHeight": 0
   },
   {
     "statusCase": "normal",

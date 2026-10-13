@@ -3,6 +3,10 @@
   "vault": "0x739fd5b653aa092a434534fa1ade67c1770b5a5b",
   "runtimeHash": "0x636a9477cd2d80694d0c8cc970f5008edb87d71a11b10ccfa82d9db04090a048",
   "checks": [
+    "Tokenomics: Docs-local keyboard tabs; exact approved prose/tables/labels; all-null live block absent; both SVG charts and contained layout at 320/375/1440/1920",
+    "BASK: exact canonical prose/formulas/five tables; three-tab ARIA, focus, Home/End/arrow wrap; no overflow at 320/375/661/1000/1440/1920; inactive modules unmounted",
+    "BASK: all local Docs tabs add zero storage writes",
+    "Tokenomics: opening the tab adds zero RPC and zero wallet requests",
     "Pool liquidity below minLiquidity blocks listing",
     "Pool/feed gap above poolDeviation blocks listing",
     "Marked genesis pairing blocks listing",
@@ -14,7 +18,7 @@
     "Deposit search: Add buttons only while text is typed, at most six, never for a stock on screen",
     "One updated feed reopens deposits after the holiday",
     "Deposit status: no normal notice; Closed sign and one approved closure sentence",
-    "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
+    "All stocks you can deposit (25): open in the right-hand column on desktop with the notes under the form, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
     "Greyed row: a stock failing its own check (feed too old) says why; amount box and Max off, Remove and Refresh on; Refresh clears it once the feed is back",
     "Exact full stock balance and chosen amount retained while searching",
     "CapExceeded explained before approvals",
@@ -78,8 +82,8 @@
     "transferOwnership",
     "acceptOwnership",
     "Vault: Always in stock, no sentence or empty paragraph; compact deposit status shows existing label and status only",
-    "Docs: original paragraph and four approved paragraphs, word for word",
-    "Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill",
+    "Docs: original paragraph and approved live-oriented copy, word for word",
+    "Deposit: Before you deposit under the form on desktop shows both approved paragraphs and the approved note without a fold; full deposit status follows the 24/7 pill",
     "Redeem: one column, removed aside and no wallet instruction line",
     "Claims: connected empty wallet shows quiet line without panel",
     "Link preview: served approved share tags and 1200x630 JPEG",
@@ -87,8 +91,9 @@
     "Claims: one/two owed show panel with exact conditional note and no zero fold; last claim confirmation survives navigation",
     "Late Connect: early account event, Disconnect, held reply dropped without request; normal Connect then succeeds; no-wallet quiet claims line",
     "24/7 label: widened text wraps at whole words inside pill and panel at 661px on Deposit and Redeem",
-    "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send",
-    "Claim all result: the Still owed line ends with Nothing owed. and carries no other-stocks count"
+    "Deposit stock list on desktop: always open in the right-hand column with a plain heading and no fold (no wallet; a wallet without a listed stock; the owner's wallet), a press adds the row and the list stays open; no wallet request or send",
+    "Claim all result: the Still owed line ends with Nothing owed. and carries no other-stocks count",
+    "Docs: five ITEM panels between Risks and Find Basket, headings in order, the ITEM paragraph, the gauge table and the five FAQ questions word for word; no not-live wording"
   ],
   "sends": [
     {
@@ -410,7 +415,7 @@
         ],
         "0x30B57ECf51D19ABcED7F6f70974e6fBb6f3b9Da3",
         "5969999005000000000000",
-        "1791520662"
+        "1791520836"
       ],
       "gas": "0x17d63b"
     },
@@ -447,7 +452,7 @@
           "0",
           "0"
         ],
-        "1791677447"
+        "1791677446"
       ],
       "gas": "0x43918"
     },
@@ -495,7 +500,7 @@
           "0",
           "0"
         ],
-        "1791677450"
+        "1791677448"
       ],
       "gas": "0x4d886"
     },
@@ -898,7 +903,18 @@
     "stocks25-owner-375.jpg",
     "stocks25-losses-375.jpg"
   ],
-  "rpcCalls": 3626,
+  "rpcCalls": 3804,
+  "tokenomicsRequests": {
+    "before": {
+      "rpc": 15,
+      "wallet": 2
+    },
+    "after": {
+      "rpc": 15,
+      "wallet": 2
+    }
+  },
+  "docsStorageWrites": 0,
   "issues": [],
   "limitations": [
     "Local fork and disposable token/feed/pool fixtures; no live transaction",

@@ -62,8 +62,7 @@ const V12_DOCS = [
   "One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.",
   "The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.",
   "BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.",
-  "The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.",
-  "ITEM is not live yet. Its address will be listed here when it is."
+  "The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM.",
 ];
 const V12_DEPOSIT = [
   "You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.",
@@ -617,9 +616,16 @@ try {
         }
         assert.equal(await page.locator('.deposit-led-sign').count(),0,'Normal operation and other routes have no sign');
         if(name==='deposit') {
-          const aside=page.locator('.flow-layout > aside.panel');
-          assert.equal(await aside.locator('details').count(),0);
-          assert.deepEqual((await aside.locator(':scope > p').allTextContents()).slice(2).map(t=>t.replace(/\s+/g,' ').trim()),V12_DEPOSIT);
+          // v14: the Before-you-deposit notes are an aside at 960px and below and sit under the form inside the panel above that.
+          const notes=page.locator(width>960?'.deposit-main > .deposit-notes':'.flow-layout > aside.panel');
+          assert.equal(await notes.count(),1,`${engine} deposit ${width}: one Before-you-deposit container`);
+          assert.equal(await page.locator(width>960?'.flow-layout > aside.panel':'.deposit-notes').count(),0,`${engine} deposit ${width}: the notes live in one place only`);
+          assert.equal(await notes.locator('details').count(),0);
+          assert.deepEqual((await notes.locator(':scope > p').allTextContents()).slice(2).map(t=>t.replace(/\s+/g,' ').trim()),V12_DEPOSIT);
+          assert.equal(await notes.getByText('Issuer restrictions and pool checks can temporarily halt deposits.',{exact:true}).count(),1,`${engine} deposit ${width}: the approved note`);
+          assert.equal(await page.getByText(/Feeds lag the market\. Issuer/).count(),0,`${engine} deposit ${width}: the old note is gone`);
+          assert.equal(await page.getByText('Grey stocks are already in the form above.',{exact:true}).count(),0,`${engine} deposit ${width}: the grey-stocks sentence is gone`);
+          if(width>960){const two=await page.evaluate(()=>{const m=document.querySelector('.deposit-main'),r=document.querySelector('.deposit-right');if(!m)return null;const a=m.getBoundingClientRect(),b=r?.getBoundingClientRect();return {columns:getComputedStyle(document.querySelector('.deposit-columns')).gridTemplateColumns.split(' ').length,right:b?b.left>=a.right-1&&Math.abs(b.top-a.top)<2:null,open:!!document.querySelector('.deposit-right .all-stocks.open-list'),fold:document.querySelectorAll('details.all-stocks').length};});assert.deepEqual(two,{columns:2,right:two?.right,open:two?.open,fold:0},`${engine} deposit ${width}: two columns`);assert.ok(two.right!==false&&two.open!==false,`${engine} deposit ${width}: list open on the right ${JSON.stringify(two)}`);}
         }
         if(name==='redeem') {
           assert.equal(await page.locator('.flow-layout.one-column').count(),1);

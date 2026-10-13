@@ -82,6 +82,17 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   // v13: the account ("" for none) for which the stock list under the search
   // was shown open because the form was empty; it stays open for it.
   const [listOpenFor, setListOpenFor] = useState<string>();
+  // v14: wider than 960px the panel has two columns (the form left, the stock
+  // list always open on the right); phones and tablets keep the one column.
+  const [desktop, setDesktop] = useState(
+    () => window.matchMedia("(min-width: 961px)").matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 961px)");
+    const update = () => setDesktop(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   // The stock an Add button just added, until its row is on screen.
   const focusRow = useRef<Address | undefined>(undefined);
   const sequence = useRef(0),
@@ -351,7 +362,7 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
   useEffect(() => {
     if (emptyForm) setListOpenFor(accountKey);
   }, [emptyForm, accountKey]);
-  const listOpen = emptyForm || listOpenFor === accountKey;
+  const listOpen = desktop || emptyForm || listOpenFor === accountKey;
   const StockList = listOpen ? "div" : "details";
   // `focus` is false for Enter in the search box, which keeps the focus.
   function add(t: Address, focus = true) {
@@ -400,6 +411,59 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
       counted++;
     }
   }
+  // Every stock the vault takes now. On phones: inside the form, closed until
+  // pressed while the form has rows, open across the panel while the form is
+  // empty (no wallet, or a wallet without a listed stock) and then for the
+  // rest of the visit for that account (v13). On desktop: always open, in the
+  // right-hand column (v14). A press is the same Add as in the search; a stock
+  // that has a row stays in the list, switched off.
+  const stockList = (
+    <StockList className={listOpen ? "all-stocks open-list" : "all-stocks"}>
+      {listOpen ? (
+        <p className="list-title">All stocks you can deposit ({open.length})</p>
+      ) : (
+        <summary>All stocks you can deposit ({open.length})</summary>
+      )}
+      <p>Press a stock to add it to your deposit.</p>
+      <ul>
+        {listed.map((a) => (
+          <li key={a.token} className={a.symbol.length > 5 ? "wide" : undefined}>
+            <button
+              type="button"
+              className="quiet"
+              disabled={
+                working || w.busy || rows.some((x) => x.a.token === a.token)
+              }
+              onClick={() => add(a.token)}
+            >
+              <bdi>{a.symbol}</bdi>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </StockList>
+  );
+  // "Before you deposit": its own panel under the form on phones, under the
+  // form inside the panel on desktop (v14).
+  const notes = (
+    <>
+      <h2>Before you deposit</h2>
+      <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>
+      <p>
+        First deposit: 0.001 BASK is locked forever. The preview already
+        subtracts this lock and any fee.
+      </p>
+      <p>
+        You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.
+      </p>
+      <p>
+        A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.
+      </p>
+      <Note warning>
+        Issuer restrictions and pool checks can temporarily halt deposits.
+      </Note>
+    </>
+  );
   return (
     <>
       <PageTitle
@@ -425,6 +489,10 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
             Choose amounts, preview, approve each stock, press Deposit.
           </p>
           <h2>Make a deposit</h2>
+          {/* v14: two columns on desktop (the form, its preview and buttons and
+              the notes left; the stock list right), one column otherwise. */}
+          <div className="deposit-columns">
+          <div className="deposit-main">
           {!open.length ? (
             <Empty
               title={
@@ -658,48 +726,9 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                     </p>
                   )}
                 </div>
-                {/* Every stock the vault takes now. Closed until pressed while
-                    the form has rows; shown open across the panel while the
-                    form is empty (no wallet, or a wallet without a listed
-                    stock), and then for the rest of the visit for that account
-                    (v13). A press is the same Add as in the search; a stock
-                    that has a row stays in the list, switched off. */}
-                <StockList
-                  className={listOpen ? "all-stocks open-list" : "all-stocks"}
-                >
-                  {listOpen ? (
-                    <p className="list-title">
-                      All stocks you can deposit ({open.length})
-                    </p>
-                  ) : (
-                    <summary>
-                      All stocks you can deposit ({open.length})
-                    </summary>
-                  )}
-                  <p>Press a stock to add it to your deposit.</p>
-                  <p>Grey stocks are already in the form above.</p>
-                  <ul>
-                    {listed.map((a) => (
-                      <li
-                        key={a.token}
-                        className={a.symbol.length > 5 ? "wide" : undefined}
-                      >
-                        <button
-                          type="button"
-                          className="quiet"
-                          disabled={
-                            working ||
-                            w.busy ||
-                            rows.some((x) => x.a.token === a.token)
-                          }
-                          onClick={() => add(a.token)}
-                        >
-                          <bdi>{a.symbol}</bdi>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </StockList>
+                {/* The stock list (above): in the form on phones, in the
+                    right-hand column on desktop. */}
+                {!desktop && stockList}
                 {counted + badAmount.length + noPrice.length > 0 && (
                   <div className="deposit-total">
                     {counted > 0 && (
@@ -866,25 +895,14 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
           <p className="error" role="alert">
             {error}
           </p>
+          {desktop && <div className="deposit-notes">{notes}</div>}
+          </div>
+          {desktop && open.length > 0 && (
+            <div className="deposit-right">{stockList}</div>
+          )}
+          </div>
         </section>
-        <aside className="panel">
-          <h2>Before you deposit</h2>
-          <p>Size limit: {usd(s.globals.NAV_CAP)}.</p>
-          <p>
-            First deposit: 0.001 BASK is locked forever. The preview already
-            subtracts this lock and any fee.
-          </p>
-          <p>
-            You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.
-          </p>
-          <p>
-            A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet.
-          </p>
-          <Note warning>
-            Feeds lag the market. Issuer restrictions and pool checks can stop
-            deposits.
-          </Note>
-        </aside>
+        {!desktop && <aside className="panel">{notes}</aside>}
       </div>
     </>
   );

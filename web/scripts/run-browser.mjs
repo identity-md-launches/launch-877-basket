@@ -1,3 +1,5 @@
+import { checkBaskGuide } from "./bask-guide-browser.mjs";
+import { checkTokenomics } from "./tokenomics-browser.mjs";
 // One bounded foreground process owns its fork, preview server and browser.
 import fs from "node:fs";
 import path from "node:path";
@@ -468,6 +470,7 @@ try {
   let holdConnect = false, releaseConnect, emptyAccounts = false;
   const v12Checks = [];
   const v13Checks = [];
+  const v14Checks = [];
   page.on("console", (m) => {
     if (m.type() === "error") consoleErrors.push(m.text());
   });
@@ -505,6 +508,11 @@ try {
         t.to.toLowerCase() === VAULT ? vaultAbi : compiled.TestStock.abi;
       const decoded = decodeFunctionData({ abi, data: t.data });
       assert.equal(await raw("eth_chainId"), "0x1237");
+      if (['deposit','redeem'].includes(decoded.functionName)) {
+        const deadline=Number(decoded.args.at(-1));
+        const clockSeconds=await page.evaluate(()=>Math.floor(Date.now()/1000));
+        assert.ok(deadline<=clockSeconds+600&&deadline>=clockSeconds+590,'Deadline remains browser time plus 600 seconds (up to 10 seconds of simulation/request latency)');
+      }
       sends.push({ to: t.to, ...decoded, gas: t.gas });
       // v12: reprice one existing deposit in the mock, without adding a page send.
       if (speedNext) {
@@ -832,13 +840,15 @@ try {
           `${state} ${name} overflow ${width}`,
         );
         const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
-        // Quality 26 in v12 (32 in v11, 36 in v9/v10, 40 before): the 24
-        // readable full-page screenshots leave at least 250,000 bytes within
-        // the 8 MiB delivery budget, including the two share-picture copies.
+        // Quality 18 in v14 (26 in v12 and v13, 32 in v11, 36 in v9/v10, 40
+        // before): the Docs page is five panels and a tab row longer, so the
+        // 24 readable full-page screenshots keep at least 250,000 bytes
+        // within the 8 MiB delivery budget, including the two share-picture
+        // copies.
         await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
-          quality: 26,
+          quality: 18,
           fullPage: true,
         });
         shots.push(file);
@@ -872,12 +882,39 @@ try {
   v12Checks.push("Vault: Always in stock, no sentence or empty paragraph; compact deposit status shows existing label and status only");
   await nav("Docs");
   await page.getByRole("heading", { name: "Docs", exact: true }).waitFor();
-  assert.deepEqual(await page.locator(".docs-grid > section").first().locator("p").allTextContents().then(xs => xs.map(x => x.replace(/\s+/g, " ").trim())), ["One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.","The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.","BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.","The 0.5% fee on each deposit and redemption is set to go to ITEM staking once ITEM is live, so more trading through the vault means more fees for ITEM.","ITEM is not live yet. Its address will be listed here when it is."]);
-  v12Checks.push("Docs: original paragraph and four approved paragraphs, word for word");
+  assert.deepEqual(await page.locator(".docs-grid > section").first().locator("p").allTextContents().then(xs => xs.map(x => x.replace(/\s+/g, " ").trim())), ["One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.","The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.","BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.","The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM."]);
+  v12Checks.push("Docs: original paragraph and approved live-oriented copy, word for word");
+  // v14: five ITEM panels between Risks and Find Basket, in the default Docs tab.
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section > h2").allTextContents(), ["What Basket is", "Deposits", "Redemption", "FAQ", "NAV", "Numbers", "Safety", "Risks", "ITEM", "Earn ITEM by providing liquidity", "Earn BASK by staking ITEM", "Rewards FAQ", "ITEM risks", "Find Basket"]);
+  assert.equal(await page.locator("#docs-panel-0 .docs-grid > section").nth(8).locator("p").first().textContent().then((x) => x.replace(/\s+/g, " ").trim()), "ITEM is Basket's reward token. It has two jobs: it pays the people who provide liquidity for BASK and ITEM, and staking it earns the vault's fees. Its supply is fixed at 1,000,000,000 and its reward schedules are written into contracts that have no owner, no pause and no upgrade. Nobody can change the amounts, speed them up or stop them.");
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(9).locator("table tbody tr").evaluateAll((rows) => rows.map((r) => [...r.children].map((c) => c.textContent))), [["BASK/USDG", "490,000,000", "43.75%", "31.25%", "18.75%", "6.25%"], ["ITEM/ETH", "210,000,000", "43.75%", "31.25%", "18.75%", "6.25%"]]);
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(11).locator("h3").allTextContents(), ["Can I claim whenever I want?", "Is anything locked?", "What if nobody uses the vault?", "Do rewards expire?", "Can the team change the rewards?"]);
+  assert.equal(await page.locator("#docs-panel-0").getByText(/not live yet/).count(), 0, "no not-live wording in the Docs tab");
+  v14Checks.push("Docs: five ITEM panels between Risks and Find Basket, headings in order, the ITEM paragraph, the gauge table and the five FAQ questions word for word; no not-live wording");
+  const beforeTokenomics = {rpc:rpcCalls.length, wallet:asked.length};
+  await page.evaluate(()=>{
+    window.__docsStorageWrites=0;
+    window.__docsStorageOriginals=Object.fromEntries(['setItem','removeItem','clear'].map(k=>[k,Storage.prototype[k]]));
+    for(const key of ['setItem','removeItem','clear'])Storage.prototype[key]=function(...args){window.__docsStorageWrites++;return window.__docsStorageOriginals[key].apply(this,args);};
+  });
+  checks.push(await checkTokenomics(page));
+  checks.push(await checkBaskGuide(page));
+  const docsStorageWrites=await page.evaluate(()=>{const n=window.__docsStorageWrites;for(const [key,fn] of Object.entries(window.__docsStorageOriginals))Storage.prototype[key]=fn;delete window.__docsStorageWrites;delete window.__docsStorageOriginals;return n;});
+  assert.equal(docsStorageWrites,0,'All local Docs tab visits add no storage write');
+  checks.push('BASK: all local Docs tabs add zero storage writes');
+  const afterTokenomics = {rpc:rpcCalls.length, wallet:asked.length};
+  assert.deepEqual(afterTokenomics,beforeTokenomics,'Opening Tokenomics adds no RPC or wallet request');
+  checks.push('Tokenomics: opening the tab adds zero RPC and zero wallet requests');
   await nav("Deposit");
   await page.getByRole("heading", { name: "Deposit Stock Tokens", exact: true }).waitFor();
-  const beforeDeposit = page.locator("aside.panel");
+  // v14: on desktop the notes sit under the form inside the panel; no aside.
+  const beforeDeposit = page.locator(".deposit-main > .deposit-notes");
+  assert.equal(await beforeDeposit.count(), 1);
+  assert.equal(await page.locator("aside.panel").count(), 0, "v14: no Before-you-deposit aside on desktop");
+  assert.equal(await beforeDeposit.locator("h2").textContent(), "Before you deposit");
   assert.equal(await beforeDeposit.locator("details").count(), 0);
+  assert.equal(await beforeDeposit.getByText("Issuer restrictions and pool checks can temporarily halt deposits.", { exact: true }).count(), 1, "v14: the approved note");
+  assert.equal(await page.getByText(/Feeds lag the market\. Issuer/).count(), 0, "the old note is gone");
   assert.equal(await beforeDeposit.getByText(/^Size limit: /).count(), 1, "Deposit aside retains Size limit");
   for (const text of ["You approve each stock for exactly the amount you deposit. Each approval is its own wallet prompt; the deposit prompt comes last.", "A prepared deposit must be sent within ten minutes. The BASK goes to your connected wallet."])
     assert.equal(await beforeDeposit.getByText(text, {exact:true}).count(), 1);
@@ -892,7 +929,7 @@ try {
   assert.equal(await fullDepositStatus.locator(":scope > strong").count(), 0, "Deposit notice has only its Closed sign and sentence");
   assert.ok(await fullDepositStatus.evaluate(element => element.previousElementSibling?.classList.contains("hours-tag") && element.parentElement.firstElementChild === element.previousElementSibling), "full deposit status follows the unchanged first-child 24/7 pill");
   assert.deepEqual(await fullDepositStatus.locator(":scope > p").allInnerTexts(), ["Deposits will be back open when “genesis not finished” is resolved."], "initial setup has exactly one approved issue sentence");
-  v12Checks.push("Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill");
+  v12Checks.push("Deposit: Before you deposit under the form on desktop shows both approved paragraphs and the approved note without a fold; full deposit status follows the 24/7 pill");
   await nav("Redeem");
   await page.getByRole("heading", { name: "Redeem BASK", exact: true }).waitFor();
   assert.equal(await page.locator(".flow-layout.one-column").count(), 1);
@@ -1181,27 +1218,34 @@ try {
   checks.push(
     "Deposit status: no normal notice; Closed sign and one approved closure sentence",
   );
-  // v11: the list under the search, closed until pressed, holds every stock
-  // the vault takes now. A stock that has a row is switched off; S10 to S16
-  // were removed above, so only they can be pressed. A press adds that
-  // stock's row, empty, in its place, with the focus in its amount box. (This
-  // fixture lists its stocks in A to Z order, so the walk does not show the
-  // list's own sorting.) The reload below clears it all.
-  const allStocks = page.locator("details.all-stocks"),
+  // v14: on desktop (the walk's 1440px) the list is always open in the
+  // right-hand column, never a fold; it holds every stock the vault takes
+  // now. A stock that has a row is switched off; S10 to S16 were removed
+  // above, so only they can be pressed. A press adds that stock's row,
+  // empty, in its place, with the focus in its amount box. (This fixture
+  // lists its stocks in A to Z order, so the walk does not show the list's
+  // own sorting.) The reload below clears it all.
+  const allStocks = page.locator(".deposit-right div.all-stocks.open-list"),
     tickers = () =>
       allStocks
         .locator("ul button")
         .evaluateAll((list) => list.map((b) => [b.textContent, b.disabled]));
   assert.equal(await allStocks.count(), 1);
-  assert.equal(await allStocks.evaluate((d) => d.open), false);
+  assert.equal(await page.locator("details.all-stocks").count(), 0);
   assert.equal(
-    await allStocks.locator("summary").textContent(),
+    await allStocks.locator(".list-title").textContent(),
     "All stocks you can deposit (25)",
   );
-  await allStocks.locator("summary").click();
   await allStocks
     .getByText("Press a stock to add it to your deposit.", { exact: true })
     .waitFor();
+  assert.equal(await allStocks.getByText("Grey stocks are already in the form above.", { exact: true }).count(), 0, "v14: the grey-stocks sentence is gone");
+  // The two columns: the form, its buttons and the notes left, the list right, side by side from the same top.
+  const columns = await page.evaluate(() => {
+    const main = document.querySelector(".deposit-main").getBoundingClientRect(), right = document.querySelector(".deposit-right").getBoundingClientRect(), notes = document.querySelector(".deposit-notes"), form = document.querySelector(".deposit-main form").getBoundingClientRect();
+    return { sideBySide: right.left >= main.right - 1 && Math.abs(right.top - main.top) < 2, notesUnderForm: !!notes && notes.getBoundingClientRect().top >= form.bottom && !!main && document.querySelector(".deposit-main").contains(notes), aside: document.querySelectorAll("aside.panel").length, columnsTemplate: getComputedStyle(document.querySelector(".deposit-columns")).gridTemplateColumns.split(" ").length, overflow: document.documentElement.scrollWidth > innerWidth };
+  });
+  assert.deepEqual(columns, { sideBySide: true, notesUnderForm: true, aside: 0, columnsTemplate: 2, overflow: false }, JSON.stringify(columns));
   assert.deepEqual(
     await tickers(),
     listed.map((s) => [s, !listed.slice(12, 19).includes(s)]),
@@ -1224,7 +1268,7 @@ try {
   );
   assert.deepEqual(await offered(), []);
   checks.push(
-    "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
+    "All stocks you can deposit (25): open in the right-hand column on desktop with the notes under the form, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
   );
   // Same hash: reload so the holiday attempt's chosen stock is cleared.
   await page.reload();
@@ -1605,14 +1649,14 @@ try {
   // shown open across the panel, with its heading as a plain line and no
   // details element, and it stays open for that account after a press. The
   // list reads from the vault only: no wallet request and no send.
-  const openList = page.locator("div.all-stocks.open-list"),
+  const openList = page.locator(".deposit-right div.all-stocks.open-list"),
     listFacts = () =>
       page.evaluate(() => {
         const ul = document.querySelector(".all-stocks ul"),
           title = document.querySelector(".all-stocks .list-title"),
-          panel = ul.closest("section.panel"),
+          // v14: the list fills its right-hand column (the panel's content box on phones).
+          panel = ul.closest(".deposit-right") ?? ul.closest("section.panel"),
           cs = getComputedStyle(panel),
-          // The panel's content box: client width without its frame and padding.
           inner = panel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
           u = ul.getBoundingClientRect();
         return {
@@ -1641,7 +1685,7 @@ try {
     ["All stocks you can deposit (25)", "P", 0, 25, false],
     JSON.stringify(facts),
   );
-  assert.ok(facts.ratio > 0.98 && facts.columns >= 8, JSON.stringify(facts));
+  assert.ok(facts.ratio > 0.98 && facts.columns >= 5, JSON.stringify(facts));
   await openList
     .getByText("Press a stock to add it to your deposit.", { exact: true })
     .waitFor();
@@ -1652,7 +1696,8 @@ try {
   );
   await address.waitFor();
   await page.getByLabel("FIG amount", { exact: true }).waitFor();
-  assert.equal(await page.locator("details.all-stocks").count(), 1);
+  // v14: on desktop the owner's wallet sees the open list too (never a fold).
+  assert.deepEqual([await page.locator("details.all-stocks").count(), await openList.count()], [0, 1]);
   await page.evaluate((a) => window.__accounts([a]), nextOwner);
   await page
     .getByText("No open listed stock in this wallet.", { exact: true })
@@ -1664,7 +1709,7 @@ try {
   );
   facts = await listFacts();
   assert.deepEqual([facts.title, facts.summaries, facts.buttons], ["All stocks you can deposit (25)", 0, 25]);
-  assert.ok(facts.ratio > 0.98 && facts.columns >= 8, JSON.stringify(facts));
+  assert.ok(facts.ratio > 0.98 && facts.columns >= 5, JSON.stringify(facts));
   await openList.getByRole("button", { name: "FIG", exact: true }).click();
   await page.getByLabel("FIG amount", { exact: true }).waitFor();
   assert.equal(await page.locator(":focus").getAttribute("aria-label"), "FIG amount");
@@ -1672,17 +1717,15 @@ try {
   assert.equal(await openList.count(), 1);
   assert.equal(await openList.getByRole("button", { name: "FIG", exact: true }).isDisabled(), true);
   assert.equal(await page.locator("details.all-stocks").count(), 0);
-  // Back to the owner's wallet: its rows, and the fold closed as before.
+  // Back to the owner's wallet: its rows, and (desktop) the list still open on the right.
   await page.evaluate((a) => window.__accounts([a]), owner);
   await page.waitForFunction(() => document.querySelectorAll(".deposit-row").length === 25);
-  assert.equal(await openList.count(), 0);
-  assert.equal(await page.locator("details.all-stocks").count(), 1);
-  assert.equal(await page.locator("details.all-stocks").evaluate((d) => d.open), false);
+  assert.deepEqual([await openList.count(), await page.locator("details.all-stocks").count()], [1, 0]);
   assert.equal(sends.length, listSends);
   assert.deepEqual([...new Set(asked.slice(listRequests))].sort(), ["eth_chainId", "eth_requestAccounts"]);
   assert.deepEqual([issues, consoleErrors.slice(before[2])], [[], []]);
   v13Checks.push(
-    "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send",
+    "Deposit stock list on desktop: always open in the right-hand column with a plain heading and no fold (no wallet; a wallet without a listed stock; the owner's wallet), a press adds the row and the list stays open; no wallet request or send",
   );
   // A Saturday: deposits refused (Hours) with the reopen time; redeem and claim still work.
   await warpTo(await saturday());
@@ -2159,8 +2202,28 @@ try {
     assert.ok(facts.natural>=240&&facts.lines>1&&facts.inside&&!facts.overflow,JSON.stringify(facts));assert.deepEqual(facts.bad,[]);
   }
   v12Checks.push("24/7 label: widened text wraps at whole words inside pill and panel at 661px on Deposit and Redeem");
-  checks.push(...v12Checks, ...v13Checks);
+  checks.push(...v12Checks, ...v13Checks, ...v14Checks);
   assert.deepEqual([...new Set(asked)].sort(),["eth_accounts","eth_chainId","eth_requestAccounts","eth_sendTransaction"]);
+  if (process.env.BASKET_PREVIOUS_WALK) {
+    const previous = JSON.parse(fs.readFileSync(process.env.BASKET_PREVIOUS_WALK,'utf8'));
+    const serialized = JSON.parse(JSON.stringify(sends,(_,v)=>typeof v==='bigint'?String(v):v));
+    assert.equal(serialized.length,70,'All 70 prior wallet sends retained');
+    // The existing fork clock advances with real elapsed time. Only its derived deadlines vary by run.
+    // The gate separately compares exact calldata/deadlines at six fixed clocks; send capture checks live clock above.
+    const normalized=records=>records.map(record=>['deposit','redeem'].includes(record.functionName)?{...record,args:[...record.args.slice(0,-1),'browser-clock-plus-600']}:record);
+    assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal v13 apart from wall-clock-derived deadlines');
+    const currentChecks=checks.filter(c=>!c.startsWith('Tokenomics:')&&!c.startsWith('BASK:')&&!v14Checks.includes(c));
+    // v14's authorized label replacements (owner decisions: desktop columns, the notes under the form, the new note).
+    const renamed={
+      'Docs: original paragraph and four approved paragraphs, word for word':'Docs: original paragraph and approved live-oriented copy, word for word',
+      "All stocks you can deposit (25): closed until pressed, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box":"All stocks you can deposit (25): open in the right-hand column on desktop with the notes under the form, the tickers of all 25 open stocks, only the stocks without a row can be pressed, and a press adds that stock's empty row with the focus in its amount box",
+      'Deposit: Before you deposit shows both approved paragraphs without a fold; full deposit status follows the 24/7 pill':'Deposit: Before you deposit under the form on desktop shows both approved paragraphs and the approved note without a fold; full deposit status follows the 24/7 pill',
+      "Deposit stock list: open across the panel with a plain heading and no fold while the form is empty (no wallet; a wallet without a listed stock), a press adds the row and the list stays open for that account, the owner's wallet keeps the closed fold; no wallet request or send":"Deposit stock list on desktop: always open in the right-hand column with a plain heading and no fold (no wallet; a wallet without a listed stock; the owner's wallet), a press adds the row and the list stays open; no wallet request or send",
+    };
+    const previousChecks=previous.checks.map(c=>renamed[c]??c);
+    assert.deepEqual(currentChecks,previousChecks,'Every prior page check retained in order');
+    assert.deepEqual(shots,previous.shots,'Every prior screenshot retained in order');
+  }
   assert.equal(revoked.length,0);
   assert.deepEqual(issues,[]);
   fs.writeFileSync(
@@ -2174,6 +2237,8 @@ try {
         sends,
         shots,
         rpcCalls: rpcCalls.length,
+        tokenomicsRequests: {before:beforeTokenomics,after:afterTokenomics},
+        docsStorageWrites,
         issues,
         limitations: [
           "Local fork and disposable token/feed/pool fixtures; no live transaction",
