@@ -10,7 +10,7 @@ export const ALLOCATIONS = [
     "share": 49,
     "amount": 490000000,
     "who": "BASK/USDG liquidity providers",
-    "terms": "Released by the gauge over four years, front loaded, only while someone is staked"
+    "terms": "Released over four years, with more rewards at the start"
   },
   {
     "share": 21,
@@ -52,13 +52,13 @@ export const ALLOCATIONS = [
 export const PARAGRAPHS = [
   "ITEM's supply is 1,000,000,000, created once at launch. Nothing can mint more. It is a plain token: anyone can hold, send or trade it.",
   "How the supply is divided:",
-  "What is available when. At launch, 26% of the supply exists outside the reward and vesting contracts: the launch pool, the swarm's share, operations and the unlocked development amount. The other 74% is held by contracts and comes out only on schedule: 70% through the two gauges, to the people staked in them, and 4% through vesting. If both gauges run without a pause, the most that can be outside those contracts is:",
-  "A gauge's clock only runs while someone is staked, so these are the earliest dates, not fixed ones.",
+  "What is available when. At launch, 260,000,000 ITEM (26% of the supply) is available through the launch pool, the swarm's share, operations and the unlocked development amount. The remaining 740,000,000 ITEM is released over four years: 700,000,000 as liquidity rewards and 40,000,000 through development vesting. The chart and table show this schedule with liquidity providers staked in both reward pools from launch throughout the four years.",
+  "The line shows the total ITEM available: the 260,000,000 available at launch plus the liquidity rewards and development tokens released by each date. The table shows the breakdown.",
   "Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.",
   "What cannot change. The split above, the four-year gauge schedule, the 7-day fee stream and the vesting dates are constants in contracts with no owner. Nobody holds a key that can alter them."
 ] as const;
 export const ALLOCATION_HEADERS = ["Share","ITEM","Who","Terms"] as const;
-export const RELEASE_HEADERS = ["End of","Released by the gauges","Vested","Outside the contracts, at most"] as const;
+export const RELEASE_HEADERS = ["End of","Liquidity rewards released","Development unlocked","Total ITEM available"] as const;
 export const ADDRESSES: Record<"ITEM" | "ITEM_STAKING" | "BASK_USDG_GAUGE" | "ITEM_ETH_GAUGE" | "DEV_VESTING", Address | null> = {
   ITEM: null, ITEM_STAKING: null, BASK_USDG_GAUGE: null, ITEM_ETH_GAUGE: null, DEV_VESTING: null,
 };
@@ -81,4 +81,4 @@ export const RELEASES = [1, 2, 3, 4].map(year => {
 export const ALLOCATION_ROWS = ALLOCATIONS.map(r => [r.share + "%", formatItem(r.amount), r.who, r.terms]);
 export const RELEASE_ROWS = RELEASES.map(r => ["Year " + r.year, formatItem(r.gauges), formatItem(r.vested), formatItem(r.outside) + " (" + r.share + "%)"]);
 export const SUPPLY_LABEL = ALLOCATIONS.map(r => r.who + " " + r.share + "%").join(", ");
-export const RELEASE_LABEL = "Outside the contracts, at most: " + formatItem(OUTSIDE_AT_LAUNCH) + " at launch, " + RELEASES.map(r => formatItem(r.outside) + " at year " + r.year).join(", ") + ". Liquidity rewards released: " + formatItem(GAUGE_ALLOCATION) + " over four years. Development vested: 0 before month 12, " + formatItem(developmentVested(CLIFF)) + " at month 12, " + formatItem(VESTED_ALLOCATION) + " at month 48.";
+export const RELEASE_LABEL = "Total ITEM available: " + formatItem(OUTSIDE_AT_LAUNCH) + " at launch, " + RELEASES.map(r => formatItem(r.outside) + " at year " + r.year).join(", ") + ". Includes the launch allocation, liquidity rewards and unlocked development tokens, with liquidity providers staked in both reward pools throughout the four years.";

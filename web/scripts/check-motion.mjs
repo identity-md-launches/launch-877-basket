@@ -292,13 +292,17 @@ try {
         }, position);
         assert.ok(gap < 0.01, `Blank of ${gap} px at ${position} ${width}`);
       }
-      // Real playback across both resets: no animationiteration event reaches the page.
+      // Real playback across both resets: no animationiteration event comes from the strip. Only the strip's own
+      // events count: while the vault is closed the Deposit page's CLOSED sign runs two endless CSS animations of its
+      // own, and their iterations say nothing about the strip (v16; before, they failed this check).
       const wrap = await strip.evaluate(async (m) => {
         const a = m.getAnimations({ subtree: true }),
           d = a[0].effect.getTiming().duration,
           crossed = [];
         let events = 0;
-        const count = () => events++;
+        const count = (e) => {
+          if (m.contains(e.target)) events++;
+        };
         document.addEventListener("animationiteration", count, true);
         for (const at of [d / 2, d]) {
           for (const x of a) {

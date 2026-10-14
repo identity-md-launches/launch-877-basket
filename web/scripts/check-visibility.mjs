@@ -46,16 +46,16 @@ const base=`http://127.0.0.1:${server.address().port}`;
 const b=await chromium.launch(),page=await b.newPage({viewport:{width:375,height:812},reducedMotion:'reduce'});
 const results=[];
 
-// v15 on the v14 baseline (the live site): no first-screen element changes its
-// words or its vertical place on any page; nothing is excepted. The one decided
-// difference is across the Vault title panel on phones: the picture stands in
-// the middle (it stood left of it), her bubble keeps its place beside her head,
-// her shelf line runs across the panel and the heading is centred. The Deposit
-// and Redeem titles equal the baseline (no heading focus marker is shown here:
-// the pages are opened directly; check-art covers the marker). Every earlier
-// state (Vault heading, Docs paragraphs and panels, the open Deposit stock list,
-// Redeem layout, status notices) must equal the baseline. The header, slogan
-// strip, and start of each title character stay pinned.
+// v16 on the v15 baseline (the live site): no first-screen element changes its
+// words or its vertical place on any page; nothing is excepted. All three title
+// panels (Vault, Deposit, Redeem) equal the baseline across the panel, and the
+// Vault title keeps the placing decided in v15: the picture in the middle, her
+// bubble beside her head inside the frame, her shelf line across the panel, the
+// heading centred. No heading focus marker is shown here (the pages are opened
+// directly; check-art covers the marker). Every earlier state (Vault heading,
+// Docs paragraphs and panels, the open Deposit stock list, Redeem layout, status
+// notices) must equal the baseline. The header, slogan strip, and start of each
+// title character stay pinned.
 const characterPages=['vault','deposit','redeem'];
 const docsAdded=[
   'The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.',
@@ -277,30 +277,29 @@ try {
       assert.deepEqual(newLayout.capacity,oldLayout.capacity,'Capacity label and figure value remain unchanged');
       checks.push('Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline');
       // v15 (owner, 2026-10-13: "the graphic on mobile is off to the left and doesnt look good"; he chose the picture
-      // centred with the heading centred): across the panel only. The baseline proves the look it replaces.
+      // centred with the heading centred): the placing stays, and since v16 the baseline carries it too.
       const mid=a=>(a.frame.left+a.frame.right)/2,centre=r=>(r.left+r.right)/2,o=oldLayout.across,n=newLayout.across;
       assert.ok(near(centre(n.picture),mid(n)),'v15: the Vault picture stands in the middle of the panel: '+(mid(n)-centre(n.picture)));
-      assert.ok(mid(o)-centre(o.picture)>10,'Baseline carries the picture left of the middle');
       assert.ok(near(n.bubble.left-n.picture.left,o.bubble.left-o.picture.left),'v15: the bubble keeps its place beside her head');
       assert.ok(n.bubble.right<=n.frame.right-3.5&&n.bubble.left>=n.frame.left,'v15: the bubble stays 4 px inside the frame');
       assert.ok(near(n.shelf.left,n.frame.left)&&near(n.shelf.right,n.frame.right),'v15: her shelf line runs across the panel');
-      assert.ok(near(o.shelf.left,o.frame.left)&&o.shelf.right<o.frame.right-40,'Baseline carries the short shelf line');
       assert.deepEqual([n.shelf.bottom,n.shelf.height],[o.shelf.bottom,o.shelf.height],'v15: the shelf line keeps its level and thickness');
       assert.equal(n.headingAlign,'center','v15: the Vault heading is centred');
       assert.ok(Math.abs(centre(n.headingText)-mid(n))<0.75,'v15: the heading words stand in the middle');
-      assert.ok(o.headingAlign!=='center'&&mid(o)-centre(o.headingText)>10,'Baseline carries the heading at the left');
+      assert.equal(n.marker,false,'No heading focus marker when the page is opened directly');
+      assert.deepEqual(rounded(n),rounded(o),'The Vault title equals the baseline across the panel');
       assert.deepEqual(rounded([n.frame,n.heading]),rounded([o.frame,o.heading]),'v15: the panel and the heading box are where they were');
       assert.deepEqual(rounded([newLayout.title,newLayout.picture]),rounded([oldLayout.title,oldLayout.picture]),'v15: the Vault title panel and picture keep their vertical place and height');
-      checks.push('v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline');
+      checks.push('Vault title: the picture in the middle of the panel, the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred (v15); the whole title equals the baseline across the panel and in every vertical place');
     }
     if(name==='deposit'||name==='redeem') {
       assert.equal(newLayout.across.marker,false,'No heading focus marker when the page is opened directly');
-      assert.deepEqual(rounded(newLayout.across),rounded(oldLayout.across),'v15: the '+name+' title equals the baseline across the panel');
-      assert.deepEqual(rounded([newLayout.title,newLayout.picture]),rounded([oldLayout.title,oldLayout.picture]),'v15: the '+name+' title panel and picture equal the baseline');
-      checks.push('v15 '+name+': the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker');
+      assert.deepEqual(rounded(newLayout.across),rounded(oldLayout.across),'The '+name+' title equals the baseline across the panel');
+      assert.deepEqual(rounded([newLayout.title,newLayout.picture]),rounded([oldLayout.title,oldLayout.picture]),'The '+name+' title panel and picture equal the baseline');
+      checks.push(name+' title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker');
     }
     assert.ok(statusFixtureReads>beforeFixtureReads,'State comparison consumes the existing depositStatus fixture');
-    assert.equal(oldLayout.led.signs.length,newLayout.led.signs.length,'Baseline and v15 carry the same sign count');
+    assert.equal(oldLayout.led.signs.length,newLayout.led.signs.length,'Baseline and this build carry the same sign count');
     if(statusCase==='normal') {
       assert.equal(newLayout.depositStatus.length,0,'Normal operation has no extra status area');
       assert.equal(newLayout.led.signs.length,0,'Normal operation has no sign');
@@ -379,7 +378,7 @@ try {
     }
     for(const x of prior) {
       const y=counterpart(x);
-      // v15 changes no word and no vertical place: every prior first-screen element is there, where it was. No exception.
+      // No word and no vertical place changes: every prior first-screen element is there, where it was. No exception.
       if(y&&y.bottom<=812) {
         if(!near(y.y,x.y)||!near(y.bottom,x.bottom))regressions.push({...x,now:y,reason:'First-screen content moved vertically'});
         continue;
@@ -406,6 +405,6 @@ try {
   }
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements with their words in the same vertical place, no exception; the Vault title across the panel as decided in v15, the Deposit and Redeem titles equal to the baseline; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements with their words in the same vertical place, no exception; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}

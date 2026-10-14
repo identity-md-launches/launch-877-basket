@@ -2211,10 +2211,10 @@ try {
     // The existing fork clock advances with real elapsed time. Only its derived deadlines vary by run.
     // The gate separately compares exact calldata/deadlines at six fixed clocks; send capture checks live clock above.
     const normalized=records=>records.map(record=>['deposit','redeem'].includes(record.functionName)?{...record,args:[...record.args.slice(0,-1),'browser-clock-plus-600']}:record);
-    assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal v14 apart from wall-clock-derived deadlines');
-    // v15 changes style rules for phones only: the previous record is the v14 walk, and every one of its checks is
-    // here under the same name in the same order, with none added, renamed or left out.
-    assert.deepEqual(checks,previous.checks,'Every v14 page check retained under its name, in order, and none added');
+    assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal the previous walk apart from wall-clock-derived deadlines');
+    // The previous record is the walk of the live commit: every one of its checks is here under the same name in
+    // the same order, with none added, renamed or left out (v15 and v16 change no page check).
+    assert.deepEqual(checks,previous.checks,'Every page check of the previous walk retained under its name, in order, and none added');
     assert.deepEqual(shots,previous.shots,'Every prior screenshot retained in order');
   }
   assert.equal(revoked.length,0);

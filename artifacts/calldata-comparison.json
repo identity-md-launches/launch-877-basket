@@ -1,6 +1,6 @@
 {
   "result": "PASS",
-  "baseline": "c05c174f639d352fb6184636bcc6e083031daa65",
+  "baseline": "5110ca96c434441cdffaec727413c54ede26dafe",
   "protectedFiles": [
     "BaskGuide.tsx",
     "Docs.tsx",
@@ -8,7 +8,6 @@
     "Losses.tsx",
     "Owner.tsx",
     "Scenery.tsx",
-    "Tokenomics.tsx",
     "Vault.tsx",
     "components.tsx",
     "main.tsx",
@@ -20,11 +19,78 @@
     "model.ts",
     "newYork.ts",
     "poolMath.ts",
-    "tokenomicsData.ts",
     "vault.abi.json"
   ],
-  "editedFiles": {},
-  "v12Pieces": {},
+  "editedFiles": {
+    "Tokenomics.tsx": "2 documented pieces [v12, HEAD]",
+    "tokenomicsData.ts": "4 documented pieces [v12, HEAD]"
+  },
+  "v12Pieces": {
+    "Tokenomics.tsx": [
+      {
+        "v12": {
+          "length": 283,
+          "sha256": "c79c03dbd0a71d1fb76c1c7da22cc7d470207acac8e710035e0c5debd745c9a5"
+        },
+        "head": {
+          "length": 284,
+          "sha256": "eaac5f8aa979896efce16a28322021d30e8973d71aef4a76e521b6f6b3830332"
+        }
+      },
+      {
+        "v12": {
+          "length": 1484,
+          "sha256": "0e772588c022df5140c19f3106aa6f5a505f80c7c2279c4253734266930c7edc"
+        },
+        "head": {
+          "length": 1734,
+          "sha256": "a4138c9013a487eac27a4d8f962268e07b1e66f9d1f23339feca839696e961bb"
+        }
+      }
+    ],
+    "tokenomicsData.ts": [
+      {
+        "v12": {
+          "length": 121,
+          "sha256": "662384ba1a7b1ca701ec5bdb92c15f05b81435784b7bda60d9be9e5ddc1b377b"
+        },
+        "head": {
+          "length": 146,
+          "sha256": "63f7faacea44e89a17c97fc5b952d138b02fb9410feac59f45e96c0bba93a6d2"
+        }
+      },
+      {
+        "v12": {
+          "length": 1109,
+          "sha256": "4abeb5f09854e0ee3d9cf971724da2e9b16466da8fb6cafef065c54247b94f0f"
+        },
+        "head": {
+          "length": 1003,
+          "sha256": "a9baa3f1080184d999d702e4477ca9d9563276d9947aae0680c2dc66a37537f1"
+        }
+      },
+      {
+        "v12": {
+          "length": 333,
+          "sha256": "96b773f6a3d617ba5f573fd9576317cd843a7d7416ce8a0c19246492cbf3ab99"
+        },
+        "head": {
+          "length": 325,
+          "sha256": "76ffc1c3c48bd9d05c9218c8f8372c8f81e688971c13cbd385b5f6fb18b1f662"
+        }
+      },
+      {
+        "v12": {
+          "length": 440,
+          "sha256": "d4af53fee00359583c95e8831361e0e920cec311910294d4581d77a30eb0c19b"
+        },
+        "head": {
+          "length": 517,
+          "sha256": "8f056b78428b31bbae13c0368df5272e683b59052c322b2a8f672b17659c85b5"
+        }
+      }
+    ]
+  },
   "counts": {
     "BaskGuide.tsx": {
       "guarded": 0,
@@ -113,7 +179,7 @@
     },
     "tokenomicsData.ts": {
       "guarded": 0,
-      "calls": 29,
+      "calls": 25,
       "attributes": 0
     },
     "wallet.tsx": {
@@ -124,7 +190,28 @@
   },
   "documentedGuardedCallChanges": {},
   "documentedAttributeChanges": {},
-  "documentedCallChanges": {},
+  "documentedCallChanges": {
+    "Tokenomics.tsx": {
+      "why": "v16 (owner-approved chart correction, 2026-10-13): the release chart shows one line, the total ITEM available. Its two component lines (liquidity rewards released, development vested) and their legend entries are removed, the caption and the one legend line are re-worded, and the legend's two figures are formatted from the data file's own launch and supply constants. The total line and its area, the axes, the points, the tables and the null-address guard before the only optional read are HEAD's. No read, send, storage or network use is added.",
+      "piecesPutBackInsideCalls": [],
+      "removed": [
+        "line(gaugeReleased)",
+        "line(developmentVested)"
+      ],
+      "newUsesOfWatchedNames": []
+    },
+    "tokenomicsData.ts": {
+      "why": "v16 (owner-approved chart correction, 2026-10-13): reviewed words only. One allocation term, the two release paragraphs, the release table's three column headings and the chart's accessible description are re-worded to describe the total available with liquidity providers staked from launch; the description no longer formats the two component totals. Every number, formula, schedule, address constant and helper is HEAD's.",
+      "piecesPutBackInsideCalls": [],
+      "removed": [
+        "formatItem(GAUGE_ALLOCATION)",
+        "formatItem(developmentVested(CLIFF))",
+        "developmentVested(CLIFF)",
+        "formatItem(VESTED_ALLOCATION)"
+      ],
+      "newUsesOfWatchedNames": []
+    }
+  },
   "vaultStockShelves": {
     "attributes": [
       "role=\"img\"",
@@ -193,16 +280,100 @@
     "addedInV12": []
   },
   "browserStorageAddedInV12": {},
-  "namesAddedAtTheTopOfAFile": {},
-  "moduleDeclarationChanges": {},
+  "namesAddedAtTheTopOfAFile": {
+    "Tokenomics.tsx": {
+      "OUTSIDE_AT_LAUNCH": "import OUTSIDE_AT_LAUNCH from \"./tokenomicsData\"",
+      "TOTAL_SUPPLY": "import TOTAL_SUPPLY from \"./tokenomicsData\""
+    },
+    "tokenomicsData.ts": {}
+  },
+  "moduleDeclarationChanges": {
+    "Tokenomics.tsx": [
+      {
+        "name": "gaugeReleased",
+        "head": [
+          "import gaugeReleased from \"./tokenomicsData\""
+        ],
+        "now": null
+      },
+      {
+        "name": "developmentVested",
+        "head": [
+          "import developmentVested from \"./tokenomicsData\""
+        ],
+        "now": null
+      }
+    ],
+    "tokenomicsData.ts": [
+      {
+        "name": "ALLOCATIONS",
+        "head": [
+          "ALLOCATIONS = [ { \"share\": 49, \"amount\": 490000000, \"who\": \"BASK/USDG liquidity providers\", \"terms\": \"Released by the gauge over four years, front loaded, only while someone is staked\" }, { \"share\": 21, \"amount\": 210000000, \"who\": \"ITEM/ETH liquidity providers\", \"terms\": \"Same schedule, same rules\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"ITEM/ETH launch pool\", \"terms\": \"Paired with ETH at launch; where ITEM first trades\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"The IMD swarm that built and launched the contracts\", \"terms\": \"Paid to IMD's members under IMD's own rules\" }, { \"share\": 5, \"amount\": 50000000, \"who\": \"Operations\", \"terms\": \"Seeding the two pools and the first stakes; held by the owner wallet\" }, { \"share\": 4, \"amount\": 40000000, \"who\": \"Development, vested\", \"terms\": \"Nothing for 12 months, 25% at month 12, the rest evenly to month 48; cannot be revoked or sped up\" }, { \"share\": 1, \"amount\": 10000000, \"who\": \"Development, unlocked\", \"terms\": \"Sent once at launch\" } ] as const"
+        ],
+        "now": [
+          "ALLOCATIONS = [ { \"share\": 49, \"amount\": 490000000, \"who\": \"BASK/USDG liquidity providers\", \"terms\": \"Released over four years, with more rewards at the start\" }, { \"share\": 21, \"amount\": 210000000, \"who\": \"ITEM/ETH liquidity providers\", \"terms\": \"Same schedule, same rules\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"ITEM/ETH launch pool\", \"terms\": \"Paired with ETH at launch; where ITEM first trades\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"The IMD swarm that built and launched the contracts\", \"terms\": \"Paid to IMD's members under IMD's own rules\" }, { \"share\": 5, \"amount\": 50000000, \"who\": \"Operations\", \"terms\": \"Seeding the two pools and the first stakes; held by the owner wallet\" }, { \"share\": 4, \"amount\": 40000000, \"who\": \"Development, vested\", \"terms\": \"Nothing for 12 months, 25% at month 12, the rest evenly to month 48; cannot be revoked or sped up\" }, { \"share\": 1, \"amount\": 10000000, \"who\": \"Development, unlocked\", \"terms\": \"Sent once at launch\" } ] as const"
+        ]
+      },
+      {
+        "name": "PARAGRAPHS",
+        "head": [
+          "PARAGRAPHS = [ \"ITEM's supply is 1,000,000,000, created once at launch. Nothing can mint more. It is a plain token: anyone can hold, send or trade it.\", \"How the supply is divided:\", \"What is available when. At launch, 26% of the supply exists outside the reward and vesting contracts: the launch pool, the swarm's share, operations and the unlocked development amount. The other 74% is held by contracts and comes out only on schedule: 70% through the two gauges, to the people staked in them, and 4% through vesting. If both gauges run without a pause, the most that can be outside those contracts is:\", \"A gauge's clock only runs while someone is staked, so these are the earliest dates, not fixed ones.\", \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\", \"What cannot change. The split above, the four-year gauge schedule, the 7-day fee stream and the vesting dates are constants in contracts with no owner. Nobody holds a key that can alter them.\" ] as const"
+        ],
+        "now": [
+          "PARAGRAPHS = [ \"ITEM's supply is 1,000,000,000, created once at launch. Nothing can mint more. It is a plain token: anyone can hold, send or trade it.\", \"How the supply is divided:\", \"What is available when. At launch, 260,000,000 ITEM (26% of the supply) is available through the launch pool, the swarm's share, operations and the unlocked development amount. The remaining 740,000,000 ITEM is released over four years: 700,000,000 as liquidity rewards and 40,000,000 through development vesting. The chart and table show this schedule with liquidity providers staked in both reward pools from launch throughout the four years.\", \"The line shows the total ITEM available: the 260,000,000 available at launch plus the liquidity rewards and development tokens released by each date. The table shows the breakdown.\", \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\", \"What cannot change. The split above, the four-year gauge schedule, the 7-day fee stream and the vesting dates are constants in contracts with no owner. Nobody holds a key that can alter them.\" ] as const"
+        ]
+      },
+      {
+        "name": "RELEASE_HEADERS",
+        "head": [
+          "RELEASE_HEADERS = [\"End of\", \"Released by the gauges\", \"Vested\", \"Outside the contracts, at most\"] as const"
+        ],
+        "now": [
+          "RELEASE_HEADERS = [\"End of\", \"Liquidity rewards released\", \"Development unlocked\", \"Total ITEM available\"] as const"
+        ]
+      },
+      {
+        "name": "RELEASE_LABEL",
+        "head": [
+          "RELEASE_LABEL = \"Outside the contracts, at most: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Liquidity rewards released: \" + formatItem(GAUGE_ALLOCATION) + \" over four years. Development vested: 0 before month 12, \" + formatItem(developmentVested(CLIFF)) + \" at month 12, \" + formatItem(VESTED_ALLOCATION) + \" at month 48.\""
+        ],
+        "now": [
+          "RELEASE_LABEL = \"Total ITEM available: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Includes the launch allocation, liquidity rewards and unlocked development tokens, with liquidity providers staked in both reward pools throughout the four years.\""
+        ]
+      }
+    ]
+  },
   "namesAddedInsideComponents": {},
-  "transactionCode": {},
-  "reviewedAddedCalls": {},
+  "transactionCode": {
+    "Tokenomics.tsx": {
+      "pieces": 0,
+      "namesDeclaredAroundThem": []
+    },
+    "tokenomicsData.ts": {
+      "pieces": 0,
+      "namesDeclaredAroundThem": []
+    }
+  },
+  "reviewedAddedCalls": {
+    "Tokenomics.tsx": {
+      "sha256": "7227ef4f006ce23b4c3ab906792bbf5a6a714da0bec09c988611e350d7ebd540",
+      "callees": "formatItem formatItem"
+    },
+    "tokenomicsData.ts": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "callees": ""
+    }
+  },
   "reviewedSourcePins": {
     "Docs.tsx": "6c9cc7e308109e50b7b9a6e5c861fc4d9feec927e7d568f4c238e9a807930e77",
-    "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309"
+    "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
+    "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
+    "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
   },
-  "transactionStateWrites": {},
+  "transactionStateWrites": {
+    "Tokenomics.tsx": 0,
+    "tokenomicsData.ts": 0
+  },
   "protectedCode": {
     "sendTailWrites": [
       "sent = mined;",

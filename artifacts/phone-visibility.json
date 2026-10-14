@@ -48,7 +48,7 @@
     "hintGrowth": 0,
     "checks": [
       "Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline",
-      "v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline",
+      "Vault title: the picture in the middle of the panel, the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred (v15); the whole title equals the baseline across the panel and in every vertical place",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -109,7 +109,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
@@ -171,7 +171,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 redeem: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "redeem title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Owner follow-up: no normal status area/sign",
       "Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line",
       "header retains its exact position and height",
@@ -403,7 +403,7 @@
     "hintGrowth": 0,
     "checks": [
       "Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline",
-      "v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline",
+      "Vault title: the picture in the middle of the panel, the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred (v15); the whole title equals the baseline across the panel and in every vertical place",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -454,7 +454,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: no normal status area/sign",
       "header retains its exact position and height",
@@ -506,7 +506,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 redeem: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "redeem title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Owner follow-up: no normal status area/sign",
       "Redeem: unchanged; one column, no aside, exact quiet claims line, no wallet-switch line",
       "header retains its exact position and height",
@@ -798,7 +798,7 @@
     "hintGrowth": 0,
     "checks": [
       "Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline",
-      "v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline",
+      "Vault title: the picture in the middle of the panel, the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred (v15); the whole title equals the baseline across the panel and in every vertical place",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -859,7 +859,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
@@ -902,7 +902,7 @@
     "hintGrowth": 0,
     "checks": [
       "Vault: heading, empty title paragraphs, panel height, capacity label and figure value equal the baseline",
-      "v15 Vault: the picture in the middle of the panel (left of it at the baseline), the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred; panel, heading box, picture height and every vertical place equal the baseline",
+      "Vault title: the picture in the middle of the panel, the bubble in its place beside her head and inside the frame, the shelf line across the panel, the heading centred (v15); the whole title equals the baseline across the panel and in every vertical place",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion",
@@ -953,7 +953,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: exact single closed sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
@@ -1015,7 +1015,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: exact single weekend sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",
@@ -1067,7 +1067,7 @@
     ],
     "hintGrowth": 0,
     "checks": [
-      "v15 deposit: the title (picture, bubble, heading, shelf line) equals the baseline while the heading has no focus marker",
+      "deposit title: picture, bubble, heading and shelf line equal the baseline while the heading has no focus marker",
       "Deposit: open stock list across the panel in both empty states, no fold, one button per open stock; the whole list equals the baseline",
       "Owner follow-up: exact single weekend sentence, compact Vault Closed notice, Deposit-only CLOSED sign",
       "header retains its exact position and height",

@@ -1,7 +1,7 @@
 {
   "checks": [
     "vault: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1",
-    "vault: Stock shelves restocking swing once per label (0 of 0 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1",
+    "vault: Stock shelves restocking swing once per label (25 of 25 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1",
     "deposit: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1",
     "redeem: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1",
     "docs: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1",
@@ -14,7 +14,7 @@
     "Marquee (4 whole lines per half, each half its own endless Web Animation at 16 px/s, no CSS animation, will-change or 3D) covers 2560px at every sampled loop phase incl. both resets, no animationiteration event across a real reset, DPR 1",
     "Marquee (5 whole lines per half, each half its own endless Web Animation at 16 px/s, no CSS animation, will-change or 3D) covers 3440px at every sampled loop phase incl. both resets, no animationiteration event across a real reset, DPR 1",
     "vault: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.25",
-    "vault: Stock shelves restocking swing once per label (0 of 0 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1.25",
+    "vault: Stock shelves restocking swing once per label (25 of 25 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1.25",
     "deposit: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.25",
     "redeem: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.25",
     "docs: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.25",
@@ -27,7 +27,7 @@
     "Marquee (4 whole lines per half, each half its own endless Web Animation at 16 px/s, no CSS animation, will-change or 3D) covers 2560px at every sampled loop phase incl. both resets, no animationiteration event across a real reset, DPR 1.25",
     "Marquee (5 whole lines per half, each half its own endless Web Animation at 16 px/s, no CSS animation, will-change or 3D) covers 3440px at every sampled loop phase incl. both resets, no animationiteration event across a real reset, DPR 1.25",
     "vault: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.5",
-    "vault: Stock shelves restocking swing once per label (0 of 0 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1.5",
+    "vault: Stock shelves restocking swing once per label (25 of 25 labels seen swinging), one iteration within 2 s, nothing moving afterwards or on scrolling back, DPR 1.5",
     "deposit: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.5",
     "redeem: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.5",
     "docs: title/brand/sticker geometry stable while scrolling at Linux Chromium DPR 1.5",
