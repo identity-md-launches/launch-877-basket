@@ -1,13 +1,15 @@
-2026-10-13 UTC — v16 exact Tokenomics patch
-Baseline: 5110ca96c434441cdffaec727413c54ede26dafe
-Patch: 75439 bytes; SHA-256 70b48e86410f60901130e5297a48e148d43639908c33a1fdea345b9cf6a8863e
-All 11 patched files remain byte-identical to the applied patch.
-npm ci passed with npm_config_cache=/tmp/basket-v16-npm-cache after the default cache returned EROFS.
-See artifacts/validation.md for all current check results and the archive fork exception.
+2026-10-15 UTC — v17 exact contact-links patch
+Baseline: 27315d9974a065935f260dec29a52fa30fc7a109
+Patch: 38635 bytes; SHA-256 ffafe41d5de02854fb4ced73a13309782450e40c27dce759ac1bbe45a5e50dca
+All seven patched files remain byte-identical to the applied patch.
+npm ci --cache ../test/scratch/npm-cache: PASS; existing manifest and lockfile unchanged.
+All five required production filenames and SHA-256 values match exactly.
+See artifacts/validation.md for the current check results, visibility failure and archive limitation.
 
 
 > basket-protocol-web@1.0.0 typecheck
 > tsc --noEmit
+
 
 
 > basket-protocol-web@1.0.0 build
@@ -22,11 +24,11 @@ computing gzip size...
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
 ../dist/assets/index-BRdefnhV.css     48.90 kB │ gzip:  11.10 kB
-../dist/assets/ccip-CsUE1brP.js        2.61 kB │ gzip:   1.23 kB
-../dist/assets/index-7uhBO_VC.js     604.00 kB │ gzip: 185.71 kB
+../dist/assets/ccip-9XcyZzby.js        2.61 kB │ gzip:   1.23 kB
+../dist/assets/index-CI-SOoQ1.js     604.48 kB │ gzip: 185.78 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 8.03s
+✓ built in 8.67s

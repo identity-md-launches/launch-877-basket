@@ -282,6 +282,10 @@ function App() {
             <a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">
               Basket Protocol on X
             </a>
+            <a href="https://t.me/basket_protocol" target="_blank" rel="noreferrer">
+              Basket Protocol on Telegram
+            </a>
+            <a href="mailto:protocolbasket@gmail.com">protocolbasket@gmail.com</a>
           </span>
         </div>
         <div>

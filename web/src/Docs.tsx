@@ -249,6 +249,14 @@ export function DocsPage() {
               Basket Protocol on X
             </a>
           </p>
+          <p>
+            <a href="https://t.me/basket_protocol" target="_blank" rel="noreferrer">
+              Basket Protocol on Telegram
+            </a>
+          </p>
+          <p>
+            Contact: <a href="mailto:protocolbasket@gmail.com">protocolbasket@gmail.com</a>
+          </p>
         </section>
       </div>
       </div>

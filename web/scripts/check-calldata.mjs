@@ -11,21 +11,20 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v16 on HEAD=v15: two things. (1) The owner-approved Tokenomics chart correction ("we should only show the supply as if
-// the protocol has depositors"; "yes make it that"): Tokenomics.tsx and tokenomicsData.ts lose the chart's two component
-// lines and their legend entries and change reviewed words and labels; the total line, every number, formula and the
-// null-address guard are HEAD's. (2) A check script: check-motion.mjs counts the strip's own animation events only.
+// v17 on HEAD=v16: one thing. The owner's contact links (2026-10-15): main.tsx gains two links in the footer and Docs.tsx
+// the same two in the "Find Basket" panel (the project's Telegram group and its e-mail address), beside the X link that
+// HEAD already has. No call, attribute that acts, import, state, storage, wallet request or chain read is added.
 // Every other web/src file is byte-identical to HEAD, styles.css included. Transactions and chain reads remain HEAD's.
 const protectedFiles=[
  "BaskGuide.tsx",
- "Docs.tsx",
  "Flows.tsx",
  "Losses.tsx",
  "Owner.tsx",
  "Scenery.tsx",
  "Vault.tsx",
  "components.tsx",
- "main.tsx",
+ "Tokenomics.tsx",
+ "tokenomicsData.ts",
  "wallet.tsx",
  "baskGuideData.ts",
  "chain.ts",
@@ -64,34 +63,26 @@ assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarr
 // v16: no style rule after HEAD's text (the v15 rules are HEAD's own now).
 const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
 assert.equal(cssTail,'','v16: no style rule after the text of HEAD');
-// The v16 files: byte-identical to HEAD once their documented pieces [v16, HEAD] are put back (each exactly once), so
+// The v17 files: byte-identical to HEAD once their documented pieces [v16, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v16 pieces (generated from the difference to HEAD, not edited by hand)
+// >>> v17 pieces (generated from the difference to HEAD, not edited by hand)
 const editedFiles={
- "Tokenomics.tsx":[
-  ["import { many } from \"./chain\";\nimport { ADDRESSES, ALLOCATIONS, ALLOCATION_HEADERS, ALLOCATION_ROWS, RELEASE_HEADERS, RELEASE_ROWS, PARAGRAPHS, T, OUTSIDE_AT_LAUNCH, TOTAL_SUPPLY, outsideContracts, formatItem, SUPPLY_LABEL, RELEASE_LABEL, type Addresses } from \"./tokenomicsData\";\n\n",
-   "import { many } from \"./chain\";\nimport { ADDRESSES, ALLOCATIONS, ALLOCATION_HEADERS, ALLOCATION_ROWS, RELEASE_HEADERS, RELEASE_ROWS, PARAGRAPHS, T, gaugeReleased, developmentVested, outsideContracts, formatItem, SUPPLY_LABEL, RELEASE_LABEL, type Addresses } from \"./tokenomicsData\";\n\n"],
-  ["  const line = (fn: (seconds: number) => number) => samples.map((m, i) => `${i ? \"L\" : \"M\"}${x(m).toFixed(3)},${y(fn(m / 48 * T)).toFixed(3)}`).join(\" \");\n  return <svg viewBox={`0 0 ${width} ${height}`} role=\"img\" aria-label={RELEASE_LABEL}>{[0, 250, 500, 750, 1000].map(n => <g key={n}><line x1={l} x2={width - r} y1={y(n * 1e6)} y2={y(n * 1e6)} stroke=\"var(--line)\" strokeOpacity=\".4\" /><text x={l - 8} y={y(n * 1e6) + 4} textAnchor=\"end\">{formatItem(n)}</text></g>)}{[0, 12, 24, 36, 48].map(m => <text key={m} x={x(m)} y={height - 6} textAnchor={m === 48 ? \"end\" : \"middle\"}>{m}</text>)}<path d={`${line(outsideContracts)} L${x(48)},${y(0)} L${x(0)},${y(0)} Z`} fill=\"var(--royal)\" fillOpacity=\".05\" /><path d={line(outsideContracts)} fill=\"none\" stroke=\"var(--royal)\" strokeWidth=\"3\" />{[12, 24, 36, 48].map(m => <circle key={m} cx={x(m)} cy={y(outsideContracts(m / 48 * T))} r=\"3.5\" fill=\"var(--royal)\" />)}</svg>;\n}\nfunction ReleaseChart() {\n  return <figure className=\"tm-chart tm-release\"><figcaption>Total ITEM available</figcaption><div className=\"tm-unit\">Million ITEM</div><div className=\"tm-plot-wide\"><Curve width={1000} height={310} /></div><div className=\"tm-plot-phone\"><Curve width={248} height={228} /></div><div className=\"tm-x-label\">Months after launch</div><div className=\"tm-series\"><span><i className=\"tm-line outside\" />{formatItem(OUTSIDE_AT_LAUNCH / 1e6)} million at launch → {formatItem(TOTAL_SUPPLY / 1e9)} billion by year four</span></div></figure>;\n}\n",
-   "  const line = (fn: (seconds: number) => number) => samples.map((m, i) => `${i ? \"L\" : \"M\"}${x(m).toFixed(3)},${y(fn(m / 48 * T)).toFixed(3)}`).join(\" \");\n  return <svg viewBox={`0 0 ${width} ${height}`} role=\"img\" aria-label={RELEASE_LABEL}>{[0, 250, 500, 750, 1000].map(n => <g key={n}><line x1={l} x2={width - r} y1={y(n * 1e6)} y2={y(n * 1e6)} stroke=\"var(--line)\" strokeOpacity=\".4\" /><text x={l - 8} y={y(n * 1e6) + 4} textAnchor=\"end\">{formatItem(n)}</text></g>)}{[0, 12, 24, 36, 48].map(m => <text key={m} x={x(m)} y={height - 6} textAnchor={m === 48 ? \"end\" : \"middle\"}>{m}</text>)}<path d={`${line(outsideContracts)} L${x(48)},${y(0)} L${x(0)},${y(0)} Z`} fill=\"var(--royal)\" fillOpacity=\".05\" /><path d={line(outsideContracts)} fill=\"none\" stroke=\"var(--royal)\" strokeWidth=\"3\" /><path d={line(gaugeReleased)} fill=\"none\" stroke=\"var(--ink)\" strokeWidth=\"2.5\" strokeDasharray=\"7 4\" /><path d={line(developmentVested)} fill=\"none\" stroke=\"var(--red)\" strokeWidth=\"2.5\" />{[12, 24, 36, 48].map(m => <circle key={m} cx={x(m)} cy={y(outsideContracts(m / 48 * T))} r=\"3.5\" fill=\"var(--royal)\" />)}</svg>;\n}\nfunction ReleaseChart() {\n  return <figure className=\"tm-chart tm-release\"><figcaption>Released over four years</figcaption><div className=\"tm-unit\">Million ITEM</div><div className=\"tm-plot-wide\"><Curve width={1000} height={310} /></div><div className=\"tm-plot-phone\"><Curve width={248} height={228} /></div><div className=\"tm-x-label\">Months after launch</div><div className=\"tm-series\"><span><i className=\"tm-line outside\" />Outside the contracts, at most</span><span><i className=\"tm-line liquidity\" />Liquidity rewards released</span><span><i className=\"tm-line vested\" />Development vested</span></div></figure>;\n}\n"]
+ "main.tsx":[
+  ["            </a>\n            <a href=\"https://t.me/basket_protocol\" target=\"_blank\" rel=\"noreferrer\">\n              Basket Protocol on Telegram\n            </a>\n            <a href=\"mailto:protocolbasket@gmail.com\">protocolbasket@gmail.com</a>\n          </span>\n",
+   "            </a>\n          </span>\n"]
  ],
- "tokenomicsData.ts":[
-  ["    \"who\": \"BASK/USDG liquidity providers\",\n    \"terms\": \"Released over four years, with more rewards at the start\"\n  },\n",
-   "    \"who\": \"BASK/USDG liquidity providers\",\n    \"terms\": \"Released by the gauge over four years, front loaded, only while someone is staked\"\n  },\n"],
-  ["  \"How the supply is divided:\",\n  \"What is available when. At launch, 260,000,000 ITEM (26% of the supply) is available through the launch pool, the swarm's share, operations and the unlocked development amount. The remaining 740,000,000 ITEM is released over four years: 700,000,000 as liquidity rewards and 40,000,000 through development vesting. The chart and table show this schedule with liquidity providers staked in both reward pools from launch throughout the four years.\",\n  \"The line shows the total ITEM available: the 260,000,000 available at launch plus the liquidity rewards and development tokens released by each date. The table shows the breakdown.\",\n  \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\",\n",
-   "  \"How the supply is divided:\",\n  \"What is available when. At launch, 26% of the supply exists outside the reward and vesting contracts: the launch pool, the swarm's share, operations and the unlocked development amount. The other 74% is held by contracts and comes out only on schedule: 70% through the two gauges, to the people staked in them, and 4% through vesting. If both gauges run without a pause, the most that can be outside those contracts is:\",\n  \"A gauge's clock only runs while someone is staked, so these are the earliest dates, not fixed ones.\",\n  \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\",\n"],
-  ["export const ALLOCATION_HEADERS = [\"Share\",\"ITEM\",\"Who\",\"Terms\"] as const;\nexport const RELEASE_HEADERS = [\"End of\",\"Liquidity rewards released\",\"Development unlocked\",\"Total ITEM available\"] as const;\nexport const ADDRESSES: Record<\"ITEM\" | \"ITEM_STAKING\" | \"BASK_USDG_GAUGE\" | \"ITEM_ETH_GAUGE\" | \"DEV_VESTING\", Address | null> = {\n",
-   "export const ALLOCATION_HEADERS = [\"Share\",\"ITEM\",\"Who\",\"Terms\"] as const;\nexport const RELEASE_HEADERS = [\"End of\",\"Released by the gauges\",\"Vested\",\"Outside the contracts, at most\"] as const;\nexport const ADDRESSES: Record<\"ITEM\" | \"ITEM_STAKING\" | \"BASK_USDG_GAUGE\" | \"ITEM_ETH_GAUGE\" | \"DEV_VESTING\", Address | null> = {\n"],
-  ["export const SUPPLY_LABEL = ALLOCATIONS.map(r => r.who + \" \" + r.share + \"%\").join(\", \");\nexport const RELEASE_LABEL = \"Total ITEM available: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Includes the launch allocation, liquidity rewards and unlocked development tokens, with liquidity providers staked in both reward pools throughout the four years.\";\n",
-   "export const SUPPLY_LABEL = ALLOCATIONS.map(r => r.who + \" \" + r.share + \"%\").join(\", \");\nexport const RELEASE_LABEL = \"Outside the contracts, at most: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Liquidity rewards released: \" + formatItem(GAUGE_ALLOCATION) + \" over four years. Development vested: 0 before month 12, \" + formatItem(developmentVested(CLIFF)) + \" at month 12, \" + formatItem(VESTED_ALLOCATION) + \" at month 48.\";\n"]
+ "Docs.tsx":[
+  ["          </p>\n          <p>\n            <a href=\"https://t.me/basket_protocol\" target=\"_blank\" rel=\"noreferrer\">\n              Basket Protocol on Telegram\n            </a>\n          </p>\n          <p>\n            Contact: <a href=\"mailto:protocolbasket@gmail.com\">protocolbasket@gmail.com</a>\n          </p>\n        </section>\n",
+   "          </p>\n        </section>\n"]
  ]
 };
-// <<< v16 pieces
+// <<< v17 pieces
 assert.deepEqual(Object.keys(editedFiles),[
- "Tokenomics.tsx",
- "tokenomicsData.ts"
-],'the v16 files');
+ "main.tsx",
+ "Docs.tsx"
+],'the v17 files');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -151,11 +142,11 @@ const expected={};
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v16 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v17 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
 
 };
-// <<< v16 attributes
+// <<< v17 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -168,28 +159,7 @@ const attributeChanges={
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
 // Reviewed v16 differences in calls and watched-name uses. Independent of the generated pieces.
-const callChanges={
- "Tokenomics.tsx": {
-  "why": "v16 (owner-approved chart correction, 2026-10-13): the release chart shows one line, the total ITEM available. Its two component lines (liquidity rewards released, development vested) and their legend entries are removed, the caption and the one legend line are re-worded, and the legend's two figures are formatted from the data file's own launch and supply constants. The total line and its area, the axes, the points, the tables and the null-address guard before the only optional read are HEAD's. No read, send, storage or network use is added.",
-  "pieces": [],
-  "removed": [
-   "line(gaugeReleased)",
-   "line(developmentVested)"
-  ],
-  "uses": []
- },
- "tokenomicsData.ts": {
-  "why": "v16 (owner-approved chart correction, 2026-10-13): reviewed words only. One allocation term, the two release paragraphs, the release table's three column headings and the chart's accessible description are re-worded to describe the total available with liquidity providers staked from launch; the description no longer formats the two component totals. Every number, formula, schedule, address constant and helper is HEAD's.",
-  "pieces": [],
-  "removed": [
-   "formatItem(GAUGE_ALLOCATION)",
-   "formatItem(developmentVested(CLIFF))",
-   "developmentVested(CLIFF)",
-   "formatItem(VESTED_ALLOCATION)"
-  ],
-  "uses": []
- }
-};
+const callChanges={};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
 function stateNames(text,file){
@@ -240,7 +210,7 @@ function localDeclarations(file,text,fn,list){
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v16 file');
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v17 file');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -264,11 +234,11 @@ if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
 const addedCallPins={
- "Tokenomics.tsx": {
-  "sha256": "7227ef4f006ce23b4c3ab906792bbf5a6a714da0bec09c988611e350d7ebd540",
-  "callees": "formatItem formatItem"
+ "main.tsx": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
  },
- "tokenomicsData.ts": {
+ "Docs.tsx": {
   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "callees": ""
  }
@@ -276,7 +246,8 @@ const addedCallPins={
 // <<< reviewed calls
 // The exact reviewed source of the two v14 files (frozen now) and of the two v16 files, beyond either generated block.
 const reviewedSourcePins={
- "Docs.tsx": "6c9cc7e308109e50b7b9a6e5c861fc4d9feec927e7d568f4c238e9a807930e77",
+ "Docs.tsx": "80a96319c164bfecef20669b86f4cae043c98e714123ff97b065b884e21d228e",
+ "main.tsx": "57c087df660d9d60b3c6b2ca6d4708136cbb8850681ec9fdd3843ae4b9f0d53a",
  "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
  "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
  "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
@@ -450,12 +421,27 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v16 adds nothing a page loads or opens: every file equals HEAD here (the module files are scanned above too).
-const loadDisplayAdded={};
+// v17 adds exactly four links a page opens, the owner's contact links (2026-10-15), each written out here with its place:
+// the Telegram group and the e-mail address in the footer (main.tsx, after the X link) and in the Docs "Find Basket"
+// panel (Docs.tsx, after the X link). Nothing else a page loads or opens changes in any file: HEAD's list stays complete,
+// in order and in place, and the only additions are these, in this order.
+const loadDisplayAdded={
+ "main.tsx": [
+  {"place": "App", "text": "href=\"https://t.me/basket_protocol\""},
+  {"place": "App", "text": "href=\"mailto:protocolbasket@gmail.com\""}
+ ],
+ "Docs.tsx": [
+  {"place": "DocsPage", "text": "href=\"https://t.me/basket_protocol\""},
+  {"place": "DocsPage", "text": "href=\"mailto:protocolbasket@gmail.com\""}
+ ]
+};
 const loadUses={};
 for(const f of sources){
- const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f);
- assert.deepEqual(n,[...(loadDisplayAdded[f]??[]),...h],f+': something a page loads or opens (a picture, frame, worker or element made in script, a navigation, a link, a style attribute) was added, removed, changed or moved');
+ const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f),added=loadDisplayAdded[f]??[];
+ const isAdded=x=>added.some(a=>a.place===x.place&&a.text===x.text);
+ assert.deepEqual(n.filter(x=>!isAdded(x)),h,f+': something a page loads or opens (a picture, frame, worker or element made in script, a navigation, a link, a style attribute) was added, removed, changed or moved');
+ assert.deepEqual(n.filter(isAdded),added,f+': the added links differ from the documented ones in text, place, order or count');
+ for(const a of added)assert.equal(h.filter(x=>x.place===a.place&&x.text===a.text).length,0,f+': a documented added link already existed at HEAD: '+a.text);
  if(n.length)loadUses[f]=n.length;
 }
 // v12: the wallet and RPC methods the pages name. Every `method` given as a property (or assigned) in web/src, in order
@@ -681,70 +667,12 @@ for(const f of Object.keys(editedFiles)){
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
 const namesAdded={
- "Tokenomics.tsx": {
-  "OUTSIDE_AT_LAUNCH": "import OUTSIDE_AT_LAUNCH from \"./tokenomicsData\"",
-  "TOTAL_SUPPLY": "import TOTAL_SUPPLY from \"./tokenomicsData\""
- },
- "tokenomicsData.ts": {}
+ "main.tsx": {},
+ "Docs.tsx": {}
 };
 // v16: the exact declarations that change at the top of the two files (two imports leave Tokenomics.tsx; four data
 // declarations of tokenomicsData.ts carry the reviewed words); never generated by put-pieces.
-const moduleChanges={
- "Tokenomics.tsx": [
-  {
-   "name": "gaugeReleased",
-   "head": [
-    "import gaugeReleased from \"./tokenomicsData\""
-   ],
-   "now": null
-  },
-  {
-   "name": "developmentVested",
-   "head": [
-    "import developmentVested from \"./tokenomicsData\""
-   ],
-   "now": null
-  }
- ],
- "tokenomicsData.ts": [
-  {
-   "name": "ALLOCATIONS",
-   "head": [
-    "ALLOCATIONS = [ { \"share\": 49, \"amount\": 490000000, \"who\": \"BASK/USDG liquidity providers\", \"terms\": \"Released by the gauge over four years, front loaded, only while someone is staked\" }, { \"share\": 21, \"amount\": 210000000, \"who\": \"ITEM/ETH liquidity providers\", \"terms\": \"Same schedule, same rules\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"ITEM/ETH launch pool\", \"terms\": \"Paired with ETH at launch; where ITEM first trades\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"The IMD swarm that built and launched the contracts\", \"terms\": \"Paid to IMD's members under IMD's own rules\" }, { \"share\": 5, \"amount\": 50000000, \"who\": \"Operations\", \"terms\": \"Seeding the two pools and the first stakes; held by the owner wallet\" }, { \"share\": 4, \"amount\": 40000000, \"who\": \"Development, vested\", \"terms\": \"Nothing for 12 months, 25% at month 12, the rest evenly to month 48; cannot be revoked or sped up\" }, { \"share\": 1, \"amount\": 10000000, \"who\": \"Development, unlocked\", \"terms\": \"Sent once at launch\" } ] as const"
-   ],
-   "now": [
-    "ALLOCATIONS = [ { \"share\": 49, \"amount\": 490000000, \"who\": \"BASK/USDG liquidity providers\", \"terms\": \"Released over four years, with more rewards at the start\" }, { \"share\": 21, \"amount\": 210000000, \"who\": \"ITEM/ETH liquidity providers\", \"terms\": \"Same schedule, same rules\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"ITEM/ETH launch pool\", \"terms\": \"Paired with ETH at launch; where ITEM first trades\" }, { \"share\": 10, \"amount\": 100000000, \"who\": \"The IMD swarm that built and launched the contracts\", \"terms\": \"Paid to IMD's members under IMD's own rules\" }, { \"share\": 5, \"amount\": 50000000, \"who\": \"Operations\", \"terms\": \"Seeding the two pools and the first stakes; held by the owner wallet\" }, { \"share\": 4, \"amount\": 40000000, \"who\": \"Development, vested\", \"terms\": \"Nothing for 12 months, 25% at month 12, the rest evenly to month 48; cannot be revoked or sped up\" }, { \"share\": 1, \"amount\": 10000000, \"who\": \"Development, unlocked\", \"terms\": \"Sent once at launch\" } ] as const"
-   ]
-  },
-  {
-   "name": "PARAGRAPHS",
-   "head": [
-    "PARAGRAPHS = [ \"ITEM's supply is 1,000,000,000, created once at launch. Nothing can mint more. It is a plain token: anyone can hold, send or trade it.\", \"How the supply is divided:\", \"What is available when. At launch, 26% of the supply exists outside the reward and vesting contracts: the launch pool, the swarm's share, operations and the unlocked development amount. The other 74% is held by contracts and comes out only on schedule: 70% through the two gauges, to the people staked in them, and 4% through vesting. If both gauges run without a pause, the most that can be outside those contracts is:\", \"A gauge's clock only runs while someone is staked, so these are the earliest dates, not fixed ones.\", \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\", \"What cannot change. The split above, the four-year gauge schedule, the 7-day fee stream and the vesting dates are constants in contracts with no owner. Nobody holds a key that can alter them.\" ] as const"
-   ],
-   "now": [
-    "PARAGRAPHS = [ \"ITEM's supply is 1,000,000,000, created once at launch. Nothing can mint more. It is a plain token: anyone can hold, send or trade it.\", \"How the supply is divided:\", \"What is available when. At launch, 260,000,000 ITEM (26% of the supply) is available through the launch pool, the swarm's share, operations and the unlocked development amount. The remaining 740,000,000 ITEM is released over four years: 700,000,000 as liquidity rewards and 40,000,000 through development vesting. The chart and table show this schedule with liquidity providers staked in both reward pools from launch throughout the four years.\", \"The line shows the total ITEM available: the 260,000,000 available at launch plus the liquidity rewards and development tokens released by each date. The table shows the breakdown.\", \"Where value flows. ITEM pays the people who make BASK and ITEM tradable: liquidity providers earn ITEM from the gauges. ITEM holders who stake earn the vault's fees, 0.5% of every deposit and 0.5% of every redemption, paid in BASK. Trading fees in the two Uniswap v2 pools stay with the liquidity providers of those pools. Trades in the launch pool carry a 1.25% fee set by IMD: 1% to the protocol's operations wallet and 0.25% to IMD.\", \"What cannot change. The split above, the four-year gauge schedule, the 7-day fee stream and the vesting dates are constants in contracts with no owner. Nobody holds a key that can alter them.\" ] as const"
-   ]
-  },
-  {
-   "name": "RELEASE_HEADERS",
-   "head": [
-    "RELEASE_HEADERS = [\"End of\", \"Released by the gauges\", \"Vested\", \"Outside the contracts, at most\"] as const"
-   ],
-   "now": [
-    "RELEASE_HEADERS = [\"End of\", \"Liquidity rewards released\", \"Development unlocked\", \"Total ITEM available\"] as const"
-   ]
-  },
-  {
-   "name": "RELEASE_LABEL",
-   "head": [
-    "RELEASE_LABEL = \"Outside the contracts, at most: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Liquidity rewards released: \" + formatItem(GAUGE_ALLOCATION) + \" over four years. Development vested: 0 before month 12, \" + formatItem(developmentVested(CLIFF)) + \" at month 12, \" + formatItem(VESTED_ALLOCATION) + \" at month 48.\""
-   ],
-   "now": [
-    "RELEASE_LABEL = \"Total ITEM available: \" + formatItem(OUTSIDE_AT_LAUNCH) + \" at launch, \" + RELEASES.map(r => formatItem(r.outside) + \" at year \" + r.year).join(\", \") + \". Includes the launch allocation, liquidity rewards and unlocked development tokens, with liquidity providers staked in both reward pools throughout the four years.\""
-   ]
-  }
- ]
-};
+const moduleChanges={};
 // v16 changes no declaration at the top of a component or hook; never generated by put-pieces.
 const scopeChanges={};
 const newNames={};

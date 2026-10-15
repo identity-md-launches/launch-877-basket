@@ -97,6 +97,10 @@ Vault title, 660px and below: the picture's left edge is `max(0, min((panel - pi
 
 Deposit and Redeem titles, 660px and below, while the heading shows the focus marker (`:focus-visible`: a 3px ink outline inside a 6px yellow band; iPhone browsers show it after a tab is tapped): her shelf line sits 6px under her feet instead of 3px and ends 6px before the heading's left edge, which is the marker's outer edge, so the line and the marker's bottom band are one 3px yellow line into the corner. The rule uses `:has()` and applies only when forced colours are off; without the marker the line is v14's.
 
+## v17 presentation details
+
+Contact links (owner's decision, 2026-10-15). The footer's link row keeps its order and gains two entries after "Basket Protocol on X": "Basket Protocol on Telegram" (opens https://t.me/basket_protocol in a new tab, like the X link) and the project e-mail "protocolbasket@gmail.com" (a mailto link). The Docs page's "Find Basket" panel shows the same two under the X link, the e-mail as "Contact: protocolbasket@gmail.com". Same link style as the X link; no new rule in styles.css.
+
 ## v16 presentation details
 
 Tokenomics tab, release chart: a single royal-blue line with its light area and its four yearly points, captioned "Total ITEM available"; under the chart one legend entry with the blue line mark, "260 million at launch → 1 billion by year four". No dashed line, no red line. The release table's columns are "End of", "Liquidity rewards released", "Development unlocked" and "Total ITEM available". Sizes, colours, axes and the phone layout are v15's.

@@ -6,9 +6,9 @@ import {createHash} from 'node:crypto';
 const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const changed=git(['diff','--name-only','HEAD']).trim().split('\n').filter(Boolean);
-// v16 (owner-approved Tokenomics chart correction of 2026-10-13: one total line, reviewed words): only these two sources may change.
+// v17 (the owner's contact links, 2026-10-15: Telegram and e-mail in the footer and the Docs Find Basket panel): only these two sources may change.
 // check-calldata independently pins each reviewed source and freezes every other.
-const v16Source=['Tokenomics.tsx','tokenomicsData.ts'].map(f=>'web/src/'+f);
+const v17Source=['main.tsx','Docs.tsx'].map(f=>'web/src/'+f);
 const SHELL_SHA256='82f66899a0c19f61299254c0005ee5117af0a912b97e8e57d249288e9dbc962d';
 const SHARE_SHA256='dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85';
 // The new favicon: red panel, yellow frame, the header's basket in yellow.
@@ -23,10 +23,10 @@ for(const p of changed){
  // v12 section 5: the exact page shell is pinned below; build configuration and validation fixtures stay unchanged.
  assert.ok(!['web/vite.config.ts','web/tsconfig.json'].includes(p)&&(!p.startsWith('web/validation/')||p==='web/validation/README.md'),'Page shell, build configuration or validation fixture changed: '+p);
  assert.ok(!/(^|\/)(lib|node_modules|\.github|\.git)(\/|$)|(^|\/)\.env(?:\.|$)|(^|\/)(foundry\.toml|foundry\.lock|remappings\.txt|\.gitmodules|package\.json|[^/]*lock[^/]*)$/.test(p),'Protected path changed: '+p);
- if(p.startsWith('web/src/'))assert.ok(v16Source.includes(p),'Source outside the v16 scope changed: '+p);
+ if(p.startsWith('web/src/'))assert.ok(v17Source.includes(p),'Source outside the v17 scope changed: '+p);
  assert.ok(!p.startsWith('src/'),'Root contract source changed');
 }
-// v16: no new source and no new public asset.
+// v17: no new source and no new public asset.
 const untracked=git(['ls-files','--others','--exclude-standard','--','web/src','web/public']).trim().split('\n').filter(Boolean);
 assert.deepEqual(untracked,[],'New files in web/src or web/public');
 assert.equal(sha256('web/index.html'),SHELL_SHA256,'exact v12 source shell');

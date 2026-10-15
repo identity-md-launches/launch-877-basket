@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 7977306,
-  "fileCount": 243,
-  "productionExportBytes": 1005252,
+  "uncompressedDeliveryBytes": 7981117,
+  "fileCount": 244,
+  "productionExportBytes": 1005729,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -160,17 +160,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-CsUE1brP.js": {
+    "dist/assets/ccip-9XcyZzby.js": {
       "bytes": 2610,
-      "sha256": "d6f00d46b4d91b8ae6f65164f8d72d7be969dfcd5b401bf7988d91c1bcdfaff4"
-    },
-    "dist/assets/index-7uhBO_VC.js": {
-      "bytes": 603998,
-      "sha256": "036b131f57d9f0127c26722bc03a5e799b06285bf4279d54f33e0cbb350c07d2"
+      "sha256": "7d0a6c92ef8c45351ab69f3eb5fa729b7fc6f91908acb86cdf80cc9e8ed70924"
     },
     "dist/assets/index-BRdefnhV.css": {
       "bytes": 48903,
       "sha256": "6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80"
+    },
+    "dist/assets/index-CI-SOoQ1.js": {
+      "bytes": 604475,
+      "sha256": "6b14104f752b8acbbcf50aab5ca80ddcb995045beca2d59413bdefe376770282"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -186,7 +186,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "8d081d507edc3b60c38e9cd268bd7da86fb8660a75337c2ca3840da8febdedfe"
+      "sha256": "7a016413136b5ac1c7c143e6c8834a5a4b43c5806c9daf25e431aa55f7fa603b"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,

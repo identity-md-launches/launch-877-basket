@@ -239,6 +239,14 @@ What the checks allow in this update:
 - check-art keeps every earlier assertion (whole bubble words, the bubble off her face, hands and the crate and off every opaque picture pixel, the strip clear of the text, no taller Vault title) at every width from 320 to 2560px in Chromium and WebKit, and adds: the Vault phone layout at every phone width; the live v14 title beside it (nothing in a title moves above 660px; on phones the Deposit and Redeem titles equal v14 and the Vault title differs only sideways as decided), with the v15 check rejecting the v14 look; and the focus marker at 660, 430, 393, 375, 360, 359 and 320px (the line on the marker's bottom band up to its outer edge, the v14 line put back is rejected, the line returns after blur, no shelf line at 661px).
 - The fork walk is unchanged in what it checks: all 91 v14 checks under the same names in the same order, none added, the same 70 page sends, the same 24 screenshot names at JPEG quality 18. check-motion, check-fixes, inspect-export, check-guards, check-preservation, check-interface, check-tokenomics, check-tokenomics-live and check-bask-guide are unchanged.
 
+## Site update v17
+
+The current patch is applied to v16, commit 27315d9974a065935f260dec29a52fa30fc7a109. One thing, decided by the owner on 2026-10-15: the project's contact links. The footer and the Docs page's "Find Basket" panel each gain two links beside the existing "Basket Protocol on X": "Basket Protocol on Telegram" (https://t.me/basket_protocol) and the project e-mail address (protocolbasket@gmail.com, a mailto link). Explorers that list token information ask for the project's e-mail to be shown on its website; this is that line.
+- Two display sources change: web/src/main.tsx (footer) and web/src/Docs.tsx (Find Basket panel). No style rule, picture or script changes.
+- No transaction input, send preparation, chain read, wallet request, storage key or application network call changes. Every other web/src file is byte-identical to v16, styles.css included.
+
+What the checks allow in this update: check-calldata freezes every web/src source except main.tsx and Docs.tsx, pins both by their reviewed digests and by their generated pieces (putting the pieces back gives v16's text exactly), allows no added call, attribute that acts, import, state, storage use or wallet request in them, and lists the four added links (two per file, in place and order) as the only additions to what a page loads or opens; check-bundle limits source changes to the same two files.
+
 ## Site update v16
 
 The current patch is applied to v15, commit 5110ca96c434441cdffaec727413c54ede26dafe. Two things, both decided by the owner on 2026-10-13:
