@@ -252,7 +252,7 @@ function App() {
         ) : page === "Owner" ? (
           <OwnerPage snapshot={data} wallet={wallet} />
         ) : page === "Docs" ? (
-          <DocsPage />
+          <DocsPage onAddToWallet={wallet.addToWallet} />
         ) : (
           <LossesPage snapshot={data} wallet={wallet} />
         )}

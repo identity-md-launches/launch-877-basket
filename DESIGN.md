@@ -97,6 +97,10 @@ Vault title, 660px and below: the picture's left edge is `max(0, min((panel - pi
 
 Deposit and Redeem titles, 660px and below, while the heading shows the focus marker (`:focus-visible`: a 3px ink outline inside a 6px yellow band; iPhone browsers show it after a tab is tapped): her shelf line sits 6px under her feet instead of 3px and ends 6px before the heading's left edge, which is the marker's outer edge, so the line and the marker's bottom band are one 3px yellow line into the corner. The rule uses `:has()` and applies only when forced colours are off; without the marker the line is v14's.
 
+## v18 presentation details
+
+Add BASK to MetaMask (owner's decision, 2026-10-15). The Docs page's "Find Basket" panel ends with one button, "Add BASK to MetaMask", in the site's existing button style, after the "Contact:" line, and under it one sentence: "Asks your wallet to list BASK with its logo. No transaction." The answer appears in the page's status line like every other wallet message: "The wallet accepted the request to list BASK.", "The wallet did not add BASK.", the usual decline text, or "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again." when the wallet stays on another network. No new rule in styles.css; nothing else moves.
+
 ## v17 presentation details
 
 Contact links (owner's decision, 2026-10-15). The footer's link row keeps its order and gains two entries after "Basket Protocol on X": "Basket Protocol on Telegram" (opens https://t.me/basket_protocol in a new tab, like the X link) and the project e-mail "protocolbasket@gmail.com" (a mailto link). The Docs page's "Find Basket" panel shows the same two under the X link, the e-mail as "Contact: protocolbasket@gmail.com". Same link style as the X link; no new rule in styles.css.

@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-15",
+  "result": "PASS",
+  "scope": "Built production export under /preview/, isolated synthetic EIP-1193 providers. External chain reads disabled; no live wallet, signatures or transactions.",
+  "cases": [
+    {
+      "engine": "Chromium",
+      "case": "absent",
+      "status": "Open this page in your wallet app's browser",
+      "methods": [],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "accepted",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "refused",
+      "status": "The wallet did not add BASK.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "declined",
+      "status": "The wallet request was declined. You can try again.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "switch",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "add-chain",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "wallet_addEthereumChain",
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "stuck",
+      "status": "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId",
+        "eth_chainId"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "Chromium",
+      "case": "switch-declined",
+      "status": "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "absent",
+      "status": "Open this page in your wallet app's browser",
+      "methods": [],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "accepted",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "refused",
+      "status": "The wallet did not add BASK.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "declined",
+      "status": "The wallet request was declined. You can try again.",
+      "methods": [
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "switch",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "add-chain",
+      "status": "The wallet accepted the request to list BASK.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "wallet_addEthereumChain",
+        "eth_chainId",
+        "eth_chainId",
+        "wallet_watchAsset"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "stuck",
+      "status": "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId",
+        "eth_chainId"
+      ],
+      "storageWrites": 0
+    },
+    {
+      "engine": "WebKit",
+      "case": "switch-declined",
+      "status": "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.",
+      "methods": [
+        "eth_chainId",
+        "wallet_switchEthereumChain",
+        "eth_chainId"
+      ],
+      "storageWrites": 0
+    }
+  ],
+  "layouts": [
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "overflow": false,
+      "button": {
+        "left": 33,
+        "right": 250.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(237, 245, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "overflow": false,
+      "button": {
+        "left": 33,
+        "right": 250.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(255, 255, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "Chromium",
+      "width": 800,
+      "overflow": false,
+      "button": {
+        "left": 441,
+        "right": 658.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(255, 255, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "Chromium",
+      "width": 1440,
+      "overflow": false,
+      "button": {
+        "left": 761,
+        "right": 978.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(255, 255, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "overflow": false,
+      "button": {
+        "left": 33,
+        "right": 250.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(237, 245, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "overflow": false,
+      "button": {
+        "left": 33,
+        "right": 250.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(237, 245, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "WebKit",
+      "width": 800,
+      "overflow": false,
+      "button": {
+        "left": 441,
+        "right": 658.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(255, 255, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    },
+    {
+      "engine": "WebKit",
+      "width": 1440,
+      "overflow": false,
+      "button": {
+        "left": 761,
+        "right": 978.359375,
+        "width": 217.359375,
+        "height": 46,
+        "color": "rgb(20, 44, 84)",
+        "background": "rgb(255, 255, 255)",
+        "fontSize": "16px"
+      },
+      "lastParagraph": "Asks your wallet to list BASK with its logo. No transaction.",
+      "previousParagraph": "Contact: protocolbasket@gmail.com"
+    }
+  ],
+  "issues": [],
+  "limitations": [
+    "Native wallet confirmation and logo retrieval were not tested.",
+    "Wrong-network flows include the pre-existing switchChain eth_chainId read in addition to the two new reads.",
+    "The archive-fork walkthrough is a separate check."
+  ]
+}

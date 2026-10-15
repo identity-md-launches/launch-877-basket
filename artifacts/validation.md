@@ -1,3 +1,94 @@
+# 2026-10-15 — v18 exact Add BASK to MetaMask patch, vault 6
+
+This run applies the supplied patch to `974ddd3ae983ba181df285f3b9791ac955b694a5` (v17). The Docs **Find Basket** panel ends with **Add BASK to MetaMask** and the exact explanatory sentence. All eight patched files retain their exact post-application bytes. No contract, dependency, lockfile, build configuration, stylesheet, ignore file or deployment parameter changed. No live transaction or publication was performed.
+
+## Patch and production export
+
+The Pinata download was **43,532 bytes**, SHA-256 `3e55a00a90961e57a9306f6d10f98bc52fcd163c5a2ccb80e5f9094d1ec32cca`. The initial worktree was clean. `git apply --check` and `git apply` passed; a reverse-application check and saved digests subsequently confirmed the patch was unmodified.
+
+`npm ci --cache /tmp/basket-npm-cache`, `npm run typecheck` and `npm run build` passed in `web/`. npm reported the existing three advisories (one moderate, two high); dependencies were not changed. Vite retained its existing large-chunk advisory. The final build/typecheck transcript is `artifacts/build-validation.txt`.
+
+All five required filenames and hashes match exactly; there is no production-build difference:
+
+| File | SHA-256 |
+| --- | --- |
+| `dist/assets/index-CvjHh67d.js` | `91f57b4a37cbf3a7e2845e580d270868f083a742edc7ddbee28488eeb20cf3cc` |
+| `dist/assets/index-BRdefnhV.css` | `6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80` |
+| `dist/assets/ccip-D_yNKjHn.js` | `5db326b6af802d44490cb7deca6eccde60ed1b3fe7d2f076db37d7782a707458` |
+| `dist/index.html` | `8d961d84dd17d0c293ce2b9bafc33f4c1e6f152fac5d4c8603673e9404d459f2` |
+| `dist/share-card.jpg` | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` |
+
+The complete static export retains relative asset URLs, hash routes, local runtime assets, title, favicon, description, og:title and og:image. README.md retains installation, preview and rebuild instructions. DESIGN.md retains the implemented design system and the exact v18 addition. The tracked source and lockfile accompany the export; Git metadata was not modified.
+
+## Required checks in this run
+
+The original v17 `dist/` was extracted with `git archive` into temporary storage before rebuilding and supplied through `BASKET_BASELINE_DIST`. The archive walkthrough was attempted before all the checks below. Commands are from `web/`; browser tooling settings are described below.
+
+| Command | Actual result |
+| --- | --- |
+| `NODE_OPTIONS='--import tsx' node scripts/run-browser.mjs` | **Archive refusal** at fork block **83874298**, before any browser, sends or screenshots. See below. |
+| `npx --no-install tsx scripts/check-tokenomics.tsx` | PASS — supply, allocation, schedule, cliff, annual rows, null guards, configured reads and formatting. |
+| `node scripts/check-tokenomics-live.mjs` | PASS — five null mounts without reads, mocked success/failure/Retry, zero external requests. |
+| `npx --no-install tsx scripts/check-bask-guide.tsx` | PASS — audited arithmetic/rounding, five examples, flywheel figures and exact canonical copy. |
+| `npm run validate` | PASS — live **verifyNetwork**, canonical ABI, runtime hash, snapshot/status and all 11 proposal kinds; block **88889867**. |
+| `node scripts/check-preservation.mjs` | PASS — protected paths, send guards, ABI/wording invariants and obsolete-integration scan. |
+| `npx --no-install tsx scripts/check-interface.ts` | PASS — arithmetic, parser, exact balances and setting units. |
+| `node scripts/check-calldata.mjs` | PASS — v17 comparison, frozen sources, reviewed digests, restored pieces and complete added-call/attribute declarations; **496 identical encodings, 1,773 mutually refused cases, zero new refusals**, plus send-builder cases. |
+| `node scripts/check-art.mjs` | PASS — **74** manifest asset copies and **56** layout groups in Chromium and WebKit, including 320–2560px title geometry and baseline/focus comparisons. |
+| `node scripts/check-motion.mjs` | PASS — **39** motion/layout checks; DPR 1/1.25/1.5 captures regenerated. |
+| `node scripts/inspect-export.mjs` | PASS — **24** page/viewport checks across six routes; subpath navigation, local fonts, keyboard skip link, reduced motion, seven contrast pairs and no recorded console/resource issues. |
+| `node scripts/check-guards.mjs` | PASS — four pre-send guards, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS — **34** wallet/Claims regressions. |
+| `node scripts/check-visibility.mjs` | **FAIL** — unchanged full-panel geometry assertion at line 357; approved Docs panel grows by **126px**. See below. |
+| `node scripts/check-bundle.mjs` | PASS — complete candidate including tracked libraries, all required assets and 24 retained screenshots is below **8,388,608 bytes**. Final total is in `artifacts/bundle-check.json`. |
+
+### Archive refusal and retained walkthrough evidence
+
+The unchanged runner used its read-only proxy and `https://robinhood.api.pocket.network` at fork block **83874298**. Anvil failed to create genesis because the archive returned **`metadata is not found, 83874301`** on its account read. The subsequent local RPC call failed because Anvil had exited. No block, state, bytecode, proof or response was substituted. The brief explicitly permits delivery after this archive refusal.
+
+This run completed **0 walkthrough checks, 0 walkthrough sends and 0 walkthrough screenshots**. The inherited `browser-fork.json` (91 checks, 70 sends, 24 screenshots), all 24 required `empty-*.jpg` / `stocks25-*.jpg` images and their prior packaging record are retained as **historical evidence**, not a current walkthrough pass. `rpc-debug.json` was regenerated by the failed runner and remains empty. Current export, art, motion and wallet-request tests are separate evidence.
+
+### Visibility assertion conflicts with the approved addition
+
+At **375×812**, normal state without a wallet, `web/scripts/check-visibility.mjs:357` asserts that every Docs panel has exactly the baseline position and size. The first 13 panels match. The final **Find Basket** panel keeps top **8011.11px**, while height grows from **352.75px** to **478.75px** and bottom from **8363.86px** to **8489.86px**: **126px**, occupied by the requested button and sentence at `web/src/Docs.tsx:264–267`.
+
+This is below the first screen and is the owner's requested change. The exact patch does not update that old assertion. Neither the approved content nor the check was changed. The script exits at that assertion, so the retained `phone-visibility.json` is historical and is not claimed as a current pass. Passing export/reflow checks do not replace this failed check.
+
+## Additional validation of the new wallet request
+
+`artifacts/watch-asset-validation.json` records **16 cases** (eight in each engine) on the actual production export served under `/preview/`. Temporary synthetic EIP-1193 providers exercise: no provider; wallet acceptance; a false result; code-4001 decline; successful network switch; code-4902 add-chain fallback; a wallet remaining on the wrong chain; and a declined switch. External chain reads were disabled in this isolated fixture; no real wallet was used.
+
+Each case asserts the exact ordered wallet-method list and exact status text. Successful listing paths assert the complete ERC20 request: vault 6, BASK, 18 decimals and the pinned IPFS image URL. Existing switch/add-chain arguments retain their original values and RPC order. There is no watchAsset call on page/tab visits, only on keyboard activation of the Docs button. No case writes storage, signs or sends a transaction. On the correct network there are exactly two `eth_chainId` reads before `wallet_watchAsset`; wrong-network paths also retain the existing `switchChain()` chain read. The two engines additionally pass **eight** layout checks at 320/390/800/1440px, checking exact panel order/copy, button containment, at least 44px height and no horizontal overflow.
+
+The assigned browser tool independently inspected the live-reading export at 320, 390 and 1440px. The new button measured approximately **217.36×46px**; keyboard Tab from the contact link reached it with the existing visible ink/yellow focus ring, and Enter produced the exact no-wallet message in the existing status line. At 390px the first screen showed product branding, Connect wallet and Deposit/Redeem navigation; the approved character-before-figures layout remains. Adding AAPL to Deposit focused its amount input; removing it cleared the row while retaining the desktop stock list. Arrow keys moved between Docs, Tokenomics and BASK. The review reported zero console warnings/errors. No contact message was sent or external social link opened.
+
+## Better Interface coverage and findings
+
+The pinned workflow and all six core domains were read and applied to the changed surface. The visual idea remains the existing supermarket flyer for a Stock Token basket vault. The brief states, “The exact-patch rule above stands over any design-bar item.” That instruction and the owner's listed decisions take precedence over generic style thresholds. No additional source edit or redesign was made.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — Checked | Native named button (`Docs.tsx:265`), keyboard activation and visible focus, minimum target height, existing status region (`main.tsx:224`) and unchanged reduced-motion behavior. Full screen-reader sessions, native-wallet dialogs and a complete keyboard-only transaction were not performed. |
+| Layout — Checked | Button follows Contact and precedes its one sentence; responsive containment at 320/390/800/1440 in both engines. Current export checks cover all six routes; art checks cover title sweeps. The 126px Docs growth is the failed preservation assertion above, not hidden. Native 200% zoom, RTL and physical-device layouts were not verified. |
+| Writing — Checked | Exact owner-approved label, sentence and all eight outcome paths (`wallet.tsx:295`); no claim of a transaction or movement of funds. Recovery instructions match the specified behavior. Existing terminology and contact copy remain pinned. |
+| Typography — Checked | Existing system body/button typography and local Flyer/Pixel fonts retained; the button and sentence wrap without clipping at reviewed widths. Font loading passes export checks. Native Windows rasterization and text-resize/locale stress tests were not performed. |
+| Colors — Checked | Existing ink `#142c54` on paper `#ffffff` measured on the new button; computed contrast **13.8337:1**. All seven named export contrast pairs exceed 4.5:1. The focused state was viewed; not every focus/background or image pixel was measured. There is no dark theme. |
+| UI — Checked | Existing button style and status presentation reused; native keyboard response, acceptance/refusal/error/retry guidance, Docs tab isolation, Deposit add/remove and unchanged motion checks exercised. Native MetaMask confirmation, actual wallet logo retrieval and a 10%-speed DevTools motion review were not performed. |
+
+Rendered captures viewed include `test/scratch/art-review/Chromium-deposit-375-screen.png`, `test/scratch/art-review/WebKit-vault-375-screen.png`, and the browser-tool screenshots of the 390px first screen and the new Docs panel at 320/390/1440px. Review captures remain in disposable scratch.
+
+The pinned `taste.mjs --out test/scratch/taste` probe completed: **10/16 passed**. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget, reduced motion and sharing passed. Six generic style checks flag existing casing, tracking, type-size/family counts, repeated marquee text and border-plus-shadow treatments. These unchanged source choices are retained under the exact-patch rule; none is caused by the new button. The probe checks the entry route, not every interaction, and excludes one image/gradient text pair from contrast measurement. Its report/captures and current manual/art review screenshots are disposable review evidence, not substitutes for the retained historical walkthrough shots.
+
+## Tooling, integrity and completion
+
+Browser tooling was installed only under `/tmp`: Playwright 1.64.0, full Chromium 156.0.8078.4 and WebKit 27.2. `PLAYWRIGHT_MODULE` selects full Chromium to preserve the documented font metrics. WebKit runtime libraries were extracted under `/tmp`; its temporary launcher was adjusted to retain the library path, and software EGL rendering was selected. Playwright's host-package preflight was skipped only because its `ldconfig` cache cannot see those temporary libraries; the actual engines launched and executed the unchanged site assertions. Initial tooling failures were not counted as passes. No repository check was edited to accommodate the runtime. The supplementary fixture's RPC-order expectation was corrected to the original frozen `chain.ts` configuration before its successful run.
+
+All 74 art copies match their manifest. A complete candidate-byte scan, including binary assets and tracked libraries, finds no vault 1–5 address fragment. Required runtime assets and all 24 inherited screenshots remain. No new dependency/cache directory, archive, browser binary, submodule or ignore-file change is included. Reports regenerated with identical contents may have no diff. Prior validation entries and reports remain explicitly historical.
+
+**Status: exact implementation and production export delivered; validation is incomplete.** The archive walkthrough has the brief's permitted external-service limitation, and the unchanged visibility check fails on the approved panel growth. All other required checks pass. No failed check is represented as passing and no source was changed to manufacture a pass.
+
+---
+
 # 2026-10-15 — v17 exact contact-links patch, vault 6
 
 This entry records this run against `27315d9974a065935f260dec29a52fa30fc7a109`. The owner-supplied patch is applied exactly. The footer and Docs **Find Basket** panel now show the Telegram and project e-mail links after X. No contract, dependency, lockfile, stylesheet, build configuration, ignore file, deployment parameter or transaction implementation changed. The seven patched files, including README.md and DESIGN.md, retain their exact post-application bytes.

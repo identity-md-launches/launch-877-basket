@@ -1,16 +1,12 @@
-2026-10-15 UTC — v17 exact contact-links patch
-Baseline: 27315d9974a065935f260dec29a52fa30fc7a109
-Patch: 38635 bytes; SHA-256 ffafe41d5de02854fb4ced73a13309782450e40c27dce759ac1bbe45a5e50dca
-All seven patched files remain byte-identical to the applied patch.
-npm ci --cache ../test/scratch/npm-cache: PASS; existing manifest and lockfile unchanged.
-All five required production filenames and SHA-256 values match exactly.
-See artifacts/validation.md for the current check results, visibility failure and archive limitation.
-
 
 > basket-protocol-web@1.0.0 typecheck
 > tsc --noEmit
 
-
+npm notice
+npm notice New minor version of npm available! 11.6.0 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
 
 > basket-protocol-web@1.0.0 build
 > tsc --noEmit && vite build
@@ -24,11 +20,16 @@ computing gzip size...
 ../dist/assets/VT323-wDgJuOC9.woff2   17.94 kB
 ../dist/assets/Anton-Byf51wtH.woff2   18.61 kB
 ../dist/assets/index-BRdefnhV.css     48.90 kB │ gzip:  11.10 kB
-../dist/assets/ccip-9XcyZzby.js        2.61 kB │ gzip:   1.23 kB
-../dist/assets/index-CI-SOoQ1.js     604.48 kB │ gzip: 185.78 kB
+../dist/assets/ccip-D_yNKjHn.js        2.61 kB │ gzip:   1.23 kB
+../dist/assets/index-CvjHh67d.js     605.41 kB │ gzip: 186.09 kB
 
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 8.67s
+✓ built in 2.61s
+npm notice
+npm notice New minor version of npm available! 11.6.0 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

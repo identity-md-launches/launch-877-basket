@@ -3,7 +3,11 @@ import { Tokenomics } from "./Tokenomics";
 import { BaskGuide } from "./BaskGuide";
 import { PageTitle, AddressLink } from "./components";
 import { VAULT } from "./deployment";
-export function DocsPage() {
+export function DocsPage({
+  onAddToWallet,
+}: {
+  onAddToWallet: () => void;
+}) {
   const [tab, setTab] = useState(0);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   function move(event: KeyboardEvent<HTMLButtonElement>) {
@@ -257,6 +261,10 @@ export function DocsPage() {
           <p>
             Contact: <a href="mailto:protocolbasket@gmail.com">protocolbasket@gmail.com</a>
           </p>
+          <p>
+            <button onClick={onAddToWallet}>Add BASK to MetaMask</button>
+          </p>
+          <p>Asks your wallet to list BASK with its logo. No transaction.</p>
         </section>
       </div>
       </div>

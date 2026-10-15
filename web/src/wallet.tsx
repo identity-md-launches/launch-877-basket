@@ -17,7 +17,10 @@ import {
   vaultAbi,
 } from "./chain";
 export interface Provider {
-  request(args: { method: string; params?: unknown[] }): Promise<any>;
+  request(args: {
+    method: string;
+    params?: unknown[] | Record<string, unknown>;
+  }): Promise<any>;
   on?(event: string, fn: (value: any) => void): void;
   removeListener?(event: string, fn: (value: any) => void): void;
 }
@@ -60,6 +63,10 @@ function savedDisconnected() {
     return false;
   }
 }
+// The BASK logo a wallet is asked to show (EIP-747 image): the 256 px PNG
+// on IPFS.
+const BASK_IMAGE =
+  "https://gateway.pinata.cloud/ipfs/bafkreiczp2hrpey42mx5hngo37rrwwwexrt3mdm537pyztv22pn4skxsvi";
 export function useWallet(refresh: () => Promise<Snapshot>) {
   const sending = useRef(false),
     connectingLock = useRef(false);
@@ -282,6 +289,40 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       setMessage(explain(e));
     }
   }
+  // Asks the wallet to list BASK with its logo (EIP-747 wallet_watchAsset).
+  // The token is added on the wallet's current network, so the chain check
+  // comes first. No signature, no transaction.
+  async function addToWallet() {
+    try {
+      const p = window.ethereum;
+      if (!p) throw new Error("Open this page in your wallet app's browser");
+      if (Number(await p.request({ method: "eth_chainId" })) !== 4663)
+        await switchChain();
+      if (Number(await p.request({ method: "eth_chainId" })) !== 4663)
+        throw new Error(
+          "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.",
+        );
+      const added = await p.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: VAULT,
+            symbol: "BASK",
+            decimals: 18,
+            image: BASK_IMAGE,
+          },
+        },
+      });
+      setMessage(
+        added
+          ? "The wallet accepted the request to list BASK."
+          : "The wallet did not add BASK.",
+      );
+    } catch (e) {
+      setMessage(explain(e));
+    }
+  }
   async function send(s: Spec, key = s.functionName, label = key) {
     if (sending.current)
       throw new InputError("A transaction is already in progress.");
@@ -472,6 +513,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     connect,
     disconnect,
     switchChain,
+    addToWallet,
     send,
     setMessage,
   };
