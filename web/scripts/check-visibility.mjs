@@ -353,19 +353,13 @@ try {
       assert.deepEqual(oldLayout.docsParagraphs.slice(1).map(p=>p.text),docsAdded,'Baseline carries the two v12 paragraphs and the live fee sentence');
       assert.deepEqual(rounded(newLayout.docsParagraphs),rounded(oldLayout.docsParagraphs),'The Docs paragraphs equal the baseline');
       assert.deepEqual(newLayout.docsTitles.slice(-7),['Risks',...ITEM_PANELS,'Find Basket'],'The five ITEM panels sit between Risks and Find Basket');
-      // v19 (the owner, 2026-10-15): one panel, "If a stock goes missing", stands right after Safety. Every panel
-      // before it equals the baseline in place and size; every panel after it keeps its size and moves down by one and
-      // the same distance: the new panel's height plus the grid spacing above it.
-      const V19_PANEL='If a stock goes missing',at=oldLayout.docsTitles.indexOf('Safety')+1;
-      assert.ok(at>0&&!oldLayout.docsTitles.includes(V19_PANEL),'Baseline has Safety and not the v19 panel');
-      assert.deepEqual(newLayout.docsTitles,[...oldLayout.docsTitles.slice(0,at),V19_PANEL,...oldLayout.docsTitles.slice(at)],'The Docs panels equal the baseline, in order, with the v19 panel after Safety');
-      assert.deepEqual(rounded(newLayout.docs.slice(0,at)),rounded(oldLayout.docs.slice(0,at)),'Every Docs panel before the v19 panel keeps its place and size');
-      const added=newLayout.docs[at],shift=added.height+(added.top-newLayout.docs[at-1].bottom);
-      assert.ok(added.height>0&&shift>added.height,'The v19 panel is rendered below Safety with the grid spacing');
-      assert.equal(newLayout.docs.length,oldLayout.docs.length+1,'One Docs panel added');
-      oldLayout.docs.slice(at).forEach((d,i)=>{const n=newLayout.docs[at+1+i];assert.ok(near(n.height,d.height)&&near(n.top,d.top+shift)&&near(n.bottom,d.bottom+shift),'Docs panel '+oldLayout.docsTitles[at+i]+' keeps its size and moves down by the v19 panel: '+JSON.stringify({old:d,now:n,shift}));});
+      // v20: the v19 panel "If a stock goes missing" is part of the baseline now, right after Safety; every Docs panel
+      // equals the baseline in order, place and size again.
+      assert.equal(newLayout.docsTitles[newLayout.docsTitles.indexOf('Safety')+1],'If a stock goes missing','The v19 panel stands right after Safety');
+      assert.deepEqual(newLayout.docsTitles,oldLayout.docsTitles,'The Docs panels equal the baseline, in order');
+      assert.deepEqual(rounded(newLayout.docs),rounded(oldLayout.docs),'Every Docs panel keeps its place and size');
       for(const d of newLayout.docs)assert.ok(d.height>0,'Docs panel rendered');
-      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; the v19 panel after Safety; every panel before it equals the baseline in place and size, every panel after it keeps its size and moves down by the v19 panel');
+      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket, "If a stock goes missing" after Safety; every panel equals the baseline in place and size');
     }
     if(name==='redeem') {
       assert.equal(oldLayout.redeemAside,null);

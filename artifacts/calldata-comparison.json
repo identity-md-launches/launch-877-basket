@@ -1,6 +1,6 @@
 {
   "result": "PASS",
-  "baseline": "ec5fa83ce47dd1a361cda55e086ef503d10f2deb",
+  "baseline": "8f88184b6dbcfd2c11f7a762c4c25cce55d8d230",
   "protectedFiles": [
     "BaskGuide.tsx",
     "Flows.tsx",
@@ -12,6 +12,8 @@
     "Tokenomics.tsx",
     "tokenomicsData.ts",
     "wallet.tsx",
+    "main.tsx",
+    "Docs.tsx",
     "baskGuideData.ts",
     "chain.ts",
     "deployment.ts",
@@ -21,56 +23,8 @@
     "poolMath.ts",
     "vault.abi.json"
   ],
-  "editedFiles": {
-    "main.tsx": "3 documented pieces [v12, HEAD]",
-    "Docs.tsx": "1 documented pieces [v12, HEAD]"
-  },
-  "v12Pieces": {
-    "main.tsx": [
-      {
-        "v12": {
-          "length": 213,
-          "sha256": "7b875723af2e745d48aa3547224c81eb6fdc63377e3d34b699be42a85a0eb929"
-        },
-        "head": {
-          "length": 21,
-          "sha256": "8d087884976edbd24d242e2552709c8a969fb81e7b37166dca7aa38d8103c9a7"
-        }
-      },
-      {
-        "v12": {
-          "length": 386,
-          "sha256": "f9e3a4bd582ac7793d1234d961f9b3ea8e1c1192a30b8308fe7ef1bdcf63555a"
-        },
-        "head": {
-          "length": 41,
-          "sha256": "697203c320c3283da2af9090f4592d22d1091fde20568337522913e7f76e6738"
-        }
-      },
-      {
-        "v12": {
-          "length": 54,
-          "sha256": "29f2340c2969a20988ee9c2dc7ac037eb1d2afb207666efa2e5480b920e1c06a"
-        },
-        "head": {
-          "length": 218,
-          "sha256": "f999ef7de9e0b04ed83c09f95fa6c33d6a0b3c03421b99a38b0bdbfd69d92109"
-        }
-      }
-    ],
-    "Docs.tsx": [
-      {
-        "v12": {
-          "length": 1291,
-          "sha256": "7546baabcf7e7ffc7d5dbce1488f190bed9139235ff35a0a2208d00e0b15ad90"
-        },
-        "head": {
-          "length": 55,
-          "sha256": "e84f60dcace87056fb0517fd5e376d52099f2e78f5fb032105a8a74fcfaeb391"
-        }
-      }
-    ]
-  },
+  "editedFiles": {},
+  "v12Pieces": {},
   "counts": {
     "BaskGuide.tsx": {
       "guarded": 0,
@@ -241,38 +195,11 @@
     "addedInV19": {}
   },
   "browserStorageAddedInV12": {},
-  "namesAddedAtTheTopOfAFile": {
-    "main.tsx": {},
-    "Docs.tsx": {}
-  },
+  "namesAddedAtTheTopOfAFile": {},
   "moduleDeclarationChanges": {},
-  "namesAddedInsideComponents": {
-    "main.tsx": {
-      "App": [
-        "shortStocks"
-      ]
-    }
-  },
-  "transactionCode": {
-    "main.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
-    },
-    "Docs.tsx": {
-      "pieces": 0,
-      "namesDeclaredAroundThem": []
-    }
-  },
-  "reviewedAddedCalls": {
-    "main.tsx": {
-      "sha256": "8be0ad9ef44faa5f10e806635279f9376403fcff9003562793ddd4028a9994a2",
-      "callees": "filter join map"
-    },
-    "Docs.tsx": {
-      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "callees": ""
-    }
-  },
+  "namesAddedInsideComponents": {},
+  "transactionCode": {},
+  "reviewedAddedCalls": {},
   "reviewedSourcePins": {
     "Docs.tsx": "4a017ccbabc92c33df85c32d34b9f4c2ad94ae8988b50c82eb1115141e413343",
     "main.tsx": "acbfbe99686e824d26720805002343722cc16c8bcfff75a095c1774bcac94e80",
@@ -281,10 +208,7 @@
     "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
     "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
   },
-  "transactionStateWrites": {
-    "main.tsx": 0,
-    "Docs.tsx": 0
-  },
+  "transactionStateWrites": {},
   "protectedCode": {
     "sendTailWrites": [
       "sent = mined;",
@@ -607,28 +531,8 @@
       "main.tsx": 16
     },
     "equalToHeadExceptDisplayNames": {
-      "added": {
-        "main.tsx": [
-          {
-            "place": "App",
-            "text": "href=\"#losses\""
-          }
-        ],
-        "Docs.tsx": [
-          {
-            "place": "DocsPage",
-            "text": "href=\"#losses\""
-          }
-        ]
-      },
-      "removed": {
-        "main.tsx": [
-          {
-            "place": "App",
-            "text": "href=\"#losses\""
-          }
-        ]
-      }
+      "added": {},
+      "removed": {}
     }
   },
   "pinnedV9Declarations": {
@@ -683,7 +587,7 @@
     "Direct and aliased transaction-state writes equal HEAD; send-tail receipt-hash writes are individually pinned with their ordered statements",
     "Wallet send head is byte-identical to HEAD through the receipt wait; its tail equals HEAD after exact receipt-hash replacements; connect and disconnect equal reviewed text and the new counter is used only at the pinned sites",
     "All protected wallet functions, flow effects, transaction buttons and handlers are byte-identical to HEAD; declaration and wrapper-scope checks prevent name rebinding",
-    "Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD apart from the documented Losses link move and the one Docs link; Disconnect makes no request; components retains the same single wallet.send",
+    "Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD; Disconnect makes no request; components retains the same single wallet.send",
     "The differential encoding corpus, six-clock send builders, parser declarations, pinned v9 decisions and imported bindings retain every prior assertion",
     "Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs"
   ]

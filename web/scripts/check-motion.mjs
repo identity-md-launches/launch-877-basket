@@ -50,8 +50,16 @@ try {
     ]) {
       await page.goto(url + "#" + name);
       // A hash change re-renders asynchronously: wait until the requested route is the current page.
+      // v20: no navigation link points at the Losses page since v19, so that route counts as shown once its own
+      // heading "Losses" is the page title's; every other route still waits for its current navigation link.
       await page.waitForFunction(
-        (n) => !!document.querySelector(`a[aria-current="page"][href="#${n}"]`),
+        (n) =>
+          n === "losses"
+            ? location.hash === "#losses" &&
+              document
+                .querySelector("main .page-title > h1")
+                ?.textContent.trim() === "Losses"
+            : !!document.querySelector(`a[aria-current="page"][href="#${n}"]`),
         name,
       );
       await page.evaluate(() => document.fonts.ready);

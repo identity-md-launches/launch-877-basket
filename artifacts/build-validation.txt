@@ -1,7 +1,17 @@
-Final v19 production build and typecheck — 2026-10-16
+Final v20 production typecheck and build — 2026-10-16
+
+npm run typecheck: PASS (tsc --noEmit, exit 0)
+npm run build: PASS (exit 0)
+
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
 
 > basket-protocol-web@1.0.0 build
 > tsc --noEmit && vite build
+
 vite v7.1.9 building for production...
 transforming...
 ✓ 1104 modules transformed.
@@ -18,16 +28,7 @@ computing gzip size...
 - Using dynamic import() to code-split the application
 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 3.28s
-npm notice
-npm notice New major version of npm available! 10.9.9 -> 12.2.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
-npm notice To update run: npm install -g npm@12.2.0
-npm notice
-
-> basket-protocol-web@1.0.0 typecheck
-> tsc --noEmit
-
+✓ built in 3.38s
 npm notice
 npm notice New major version of npm available! 10.9.9 -> 12.2.0
 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0

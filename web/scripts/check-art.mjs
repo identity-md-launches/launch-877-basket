@@ -377,7 +377,12 @@ function assertWideLabel(tag,label) {
   assert.deepEqual(tag.outside,[],label+': words inside pill');assert.equal(tag.overlap,0,label+': clear of character/bubble');assert.equal(tag.overflow,false,label+': no horizontal scroll');
 }
 // A hash change re-renders asynchronously: wait until the requested route is the current page before measuring it.
-const routeShown = name => !!document.querySelector(`a[aria-current="page"][href="#${name}"]`);
+// v20: since v19 no navigation link points at the Losses page (the footer link went; the short-stock notice and the
+// Docs panel link to it without a current-page mark), so that route counts as shown once its own heading "Losses" is
+// the page title's. Every other route still waits for its current navigation link.
+const routeShown = name => name === "losses"
+  ? location.hash === "#losses" && document.querySelector("main .page-title > h1")?.textContent.trim() === "Losses"
+  : !!document.querySelector(`a[aria-current="page"][href="#${name}"]`);
 
 function capacityGeometry() {
   const cells=[...document.querySelectorAll('.stats > div')],cell=cells[3],label=cell?.querySelector(':scope > span'),note=label?.querySelector('small'),value=cell?.querySelector(':scope > strong');

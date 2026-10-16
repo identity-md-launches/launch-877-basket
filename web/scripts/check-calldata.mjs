@@ -11,14 +11,11 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v19 on HEAD=v18: one thing. The owner's decision on the Losses page (2026-10-15): the footer no longer links to it.
-// Instead main.tsx shows a notice above the Vault and Deposit pages while an unretired stock is short ("Deposits are
-// paused: the vault is short of ..."), whose link opens the Losses page, and Docs.tsx gains the panel "If a stock goes
-// missing" that explains the flag, the 7-day wait and the recognise step, with the same link. The Losses page and its
-// route are HEAD's. The notice reads only the snapshot App already holds. No call that acts, attribute that acts,
-// import, state, storage use, wallet request or chain read is added. Every other web/src file is byte-identical to
-// HEAD, styles.css included. Transactions remain HEAD's: send(), connect(), disconnect() and switchChain() keep their
-// pins.
+// v20 on HEAD=v19: no source changes. The update re-scopes two browser checks (check-art, check-motion) whose wait for
+// a route needed a current-page navigation link, which the Losses page no longer has since v19, and returns this
+// gate, check-bundle and check-visibility to "equal to HEAD": v19's documented changes in main.tsx and Docs.tsx are
+// HEAD's own now. Every web/src file is byte-identical to HEAD, styles.css included. Transactions remain HEAD's:
+// send(), connect(), disconnect() and switchChain() keep their pins.
 const protectedFiles=[
  "BaskGuide.tsx",
  "Flows.tsx",
@@ -30,6 +27,8 @@ const protectedFiles=[
  "Tokenomics.tsx",
  "tokenomicsData.ts",
  "wallet.tsx",
+ "main.tsx",
+ "Docs.tsx",
  "baskGuideData.ts",
  "chain.ts",
  "deployment.ts",
@@ -67,30 +66,14 @@ assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarr
 // v16: no style rule after HEAD's text (the v15 rules are HEAD's own now).
 const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
 assert.equal(cssTail,'','v16: no style rule after the text of HEAD');
-// The v19 files: byte-identical to HEAD once their documented pieces [v19, HEAD] are put back (each exactly once), so
+// The v20 files (none: v20 changes no source): byte-identical to HEAD once their documented pieces [v20, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v19 pieces (generated from the difference to HEAD, not edited by hand)
-const editedFiles={
- "main.tsx":[
-  ["  }, []);\n  // Unretired stocks the vault holds less of than it manages: while any is\n  // short, the vault refuses deposits.\n  const shortStocks = snapshot.assets.filter((a) => a.short && !a.retired);\n  return (\n",
-   "  }, []);\n  return (\n"],
-  ["        )}\n        {(page === \"Vault\" || page === \"Deposit\") && shortStocks.length > 0 && (\n          <div className=\"note warning\">\n            Deposits are paused: the vault is short of{\" \"}\n            <bdi>{shortStocks.map((a) => a.symbol).join(\", \")}</bdi>.{\" \"}\n            <a href=\"#losses\">Anyone can start the fix.</a>\n          </div>\n        )}\n        {page === \"Vault\" ? (\n",
-   "        )}\n        {page === \"Vault\" ? (\n"],
-  ["            </a>\n            <a href=\"#docs\">Docs</a>\n",
-   "            </a>\n            <a\n              href=\"#losses\"\n              aria-current={page === \"Losses\" ? \"page\" : undefined}\n            >\n              Losses\n            </a>\n            <a href=\"#docs\">Docs</a>\n"]
- ],
- "Docs.tsx":[
-  ["        </section>\n        <section className=\"panel\">\n          <h2>If a stock goes missing</h2>\n          <p>\n            The vault keeps its own count of each stock it holds. If the real\n            balance ever falls below that count, for example because the issuer\n            burned or took back tokens, that stock is short. While an unretired\n            stock is short, deposits are paused. Redemptions keep working and\n            pay from the real balance.\n          </p>\n          <p>\n            Anyone can correct the count on the{\" \"}\n            <a href=\"#losses\">Losses page</a>, in two steps. Flag shortfall\n            records the gap and starts a 7-day wait. After the wait, Recognise\n            loss lowers the count by the recorded gap or the current gap,\n            whichever is smaller, and deposits can open again. If the tokens\n            come back during the wait, less or nothing is written off. If the\n            gap grows, flagging again records the larger gap and starts a new\n            7-day wait.\n          </p>\n          <p>\n            This only corrects the records: the missing tokens were already\n            gone, and redemptions were already paying from what is really there.\n          </p>\n        </section>\n        <section className=\"panel\">\n",
-   "        </section>\n        <section className=\"panel\">\n"]
- ]
-};
-// <<< v19 pieces
-assert.deepEqual(Object.keys(editedFiles),[
- "main.tsx",
- "Docs.tsx"
-],'the v19 files');
+// >>> v20 pieces (generated from the difference to HEAD, not edited by hand)
+const editedFiles={};
+// <<< v20 pieces
+assert.deepEqual(Object.keys(editedFiles),[],'v20 edits no source');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -144,17 +127,17 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD (v18's addToWallet() calls included). v19 adds no guarded call, wallet request or chain read.
+// already part of HEAD (v18's addToWallet() calls included). v20 adds no guarded call, wallet request or chain read.
 const expected={};
 // Action attributes: the exact differences from HEAD, in page order, each [element, attribute, why]. Everything else
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v19 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v20 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
 
 };
-// <<< v19 attributes
+// <<< v20 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -167,7 +150,7 @@ const attributeChanges={
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
 // Reviewed v16 differences in calls and watched-name uses. Independent of the generated pieces.
-// v19: no call of HEAD is removed and no watched name gains a use (v18's two setMessage uses are HEAD's own now).
+// v20: no call of HEAD is removed and no watched name gains a use.
 const callChanges={};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
@@ -219,7 +202,7 @@ function localDeclarations(file,text,fn,list){
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v19 file');
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen (v20 edits none)');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -242,16 +225,7 @@ if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,
 // ordered callee names make the list readable without repeating large nested JSX bodies. No regeneration block
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
-const addedCallPins={
- "main.tsx": {
-  "sha256": "8be0ad9ef44faa5f10e806635279f9376403fcff9003562793ddd4028a9994a2",
-  "callees": "filter join map"
- },
- "Docs.tsx": {
-  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "callees": ""
- }
-};
+const addedCallPins={};
 // <<< reviewed calls
 // The exact reviewed source of the two v14 files (frozen now) and of the two v16 files, beyond either generated block.
 const reviewedSourcePins={
@@ -394,7 +368,7 @@ function sendsOf(text,file){
  })(tree);
  return out;
 }
-// v19 adds no provider use: every file's list equals HEAD's (v18's addToWallet() uses included).
+// v20 adds no provider use: every file's list equals HEAD's.
 const sendAdded={};
 const NO_SEND=['Vault.tsx','Scenery.tsx','main.tsx','Docs.tsx'],sendUses={};
 for(const f of sources){
@@ -436,24 +410,10 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v19: one link moves in main.tsx and one is added in Docs.tsx, each written out here with its place. The Losses link
-// (href="#losses") leaves the footer (removed once from HEAD's list) and is the link of the short-stock notice above
-// the Vault and Deposit pages (added once, App); the Docs panel "If a stock goes missing" links to the same page
-// (DocsPage). Nothing else a page loads or opens changes in any file: HEAD's list without the removed entry stays
-// complete, in order and in place, and the only additions are these.
-const loadDisplayAdded={
- "main.tsx": [
-  {"place": "App", "text": "href=\"#losses\""}
- ],
- "Docs.tsx": [
-  {"place": "DocsPage", "text": "href=\"#losses\""}
- ]
-};
-const loadDisplayRemoved={
- "main.tsx": [
-  {"place": "App", "text": "href=\"#losses\""}
- ]
-};
+// v20 adds, removes and moves nothing a page loads or opens: every file's list equals HEAD's (v19's Losses link move
+// and Docs link included), in order and in place.
+const loadDisplayAdded={};
+const loadDisplayRemoved={};
 const loadUses={};
 for(const f of sources){
  const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f),added=loadDisplayAdded[f]??[],removed=loadDisplayRemoved[f]??[];
@@ -469,7 +429,7 @@ for(const f of sources){
 }
 // v12: the wallet and RPC methods the pages name. Every `method` given as a property (or assigned) in web/src, in order
 // with its place: exactly HEAD's list. Local-only Disconnect names no new wallet or RPC method.
-// v19 names no new wallet or RPC method in any file (v18's three in addToWallet() are HEAD's own).
+// v20 names no new wallet or RPC method in any file.
 const methodsAdded={};
 function methodsOf(text,file){
  const tree=parse(text,file),print=printerOf(tree),out=[],key=n=>ts.isIdentifier(n)||ts.isStringLiteralLike(n)?n.text:ts.isComputedPropertyName(n)?lit(n.expression):undefined;
@@ -586,7 +546,7 @@ function hookReturn(text){
  assert.equal(returns.length,1,'wallet.tsx useWallet: one return');
  return print(returns[0]);
 }
-// v19: the hook's return list is HEAD's (v18's, with addToWallet after switchChain), pinned here printed without
+// v20: the hook's return list is HEAD's (with addToWallet after switchChain since v18), pinned here printed without
 // comments; nothing in the list may change.
 const HOOK_RETURN_HEAD="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };";
 assert.equal(hookReturn(baseline('web/src/wallet.tsx')),HOOK_RETURN_HEAD,'wallet.tsx: HEAD\'s hook return list as pinned');
@@ -698,10 +658,8 @@ for(const f of Object.keys(editedFiles)){
  assert.deepEqual(n,h,f+': a name used by the transaction code is declared around it differently from HEAD');
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
-// v19 adds no name at the top of a file.
+// v20 adds no name at the top of a file.
 const namesAdded={
- "main.tsx": {},
- "Docs.tsx": {}
 };
 // v16: the exact declarations that change at the top of the two files (two imports leave Tokenomics.tsx; four data
 // declarations of tokenomicsData.ts carry the reviewed words); never generated by put-pieces.
@@ -917,7 +875,7 @@ fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:
   'Direct and aliased transaction-state writes equal HEAD; send-tail receipt-hash writes are individually pinned with their ordered statements',
   'Wallet send head is byte-identical to HEAD through the receipt wait; its tail equals HEAD after exact receipt-hash replacements; connect and disconnect equal reviewed text and the new counter is used only at the pinned sites',
   'All protected wallet functions, flow effects, transaction buttons and handlers are byte-identical to HEAD; declaration and wrapper-scope checks prevent name rebinding',
-  'Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD apart from the documented Losses link move and the one Docs link; Disconnect makes no request; components retains the same single wallet.send',
+  'Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD; Disconnect makes no request; components retains the same single wallet.send',
   'The differential encoding corpus, six-clock send builders, parser declarations, pinned v9 decisions and imported bindings retain every prior assertion',
   'Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs'
  ]},null,2)+'\n');

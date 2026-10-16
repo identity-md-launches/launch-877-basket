@@ -1,3 +1,84 @@
+# 2026-10-16 — v20 exact browser-check repair, vault 6
+
+Applied the supplied patch unchanged to clean commit `8f88184b6dbcfd2c11f7a762c4c25cce55d8d230`. The only implementation changes are the five check scripts and two README files in that patch. No contract, website source, stylesheet, public asset, dependency, lockfile, build configuration, ignore rule or deployment setting changed. Nothing was deployed or published.
+
+## Patch and export integrity
+
+The [Pinata patch](https://gateway.pinata.cloud/ipfs/bafkreihxpjvdvy2mwx2rxqehatf256atxuwtjhlm4ucbw63midg3crr73q) is **30,049 bytes**, SHA-256 `f77a6a3ae34cb5f51bc08704cbaef813bd2d349d6ce5041b7b6c40cdb1463fdc`. `git apply --check`, application and reverse-application checking passed. An independent application to copies of the seven original files in disposable scratch confirms that all seven delivered files exactly match the supplied patch. No patched assertion or text was rewritten.
+
+`npm ci --cache /tmp/basket-v20-npm-cache`, `npm run typecheck` and `npm run build` passed in `web/`. Typecheck and build passed again after the design probe; `build-validation.txt` records that final run. npm reported the existing three dependency advisories (one moderate, two high), and Vite retained its existing large-chunk advisory. Dependencies and configuration remain pinned.
+
+The **entire final `dist/` is byte-identical to HEAD**, compared recursively against a `git archive HEAD dist` export saved before rebuilding. No production file differs. All five requested hashes match:
+
+| File | SHA-256 |
+| --- | --- |
+| `dist/assets/index-C7kCGuGo.js` | `95a973e1ba6804d0f88857713350e3e5539a95cbdd1b0e1ddb09398e41e7b997` |
+| `dist/assets/index-BRdefnhV.css` | `6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80` |
+| `dist/assets/ccip-yLdmA1De.js` | `e5c63129a46f8d32a96b28920d39cac03fc08e723d5655b42fb6948fcf7a3bc9` |
+| `dist/index.html` | `67c1079e20f3c46d43107648708aa6006517298ffa791caaf2bd179c43b5d5c1` |
+| `dist/share-card.jpg` | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` |
+
+The static export retains relative asset URLs, local fonts/art, hash navigation and the required title, favicon, description, og:title and og:image. README.md retains installation, preview and rebuild instructions plus the exact v20 patch explanation. DESIGN.md already documents the unchanged implementation's tokens, typography, components and responsive behavior; it remains unchanged.
+
+## Required checks actually run
+
+The fork walkthrough was attempted **before** the other checks. All commands below run from `web/`. The existing `tsx` loader supports the scripts' TypeScript imports. Both baseline comparison checks used the untouched **8f88184 dist** through `BASKET_BASELINE_DIST`.
+
+| Command | Actual result |
+| --- | --- |
+| `node scripts/run-browser.mjs` | **Archive refusal** at fork block **83874298**, before walkthrough checks, sends or screenshots; see below. |
+| `npx --no-install tsx scripts/check-tokenomics.tsx` | PASS — supply, schedule, cliff, annual rows, null guards, configured reads and formatting. |
+| `node scripts/check-tokenomics-live.mjs` | PASS — five null mounts without reads, mocked success/failure/Retry, zero external requests. |
+| `npx --no-install tsx scripts/check-bask-guide.tsx` | PASS — integer arithmetic, five examples, flywheel figures and canonical copy. |
+| `npm run validate` | PASS — live **verifyNetwork**, canonical ABI, runtime hash, snapshot/status and all 11 proposal kinds; live block **89802272**. |
+| `node scripts/check-preservation.mjs` | PASS — protected files, send checks, ABI/wording invariants and obsolete-integration scan. |
+| `npx --no-install tsx scripts/check-interface.ts` | PASS — arithmetic, parser, exact balances and setting units. |
+| `node scripts/check-calldata.mjs` | PASS against **8f88184** — whole sources frozen, every exception list empty; **496 identical encodings, 1,773 mutually refused cases, zero new refusals**, plus send-builder cases. |
+| `node scripts/check-art.mjs` | PASS — **74 asset copies** match the manifest; **56 layout groups** in Chromium and WebKit, including Losses routing, title geometry, strip motion and focus markers. |
+| `node scripts/check-motion.mjs` | PASS — **39 checks**, including the Losses route, DPR 1/1.25/1.5, loop boundaries, fixed track, half offsets, speeds and reduced motion. |
+| `node scripts/inspect-export.mjs` | PASS — **24 page/viewport checks**, all six routes at 320/375/800/1440px, subpath loading, local fonts, keyboard skip link, reduced motion, seven contrast pairs and zero recorded issues. |
+| `node scripts/check-guards.mjs` | PASS — four pre-send guards, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS — **34** wallet/Claims regressions. |
+| `node scripts/check-visibility.mjs` | PASS — six routes, disconnected/connected; **70** prior first-screen elements preserved with no exception. Every Docs panel equals the baseline in position and size; “If a stock goes missing” immediately follows Safety. |
+| `node scripts/check-bundle.mjs` | PASS — complete candidate below **8,388,608 bytes**, including tracked libraries, required assets, screenshots and this entry. Final exact accounting is in `bundle-check.json`. |
+
+### Permitted archive limitation
+
+The unchanged walkthrough used its own read-only proxy and `https://robinhood.api.pocket.network` at block **83874298**. The archive returned **`metadata is not found, 83874301`**, so Anvil could not create genesis; the next fork call failed because that process had exited. No archive response, state, bytecode, proof or block was substituted. The brief explicitly permits delivery after this archive refusal.
+
+This run completed **0 walkthrough checks, 0 walkthrough sends and 0 walkthrough screenshots**. The inherited `browser-fork.json` (91 checks, 70 sends, 24 screenshots), all 24 required empty/stocks25 JPEGs and their packaging record remain **historical evidence**. Earlier supplementary reports, versioned validation JSON and compiler evidence are also historical; they are not relabeled as this run's results. The failed runner regenerated `rpc-debug.json` with identical empty contents. No real wallet transaction was sent.
+
+Browser checks used full Chromium for the previously documented fractional font metrics and WebKit through temporary runtime tooling. Tool selection, runtime libraries, baseline extraction and raw logs stay outside the submission or in disposable scratch. Initial setup errors are not passes: the first runner invocation had an incorrect relative module path; the first art invocation omitted `BASKET_BASELINE_DIST` and exited before producing a report. Both were rerun with correct tool/baseline settings and unchanged scripts. A later art attempt reached WebKit but timed out on `page.reload()` in the weekend-status fixture at `check-art.mjs:795`; the unchanged suite was retried. No timeout or assertion was relaxed. Only the completed results above count.
+
+## Better Interface review
+
+The pinned workflow and all six domain cores were read and applied to the unchanged export. The visual idea remains the supermarket flyer for a Stock Token basket vault. The exact-patch rule and all listed owner decisions remain authoritative; no design preference caused a source or copy edit.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — Checked | Semantic route headings, keyboard skip link, keyboard focus markers, native controls, target spacing and reduced motion covered by the supplied checks. Screen-reader sessions, native 200% zoom and keyboard-only wallet transactions were not performed. |
+| Layout — Checked | Six routes at four export widths; the 320/390/1440 entry-page probe; exact phone/title/Docs baseline comparisons. Viewed the 390 first screen: Basket branding, Connect wallet and Deposit/Redeem navigation are visible. Approved character-before-figures order remains. Physical devices and RTL were not tested. |
+| Writing — Checked | Source preservation freezes every word. Losses is reached by its contextual notice and Docs link; the Docs panel follows Safety. Transaction/error terminology remains pinned. No new product copy was introduced. |
+| Typography — Checked | Local fonts load, title geometry and whole-word wrapping are checked, and the approved typography is preserved. Native Windows font rasterization and localization stress tests were not performed. |
+| Colors — Checked | Existing tokens and focus treatment retained. All seven export-review solid-color pairs exceed 4.5:1; the entry-page probe's measured text pairs pass. One image/gradient background was not measured, and this is not a complete focus/image contrast audit. |
+| UI — Checked | Route navigation, wallet/Claims regressions, send refusals, empty/read-failure behavior and reduced motion covered by current checks. Live wallet actions and the archive walkthrough remain unperformed. A DevTools 10% motion playback review was not performed. |
+
+The unmodified pinned design probe completed **10/16 checks**. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget, reduced motion and sharing pass. It found no horizontal scroll, overlapping text, clipped text, obscured controls, script errors or missing local resources at 320/390/1440. All 45 measured controls meet the 24px-or-spacing rule; 26 are below the comfortable 44px guideline. It measured 60 first-screen prose words at 390 and 73 at 1440. Both endless animations stop under reduced motion.
+
+The six flagged treatments are established and unchanged: uppercase display type (`web/src/styles.css:108`), label tracking (`web/src/styles.css:398`), the existing type-size/family system (`web/src/styles.css:1`), repeated marquee copy (`web/src/Scenery.tsx:77`) and border-plus-shadow flyer chrome (`web/src/styles.css:236`). Rendered captures confirm them; the exact-patch requirement precludes restyling them. These are reported as retained design-probe flags, not concealed as passes or treated as new regressions.
+
+Captures actually viewed: `test/scratch/taste/shots/390.png`, `1440.png`, `test/scratch/export-review/live-losses-375.jpg` and `live-deposit-1440.jpg`. The Losses page renders its heading and empty state; the desktop Deposit form and always-open stock column retain the approved layout. Also viewed the WebKit 375px Vault title, 320px Deposit screen and 375px Deposit focus-marker capture under `test/scratch/art-review/`; the focused heading meets the shelf line as approved. Extra review images stay in disposable scratch.
+
+## Completion and integrity
+
+**Complete for the exact-patch implementation scope, with the explicitly permitted archive-walkthrough limitation. All 14 other required checks pass.** The seven patched files remain exact, all website sources and protected paths are unchanged, and all 47 production files (1,007,958 bytes) equal the starting commit. All 74 manifest asset copies retain their required sizes and SHA-256 values. A byte scan of every candidate file, including binaries and tracked libraries, finds no vault 1–5 address fragment. Required runtime assets and all 24 historical walkthrough screenshots remain. No dependency/cache archive, browser package, submodule or ignore-file change is delivered. Regenerated reports whose bytes are identical naturally have no diff.
+
+Staging the requested deliverable paths with `git add -A` failed because Git could not create its index lock: **`Read-only file system`**. No commit was created, and no Git permissions, configuration or metadata were changed to bypass that refusal. The complete files remain in the working tree. All 47 production files, the source, lockfile and existing artifact paths are already tracked in HEAD.
+
+These are worker observations, not independent certification. Older entries below describe earlier runs.
+
+---
+
 # 2026-10-16 — v19 exact Losses navigation patch, vault 6
 
 The supplied patch was applied unchanged to `ec5fa83ce47dd1a361cda55e086ef503d10f2deb`. The footer no longer links to Losses. An unretired short stock now produces the requested warning above Vault and Deposit, with its link to `#losses`. Docs has the exact “If a stock goes missing” panel immediately after Safety. The page address and transaction implementation are unchanged. No contract, dependency, lockfile, build configuration, stylesheet, public asset, ignore file or deployment setting changed. No live transaction or publication was performed.
