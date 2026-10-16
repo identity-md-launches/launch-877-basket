@@ -1,6 +1,6 @@
 {
   "result": "PASS",
-  "baseline": "974ddd3ae983ba181df285f3b9791ac955b694a5",
+  "baseline": "ec5fa83ce47dd1a361cda55e086ef503d10f2deb",
   "protectedFiles": [
     "BaskGuide.tsx",
     "Flows.tsx",
@@ -11,6 +11,7 @@
     "components.tsx",
     "Tokenomics.tsx",
     "tokenomicsData.ts",
+    "wallet.tsx",
     "baskGuideData.ts",
     "chain.ts",
     "deployment.ts",
@@ -21,84 +22,51 @@
     "vault.abi.json"
   ],
   "editedFiles": {
-    "wallet.tsx": "4 documented pieces [v12, HEAD]",
-    "main.tsx": "1 documented pieces [v12, HEAD]",
-    "Docs.tsx": "2 documented pieces [v12, HEAD]"
+    "main.tsx": "3 documented pieces [v12, HEAD]",
+    "Docs.tsx": "1 documented pieces [v12, HEAD]"
   },
   "v12Pieces": {
-    "wallet.tsx": [
-      {
-        "v12": {
-          "length": 190,
-          "sha256": "d04d05fa9faa61a352f161a4bab7d885c85c4219240686240712abf2c17081a5"
-        },
-        "head": {
-          "length": 153,
-          "sha256": "b304132ee7211e12cf89f6cfab173e1f2ecd23af88108c6eafe03e52e83be8e4"
-        }
-      },
-      {
-        "v12": {
-          "length": 269,
-          "sha256": "6fc6d7c1691d070d9eda87935d4e9f2ece36fb09d0fdd261b7977ecb323121a2"
-        },
-        "head": {
-          "length": 64,
-          "sha256": "e0248d4ef6419338ea58f158f3aeebd86f5ee0a7268f2e7d6b9b964aea741b6a"
-        }
-      },
-      {
-        "v12": {
-          "length": 1221,
-          "sha256": "07e0eab9bc45198298e76315ab2e532806c96f444ef86b945750094e32b4dcef"
-        },
-        "head": {
-          "length": 72,
-          "sha256": "c8eaefc2a37785d46d42b1ea1b44138a16e3a920c30fc85db3523eb65e5a0a47"
-        }
-      },
-      {
-        "v12": {
-          "length": 44,
-          "sha256": "7c81542ada85960aac66b86f2fdb4db48aee1b0f56ad78dab13a89d32180f2d4"
-        },
-        "head": {
-          "length": 27,
-          "sha256": "92d6ada20bba05c5d3e2ab5ace973a1dd4258fe72eca1483e44a83b368148778"
-        }
-      }
-    ],
     "main.tsx": [
       {
         "v12": {
-          "length": 104,
-          "sha256": "9ecf030613d8fe0810f9c32c01dccc0f52b90ff1c8773446531e853dbdd285fc"
+          "length": 213,
+          "sha256": "7b875723af2e745d48aa3547224c81eb6fdc63377e3d34b699be42a85a0eb929"
         },
         "head": {
-          "length": 69,
-          "sha256": "56d535e1cce2d8346b1a1ff82da285d5368d5bcc5fe0b0d443d3cf47febf3583"
+          "length": 21,
+          "sha256": "8d087884976edbd24d242e2552709c8a969fb81e7b37166dca7aa38d8103c9a7"
+        }
+      },
+      {
+        "v12": {
+          "length": 386,
+          "sha256": "f9e3a4bd582ac7793d1234d961f9b3ea8e1c1192a30b8308fe7ef1bdcf63555a"
+        },
+        "head": {
+          "length": 41,
+          "sha256": "697203c320c3283da2af9090f4592d22d1091fde20568337522913e7f76e6738"
+        }
+      },
+      {
+        "v12": {
+          "length": 54,
+          "sha256": "29f2340c2969a20988ee9c2dc7ac037eb1d2afb207666efa2e5480b920e1c06a"
+        },
+        "head": {
+          "length": 218,
+          "sha256": "f999ef7de9e0b04ed83c09f95fa6c33d6a0b3c03421b99a38b0bdbfd69d92109"
         }
       }
     ],
     "Docs.tsx": [
       {
         "v12": {
-          "length": 158,
-          "sha256": "bdb84125a1b6cbc0d0ec400079078e77c493130491cc1bce4db23a141685720d"
+          "length": 1291,
+          "sha256": "7546baabcf7e7ffc7d5dbce1488f190bed9139235ff35a0a2208d00e0b15ad90"
         },
         "head": {
-          "length": 104,
-          "sha256": "5b1bc660e2af8afd1a5bc3a7461c1944685274460b1c05fbe163278f3dd701d2"
-        }
-      },
-      {
-        "v12": {
-          "length": 215,
-          "sha256": "0049a50d28d4e751a0ff149133fb8f3f052b364af66d5b192ce3a86b0212d036"
-        },
-        "head": {
-          "length": 34,
-          "sha256": "2ab5d976f8c9346c289124313fca9f95ce80bf178e365228fc43ffdb3605d2b3"
+          "length": 55,
+          "sha256": "e84f60dcace87056fb0517fd5e376d52099f2e78f5fb032105a8a74fcfaeb391"
         }
       }
     ]
@@ -171,7 +139,7 @@
     },
     "main.tsx": {
       "guarded": 1,
-      "calls": 57,
+      "calls": 60,
       "attributes": 25
     },
     "model.ts": {
@@ -200,58 +168,9 @@
       "attributes": 0
     }
   },
-  "documentedGuardedCallChanges": {
-    "wallet.tsx": {
-      "removed": [],
-      "added": [
-        [
-          "p.request({ method: \"eth_chainId\" })",
-          "useWallet > addToWallet"
-        ],
-        [
-          "p.request({ method: \"eth_chainId\" })",
-          "useWallet > addToWallet"
-        ],
-        [
-          "p.request({ method: \"wallet_watchAsset\", params: { type: \"ERC20\", options: { address: VAULT, symbol: \"BASK\", decimals: 18, image: BASK_IMAGE, }, }, })",
-          "useWallet > addToWallet"
-        ]
-      ]
-    }
-  },
-  "documentedAttributeChanges": {
-    "Docs.tsx": {
-      "removed": [],
-      "added": [
-        "<button> onClick={onAddToWallet}"
-      ],
-      "why": "each has its why in scripts/check-calldata.mjs"
-    },
-    "main.tsx": {
-      "removed": [],
-      "added": [
-        "<DocsPage> onAddToWallet={wallet.addToWallet}"
-      ],
-      "why": "each has its why in scripts/check-calldata.mjs"
-    }
-  },
-  "documentedCallChanges": {
-    "wallet.tsx": {
-      "why": "v18 (the owner, 2026-10-15): addToWallet() asks the wallet to list BASK with its logo; its two status messages are the only new uses of a watched name (the setMessage state setter of HEAD). No call of HEAD is removed or moved; no piece sits inside a call.",
-      "piecesPutBackInsideCalls": [],
-      "removed": [],
-      "newUsesOfWatchedNames": [
-        [
-          "setMessage(added ? \"The wallet accepted the request to list BASK.\" : \"The wallet did not add BASK.\")",
-          "useWallet > addToWallet"
-        ],
-        [
-          "setMessage(explain(e))",
-          "useWallet > addToWallet"
-        ]
-      ]
-    }
-  },
+  "documentedGuardedCallChanges": {},
+  "documentedAttributeChanges": {},
+  "documentedCallChanges": {},
   "vaultStockShelves": {
     "attributes": [
       "role=\"img\"",
@@ -306,9 +225,8 @@
     }
   },
   "walletHookReturn": {
-    "equalToHeadPlusAddToWallet": true,
-    "head": "return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, send, setMessage, };",
-    "now": "return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };"
+    "equalToHead": true,
+    "text": "return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };"
   },
   "walletAndRpcMethods": {
     "named": {
@@ -320,49 +238,22 @@
       "wallet_watchAsset": 1,
       "eth_sendTransaction": 1
     },
-    "addedInV18": {
-      "wallet.tsx": [
-        {
-          "method": "eth_chainId",
-          "place": "useWallet > addToWallet"
-        },
-        {
-          "method": "eth_chainId",
-          "place": "useWallet > addToWallet"
-        },
-        {
-          "method": "wallet_watchAsset",
-          "place": "useWallet > addToWallet"
-        }
-      ]
-    }
+    "addedInV19": {}
   },
   "browserStorageAddedInV12": {},
   "namesAddedAtTheTopOfAFile": {
-    "wallet.tsx": {
-      "BASK_IMAGE": "BASK_IMAGE = \"https://gateway.pinata.cloud/ipfs/bafkreiczp2hrpey42mx5hngo37rrwwwexrt3mdm537pyztv22pn4skxsvi\""
-    },
     "main.tsx": {},
     "Docs.tsx": {}
   },
   "moduleDeclarationChanges": {},
   "namesAddedInsideComponents": {
-    "wallet.tsx": {
-      "useWallet": [
-        "addToWallet"
-      ]
-    },
-    "Docs.tsx": {
-      "DocsPage": [
-        "onAddToWallet"
+    "main.tsx": {
+      "App": [
+        "shortStocks"
       ]
     }
   },
   "transactionCode": {
-    "wallet.tsx": {
-      "pieces": 1,
-      "namesDeclaredAroundThem": []
-    },
     "main.tsx": {
       "pieces": 0,
       "namesDeclaredAroundThem": []
@@ -373,13 +264,9 @@
     }
   },
   "reviewedAddedCalls": {
-    "wallet.tsx": {
-      "sha256": "5bf81673fe9064f2f5d8a5716931ca2808f203af2130f2240981397d7c0b2991",
-      "callees": "Number request switchChain Number request request setMessage setMessage explain"
-    },
     "main.tsx": {
-      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "callees": ""
+      "sha256": "8be0ad9ef44faa5f10e806635279f9376403fcff9003562793ddd4028a9994a2",
+      "callees": "filter join map"
     },
     "Docs.tsx": {
       "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -387,15 +274,14 @@
     }
   },
   "reviewedSourcePins": {
-    "Docs.tsx": "2ab149e23a1bd4d566d8e56abc514fc203d4b3ebf247cc4e6182f0461c5d8467",
-    "main.tsx": "bf5e06e8f39a4c895fe485a5bcca9db9b9be8d61a5969ed4327297bb6423d5b1",
+    "Docs.tsx": "4a017ccbabc92c33df85c32d34b9f4c2ad94ae8988b50c82eb1115141e413343",
+    "main.tsx": "acbfbe99686e824d26720805002343722cc16c8bcfff75a095c1774bcac94e80",
     "wallet.tsx": "cb08bb0214a1b581a85da98c9974b5edb0b340e5c66e01bcdd4239149c7d6a91",
     "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
     "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
     "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
   },
   "transactionStateWrites": {
-    "wallet.tsx": 0,
     "main.tsx": 0,
     "Docs.tsx": 0
   },
@@ -662,26 +548,7 @@
     "components": [
       "wallet.send(await getSpec(), scope, scope)"
     ],
-    "addedInV18": {
-      "wallet.tsx": [
-        {
-          "place": "useWallet > addToWallet",
-          "text": "window.ethereum"
-        },
-        {
-          "place": "useWallet > addToWallet",
-          "text": "p.request({ method: \"eth_chainId\" })"
-        },
-        {
-          "place": "useWallet > addToWallet",
-          "text": "p.request({ method: \"eth_chainId\" })"
-        },
-        {
-          "place": "useWallet > addToWallet",
-          "text": "p.request({ method: \"wallet_watchAsset\", params: { type: \"ERC20\", options: { address: VAULT, symbol: \"BASK\", decimals: 18, image: BASK_IMAGE, }, }, })"
-        }
-      ]
-    }
+    "addedInV19": {}
   },
   "pageLoads": {
     "names": [
@@ -730,7 +597,7 @@
       "httpequiv"
     ],
     "usesPerFile": {
-      "Docs.tsx": 4,
+      "Docs.tsx": 5,
       "Flows.tsx": 3,
       "Owner.tsx": 28,
       "Scenery.tsx": 1,
@@ -739,7 +606,30 @@
       "components.tsx": 5,
       "main.tsx": 16
     },
-    "equalToHeadExceptDisplayNames": {}
+    "equalToHeadExceptDisplayNames": {
+      "added": {
+        "main.tsx": [
+          {
+            "place": "App",
+            "text": "href=\"#losses\""
+          }
+        ],
+        "Docs.tsx": [
+          {
+            "place": "DocsPage",
+            "text": "href=\"#losses\""
+          }
+        ]
+      },
+      "removed": {
+        "main.tsx": [
+          {
+            "place": "App",
+            "text": "href=\"#losses\""
+          }
+        ]
+      }
+    }
   },
   "pinnedV9Declarations": {
     "web/src/governance.ts": {
@@ -787,13 +677,13 @@
   },
   "checks": [
     "v12 source scope: every other TypeScript source and ABI equal HEAD; edited sources equal HEAD once their exact pieces are restored, and also match independent reviewed SHA-256 pins outside regeneration blocks",
-    "Every guarded reading, parsing, encoding, simulation, sending and provider call equals HEAD in order and place apart from the documented addToWallet additions (two eth_chainId reads and the one wallet_watchAsset request, written out with their place); no other chain read, wallet request, storage key or network call is added",
+    "Every guarded reading, parsing, encoding, simulation, sending and provider call equals HEAD in order and place; no added chain read, wallet request, storage key or network call",
     "Action attributes equal HEAD except the documented approved presentation changes with a written reason; every onSubmit, getSpec, build and claim attribute equals HEAD",
     "Every removed call and added watched-name use is independently listed; complete ordered added calls match reviewed hashes and ordered callee lists outside regeneration blocks",
     "Direct and aliased transaction-state writes equal HEAD; send-tail receipt-hash writes are individually pinned with their ordered statements",
     "Wallet send head is byte-identical to HEAD through the receipt wait; its tail equals HEAD after exact receipt-hash replacements; connect and disconnect equal reviewed text and the new counter is used only at the pinned sites",
     "All protected wallet functions, flow effects, transaction buttons and handlers are byte-identical to HEAD; declaration and wrapper-scope checks prevent name rebinding",
-    "Provider methods and uses equal HEAD plus the documented addToWallet additions; browser storage, network and page-load sinks equal HEAD; Disconnect makes no request; components retains the same single wallet.send",
+    "Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD apart from the documented Losses link move and the one Docs link; Disconnect makes no request; components retains the same single wallet.send",
     "The differential encoding corpus, six-clock send builders, parser declarations, pinned v9 decisions and imported bindings retain every prior assertion",
     "Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs"
   ]

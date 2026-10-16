@@ -244,7 +244,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; every panel equals the baseline in place and size",
+      "Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; the v19 panel after Safety; every panel before it equals the baseline in place and size, every panel after it keeps its size and moves down by the v19 panel",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],
@@ -589,7 +589,7 @@
     "hintGrowth": 0,
     "checks": [
       "Owner follow-up: no normal status area/sign",
-      "Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; every panel equals the baseline in place and size",
+      "Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket; the v19 panel after Safety; every panel before it equals the baseline in place and size, every panel after it keeps its size and moves down by the v19 panel",
       "header retains its exact position and height",
       "slogan strip in the same place and size, still and full under reduced motion"
     ],

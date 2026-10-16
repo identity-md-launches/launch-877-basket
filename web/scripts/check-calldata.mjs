@@ -11,15 +11,14 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v18 on HEAD=v17: one thing. The owner's "Add BASK to MetaMask" button (2026-10-15): the Docs page's "Find Basket"
-// panel gains one button; pressing it runs the one new wallet request of this update, wallet_watchAsset (EIP-747),
-// which asks the wallet to list the BASK token with its logo. It signs nothing and sends nothing. wallet.tsx gains
-// addToWallet() inside useWallet (two eth_chainId reads, the existing switchChain(), the one request, two status
-// messages), main.tsx hands it to DocsPage. Every addition is written out below with its place (sendAdded,
-// methodsAdded, expected, callChanges, attributeChanges, namesAdded, the hook's return list); no other call,
-// attribute that acts, import, state, storage use, wallet request or chain read is added. Every other web/src file
-// is byte-identical to HEAD, styles.css included. Transactions remain HEAD's: send(), connect(), disconnect() and
-// switchChain() keep their pins.
+// v19 on HEAD=v18: one thing. The owner's decision on the Losses page (2026-10-15): the footer no longer links to it.
+// Instead main.tsx shows a notice above the Vault and Deposit pages while an unretired stock is short ("Deposits are
+// paused: the vault is short of ..."), whose link opens the Losses page, and Docs.tsx gains the panel "If a stock goes
+// missing" that explains the flag, the 7-day wait and the recognise step, with the same link. The Losses page and its
+// route are HEAD's. The notice reads only the snapshot App already holds. No call that acts, attribute that acts,
+// import, state, storage use, wallet request or chain read is added. Every other web/src file is byte-identical to
+// HEAD, styles.css included. Transactions remain HEAD's: send(), connect(), disconnect() and switchChain() keep their
+// pins.
 const protectedFiles=[
  "BaskGuide.tsx",
  "Flows.tsx",
@@ -30,6 +29,7 @@ const protectedFiles=[
  "components.tsx",
  "Tokenomics.tsx",
  "tokenomicsData.ts",
+ "wallet.tsx",
  "baskGuideData.ts",
  "chain.ts",
  "deployment.ts",
@@ -67,39 +67,30 @@ assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarr
 // v16: no style rule after HEAD's text (the v15 rules are HEAD's own now).
 const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
 assert.equal(cssTail,'','v16: no style rule after the text of HEAD');
-// The v18 files: byte-identical to HEAD once their documented pieces [v18, HEAD] are put back (each exactly once), so
+// The v19 files: byte-identical to HEAD once their documented pieces [v19, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v18 pieces (generated from the difference to HEAD, not edited by hand)
+// >>> v19 pieces (generated from the difference to HEAD, not edited by hand)
 const editedFiles={
- "wallet.tsx":[
-  ["export interface Provider {\n  request(args: {\n    method: string;\n    params?: unknown[] | Record<string, unknown>;\n  }): Promise<any>;\n  on?(event: string, fn: (value: any) => void): void;\n",
-   "export interface Provider {\n  request(args: { method: string; params?: unknown[] }): Promise<any>;\n  on?(event: string, fn: (value: any) => void): void;\n"],
-  ["}\n// The BASK logo a wallet is asked to show (EIP-747 image): the 256 px PNG\n// on IPFS.\nconst BASK_IMAGE =\n  \"https://gateway.pinata.cloud/ipfs/bafkreiczp2hrpey42mx5hngo37rrwwwexrt3mdm537pyztv22pn4skxsvi\";\nexport function useWallet(refresh: () => Promise<Snapshot>) {\n",
-   "}\nexport function useWallet(refresh: () => Promise<Snapshot>) {\n"],
-  ["  }\n  // Asks the wallet to list BASK with its logo (EIP-747 wallet_watchAsset).\n  // The token is added on the wallet's current network, so the chain check\n  // comes first. No signature, no transaction.\n  async function addToWallet() {\n    try {\n      const p = window.ethereum;\n      if (!p) throw new Error(\"Open this page in your wallet app's browser\");\n      if (Number(await p.request({ method: \"eth_chainId\" })) !== 4663)\n        await switchChain();\n      if (Number(await p.request({ method: \"eth_chainId\" })) !== 4663)\n        throw new Error(\n          \"Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again.\",\n        );\n      const added = await p.request({\n        method: \"wallet_watchAsset\",\n        params: {\n          type: \"ERC20\",\n          options: {\n            address: VAULT,\n            symbol: \"BASK\",\n            decimals: 18,\n            image: BASK_IMAGE,\n          },\n        },\n      });\n      setMessage(\n        added\n          ? \"The wallet accepted the request to list BASK.\"\n          : \"The wallet did not add BASK.\",\n      );\n    } catch (e) {\n      setMessage(explain(e));\n    }\n  }\n  async function send(s: Spec, key = s.functionName, label = key) {\n",
-   "  }\n  async function send(s: Spec, key = s.functionName, label = key) {\n"],
-  ["    switchChain,\n    addToWallet,\n    send,\n",
-   "    switchChain,\n    send,\n"]
- ],
  "main.tsx":[
-  ["        ) : page === \"Docs\" ? (\n          <DocsPage onAddToWallet={wallet.addToWallet} />\n        ) : (\n",
-   "        ) : page === \"Docs\" ? (\n          <DocsPage />\n        ) : (\n"]
+  ["  }, []);\n  // Unretired stocks the vault holds less of than it manages: while any is\n  // short, the vault refuses deposits.\n  const shortStocks = snapshot.assets.filter((a) => a.short && !a.retired);\n  return (\n",
+   "  }, []);\n  return (\n"],
+  ["        )}\n        {(page === \"Vault\" || page === \"Deposit\") && shortStocks.length > 0 && (\n          <div className=\"note warning\">\n            Deposits are paused: the vault is short of{\" \"}\n            <bdi>{shortStocks.map((a) => a.symbol).join(\", \")}</bdi>.{\" \"}\n            <a href=\"#losses\">Anyone can start the fix.</a>\n          </div>\n        )}\n        {page === \"Vault\" ? (\n",
+   "        )}\n        {page === \"Vault\" ? (\n"],
+  ["            </a>\n            <a href=\"#docs\">Docs</a>\n",
+   "            </a>\n            <a\n              href=\"#losses\"\n              aria-current={page === \"Losses\" ? \"page\" : undefined}\n            >\n              Losses\n            </a>\n            <a href=\"#docs\">Docs</a>\n"]
  ],
  "Docs.tsx":[
-  ["import { VAULT } from \"./deployment\";\nexport function DocsPage({\n  onAddToWallet,\n}: {\n  onAddToWallet: () => void;\n}) {\n  const [tab, setTab] = useState(0);\n",
-   "import { VAULT } from \"./deployment\";\nexport function DocsPage() {\n  const [tab, setTab] = useState(0);\n"],
-  ["          </p>\n          <p>\n            <button onClick={onAddToWallet}>Add BASK to MetaMask</button>\n          </p>\n          <p>Asks your wallet to list BASK with its logo. No transaction.</p>\n        </section>\n",
-   "          </p>\n        </section>\n"]
+  ["        </section>\n        <section className=\"panel\">\n          <h2>If a stock goes missing</h2>\n          <p>\n            The vault keeps its own count of each stock it holds. If the real\n            balance ever falls below that count, for example because the issuer\n            burned or took back tokens, that stock is short. While an unretired\n            stock is short, deposits are paused. Redemptions keep working and\n            pay from the real balance.\n          </p>\n          <p>\n            Anyone can correct the count on the{\" \"}\n            <a href=\"#losses\">Losses page</a>, in two steps. Flag shortfall\n            records the gap and starts a 7-day wait. After the wait, Recognise\n            loss lowers the count by the recorded gap or the current gap,\n            whichever is smaller, and deposits can open again. If the tokens\n            come back during the wait, less or nothing is written off. If the\n            gap grows, flagging again records the larger gap and starts a new\n            7-day wait.\n          </p>\n          <p>\n            This only corrects the records: the missing tokens were already\n            gone, and redemptions were already paying from what is really there.\n          </p>\n        </section>\n        <section className=\"panel\">\n",
+   "        </section>\n        <section className=\"panel\">\n"]
  ]
 };
-// <<< v18 pieces
+// <<< v19 pieces
 assert.deepEqual(Object.keys(editedFiles),[
- "wallet.tsx",
  "main.tsx",
  "Docs.tsx"
-],'the v18 files');
+],'the v19 files');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -153,32 +144,17 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD. v18 adds exactly the calls of addToWallet() listed here, each at its place.
-const expected={
- "wallet.tsx":{"removed":[],"added":[
-  ["p.request({ method: \"eth_chainId\" })", "useWallet > addToWallet"],
-  ["p.request({ method: \"eth_chainId\" })", "useWallet > addToWallet"],
-  ["p.request({ method: \"wallet_watchAsset\", params: { type: \"ERC20\", options: { address: VAULT, symbol: \"BASK\", decimals: 18, image: BASK_IMAGE, }, }, })", "useWallet > addToWallet"]
- ]}
-};
+// already part of HEAD (v18's addToWallet() calls included). v19 adds no guarded call, wallet request or chain read.
+const expected={};
 // Action attributes: the exact differences from HEAD, in page order, each [element, attribute, why]. Everything else
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v18 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v19 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
- "Docs.tsx":{
-  removed:[],
-  added:[
-   ["button","onClick={onAddToWallet}",
-    "v18, the owner (2026-10-15): the Add BASK to MetaMask button in the Find Basket panel calls the handler the page received; Docs.tsx itself makes no request, read or send (NO_SEND holds)."]]},
- "main.tsx":{
-  removed:[],
-  added:[
-   ["DocsPage","onAddToWallet={wallet.addToWallet}",
-    "v18, the owner (2026-10-15): main.tsx hands useWallet.addToWallet to the Docs page as the handler of its Add BASK to MetaMask button; the function itself lives in wallet.tsx and is pinned there (two eth_chainId reads, switchChain, one wallet_watchAsset request, no send)."]]}
+
 };
-// <<< v18 attributes
+// <<< v19 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -191,16 +167,8 @@ const attributeChanges={
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
 // Reviewed v16 differences in calls and watched-name uses. Independent of the generated pieces.
-const callChanges={
- "wallet.tsx":{
-  why:'v18 (the owner, 2026-10-15): addToWallet() asks the wallet to list BASK with its logo; its two status messages are the only new uses of a watched name (the setMessage state setter of HEAD). No call of HEAD is removed or moved; no piece sits inside a call.',
-  pieces:[],
-  removed:[],
-  uses:[
-   ["setMessage(added ? \"The wallet accepted the request to list BASK.\" : \"The wallet did not add BASK.\")", "useWallet > addToWallet"],
-   ["setMessage(explain(e))", "useWallet > addToWallet"]
-  ]}
-};
+// v19: no call of HEAD is removed and no watched name gains a use (v18's two setMessage uses are HEAD's own now).
+const callChanges={};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
 function stateNames(text,file){
@@ -251,7 +219,7 @@ function localDeclarations(file,text,fn,list){
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v18 file');
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v19 file');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -275,13 +243,9 @@ if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
 const addedCallPins={
- "wallet.tsx": {
-  "sha256": "5bf81673fe9064f2f5d8a5716931ca2808f203af2130f2240981397d7c0b2991",
-  "callees": "Number request switchChain Number request request setMessage setMessage explain"
- },
  "main.tsx": {
-  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-  "callees": ""
+  "sha256": "8be0ad9ef44faa5f10e806635279f9376403fcff9003562793ddd4028a9994a2",
+  "callees": "filter join map"
  },
  "Docs.tsx": {
   "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -291,8 +255,8 @@ const addedCallPins={
 // <<< reviewed calls
 // The exact reviewed source of the two v14 files (frozen now) and of the two v16 files, beyond either generated block.
 const reviewedSourcePins={
- "Docs.tsx": "2ab149e23a1bd4d566d8e56abc514fc203d4b3ebf247cc4e6182f0461c5d8467",
- "main.tsx": "bf5e06e8f39a4c895fe485a5bcca9db9b9be8d61a5969ed4327297bb6423d5b1",
+ "Docs.tsx": "4a017ccbabc92c33df85c32d34b9f4c2ad94ae8988b50c82eb1115141e413343",
+ "main.tsx": "acbfbe99686e824d26720805002343722cc16c8bcfff75a095c1774bcac94e80",
  "wallet.tsx": "cb08bb0214a1b581a85da98c9974b5edb0b340e5c66e01bcdd4239149c7d6a91",
  "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
  "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
@@ -430,17 +394,8 @@ function sendsOf(text,file){
  })(tree);
  return out;
 }
-// v18: the provider uses of addToWallet(), written out with their place and in order: the read of window.ethereum,
-// two eth_chainId reads and the one wallet_watchAsset request. wallet.tsx equals HEAD apart from exactly these;
-// no other file gains any. Each is also a guarded call (expected) and a named method (methodsAdded) below.
-const sendAdded={
- "wallet.tsx":[
-  {"place":"useWallet > addToWallet","text":"window.ethereum"},
-  {"place":"useWallet > addToWallet","text":"p.request({ method: \"eth_chainId\" })"},
-  {"place":"useWallet > addToWallet","text":"p.request({ method: \"eth_chainId\" })"},
-  {"place":"useWallet > addToWallet","text":"p.request({ method: \"wallet_watchAsset\", params: { type: \"ERC20\", options: { address: VAULT, symbol: \"BASK\", decimals: 18, image: BASK_IMAGE, }, }, })"}
- ]
-};
+// v19 adds no provider use: every file's list equals HEAD's (v18's addToWallet() uses included).
+const sendAdded={};
 const NO_SEND=['Vault.tsx','Scenery.tsx','main.tsx','Docs.tsx'],sendUses={};
 for(const f of sources){
  const h=sendsOf(baseline('web/src/'+f),f),n=sendsOf(read('web/src/'+f),f),added=sendAdded[f]??[];
@@ -448,7 +403,7 @@ for(const f of sources){
  // The startup request, its answer handling and all provider uses already belong to HEAD and remain exact.
  // Guarded calls and named methods independently compare the requests without an exception.
  const restored=n.map(x=>({...x,text:restoreAccountReply(x,f)}));
- if(f==='wallet.tsx')assert.deepEqual(n.filter(x=>!isAdded(x)),h,'wallet.tsx: provider uses including the guarded startup reply equal HEAD apart from the documented addToWallet additions');
+ if(f==='wallet.tsx')assert.deepEqual(n.filter(x=>!isAdded(x)),h,'wallet.tsx: provider uses including the guarded startup reply equal HEAD');
  assert.deepEqual(restored.filter(x=>!isAdded(x)),h,f+': a wallet send, provider request, signing method or network call was added, removed, changed or moved');
  assert.deepEqual(n.filter(isAdded),added,f+': the added provider uses differ from the documented ones in text, place, order or count');
  for(const a of added)assert.equal(h.filter(x=>x.place===a.place&&x.text===a.text).length,0,f+': a documented added provider use already existed at HEAD: '+a.text);
@@ -481,29 +436,41 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v18 adds nothing a page loads or opens: the button has no href, src or style, and the logo address is a string the
-// wallet is handed, not a link the page opens. HEAD's list (v17's contact links included) stays complete, in order and
-// in place, in every file, with no addition.
-const loadDisplayAdded={};
+// v19: one link moves in main.tsx and one is added in Docs.tsx, each written out here with its place. The Losses link
+// (href="#losses") leaves the footer (removed once from HEAD's list) and is the link of the short-stock notice above
+// the Vault and Deposit pages (added once, App); the Docs panel "If a stock goes missing" links to the same page
+// (DocsPage). Nothing else a page loads or opens changes in any file: HEAD's list without the removed entry stays
+// complete, in order and in place, and the only additions are these.
+const loadDisplayAdded={
+ "main.tsx": [
+  {"place": "App", "text": "href=\"#losses\""}
+ ],
+ "Docs.tsx": [
+  {"place": "DocsPage", "text": "href=\"#losses\""}
+ ]
+};
+const loadDisplayRemoved={
+ "main.tsx": [
+  {"place": "App", "text": "href=\"#losses\""}
+ ]
+};
 const loadUses={};
 for(const f of sources){
- const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f),added=loadDisplayAdded[f]??[];
- const isAdded=x=>added.some(a=>a.place===x.place&&a.text===x.text);
- assert.deepEqual(n.filter(x=>!isAdded(x)),h,f+': something a page loads or opens (a picture, frame, worker or element made in script, a navigation, a link, a style attribute) was added, removed, changed or moved');
+ const h=loadsOf(baseline('web/src/'+f),f),n=loadsOf(read('web/src/'+f),f),added=loadDisplayAdded[f]??[],removed=loadDisplayRemoved[f]??[];
+ const isAdded=x=>added.some(a=>a.place===x.place&&a.text===x.text),kept=[...h];
+ for(const r of removed){
+  assert.equal(h.filter(x=>x.place===r.place&&x.text===r.text).length,1,f+': a documented removed link is not exactly once at HEAD: '+r.text);
+  kept.splice(kept.findIndex(x=>x.place===r.place&&x.text===r.text),1);
+ }
+ assert.deepEqual(n.filter(x=>!isAdded(x)),kept,f+': something a page loads or opens (a picture, frame, worker or element made in script, a navigation, a link, a style attribute) was added, removed, changed or moved');
  assert.deepEqual(n.filter(isAdded),added,f+': the added links differ from the documented ones in text, place, order or count');
- for(const a of added)assert.equal(h.filter(x=>x.place===a.place&&x.text===a.text).length,0,f+': a documented added link already existed at HEAD: '+a.text);
+ for(const a of added)assert.equal(kept.filter(x=>x.place===a.place&&x.text===a.text).length,0,f+': a documented added link already existed at HEAD: '+a.text);
  if(n.length)loadUses[f]=n.length;
 }
 // v12: the wallet and RPC methods the pages name. Every `method` given as a property (or assigned) in web/src, in order
 // with its place: exactly HEAD's list. Local-only Disconnect names no new wallet or RPC method.
-// v18: wallet.tsx names three more, all inside addToWallet(), in this order; no other file names a new one.
-const methodsAdded={
- "wallet.tsx":[
-  {"method":"eth_chainId","place":"useWallet > addToWallet"},
-  {"method":"eth_chainId","place":"useWallet > addToWallet"},
-  {"method":"wallet_watchAsset","place":"useWallet > addToWallet"}
- ]
-};
+// v19 names no new wallet or RPC method in any file (v18's three in addToWallet() are HEAD's own).
+const methodsAdded={};
 function methodsOf(text,file){
  const tree=parse(text,file),print=printerOf(tree),out=[],key=n=>ts.isIdentifier(n)||ts.isStringLiteralLike(n)?n.text:ts.isComputedPropertyName(n)?lit(n.expression):undefined;
  const put=(n,value)=>out.push({method:value?lit(value)??'not a plain string: '+print(value):'not a plain string: shorthand',place:place(n,tree)});
@@ -619,12 +586,11 @@ function hookReturn(text){
  assert.equal(returns.length,1,'wallet.tsx useWallet: one return');
  return print(returns[0]);
 }
-// v18: the hook's return list is HEAD's with addToWallet after switchChain. Both texts are pinned here, printed
-// without comments; nothing else in the list may change.
-const HOOK_RETURN_HEAD="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, send, setMessage, };";
-const HOOK_RETURN_V18="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };";
+// v19: the hook's return list is HEAD's (v18's, with addToWallet after switchChain), pinned here printed without
+// comments; nothing in the list may change.
+const HOOK_RETURN_HEAD="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };";
 assert.equal(hookReturn(baseline('web/src/wallet.tsx')),HOOK_RETURN_HEAD,'wallet.tsx: HEAD\'s hook return list as pinned');
-assert.equal(hookReturn(read('web/src/wallet.tsx')),HOOK_RETURN_V18,'wallet.tsx: hook returns HEAD\'s list plus addToWallet, as pinned');
+assert.equal(hookReturn(read('web/src/wallet.tsx')),HOOK_RETURN_HEAD,'wallet.tsx: hook returns HEAD\'s unchanged list');
 // SPEC protected code: raw bytes, including entire buttons and effects, independent of generated differences.
 const protectedCode={sendTailWrites};
 function rawProtected(label,file,select,count=1){
@@ -732,9 +698,8 @@ for(const f of Object.keys(editedFiles)){
  assert.deepEqual(n,h,f+': a name used by the transaction code is declared around it differently from HEAD');
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
-// v18: one module constant in wallet.tsx, the logo address the wallet is asked to show.
+// v19 adds no name at the top of a file.
 const namesAdded={
- "wallet.tsx": {"BASK_IMAGE": "BASK_IMAGE = \"https://gateway.pinata.cloud/ipfs/bafkreiczp2hrpey42mx5hngo37rrwwwexrt3mdm537pyztv22pn4skxsvi\""},
  "main.tsx": {},
  "Docs.tsx": {}
 };
@@ -938,21 +903,21 @@ const brief=x=>x.length>120?{start:x.slice(0,80),length:x.length,sha256:sha256(x
 fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',baseline:git(['rev-parse','HEAD']).trim(),protectedFiles,editedFiles:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.length+' documented pieces [v12, HEAD]'])),v12Pieces:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.map(pieceRecord)])),counts,
  documentedGuardedCallChanges:expected,documentedAttributeChanges:Object.fromEntries(Object.entries(attributeChanges).map(([f,a])=>[f,{removed:a.removed.map(x=>'<'+x[0]+'> '+x[1]),added:a.added.map(x=>'<'+x[0]+'> '+x[1]),why:'each has its why in scripts/check-calldata.mjs'}])),
  documentedCallChanges:Object.fromEntries(Object.entries(callChanges).map(([f,c])=>[f,{why:c.why,piecesPutBackInsideCalls:c.pieces.map(pieceRecord),removed:c.removed.map(brief),newUsesOfWatchedNames:c.uses.map(([x,where])=>[brief(x),where])}])),
- vaultStockShelves:{attributes:vaultAttributes,handlers:vaultHandlers},pinnedFunctions,walletHookReturn:{equalToHeadPlusAddToWallet:true,head:HOOK_RETURN_HEAD,now:HOOK_RETURN_V18},
- walletAndRpcMethods:{named:methods,addedInV18:methodsAdded},browserStorageAddedInV12:storageAdded,namesAddedAtTheTopOfAFile:namesAdded,moduleDeclarationChanges:moduleChanges,namesAddedInsideComponents:newNames,transactionCode,reviewedAddedCalls:addedCallPins,reviewedSourcePins,transactionStateWrites,protectedCode,
+ vaultStockShelves:{attributes:vaultAttributes,handlers:vaultHandlers},pinnedFunctions,walletHookReturn:{equalToHead:true,text:HOOK_RETURN_HEAD},
+ walletAndRpcMethods:{named:methods,addedInV19:methodsAdded},browserStorageAddedInV12:storageAdded,namesAddedAtTheTopOfAFile:namesAdded,moduleDeclarationChanges:moduleChanges,namesAddedInsideComponents:newNames,transactionCode,reviewedAddedCalls:addedCallPins,reviewedSourcePins,transactionStateWrites,protectedCode,
  differentialEncoding:{cases:cases.length,...tally},sendBuilders:{clocks,...sends},pinnedDeclarations:pinned,
- sendsAndRequests:{sendFreeFiles:NO_SEND,usesPerFile:Object.fromEntries(Object.entries(sendUses).map(([f,x])=>[f,x.length])),components:sendUses['components.tsx'].filter(x=>/\(/.test(x)),addedInV18:sendAdded},
- pageLoads:{names:[...LOADS],jsxAttributes:[...LOAD_ATTRIBUTES],usesPerFile:loadUses,equalToHeadExceptDisplayNames:loadDisplayAdded},
+ sendsAndRequests:{sendFreeFiles:NO_SEND,usesPerFile:Object.fromEntries(Object.entries(sendUses).map(([f,x])=>[f,x.length])),components:sendUses['components.tsx'].filter(x=>/\(/.test(x)),addedInV19:sendAdded},
+ pageLoads:{names:[...LOADS],jsxAttributes:[...LOAD_ATTRIBUTES],usesPerFile:loadUses,equalToHeadExceptDisplayNames:{added:loadDisplayAdded,removed:loadDisplayRemoved}},
  pinnedV9Declarations:Object.fromEntries(Object.entries(pinnedV9).map(([f,m])=>[f,Object.fromEntries(Object.entries(m).map(([k,x])=>[k,typeof x==='string'?'v9 text (also at HEAD)':'equal to HEAD ('+x.length+' pieces)']))])),importBindings:imports,
  checks:[
   'v12 source scope: every other TypeScript source and ABI equal HEAD; edited sources equal HEAD once their exact pieces are restored, and also match independent reviewed SHA-256 pins outside regeneration blocks',
-  'Every guarded reading, parsing, encoding, simulation, sending and provider call equals HEAD in order and place apart from the documented addToWallet additions (two eth_chainId reads and the one wallet_watchAsset request, written out with their place); no other chain read, wallet request, storage key or network call is added',
+  'Every guarded reading, parsing, encoding, simulation, sending and provider call equals HEAD in order and place; no added chain read, wallet request, storage key or network call',
   'Action attributes equal HEAD except the documented approved presentation changes with a written reason; every onSubmit, getSpec, build and claim attribute equals HEAD',
   'Every removed call and added watched-name use is independently listed; complete ordered added calls match reviewed hashes and ordered callee lists outside regeneration blocks',
   'Direct and aliased transaction-state writes equal HEAD; send-tail receipt-hash writes are individually pinned with their ordered statements',
   'Wallet send head is byte-identical to HEAD through the receipt wait; its tail equals HEAD after exact receipt-hash replacements; connect and disconnect equal reviewed text and the new counter is used only at the pinned sites',
   'All protected wallet functions, flow effects, transaction buttons and handlers are byte-identical to HEAD; declaration and wrapper-scope checks prevent name rebinding',
-  'Provider methods and uses equal HEAD plus the documented addToWallet additions; browser storage, network and page-load sinks equal HEAD; Disconnect makes no request; components retains the same single wallet.send',
+  'Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD apart from the documented Losses link move and the one Docs link; Disconnect makes no request; components retains the same single wallet.send',
   'The differential encoding corpus, six-clock send builders, parser declarations, pinned v9 decisions and imported bindings retain every prior assertion',
   'Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs'
  ]},null,2)+'\n');

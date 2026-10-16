@@ -144,6 +144,30 @@ export function DocsPage({
           </p>
         </section>
         <section className="panel">
+          <h2>If a stock goes missing</h2>
+          <p>
+            The vault keeps its own count of each stock it holds. If the real
+            balance ever falls below that count, for example because the issuer
+            burned or took back tokens, that stock is short. While an unretired
+            stock is short, deposits are paused. Redemptions keep working and
+            pay from the real balance.
+          </p>
+          <p>
+            Anyone can correct the count on the{" "}
+            <a href="#losses">Losses page</a>, in two steps. Flag shortfall
+            records the gap and starts a 7-day wait. After the wait, Recognise
+            loss lowers the count by the recorded gap or the current gap,
+            whichever is smaller, and deposits can open again. If the tokens
+            come back during the wait, less or nothing is written off. If the
+            gap grows, flagging again records the larger gap and starts a new
+            7-day wait.
+          </p>
+          <p>
+            This only corrects the records: the missing tokens were already
+            gone, and redemptions were already paying from what is really there.
+          </p>
+        </section>
+        <section className="panel">
           <h2>Risks</h2>
           <p>
             Feeds lag the market. The issuer can pause, block, burn or change

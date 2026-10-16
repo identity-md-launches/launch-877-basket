@@ -72,6 +72,9 @@ function App() {
     const t = setInterval(() => tick((x) => x + 1), 60000);
     return () => clearInterval(t);
   }, []);
+  // Unretired stocks the vault holds less of than it manages: while any is
+  // short, the vault refuses deposits.
+  const shortStocks = snapshot.assets.filter((a) => a.short && !a.retired);
   return (
     <>
       <a
@@ -243,6 +246,13 @@ function App() {
             remains available.
           </div>
         )}
+        {(page === "Vault" || page === "Deposit") && shortStocks.length > 0 && (
+          <div className="note warning">
+            Deposits are paused: the vault is short of{" "}
+            <bdi>{shortStocks.map((a) => a.symbol).join(", ")}</bdi>.{" "}
+            <a href="#losses">Anyone can start the fix.</a>
+          </div>
+        )}
         {page === "Vault" ? (
           <VaultPage snapshot={data} />
         ) : page === "Deposit" ? (
@@ -271,12 +281,6 @@ function App() {
               aria-current={page === "Owner" ? "page" : undefined}
             >
               Owner controls
-            </a>
-            <a
-              href="#losses"
-              aria-current={page === "Losses" ? "page" : undefined}
-            >
-              Losses
             </a>
             <a href="#docs">Docs</a>
             <a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">

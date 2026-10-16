@@ -97,6 +97,10 @@ Vault title, 660px and below: the picture's left edge is `max(0, min((panel - pi
 
 Deposit and Redeem titles, 660px and below, while the heading shows the focus marker (`:focus-visible`: a 3px ink outline inside a 6px yellow band; iPhone browsers show it after a tab is tapped): her shelf line sits 6px under her feet instead of 3px and ends 6px before the heading's left edge, which is the marker's outer edge, so the line and the marker's bottom band are one 3px yellow line into the corner. The rule uses `:has()` and applies only when forced colours are off; without the marker the line is v14's.
 
+## v19 presentation details
+
+The Losses page (owner's decision, 2026-10-15). The footer's link row loses "Losses"; the rest of the row keeps its order. While an unretired stock is short, the Vault and Deposit pages show one warning note above the page title, in the existing `note warning` style (the same note as the wrong-network warning): "Deposits are paused: the vault is short of <symbols>. Anyone can start the fix.", the symbols comma-separated in one `bdi`, the last sentence a link to #losses. No note when nothing is short. The Docs page gains one panel, "If a stock goes missing", after Safety, in the existing panel style, with one link to the Losses page. No new rule in styles.css.
+
 ## v18 presentation details
 
 Add BASK to MetaMask (owner's decision, 2026-10-15). The Docs page's "Find Basket" panel ends with one button, "Add BASK to MetaMask", in the site's existing button style, after the "Contact:" line, and under it one sentence: "Asks your wallet to list BASK with its logo. No transaction." The answer appears in the page's status line like every other wallet message: "The wallet accepted the request to list BASK.", "The wallet did not add BASK.", the usual decline text, or "Switch your wallet to Robinhood Chain (4663), then press Add BASK to MetaMask again." when the wallet stays on another network. No new rule in styles.css; nothing else moves.

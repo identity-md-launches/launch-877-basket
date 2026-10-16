@@ -1,3 +1,96 @@
+# 2026-10-16 — v19 exact Losses navigation patch, vault 6
+
+The supplied patch was applied unchanged to `ec5fa83ce47dd1a361cda55e086ef503d10f2deb`. The footer no longer links to Losses. An unretired short stock now produces the requested warning above Vault and Deposit, with its link to `#losses`. Docs has the exact “If a stock goes missing” panel immediately after Safety. The page address and transaction implementation are unchanged. No contract, dependency, lockfile, build configuration, stylesheet, public asset, ignore file or deployment setting changed. No live transaction or publication was performed.
+
+**Delivery status: exact implementation and export complete; validation incomplete.** The archive refused the walkthrough, as anticipated by the brief's delivery exception. Two unchanged checks also time out because their route-ready selector requires the footer link this patch removes. These are reported below, without changing the patch or weakening a check.
+
+## Patch and final build
+
+The Pinata download was **48,823 bytes**, SHA-256 `561d2c0f36f93ddf9a2289d019e2207ced4d74b3d7f331a9a8646f20c52ed753`. The starting worktree was clean. `git apply --check`, `git apply`, and the later reverse-application check passed. An independent application to copies of the eight original files in disposable scratch confirms that every delivered patched file has exactly the supplied patch's bytes.
+
+In `web/`, `npm ci --cache /tmp/basket-v19-npm-cache`, `npm run typecheck` and `npm run build` passed. The final build and typecheck also passed after the design probe; their output is in `build-validation.txt`. npm reported the existing three dependency advisories (one moderate, two high); dependencies remain pinned. Vite's existing large-chunk advisory remains.
+
+All five required output names and hashes match exactly, including after the final rebuild:
+
+| File | SHA-256 |
+| --- | --- |
+| `dist/assets/index-C7kCGuGo.js` | `95a973e1ba6804d0f88857713350e3e5539a95cbdd1b0e1ddb09398e41e7b997` |
+| `dist/assets/index-BRdefnhV.css` | `6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80` |
+| `dist/assets/ccip-yLdmA1De.js` | `e5c63129a46f8d32a96b28920d39cac03fc08e723d5655b42fb6948fcf7a3bc9` |
+| `dist/index.html` | `67c1079e20f3c46d43107648708aa6006517298ffa791caaf2bd179c43b5d5c1` |
+| `dist/share-card.jpg` | `dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85` |
+
+The root export includes relative asset URLs, hash routes, local fonts/art, title, favicon, description, og:title and og:image. README.md documents installation, preview and rebuilding. DESIGN.md retains the implemented tokens, typography, components and responsive rules, with the exact v19 addition. Both documents are byte-identical to the patch result.
+
+## Required checks actually run
+
+The untouched v18 `dist/` was copied to disposable scratch before rebuilding and supplied as `BASKET_BASELINE_DIST`. The archive walkthrough was attempted before the other checks. Commands below run from `web/`; TypeScript imports used the existing `tsx` loader. Browser checks used the supplied Playwright module, full Chromium for the previously documented font metrics, and temporary writable browser directories. Initial browser-launch failures were repaired through tool selection only and are not counted as check passes. No assertion or site code was changed.
+
+| Command | Actual result |
+| --- | --- |
+| `node scripts/run-browser.mjs` with `NODE_OPTIONS='--import tsx'` | **Archive refusal**, fork **83874298**, before walkthrough checks, sends or screenshots. |
+| `npx --no-install tsx scripts/check-tokenomics.tsx` | PASS — supply, schedule, cliff, annual rows, null guards, configured reads and formatting. |
+| `node scripts/check-tokenomics-live.mjs` | PASS — five null mounts without reads, mocked success/failure/Retry, zero external requests. |
+| `npx --no-install tsx scripts/check-bask-guide.tsx` | PASS — integer arithmetic, five examples, flywheel figures and canonical copy. |
+| `npm run validate` | PASS — live **verifyNetwork**, canonical ABI, runtime hash, snapshot/status and all 11 proposal kinds; live block **89716694**. |
+| `node scripts/check-preservation.mjs` | PASS — protected files, send checks, ABI/wording invariants and obsolete-integration scan. |
+| `npx --no-install tsx scripts/check-interface.ts` | PASS — arithmetic, parser, exact balances and setting units. |
+| `node scripts/check-calldata.mjs` | PASS against **ec5fa83** — frozen sources, reviewed digests, restored pieces, ordered display calls and page-open declarations; **496 identical encodings, 1,773 mutually refused cases, zero new refusals**, plus send-builder cases. |
+| `node scripts/check-art.mjs` | **FAIL** — route-ready timeout at line 547; see diagnosis below. All **74 art copies** passed the manifest size/hash checks before that timeout and passed a separate complete manifest comparison. |
+| `node scripts/check-motion.mjs` | **FAIL** — same route-ready timeout at line 53; see diagnosis below. |
+| `node scripts/inspect-export.mjs` | PASS — **24 page/viewport checks**, all six routes at 320/375/800/1440px, subpath loading, local fonts, keyboard skip link, reduced motion, seven solid-color contrast pairs and zero recorded issues. |
+| `node scripts/check-guards.mjs` | PASS — four pre-send guards, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS — **34** wallet/Claims regressions. |
+| `node scripts/check-visibility.mjs` | PASS — six routes, disconnected/connected, **70** prior first-screen elements preserved; Docs panels before the addition retain position/size, following panels retain size and shift by the new panel plus spacing. |
+| `node scripts/check-bundle.mjs` | PASS — **8,027,863 / 8,388,608 bytes** before this entry and supplementary evidence; the final complete total, including those additions, is in `bundle-check.json`. |
+
+### Archive refusal
+
+The unchanged runner used its own read-only proxy and `https://robinhood.api.pocket.network` at block **83874298**. Anvil could not create genesis because the archive returned **`metadata is not found, 83874301`**. The subsequent fork call failed because the fork process had exited. No chain response, state, bytecode, proof or block was substituted. This is the brief's explicit permitted archive limitation.
+
+This run completed **0 walkthrough checks, 0 walkthrough sends and 0 walkthrough screenshots**. The inherited `browser-fork.json` (91 checks, 70 sends, 24 screenshots), the 24 required `empty-*.jpg` / `stocks25-*.jpg` images and prior screenshot-packaging record are retained as **historical evidence**, not a current walkthrough pass. The runner regenerated `rpc-debug.json` with identical empty contents.
+
+### Two unchanged checks still require the removed footer link
+
+`web/scripts/check-art.mjs:380` defines route readiness as `a[aria-current="page"][href="#<route>"]`. Its six-route loop waits for this at line **547**. `web/scripts/check-motion.mjs:53` uses the same selector. For `#losses`, the removed footer link was the only matching element; the new contextual links deliberately do not replace it with an active navigation marker. Both scripts reach that route and time out after **30 seconds**.
+
+The separately tested production export renders heading **Losses** at `#losses` while the selector count is **0**, in each of five display states (`short-stock-validation.json`). Both new links reach that page using the keyboard. This confirms the cause without changing what either required check asserts. No replacement navigation element, altered selector, intercepted assertion or modified check was used. The old `art-validation.json`, `motion-validation.json` and associated DPR captures remain historical; neither failed suite is represented as a current pass. The failure occurs before the art suite's WebKit pass.
+
+## Supplementary production interaction validation
+
+`short-stock-validation.json` records **36 passing Chromium cases** on the actual production export served under a subpath. A disposable fixture forwards read-only requests to the public RPC and explicitly substitutes only `allAssets` shortfall/readability/retirement fields for synthetic display states. It uses actual listed token metadata, changes no application source and supplies no wallet provider.
+
+At 390px, five states (healthy, one short stock, two short stocks, retired short stock, unreadable balance) were tested on all six routes. Only the active short cases produce one notice on Vault and Deposit. Exact wording, symbol ordering/separation, position above the title, no footer Losses link and no horizontal overflow are asserted. At 320/390/1440px, keyboard activation of the notice and the Docs panel link reaches the unchanged Losses route. The new panel has one Losses link and immediately follows Safety. No wallet request, signing or transaction occurs in this fixture, and no page errors were recorded.
+
+This does not establish a live shortfall or exercise the on-chain flag/recognise actions. WebKit was unavailable for the supplementary run; no WebKit result is claimed. The browser connector returned `Transport closed`, so rendered review used the working Playwright Chromium runner and its actual captures instead.
+
+## Better Interface review
+
+The pinned workflow and all six core domains were read and applied to the affected surfaces. The visual idea remains the existing supermarket flyer for the Stock Token basket vault. “The exact-patch rule above stands over any design-bar item” governs this delivery; the owner's listed decisions are preserved. No extra restyling, copy edit or source change was made.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — Checked | Native links at `main.tsx:253` and `Docs.tsx:157`, keyboard focus/Enter navigation, visible focus on the notice link, semantic heading/panel order and retained reduced-motion behavior. Full screen-reader sessions and keyboard-only wallet transactions were not performed. |
+| Layout — Checked | Actual notice/panel reflow at 320/390/1440px, first screen at 390px, six-route export checks and baseline panel geometry. Branding, Connect wallet and Deposit/Redeem navigation remain on the first phone screen; the approved character-before-figures layout remains. Native zoom, RTL and physical-device tests were not performed. |
+| Writing — Checked | Exact requested notice and Docs copy; symbols derive from the snapshot's short flag and exclude retired assets (`main.tsx:77`, `:249`). The panel states the flag, seven-day wait, recognition and restored-token behavior. Preservation checks retain terminology. |
+| Typography — Checked | Existing body, warning and panel styles reused; local fonts load; long panel text wraps without clipping in reviewed captures. No font, size or stylesheet changed. Native Windows rasterization and localization stress testing were not performed. |
+| Colors — Checked | Existing warning and paper surfaces retained; the focused link was visually inspected. The export check's seven named solid-color pairs pass, and the entry-route probe's measured pairs pass. This is not a complete contrast audit of every notice/focus/image combination. |
+| UI — Checked | Conditional warning appears only in the specified states/routes, both entry points navigate by keyboard, healthy/retired/unreadable states omit the warning, and the existing wallet regressions pass. Real wallet and loss-recognition transactions remain unperformed; the full motion suite is incomplete as documented above. |
+
+The exact pinned `taste.mjs --out test/scratch/taste` probe completed: **10/16 passed**. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget, reduced motion and sharing pass. Casing, tracking, type sizes/families, marquee repetition and border-plus-shadow treatments flag the established design. The entry-route screenshots confirm these retained treatments; they are unchanged by this patch and are not grounds to override it. One image/gradient text background was not measured for contrast.
+
+Rendered captures actually viewed: `test/scratch/taste/shots/390.png`, `1440.png`, `test/scratch/Chromium-short-deposit-390.png`, `Chromium-docs-panel-320.png` and `Chromium-docs-panel-1440.png`. The focused warning link fits above the Deposit title, the 320px panel is readable without horizontal clipping, and desktop places the new panel after Safety in the existing two-column grid. All supplemental images remain disposable scratch; the historical 24 walkthrough images are not relabeled as these captures.
+
+## Final integrity and limits
+
+The eight patched files match an independent exact application. All 74 art copies match their manifest. Every candidate file's bytes, including binaries and tracked libraries, were scanned for vault 1–5 address fragments with no match. Protected configuration, dependencies, root contracts and pinned sources remain unchanged. Required runtime assets and all 24 inherited walkthrough screenshots are retained. No dependency cache, browser package, archive, submodule or ignore-file change is delivered. The final bundle gate includes this entry and the supplementary report.
+
+Staging the patched sources, rebuilt export and artifacts was attempted with `git add -A` restricted to the deliverable paths. Git refused to create its index lock with **`Read-only file system`**. No commit was created; the complete deliverable remains in the working tree. No Git permission, configuration or metadata was changed to bypass that refusal.
+
+The failed required checks remain failed. All other requested checks pass, with the archive exception and browser coverage limits stated above. These are worker observations, not independent verification. Earlier entries below are historical.
+
+---
+
 # 2026-10-15 — v18 exact Add BASK to MetaMask patch, vault 6
 
 This run applies the supplied patch to `974ddd3ae983ba181df285f3b9791ac955b694a5` (v17). The Docs **Find Basket** panel ends with **Add BASK to MetaMask** and the exact explanatory sentence. All eight patched files retain their exact post-application bytes. No contract, dependency, lockfile, build configuration, stylesheet, ignore file or deployment parameter changed. No live transaction or publication was performed.
