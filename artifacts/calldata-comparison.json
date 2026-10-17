@@ -1,17 +1,14 @@
 {
   "result": "PASS",
-  "baseline": "8f88184b6dbcfd2c11f7a762c4c25cce55d8d230",
+  "baseline": "f86e5d80e53174c37f5cd4e14cf6df453ffa33c6",
   "protectedFiles": [
     "BaskGuide.tsx",
-    "Flows.tsx",
     "Losses.tsx",
-    "Owner.tsx",
     "Scenery.tsx",
     "Vault.tsx",
     "components.tsx",
     "Tokenomics.tsx",
     "tokenomicsData.ts",
-    "wallet.tsx",
     "main.tsx",
     "Docs.tsx",
     "baskGuideData.ts",
@@ -23,8 +20,99 @@
     "poolMath.ts",
     "vault.abi.json"
   ],
-  "editedFiles": {},
-  "v12Pieces": {},
+  "editedFiles": {
+    "wallet.tsx": "4 documented pieces [v12, HEAD]",
+    "Flows.tsx": "3 documented pieces [v12, HEAD]",
+    "Owner.tsx": "1 documented pieces [v12, HEAD]"
+  },
+  "v12Pieces": {
+    "wallet.tsx": [
+      {
+        "v12": {
+          "length": 904,
+          "sha256": "99fdb5500edace6017efdaad953a9f522491844d273500b86a34e28830ea8850"
+        },
+        "head": {
+          "length": 107,
+          "sha256": "4b848af5adc6b672f7deccfab82af742bca419f29155493477e80e05aba86e32"
+        }
+      },
+      {
+        "v12": {
+          "length": 2189,
+          "sha256": "dca59d6c4dde5aa8297a20088f6d0df5a4cd7ceed3277c6770b164ab3a71863a"
+        },
+        "head": {
+          "length": 57,
+          "sha256": "03a9059c9acda890001dc8d941a2828839e9081a908277bbf5941a84787f163b"
+        }
+      },
+      {
+        "v12": {
+          "length": 132,
+          "sha256": "67d1efe65dffda173814eb64b6bb7f4cb70bd9efd612fa785d86e00a518fb5b4"
+        },
+        "head": {
+          "length": 97,
+          "sha256": "bfa7a936820845cd6146b7be74d5c03b0a7c821f71acd0fe21027dd0a96d695e"
+        }
+      },
+      {
+        "v12": {
+          "length": 210,
+          "sha256": "78777636467ca673e2363c281c355a3758e10a2220ba2a360755ffd0bd8162e8"
+        },
+        "head": {
+          "length": 57,
+          "sha256": "b3981c473ad9d858f7da21a69fd1b65a5c0f81032e5ca2228693374a20294cbb"
+        }
+      }
+    ],
+    "Flows.tsx": [
+      {
+        "v12": {
+          "length": 514,
+          "sha256": "252911883a57049fee8ff2129828abdc0c689efe54a4eb5be0d9702d993c46bb"
+        },
+        "head": {
+          "length": 81,
+          "sha256": "5294ed3ef3da17f5a624ffa0ade41608265cc8ee9cd462b8b3fa0b8a2d74f3be"
+        }
+      },
+      {
+        "v12": {
+          "length": 188,
+          "sha256": "228e626d55d0d46f041c3ffd001ce42039318a46e6e1b93e999be1331aaf6687"
+        },
+        "head": {
+          "length": 183,
+          "sha256": "07868bb80645e7807e38bdb47d49d24688a81673a1bcd4b10030b1475da9c960"
+        }
+      },
+      {
+        "v12": {
+          "length": 788,
+          "sha256": "a3ef70c671c89c351d95767a124958055a88e2a292737b5f871995a67064ba77"
+        },
+        "head": {
+          "length": 228,
+          "sha256": "46fe087b436534ddd67fc7637add5919388445b3c2bc5a630ef7c83ddcacafb0"
+        }
+      }
+    ],
+    "Owner.tsx": [
+      {
+        "v12": {
+          "length": 410,
+          "sha256": "e775571db7b0fd2cea61037cc5cc9f080abcbec737f850c4e561bdf60f94bb1b"
+        },
+        "head": {
+          "length": 28,
+          "sha256": "a480aa1233d2413c84f7c31456658af85bd2088ebc1c640945796b51229d300f"
+        }
+      }
+    ]
+  },
   "counts": {
     "BaskGuide.tsx": {
       "guarded": 0,
@@ -37,8 +125,8 @@
       "attributes": 9
     },
     "Flows.tsx": {
-      "guarded": 41,
-      "calls": 322,
+      "guarded": 43,
+      "calls": 325,
       "attributes": 95
     },
     "Losses.tsx": {
@@ -48,8 +136,8 @@
     },
     "Owner.tsx": {
       "guarded": 45,
-      "calls": 307,
-      "attributes": 131
+      "calls": 308,
+      "attributes": 132
     },
     "Scenery.tsx": {
       "guarded": 0,
@@ -117,14 +205,126 @@
       "attributes": 0
     },
     "wallet.tsx": {
-      "guarded": 34,
-      "calls": 149,
+      "guarded": 38,
+      "calls": 164,
       "attributes": 0
     }
   },
-  "documentedGuardedCallChanges": {},
-  "documentedAttributeChanges": {},
-  "documentedCallChanges": {},
+  "documentedGuardedCallChanges": {
+    "wallet.tsx": {
+      "removed": [],
+      "added": [
+        [
+          "client .getTransactionReceipt({ hash: pending.hash })",
+          "useWallet > sendPending"
+        ],
+        [
+          "client .getTransaction({ hash: pending.hash })",
+          "useWallet > sendPending"
+        ],
+        [
+          "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
+          "useWallet > sendPending"
+        ],
+        [
+          "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
+          "useWallet > sendPending"
+        ]
+      ]
+    },
+    "Flows.tsx": {
+      "removed": [
+        "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
+        "redeemArgs(quote.shares, receiver, amounts)"
+      ],
+      "added": [
+        [
+          "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
+          "DepositPage, in getSpec"
+        ],
+        [
+          "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
+          "DepositPage, in getSpec"
+        ],
+        [
+          "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
+          "RedeemPage, in getSpec"
+        ],
+        [
+          "redeemArgs(quote.shares, receiver, quote.amounts)",
+          "RedeemPage, in getSpec"
+        ]
+      ]
+    }
+  },
+  "documentedAttributeChanges": {
+    "Owner.tsx": {
+      "removed": [],
+      "added": [
+        "<Addr> value={s.globals.feeRecipient}"
+      ],
+      "why": "each has its why in scripts/check-calldata.mjs"
+    }
+  },
+  "documentedCallChanges": {
+    "wallet.tsx": {
+      "why": "v22: sendPending reads the saved record and the public client (receipt, transaction, two nonce counts) to settle it; nothing else of HEAD moves.",
+      "piecesPutBackInsideCalls": [],
+      "removed": [],
+      "newUsesOfWatchedNames": [
+        [
+          "pendingRef.current",
+          "useWallet > sendPending"
+        ],
+        [
+          "client .getTransactionReceipt({ hash: pending.hash }) .catch(absent(\"TransactionReceiptNotFoundError\"))",
+          "useWallet > sendPending"
+        ],
+        [
+          "client .getTransaction({ hash: pending.hash }) .catch(absent(\"TransactionNotFoundError\"))",
+          "useWallet > sendPending"
+        ],
+        [
+          "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
+          "useWallet > sendPending"
+        ],
+        [
+          "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
+          "useWallet > sendPending"
+        ],
+        [
+          "pendingRef.current",
+          "useWallet > sendPending"
+        ]
+      ]
+    },
+    "Flows.tsx": {
+      "why": "v22: the Redeem floors are built from the preview on screen (quote.amounts) after the fresh estimate was compared with it; the Deposit press re-reads previewDeposit for its fee.",
+      "piecesPutBackInsideCalls": [],
+      "removed": [
+        "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
+        "redeemArgs(quote.shares, receiver, amounts)"
+      ],
+      "newUsesOfWatchedNames": [
+        [
+          "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
+          "DepositPage, in getSpec"
+        ],
+        [
+          "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
+          "DepositPage, in getSpec"
+        ],
+        [
+          "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
+          "RedeemPage, in getSpec"
+        ],
+        [
+          "redeemArgs(quote.shares, receiver, quote.amounts)",
+          "RedeemPage, in getSpec"
+        ]
+      ]
+    }
+  },
   "vaultStockShelves": {
     "attributes": [
       "role=\"img\"",
@@ -157,10 +357,20 @@
   },
   "pinnedFunctions": {
     "wallet.tsx send()": {
-      "headEqualToHead": true,
-      "headBytes": 3051,
-      "headSha256": "4247a4ab77f71629f43cd7af26084e39f6e92fbce48175ebd637257b82b24238",
-      "tailPieces": []
+      "headPieces": [
+        {
+          "now": "      if (s.functionName === \"listGenesis\") await listingPending();\n      else await sendPending(key);\n",
+          "head": "      if (s.functionName === \"listGenesis\") await listingPending();\n"
+        }
+      ],
+      "headBytes": 3086,
+      "headSha256": "fcd7f2b93240657e0be2323761416e327023fd1cf474f12b1aa1203be410b037",
+      "tailPieces": [
+        {
+          "now": "      }\n      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n      const message = await explainAction(e, s);",
+          "head": "      }\n      const message = await explainAction(e, s);"
+        }
+      ]
     },
     "Flows.tsx approveAll()": {
       "equalToHead": true,
@@ -194,21 +404,79 @@
     },
     "addedInV19": {}
   },
-  "browserStorageAddedInV12": {},
-  "namesAddedAtTheTopOfAFile": {},
+  "browserStorageAddedInV12": {
+    "wallet.tsx": [
+      [
+        "sessionStorage.removeItem(pendingKey)",
+        "useWallet > sendPending"
+      ]
+    ]
+  },
+  "namesAddedAtTheTopOfAFile": {
+    "wallet.tsx": {
+      "PENDING_WAIT": "PENDING_WAIT = \"Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.\"",
+      "PENDING_FINISHED": "PENDING_FINISHED = \"The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.\"",
+      "PendingTransaction": "class"
+    },
+    "Flows.tsx": {},
+    "Owner.tsx": {}
+  },
   "moduleDeclarationChanges": {},
-  "namesAddedInsideComponents": {},
-  "transactionCode": {},
-  "reviewedAddedCalls": {},
+  "namesAddedInsideComponents": {
+    "wallet.tsx": {
+      "useWallet": [
+        "sendPending"
+      ]
+    }
+  },
+  "transactionCode": {
+    "wallet.tsx": {
+      "pieces": 1,
+      "namesDeclaredAroundThem": []
+    },
+    "Flows.tsx": {
+      "pieces": 9,
+      "namesDeclaredAroundThem": [
+        "#9 Claims getSpec: a is declared around it by a"
+      ]
+    },
+    "Owner.tsx": {
+      "pieces": 23,
+      "namesDeclaredAroundThem": [
+        "#4 Proposals getSpec: paused is declared around it by paused = [4, 6].includes(kind)",
+        "#4 Proposals getSpec: p is declared around it by p",
+        "#5 Proposals getSpec: p is declared around it by p"
+      ]
+    }
+  },
+  "reviewedAddedCalls": {
+    "wallet.tsx": {
+      "callees": "(expression) catch getTransactionReceipt absent all catch getTransaction absent getTransactionCount getTransactionCount removeItem catch refresh sendPending report",
+      "sha256": "88c506b1a61cee524cb639339aa5544bddcd6d2b1ade989b4a576c7030403479"
+    },
+    "Flows.tsx": {
+      "callees": "read vault some vault redeemArgs",
+      "sha256": "cfcc36196b942db1408478afc506239e72adc2bfd2b2d0272dbb48787550ac66"
+    },
+    "Owner.tsx": {
+      "callees": "same",
+      "sha256": "003598b1cc1bd05f81547de19ff078e021d708fd8b5a8e19706c79fe8e82f436"
+    }
+  },
   "reviewedSourcePins": {
     "Docs.tsx": "4a017ccbabc92c33df85c32d34b9f4c2ad94ae8988b50c82eb1115141e413343",
     "main.tsx": "acbfbe99686e824d26720805002343722cc16c8bcfff75a095c1774bcac94e80",
-    "wallet.tsx": "cb08bb0214a1b581a85da98c9974b5edb0b340e5c66e01bcdd4239149c7d6a91",
-    "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
+    "wallet.tsx": "550eb23f8c890ee228c218a6e15ffa6e8c1f2f0a3da2aef7c17200103fffcd67",
+    "Flows.tsx": "e8f727507de361e7c3f074b33d855867273083aa900f6c0132709c4c8a4246db",
+    "Owner.tsx": "9f7b51477f4b3ea2410cad43073ac75c4c2ee3b17085fcf97797dade3942fd65",
     "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
     "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
   },
-  "transactionStateWrites": {},
+  "transactionStateWrites": {
+    "wallet.tsx": 0,
+    "Flows.tsx": 0,
+    "Owner.tsx": 0
+  },
   "protectedCode": {
     "sendTailWrites": [
       "sent = mined;",

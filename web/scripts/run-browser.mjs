@@ -13,6 +13,8 @@ import {
   http as transport,
   encodeFunctionData,
   decodeFunctionData,
+  decodeFunctionResult,
+  encodeFunctionResult,
   decodeEventLog,
   keccak256,
   zeroAddress,
@@ -479,7 +481,10 @@ try {
     now = Number((await pc.getBlock()).timestamp) * 1000,
     failAggregate = false,
     declineNext = false,
-    pendingNext = false;
+    pendingNext = false,
+    // v22: answer the next previewDeposit read with a 0.5% fee (the fee switch
+    // between a preview and its press).
+    feeNext = false;
   await page.exposeFunction("testWallet", async ({ method, params }) => {
     asked.push(method);
     if (method === "eth_requestAccounts" && holdConnect)
@@ -597,6 +602,25 @@ try {
           body: JSON.stringify(b),
         });
         const response = await r.json();
+        if (
+          feeNext &&
+          b.method === "eth_call" &&
+          b.params[0].data?.startsWith(previewDeposit) &&
+          response.result
+        ) {
+          feeNext = false;
+          const [shares, , value, nav] = decodeFunctionResult({
+            abi: vaultAbi,
+            functionName: "previewDeposit",
+            data: response.result,
+          });
+          const fee = shares / 200n + (shares % 200n === 0n ? 0n : 1n);
+          response.result = encodeFunctionResult({
+            abi: vaultAbi,
+            functionName: "previewDeposit",
+            result: [shares - fee, fee, value, nav],
+          });
+        }
         if (response.error)
           console.log(
             "RPC error",
@@ -884,11 +908,12 @@ try {
   await page.getByRole("heading", { name: "Docs", exact: true }).waitFor();
   assert.deepEqual(await page.locator(".docs-grid > section").first().locator("p").allTextContents().then(xs => xs.map(x => x.replace(/\s+/g, " ").trim())), ["One token, BASK, backed by a basket of Stock Tokens held in a vault on Robinhood Chain. Deposit one or more listed Stock Tokens at once and receive BASK. Redeeming BASK pays a share of every stock in the vault.","The basket has no set weights. Any listed stock can be deposited, in any amount, as long as the vault’s checks pass and the vault stays under its size limit. So the mix is whatever holders have put in, and it changes with every deposit and redemption.","BASK’s backing moves with every stock in the vault, so its market price can drift from the value behind it. Traders close that gap: they deposit stocks and sell BASK when it trades high, or buy BASK and redeem when it trades low. That keeps BASK near its backing.","The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM."]);
   v12Checks.push("Docs: original paragraph and approved live-oriented copy, word for word");
-  // v14: five ITEM panels between Risks and Find Basket, in the default Docs tab.
-  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section > h2").allTextContents(), ["What Basket is", "Deposits", "Redemption", "FAQ", "NAV", "Numbers", "Safety", "Risks", "ITEM", "Earn ITEM by providing liquidity", "Earn BASK by staking ITEM", "Rewards FAQ", "ITEM risks", "Find Basket"]);
-  assert.equal(await page.locator("#docs-panel-0 .docs-grid > section").nth(8).locator("p").first().textContent().then((x) => x.replace(/\s+/g, " ").trim()), "ITEM is Basket's reward token. It has two jobs: it pays the people who provide liquidity for BASK and ITEM, and staking it earns the vault's fees. Its supply is fixed at 1,000,000,000 and its reward schedules are written into contracts that have no owner, no pause and no upgrade. Nobody can change the amounts, speed them up or stop them.");
-  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(9).locator("table tbody tr").evaluateAll((rows) => rows.map((r) => [...r.children].map((c) => c.textContent))), [["BASK/USDG", "490,000,000", "43.75%", "31.25%", "18.75%", "6.25%"], ["ITEM/ETH", "210,000,000", "43.75%", "31.25%", "18.75%", "6.25%"]]);
-  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(11).locator("h3").allTextContents(), ["Can I claim whenever I want?", "Is anything locked?", "What if nobody uses the vault?", "Do rewards expire?", "Can the team change the rewards?"]);
+  // v14: five ITEM panels between Risks and Find Basket, in the default Docs tab. v22: the walk itself was stale
+  // since v19 ("If a stock goes missing" stands right after Safety, so the three panel indexes below moved up by one).
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section > h2").allTextContents(), ["What Basket is", "Deposits", "Redemption", "FAQ", "NAV", "Numbers", "Safety", "If a stock goes missing", "Risks", "ITEM", "Earn ITEM by providing liquidity", "Earn BASK by staking ITEM", "Rewards FAQ", "ITEM risks", "Find Basket"]);
+  assert.equal(await page.locator("#docs-panel-0 .docs-grid > section").nth(9).locator("p").first().textContent().then((x) => x.replace(/\s+/g, " ").trim()), "ITEM is Basket's reward token. It has two jobs: it pays the people who provide liquidity for BASK and ITEM, and staking it earns the vault's fees. Its supply is fixed at 1,000,000,000 and its reward schedules are written into contracts that have no owner, no pause and no upgrade. Nobody can change the amounts, speed them up or stop them.");
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(10).locator("table tbody tr").evaluateAll((rows) => rows.map((r) => [...r.children].map((c) => c.textContent))), [["BASK/USDG", "490,000,000", "43.75%", "31.25%", "18.75%", "6.25%"], ["ITEM/ETH", "210,000,000", "43.75%", "31.25%", "18.75%", "6.25%"]]);
+  assert.deepEqual(await page.locator("#docs-panel-0 .docs-grid > section").nth(12).locator("h3").allTextContents(), ["Can I claim whenever I want?", "Is anything locked?", "What if nobody uses the vault?", "Do rewards expire?", "Can the team change the rewards?"]);
   assert.equal(await page.locator("#docs-panel-0").getByText(/not live yet/).count(), 0, "no not-live wording in the Docs tab");
   v14Checks.push("Docs: five ITEM panels between Risks and Find Basket, headings in order, the ITEM paragraph, the gauge table and the five FAQ questions word for word; no not-live wording");
   const beforeTokenomics = {rpc:rpcCalls.length, wallet:asked.length};
@@ -1489,6 +1514,28 @@ try {
       { exact: true },
     )
     .waitFor({ timeout: 30000 });
+  // v22: a fee that changed since the preview (the route answers the press's
+  // previewDeposit read with a 0.5% fee) refuses the press with no wallet
+  // prompt; the next press, with the fee unchanged, deposits as before.
+  {
+    const before = sends.length,
+      asksBefore = asked.length;
+    feeNext = true;
+    await page.getByRole("button", { name: "Deposit", exact: true }).click();
+    await page
+      .getByText("Deposit changed. Preview again.", { exact: true })
+      .first()
+      .waitFor();
+    assert.equal(feeNext, false, "v22: the fee was injected into the press's previewDeposit read");
+    assert.equal(sends.length, before, "v22: no send when the fee changed since the preview");
+    assert.ok(
+      !asked.slice(asksBefore).includes("eth_sendTransaction"),
+      "v22: no wallet prompt",
+    );
+    checks.push(
+      "v22: Deposit refuses the press when the fee changed since the preview, with no wallet prompt; the next press deposits",
+    );
+  }
   speedNext = true;
   await sendClick(
     page.getByRole("button", { name: "Deposit", exact: true }),
@@ -1765,6 +1812,33 @@ try {
   await page.getByLabel("Receiver", { exact: true }).fill(owner);
   await page.getByRole("button", { name: "Preview redemption" }).click();
   await page.getByRole("heading", { name: "Redemption preview" }).waitFor();
+  // v22: a shortfall between the preview and the press (half of a held stock
+  // burned from the vault by a fixture) makes the fresh estimate fall under
+  // the previewed legs: the press is refused with no wallet prompt. The stock
+  // is minted back, Preview again, and the redeem below goes through as before.
+  {
+    const before = sends.length,
+      asksBefore = asked.length;
+    const held = await rv("managed", [stocks[1]]);
+    assert.ok(held > 0n, "v22: the second stock is held");
+    await tx(stocks[1], compiled.TestStock.abi, "burn", [VAULT, held / 2n]);
+    await page.getByRole("button", { name: "Redeem", exact: true }).click();
+    await page
+      .getByText("Redemption changed. Preview again.", { exact: true })
+      .first()
+      .waitFor();
+    assert.equal(sends.length, before, "v22: no send under the preview");
+    assert.ok(
+      !asked.slice(asksBefore).includes("eth_sendTransaction"),
+      "v22: no wallet prompt",
+    );
+    await tx(stocks[1], compiled.TestStock.abi, "mint", [VAULT, held / 2n]);
+    await page.getByRole("button", { name: "Preview redemption" }).click();
+    await page.getByRole("heading", { name: "Redemption preview" }).waitFor();
+    checks.push(
+      "v22: Redeem refuses the press when a stock's fresh estimate is under the previewed one, with no wallet prompt; Preview again, then it sends",
+    );
+  }
   await sendClick(
     page.getByRole("button", { name: "Redeem", exact: true }),
     "redeem",
@@ -1864,6 +1938,76 @@ try {
     "Close stock",
     "close",
   );
+  // v22: the Owner roles panel shows the current fee recipient: none yet.
+  const feeRow = page
+    .locator(".roles > div")
+    .filter({ has: page.locator("strong", { hasText: /^Fee recipient$/ }) });
+  assert.equal(await feeRow.count(), 1, "v22: one Fee recipient row");
+  assert.equal(
+    (await feeRow.innerText()).replace(/\s+/g, " ").trim(),
+    "Fee recipient None",
+  );
+  // v22: a saved send without a receipt locks every send. A record whose nonce
+  // has not passed refuses Pause deposits with the pending words, after a
+  // reload too; once its nonce has passed it is refused once with the finished
+  // words and the record goes. No wallet prompt either time; the real press
+  // below then sends.
+  {
+    const before = sends.length,
+      asksBefore = asked.length;
+    const latest = Number(
+      await raw("eth_getTransactionCount", [owner, "latest"]),
+    );
+    const unknown = keccak256(toHex("v22 saved send without a receipt"));
+    const plant = async (nonce) => {
+      await page.evaluate(
+        ([key, record]) => sessionStorage.setItem(key, JSON.stringify(record)),
+        [
+          "basket-pending-4663",
+          { hash: unknown, account: owner, functionName: "pauseDeposits", nonce },
+        ],
+      );
+      await page.reload();
+      await page.evaluate((n) => (window.__clock = n), now);
+      await page.waitForFunction(
+        () => !document.querySelector("button.refresh")?.disabled,
+      );
+    };
+    await plant(latest);
+    await page.getByRole("button", { name: "Pause deposits", exact: true }).click();
+    await page
+      .getByText(/This transaction may still be pending\. Wait for its receipt before retrying\./)
+      .first()
+      .waitFor();
+    assert.equal(
+      await page.evaluate(
+        () => JSON.parse(sessionStorage.getItem("basket-pending-4663")).hash,
+      ),
+      unknown,
+      "v22: the record stays while unresolved",
+    );
+    assert.equal(sends.length, before, "v22: no send while an earlier one is unresolved");
+    await plant(latest - 1);
+    await page.getByRole("button", { name: "Pause deposits", exact: true }).click();
+    await page
+      .getByText(/The earlier transaction is finished \(confirmed or replaced\)\. Refresh the vault before retrying\./)
+      .first()
+      .waitFor();
+    await page.waitForFunction(
+      () => sessionStorage.getItem("basket-pending-4663") === null,
+    );
+    assert.equal(sends.length, before, "v22: no send on the press that found the earlier one finished");
+    assert.ok(
+      !asked.slice(asksBefore).includes("eth_sendTransaction"),
+      "v22: no wallet prompt",
+    );
+    await page.waitForFunction(
+      () => !document.querySelector("button.refresh")?.disabled,
+    );
+    checks.push(
+      "v22: a saved send without a receipt refuses the next send, after a reload too, until it is found finished; then it is refused once and forgotten; no wallet prompt",
+    );
+  }
   await sendClick(
     page.getByRole("button", { name: "Pause deposits", exact: true }),
     "pauseDeposits",
@@ -2055,6 +2199,15 @@ try {
     );
   }
   assert.equal(await rv("feeRecipient"), owner);
+  // v22: the roles row now shows the recipient (the snapshot refreshed after
+  // the execute).
+  assert.equal(
+    (await feeRow.innerText()).replace(/\s+/g, " ").trim(),
+    "Fee recipient " + owner,
+  );
+  checks.push(
+    "v22: the Owner roles panel shows the fee recipient: None before, the address after the FeeRecipient proposal executes",
+  );
   const after = await rv("settings");
   assert.deepEqual([after.hoursFrom, after.hoursTo, after.dst], [120600n, 489600n, 1n]);
   checks.push("Hours (120600-489600) and Dst 1 executed and read back from settings()");
@@ -2213,8 +2366,9 @@ try {
     const normalized=records=>records.map(record=>['deposit','redeem'].includes(record.functionName)?{...record,args:[...record.args.slice(0,-1),'browser-clock-plus-600']}:record);
     assert.deepEqual(normalized(serialized),normalized(previous.sends),'All 70 sends equal the previous walk apart from wall-clock-derived deadlines');
     // The previous record is the walk of the live commit: every one of its checks is here under the same name in
-    // the same order, with none added, renamed or left out (v15 and v16 change no page check).
-    assert.deepEqual(checks,previous.checks,'Every page check of the previous walk retained under its name, in order, and none added');
+    // the same order, with none renamed or left out; v22 adds its four documented checks (named "v22: ...") and nothing else.
+    assert.deepEqual(checks.filter((c) => !c.startsWith("v22: ")),previous.checks,'Every page check of the previous walk retained under its name, in order, and none added beyond the v22 ones');
+    assert.equal(checks.filter((c) => c.startsWith("v22: ")).length,4,'The four v22 checks');
     assert.deepEqual(shots,previous.shots,'Every prior screenshot retained in order');
   }
   assert.equal(revoked.length,0);

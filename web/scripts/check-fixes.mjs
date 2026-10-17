@@ -14,24 +14,29 @@ import {createRoot} from '${path.resolve('node_modules/react-dom/client.js')}';
 import {useWallet} from '${src}/wallet';
 import {Claims} from '${src}/Flows';
 import {client,VAULT,vaultAbi} from '${src}/chain';
-import {keccak256,toHex,decodeFunctionData,encodeAbiParameters} from '${path.resolve('node_modules/viem/_esm/index.js')}';
+import {keccak256,toHex,decodeFunctionData,encodeAbiParameters,TransactionNotFoundError,TransactionReceiptNotFoundError} from '${path.resolve('node_modules/viem/_esm/index.js')}';
 const mode=new URLSearchParams(location.search).get('mode');
 const hash=keccak256(toHex('isolated pending transaction fixture'));
 const key='basket-pending-4663';
 const mockAccount='0x00000000000000000000000000000000000a11ce';
 const fixture={hash,account:mockAccount,functionName:'genesisList',...(mode==='legacy'?{}:{nonce:4})};
 sessionStorage.setItem(key,JSON.stringify(fixture));
-window.ethereum={request:async({method})=>method==='eth_chainId'?'0x1237':[mockAccount]};
+// v22 fix (Codex V22-01): every provider method asked is recorded and inspected; only the two reads of the hook's
+// start-up and of the send head are answered, anything else is an error (a wallet prompt has no business here).
+const asked=[];
+window.ethereum={request:async({method})=>{asked.push(method);if(method==='eth_chainId')return '0x1237';if(method==='eth_accounts')return [mockAccount];throw Error('unexpected provider method '+method)}};
 let waits=0,refreshed=0;
 Object.assign(client,{
- getTransactionReceipt:async()=>{if(mode==='receipt')return {};throw Error('no receipt')},
- getTransaction:async()=>{if(mode==='legacy')return {nonce:4};throw Error('replaced hash no longer known')},
- getTransactionCount:async({blockTag})=>mode==='pending'?(blockTag==='pending'?5:4):mode==='unknown'?4:mode==='queue'?(blockTag==='pending'?6:5):5,
+ // v22 fix (Codex V22-02): "not found" is viem's own not-found error, as the shipped client throws it for a null
+ // answer; the four ...Error modes make one read fail with a transport error instead (saved nonce 4, counts 5/5).
+ getTransactionReceipt:async()=>{if(mode==='receipt')return {};if(mode==='receiptError')throw Error('HTTP 503');throw new TransactionReceiptNotFoundError({hash})},
+ getTransaction:async()=>{if(mode==='legacy')return {nonce:4};if(mode==='transactionError')throw Error('HTTP 503');throw new TransactionNotFoundError({hash})},
+ getTransactionCount:async({blockTag})=>{if((mode==='latestError'&&blockTag==='latest')||(mode==='pendingError'&&blockTag==='pending'))throw Error('HTTP 503');return mode==='pending'?(blockTag==='pending'?5:4):mode==='unknown'?4:mode==='queue'?(blockTag==='pending'?6:5):5},
  waitForTransactionReceipt:async()=>{waits++;return {}}
 });
 const s={assets:[],globals:{},errors:[],complete:mode==='complete',aggregate:false,loadedAt:0,loading:false,retry:()=>{refreshed++}};
-function App(){const w=useWallet(async()=>{refreshed++;return s});return <><div data-account>{w.account}</div><button onClick={async()=>{try{await w.listingPending();document.querySelector('output').textContent='clear'}catch(e){document.querySelector('output').textContent=e.message}}}>Check listing</button><button onClick={async()=>{try{await w.waitPending();document.querySelector('output').textContent='waited'}catch(e){document.querySelector('output').textContent=e.message}}}>Wait</button><output/><Claims snapshot={s} wallet={w}/></>}
-window.inspect=()=>({saved:sessionStorage.getItem(key),waits,refreshed});
+function App(){const w=useWallet(async()=>{refreshed++;return s});return <><div data-account>{w.account}</div><button onClick={async()=>{try{await w.listingPending();document.querySelector('output').textContent='clear'}catch(e){document.querySelector('output').textContent=e.message}}}>Check listing</button><button onClick={async()=>{try{await w.waitPending();document.querySelector('output').textContent='waited'}catch(e){document.querySelector('output').textContent=e.message}}}>Wait</button><button onClick={async()=>{try{await w.send({address:VAULT,abi:vaultAbi,functionName:'pauseDeposits'});document.querySelector('output').textContent='sent'}catch(e){document.querySelector('output').textContent=e.message}}}>Send pause</button><output/><Claims snapshot={s} wallet={w}/></>}
+window.inspect=()=>({saved:sessionStorage.getItem(key),waits,refreshed,asked:[...asked]});
 
 // v12 SPEC 4: drive the shipped Claims component, including its Activity/key mounting.
 const fixtureAddress=(n)=>'0x'+n.toString(16).padStart(40,'0');
@@ -67,14 +72,41 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;const checks=[]
 const blockedNetwork=[];
 try{browser=await chromium.launch();const page=await browser.newPage();
 await page.route('**/*',route=>{const address=route.request().url();if(address.startsWith('http://127.0.0.1:'+server.address().port+'/'))return route.continue();blockedNetwork.push(address);return route.abort();});
+// v22 fix (Codex V22-01): after every non-listing press the provider's recorded methods are asserted: none is a send
+// or a signature, and nothing but eth_accounts and eth_chainId was asked (the walk asserts no eth_sendTransaction on
+// the real page).
+const prompt=m=>/eth_send|eth_sign|personal_sign|signTypedData/i.test(m),allowed=['eth_accounts','eth_chainId'];
 for(const mode of ['replaced','legacy','receipt','pending','unknown','queue']){
+ await page.goto(`http://127.0.0.1:${server.address().port}/?mode=${mode}`);await page.waitForFunction(()=>document.querySelector('[data-account]').textContent);
+ // v22: a non-listing send meets the same saved record first (sendPending): found finished (a receipt, or its nonce
+ // passed) it is refused once with the finished words, the record removed and the vault read again; otherwise it is
+ // refused with the pending words and the record kept (the predicted nonce settles only while nothing is queued).
+ await page.getByRole('button',{name:'Send pause',exact:true}).click();
+ const sent=await page.locator('output').innerText(),sentState=await page.evaluate(()=>window.inspect());
+ assert.deepEqual(sentState.asked.filter(prompt),[],'v22 '+mode+': the press asked the wallet for no send or signature');assert.deepEqual(sentState.asked.filter(m=>!allowed.includes(m)),[],'v22 '+mode+': the press asked the wallet for nothing but its account and chain id');
+ if(['replaced','legacy','receipt'].includes(mode)){assert.equal(sent,'The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.');assert.equal(sentState.saved,null);assert.equal(sentState.refreshed,1);}
+ else{assert.equal(sent,'Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.');assert.notEqual(sentState.saved,null);assert.equal(sentState.refreshed,0);}
+ checks.push('v22 '+mode+': a non-listing send is refused by the saved record (finished once, or still pending), no prompt, no network');
  await page.goto(`http://127.0.0.1:${server.address().port}/?mode=${mode}`);await page.waitForFunction(()=>document.querySelector('[data-account]').textContent);
  await page.getByRole('button',{name:'Check listing',exact:true}).click();
  const result=await page.locator('output').innerText(),state=await page.evaluate(()=>window.inspect());
  if(['replaced','legacy','receipt'].includes(mode)){assert.equal(result,'clear');assert.equal(state.saved,null);}else{assert.match(result,/pending/);assert.equal(state.saved===null,mode==='queue');}
  checks.push(mode+': nonce/receipt recovery and fail-closed pending guard');
 }
-await page.goto(`http://127.0.0.1:${server.address().port}/?mode=replaced`);await page.waitForFunction(()=>document.querySelector('[data-account]').textContent);await page.getByRole('button',{name:'Wait',exact:true}).click();assert.equal(await page.locator('output').innerText(),'waited');assert.deepEqual(await page.evaluate(()=>window.inspect()),{saved:null,waits:0,refreshed:1});checks.push('Wait reconciles replaced hash without waiting for impossible receipt');
+// v22 fix (Codex V22-02): an RPC error of the settle keeps the record and refuses the press. The two hash lookups: only
+// viem's not-found answer counts as absent; any other error is refused with the pending words and the hash (the saved
+// nonce 4 with the counts 5/5 would otherwise settle it). The two count reads: the error propagates to send()'s own
+// catch and the press is refused with the read's own message. No refresh, no prompt, no network.
+for(const mode of ['receiptError','transactionError','latestError','pendingError']){
+ await page.goto(`http://127.0.0.1:${server.address().port}/?mode=${mode}`);await page.waitForFunction(()=>document.querySelector('[data-account]').textContent);
+ await page.getByRole('button',{name:'Send pause',exact:true}).click();
+ const sent=await page.locator('output').innerText(),state=await page.evaluate(()=>window.inspect());
+ assert.deepEqual(state.asked.filter(prompt),[],'v22 '+mode+': the press asked the wallet for no send or signature');assert.deepEqual(state.asked.filter(m=>!allowed.includes(m)),[],'v22 '+mode+': the press asked the wallet for nothing but its account and chain id');
+ assert.equal(sent,['receiptError','transactionError'].includes(mode)?'Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.':'HTTP 503','v22 '+mode+': refused with the pending words (a hash lookup) or the read\'s own error (a count)');
+ assert.notEqual(state.saved,null,'v22 '+mode+': the record stays');assert.equal(state.refreshed,0,'v22 '+mode+': no refresh');
+ checks.push('v22 '+mode+': an RPC error of the settle keeps the record and refuses the send (the pending words for a hash lookup, the read\'s own error for a count), no refresh, no prompt, no network');
+}
+await page.goto(`http://127.0.0.1:${server.address().port}/?mode=replaced`);await page.waitForFunction(()=>document.querySelector('[data-account]').textContent);await page.getByRole('button',{name:'Wait',exact:true}).click();assert.equal(await page.locator('output').innerText(),'waited');assert.deepEqual((({saved,waits,refreshed})=>({saved,waits,refreshed}))(await page.evaluate(()=>window.inspect())),{saved:null,waits:0,refreshed:1});checks.push('Wait reconciles replaced hash without waiting for impossible receipt');
 assert.equal(await page.getByText('Owed balances unreadable. Retry vault.',{exact:true}).count(),1);assert.equal(await page.getByText('Nothing is owed to your connected wallet.',{exact:true}).count(),0);await page.getByRole('button',{name:'Retry vault',exact:true}).click();assert.equal((await page.evaluate(()=>window.inspect())).refreshed,2);checks.push('Incomplete stock read says unreadable, offers functioning Retry vault, never says nothing owed');
 await page.goto(`http://127.0.0.1:${server.address().port}/?mode=complete`);await page.getByText('Nothing is owed to this wallet.',{exact:true}).waitFor();assert.equal(await page.locator('.claims').count(),0);checks.push('v12 SPEC 4: complete empty stock read has no Claims panel and the exact quiet line');
 

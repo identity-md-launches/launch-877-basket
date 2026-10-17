@@ -853,6 +853,13 @@ export function DepositPage({ snapshot: s, wallet: w }: Props) {
                             "Your stock balance is too low. Preview again.",
                           );
                       }
+                      // v22: the fee shown must be the fee charged; a fee that
+                      // changed since the preview needs a new preview.
+                      const [, fee] = await read(
+                        vault("previewDeposit", [quote.tokens, quote.amounts]),
+                      );
+                      if (fee !== quote.fee)
+                        throw new InputError("Deposit changed. Preview again.");
                       if (revision !== sequence.current)
                         throw new InputError("Deposit changed. Preview again.");
                       return vault(
@@ -1093,14 +1100,25 @@ export function RedeemPage({ snapshot: s, wallet: w }: Props) {
                   const b = await read(vault("balanceOf", [w.account]));
                   if (b < quote.shares)
                     throw new InputError("Your BASK balance is too low.");
-                  const [amounts] = await read(
+                  const [amounts, fee] = await read(
                     vault("previewRedeem", [quote.shares]),
                   );
                   if (revision !== seq.current)
                     throw new InputError("Redemption changed. Preview again.");
+                  // v22: the minimums are 0.1% under the preview on screen; a
+                  // fresh estimate under them, or another fee, needs a new one.
+                  if (
+                    fee !== quote.fee ||
+                    amounts.length !== quote.amounts.length ||
+                    amounts.some(
+                      (a: bigint, i: number) =>
+                        a < (quote.amounts[i] * 999n) / 1000n,
+                    )
+                  )
+                    throw new InputError("Redemption changed. Preview again.");
                   return vault(
                     "redeem",
-                    redeemArgs(quote.shares, receiver, amounts),
+                    redeemArgs(quote.shares, receiver, quote.amounts),
                   );
                 }}
               />

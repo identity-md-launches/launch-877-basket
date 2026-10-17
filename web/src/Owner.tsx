@@ -966,6 +966,18 @@ export function OwnerPage(props: Props) {
             <Addr value={s.globals.pendingOwner} />
           )}
         </div>
+        <div>
+          <strong>Fee recipient</strong>
+          {s.loading ? (
+            "Reading..."
+          ) : s.globals.feeRecipient === undefined ? (
+            <span>unreadable</span>
+          ) : same(s.globals.feeRecipient, zeroAddress) ? (
+            <span>None</span>
+          ) : (
+            <Addr value={s.globals.feeRecipient} />
+          )}
+        </div>
       </div>
       {finalized ? (
         <p className="panel" id="owner-launch" tabIndex={-1}>

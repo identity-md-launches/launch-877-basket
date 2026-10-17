@@ -11,22 +11,23 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const baseline=p=>git(['show','HEAD:'+p]);
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v20 on HEAD=v19: no source changes. The update re-scopes two browser checks (check-art, check-motion) whose wait for
-// a route needed a current-page navigation link, which the Losses page no longer has since v19, and returns this
-// gate, check-bundle and check-visibility to "equal to HEAD": v19's documented changes in main.tsx and Docs.tsx are
-// HEAD's own now. Every web/src file is byte-identical to HEAD, styles.css included. Transactions remain HEAD's:
-// send(), connect(), disconnect() and switchChain() keep their pins.
+// v22 on HEAD=v20 (f86e5d8): three sources change, the live-site audit fixes (character/v22/SPEC.md). wallet.tsx: every
+// send except genesis listing first settles the saved transaction of this tab (sendPending: a receipt, or its nonce
+// passed; refused with its hash while unresolved; refused once with the finished words after); its call is the one
+// documented piece in send()'s head and the PendingTransaction branch the one in its tail. Flows.tsx: the Redeem press
+// compares the fresh previewRedeem (fee, leg count, every leg within 0.1%) with the preview on screen and builds the
+// floors from quote.amounts; the Deposit press re-reads previewDeposit and refuses when the fee changed. Owner.tsx:
+// a fourth roles row shows the current feeRecipient. Every other web/src file is byte-identical to HEAD, styles.css
+// included. connect(), disconnect(), switchChain(), listingPending() and waitPending() keep their pins; send()'s head
+// and tail equal HEAD once their documented pieces are put back.
 const protectedFiles=[
  "BaskGuide.tsx",
- "Flows.tsx",
  "Losses.tsx",
- "Owner.tsx",
  "Scenery.tsx",
  "Vault.tsx",
  "components.tsx",
  "Tokenomics.tsx",
  "tokenomicsData.ts",
- "wallet.tsx",
  "main.tsx",
  "Docs.tsx",
  "baskGuideData.ts",
@@ -66,14 +67,41 @@ assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarr
 // v16: no style rule after HEAD's text (the v15 rules are HEAD's own now).
 const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
 assert.equal(cssTail,'','v16: no style rule after the text of HEAD');
-// The v20 files (none: v20 changes no source): byte-identical to HEAD once their documented pieces [v20, HEAD] are put back (each exactly once), so
+// The v22 files (wallet.tsx, Flows.tsx, Owner.tsx): byte-identical to HEAD once their documented pieces [v22, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v20 pieces (generated from the difference to HEAD, not edited by hand)
-const editedFiles={};
-// <<< v20 pieces
-assert.deepEqual(Object.keys(editedFiles),[],'v20 edits no source');
+// >>> v22 pieces (generated from the difference to HEAD, not edited by hand)
+const editedFiles={
+ "wallet.tsx":[
+  ["  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\n// v22 (2026-10-17, live-site review): every send except genesis listing first\n// settles the saved transaction of this tab. While it has no receipt and its\n// nonce has not passed, the press is refused with its hash and these words.\nexport const PENDING_WAIT =\n  \"Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.\";\n// Once it is found mined or replaced, the record goes, the vault is read again\n// and that press is refused once, so the result is seen before any retry.\nexport const PENDING_FINISHED =\n  \"The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.\";\nclass PendingTransaction extends Error {\n  constructor(\n    message: string,\n    public hash?: Hex,\n  ) {\n    super(message);\n  }\n}\ntype PendingTx = {\n",
+   "  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\ntype PendingTx = {\n"],
+  ["  }\n  // v22: settles the saved transaction of this tab before a send, whichever\n  // account sent it (listGenesis keeps listingPending and its Resume buttons).\n  // Mined or replaced: a receipt, the nonce the node reports for the hash\n  // passed, or the count saved before the prompt passed while nothing is\n  // queued (listingPending's second guard). Fail closed: only the node's \"not\n  // found\" answer to a hash lookup (viem's TransactionReceiptNotFoundError or\n  // TransactionNotFoundError) counts as absent; any other error of the two\n  // lookups refuses the press with the pending words and the hash, and an\n  // error of either count read propagates to send()'s catch; the record stays.\n  async function sendPending(key: string) {\n    const pending = pendingRef.current;\n    if (!pending) return;\n    const absent = (name: string) => (e: unknown) => {\n      if ((e as { name?: string } | null)?.name === name) return undefined;\n      throw new PendingTransaction(PENDING_WAIT, pending.hash);\n    };\n    let finished = !!(await client\n      .getTransactionReceipt({ hash: pending.hash })\n      .catch(absent(\"TransactionReceiptNotFoundError\")));\n    if (!finished) {\n      const [transaction, latest, queued] = await Promise.all([\n        client\n          .getTransaction({ hash: pending.hash })\n          .catch(absent(\"TransactionNotFoundError\")),\n        client.getTransactionCount({\n          address: pending.account,\n          blockTag: \"latest\",\n        }),\n        client.getTransactionCount({\n          address: pending.account,\n          blockTag: \"pending\",\n        }),\n      ]);\n      finished =\n        transaction !== undefined\n          ? latest > transaction.nonce\n          : pending.nonce !== undefined &&\n            latest > pending.nonce &&\n            latest === queued;\n    }\n    if (!finished) throw new PendingTransaction(PENDING_WAIT, pending.hash);\n    pendingRef.current = undefined;\n    try {\n      sessionStorage.removeItem(pendingKey);\n    } catch {\n      /* storage unavailable */\n    }\n    void refresh().catch(() => {});\n    throw new PendingTransaction(PENDING_FINISHED, pending.hash);\n  }\n  const [account, setAccount] = useState<Address>();\n",
+   "  }\n  const [account, setAccount] = useState<Address>();\n"],
+  ["      if (s.functionName === \"listGenesis\") await listingPending();\n      else await sendPending(key);\n      await verifyNetwork();\n",
+   "      if (s.functionName === \"listGenesis\") await listingPending();\n      await verifyNetwork();\n"],
+  ["      }\n      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n      const message = await explainAction(e, s);\n",
+   "      }\n      const message = await explainAction(e, s);\n"]
+ ],
+ "Flows.tsx":[
+  ["                      }\n                      // v22: the fee shown must be the fee charged; a fee that\n                      // changed since the preview needs a new preview.\n                      const [, fee] = await read(\n                        vault(\"previewDeposit\", [quote.tokens, quote.amounts]),\n                      );\n                      if (fee !== quote.fee)\n                        throw new InputError(\"Deposit changed. Preview again.\");\n                      if (revision !== sequence.current)\n",
+   "                      }\n                      if (revision !== sequence.current)\n"],
+  ["                    throw new InputError(\"Your BASK balance is too low.\");\n                  const [amounts, fee] = await read(\n                    vault(\"previewRedeem\", [quote.shares]),\n",
+   "                    throw new InputError(\"Your BASK balance is too low.\");\n                  const [amounts] = await read(\n                    vault(\"previewRedeem\", [quote.shares]),\n"],
+  ["                    throw new InputError(\"Redemption changed. Preview again.\");\n                  // v22: the minimums are 0.1% under the preview on screen; a\n                  // fresh estimate under them, or another fee, needs a new one.\n                  if (\n                    fee !== quote.fee ||\n                    amounts.length !== quote.amounts.length ||\n                    amounts.some(\n                      (a: bigint, i: number) =>\n                        a < (quote.amounts[i] * 999n) / 1000n,\n                    )\n                  )\n                    throw new InputError(\"Redemption changed. Preview again.\");\n                  return vault(\n                    \"redeem\",\n                    redeemArgs(quote.shares, receiver, quote.amounts),\n                  );\n",
+   "                    throw new InputError(\"Redemption changed. Preview again.\");\n                  return vault(\n                    \"redeem\",\n                    redeemArgs(quote.shares, receiver, amounts),\n                  );\n"]
+ ],
+ "Owner.tsx":[
+  ["        </div>\n        <div>\n          <strong>Fee recipient</strong>\n          {s.loading ? (\n            \"Reading...\"\n          ) : s.globals.feeRecipient === undefined ? (\n            <span>unreadable</span>\n          ) : same(s.globals.feeRecipient, zeroAddress) ? (\n            <span>None</span>\n          ) : (\n            <Addr value={s.globals.feeRecipient} />\n          )}\n        </div>\n      </div>\n",
+   "        </div>\n      </div>\n"]
+ ]
+};
+// <<< v22 pieces
+assert.deepEqual(Object.keys(editedFiles),[
+ "wallet.tsx",
+ "Flows.tsx",
+ "Owner.tsx"
+],'the v22 files');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
 for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
@@ -127,17 +155,67 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD (v18's addToWallet() calls included). v20 adds no guarded call, wallet request or chain read.
-const expected={};
+// already part of HEAD (v18's addToWallet() calls included). v22's added guarded calls (the settle's four client reads, the Deposit press's previewDeposit read and its encoder, the Redeem floors built from quote.amounts) are written out below, each in its place.
+const expected={
+ "wallet.tsx": {
+  "removed": [],
+  "added": [
+   [
+    "client .getTransactionReceipt({ hash: pending.hash })",
+    "useWallet > sendPending"
+   ],
+   [
+    "client .getTransaction({ hash: pending.hash })",
+    "useWallet > sendPending"
+   ],
+   [
+    "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
+    "useWallet > sendPending"
+   ],
+   [
+    "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
+    "useWallet > sendPending"
+   ]
+  ]
+ },
+ "Flows.tsx": {
+  "removed": [
+   "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
+   "redeemArgs(quote.shares, receiver, amounts)"
+  ],
+  "added": [
+   [
+    "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
+    "DepositPage, in getSpec"
+   ],
+   [
+    "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
+    "DepositPage, in getSpec"
+   ],
+   [
+    "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
+    "RedeemPage, in getSpec"
+   ],
+   [
+    "redeemArgs(quote.shares, receiver, quote.amounts)",
+    "RedeemPage, in getSpec"
+   ]
+  ]
+ }
+};
 // Action attributes: the exact differences from HEAD, in page order, each [element, attribute, why]. Everything else
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v20 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> v22 attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
-
+ "Owner.tsx":{
+  removed:[],
+  added:[
+   ["Addr","value={s.globals.feeRecipient}",
+    "v22, the owner (2026-10-17, live-site review, Codex F6): the Owner page's roles panel gains a fourth row, Fee recipient, showing the vault's current feeRecipient() from the snapshot's globals (already read since v12), None while it is zero, unreadable when the read failed; a display-only Addr, no read, check or send."]]}
 };
-// <<< v20 attributes
+// <<< v22 attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -150,8 +228,66 @@ const attributeChanges={
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
 // Reviewed v16 differences in calls and watched-name uses. Independent of the generated pieces.
-// v20: no call of HEAD is removed and no watched name gains a use.
-const callChanges={};
+// v22: the Redeem floors call changes its argument (a documented removed call and its replacement); the new uses of watched names (client in sendPending, read and vault in the Deposit press, quote.amounts in the Redeem floors) are written out below.
+const callChanges={
+ "wallet.tsx": {
+  "why": "v22: sendPending reads the saved record and the public client (receipt, transaction, two nonce counts) to settle it; nothing else of HEAD moves.",
+  "pieces": [],
+  "removed": [],
+  "uses": [
+   [
+    "pendingRef.current",
+    "useWallet > sendPending"
+   ],
+   [
+    "client .getTransactionReceipt({ hash: pending.hash }) .catch(absent(\"TransactionReceiptNotFoundError\"))",
+    "useWallet > sendPending"
+   ],
+   [
+    "client .getTransaction({ hash: pending.hash }) .catch(absent(\"TransactionNotFoundError\"))",
+    "useWallet > sendPending"
+   ],
+   [
+    "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
+    "useWallet > sendPending"
+   ],
+   [
+    "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
+    "useWallet > sendPending"
+   ],
+   [
+    "pendingRef.current",
+    "useWallet > sendPending"
+   ]
+  ]
+ },
+ "Flows.tsx": {
+  "why": "v22: the Redeem floors are built from the preview on screen (quote.amounts) after the fresh estimate was compared with it; the Deposit press re-reads previewDeposit for its fee.",
+  "pieces": [],
+  "removed": [
+   "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
+   "redeemArgs(quote.shares, receiver, amounts)"
+  ],
+  "uses": [
+   [
+    "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
+    "DepositPage, in getSpec"
+   ],
+   [
+    "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
+    "DepositPage, in getSpec"
+   ],
+   [
+    "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
+    "RedeemPage, in getSpec"
+   ],
+   [
+    "redeemArgs(quote.shares, receiver, quote.amounts)",
+    "RedeemPage, in getSpec"
+   ]
+  ]
+ }
+};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
 function stateNames(text,file){
@@ -202,7 +338,16 @@ function localDeclarations(file,text,fn,list){
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen (v20 edits none)');
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v22 file');
+// v22: the attributes that build a transaction (the Deposit and Redeem getSpec) carry the documented Flows.tsx pieces;
+// they are compared with HEAD once those pieces, printed as the scan prints them, are put back. Each printed piece must
+// be used exactly once over all attributes of the file. No other attribute carries a piece.
+const attributePieces={"Flows.tsx":[
+ ['} const [, fee] = await read(vault("previewDeposit", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError("Deposit changed. Preview again."); if (revision !== sequence.current)','} if (revision !== sequence.current)'],
+ ['const [amounts, fee] = await read(vault("previewRedeem", [quote.shares])); if (revision !== seq.current) throw new InputError("Redemption changed. Preview again."); if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, quote.amounts));','const [amounts] = await read(vault("previewRedeem", [quote.shares])); if (revision !== seq.current) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, amounts));'],
+]};
+const attributePieceUses={};
+const restoreAttribute=(f,a)=>{if(!TX_ATTRIBUTES.has(a.name))return a.text;let t=a.text;(attributePieces[f]??[]).forEach(([n,h],i)=>{const parts=t.split(n);assert.ok(parts.length<=2,f+': an attribute piece occurs twice in one attribute: '+n);if(parts.length===2){(attributePieceUses[f]??=[])[i]=(attributePieceUses[f]?.[i]??0)+1;t=parts.join(h);}});return t;};
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -211,7 +356,7 @@ for(const f of sources){
  const restored=now.all.map(x=>restore(x.text));
  const watched=new Set([...WATCHED,...stateNames(baseline('web/src/'+f),f)]),usesOld=usesOf(baseline('web/src/'+f),f,watched),usesNow=usesOf(read('web/src/'+f),f,watched),uses=difference(usesOld.map(x=>x.text+' @ '+x.place),usesNow.map(x=>restore(x.text)+' @ '+x.place));
  // Two calls are the same when their text and their place are; two attributes when their element and their text are.
- const attributes=difference(old.attributes.map(a=>a.tag+' '+a.text),now.attributes.map(a=>a.tag+' '+a.text)),guarded=difference(old.found.map(x=>x.text+' @ '+x.place),now.found.map(x=>restoreAccountReply(x,f)+' @ '+x.place)),all=difference(old.all.map(x=>x.text+' @ '+x.place),restored.map((x,i)=>x+' @ '+now.all[i].place));
+ const attributes=difference(old.attributes.map(a=>a.tag+' '+a.text),now.attributes.map(a=>a.tag+' '+restoreAttribute(f,a))),guarded=difference(old.found.map(x=>x.text+' @ '+x.place),now.found.map(x=>restoreAccountReply(x,f)+' @ '+x.place)),all=difference(old.all.map(x=>x.text+' @ '+x.place),restored.map((x,i)=>x+' @ '+now.all[i].place));
   scans[f]={old,now,c,used,attributes,guarded,all,usesOld,usesNow,uses};
  if(attributes.removed.length+attributes.added.length)facts.attributes[f]={removed:attributes.removed.map(i=>[old.attributes[i].tag,old.attributes[i].text]),added:attributes.added.map(i=>[now.attributes[i].tag,now.attributes[i].text])};
  if(guarded.removed.length+guarded.added.length)facts.guarded[f]={removed:guarded.removed.map(i=>old.found[i].text),added:guarded.added.map(i=>[now.found[i].text,now.found[i].place])};
@@ -221,18 +366,33 @@ for(const f of sources){
 // names a file, the differences computed from this tree are written to it before they are checked. Nothing is
 // skipped or loosened by it.
 if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,JSON.stringify(facts,null,1)+'\n');
+for(const [f,pieces] of Object.entries(attributePieces))pieces.forEach((p,i)=>assert.equal(attributePieceUses[f]?.[i]??0,1,f+': the attribute piece is used exactly once over its attributes: '+p[0].slice(0,80)));
 // Hand-reviewed complete ordered additions. SHA-256 binds JSON.stringify([[full printed call, place], ...]); the
 // ordered callee names make the list readable without repeating large nested JSX bodies. No regeneration block
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
-const addedCallPins={};
+const addedCallPins={
+ "wallet.tsx": {
+  "callees": "(expression) catch getTransactionReceipt absent all catch getTransaction absent getTransactionCount getTransactionCount removeItem catch refresh sendPending report",
+  "sha256": "88c506b1a61cee524cb639339aa5544bddcd6d2b1ade989b4a576c7030403479"
+ },
+ "Flows.tsx": {
+  "callees": "read vault some vault redeemArgs",
+  "sha256": "cfcc36196b942db1408478afc506239e72adc2bfd2b2d0272dbb48787550ac66"
+ },
+ "Owner.tsx": {
+  "callees": "same",
+  "sha256": "003598b1cc1bd05f81547de19ff078e021d708fd8b5a8e19706c79fe8e82f436"
+ }
+};
 // <<< reviewed calls
 // The exact reviewed source of the two v14 files (frozen now) and of the two v16 files, beyond either generated block.
 const reviewedSourcePins={
  "Docs.tsx": "4a017ccbabc92c33df85c32d34b9f4c2ad94ae8988b50c82eb1115141e413343",
  "main.tsx": "acbfbe99686e824d26720805002343722cc16c8bcfff75a095c1774bcac94e80",
- "wallet.tsx": "cb08bb0214a1b581a85da98c9974b5edb0b340e5c66e01bcdd4239149c7d6a91",
- "Flows.tsx": "b9452b067fabd93c4ce9718d19e4c70906263068bcb81589b2e151beb411c309",
+ "wallet.tsx": "550eb23f8c890ee228c218a6e15ffa6e8c1f2f0a3da2aef7c17200103fffcd67",
+ "Flows.tsx": "e8f727507de361e7c3f074b33d855867273083aa900f6c0132709c4c8a4246db",
+ "Owner.tsx": "9f7b51477f4b3ea2410cad43073ac75c4c2ee3b17085fcf97797dade3942fd65",
  "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
  "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a"
 };
@@ -325,9 +485,9 @@ for(const f of sources){
   assert.deepEqual(list[i].guarded,[],f+' '+list[i].where+': a guarded call inside an added or removed attribute: '+list[i].text);
  }
  // The attributes that build or start a transaction, spelled out: the same texts as at HEAD, in order.
- assert.deepEqual(now.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),old.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),f+': an onSubmit, getSpec, build or claim attribute differs from HEAD');
+ assert.deepEqual(now.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>restoreAttribute(f,x)),old.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),f+': an onSubmit, getSpec, build or claim attribute differs from HEAD beyond the documented v22 pieces');
  // No guarded call moved into or out of an attribute: inside the attributes they are HEAD's, in order.
- assert.deepEqual(now.attributes.flatMap(x=>x.guarded),old.attributes.flatMap(x=>x.guarded),f+': the guarded calls inside action attributes differ from HEAD');
+ assert.deepEqual(now.attributes.flatMap(x=>x.guarded).filter(t=>!e.added.some(a=>a[0]===t)),old.attributes.flatMap(x=>x.guarded).filter(t=>!e.removed.includes(t)),f+': the guarded calls inside action attributes differ from HEAD beyond the documented ones');
  // Every call expression (see callChanges).
  assert.deepEqual(all.removed.map(i=>old.all[i].text),c.removed,f+': a call of HEAD is gone or moved beyond the documented ones');
  c.pieces.forEach(([n],i)=>assert.ok(used[i]>0,f+': the call piece is in no call: '+n));
@@ -368,7 +528,7 @@ function sendsOf(text,file){
  })(tree);
  return out;
 }
-// v20 adds no provider use: every file's list equals HEAD's.
+// v22 adds no provider use: every file's list equals HEAD's (sendPending reads the chain through the public client only).
 const sendAdded={};
 const NO_SEND=['Vault.tsx','Scenery.tsx','main.tsx','Docs.tsx'],sendUses={};
 for(const f of sources){
@@ -410,8 +570,7 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v20 adds, removes and moves nothing a page loads or opens: every file's list equals HEAD's (v19's Losses link move
-// and Docs link included), in order and in place.
+// v22 adds, removes and moves nothing a page loads or opens: every file's list equals HEAD's, in order and in place.
 const loadDisplayAdded={};
 const loadDisplayRemoved={};
 const loadUses={};
@@ -429,7 +588,7 @@ for(const f of sources){
 }
 // v12: the wallet and RPC methods the pages name. Every `method` given as a property (or assigned) in web/src, in order
 // with its place: exactly HEAD's list. Local-only Disconnect names no new wallet or RPC method.
-// v20 names no new wallet or RPC method in any file.
+// v22 names no new wallet or RPC method in any file.
 const methodsAdded={};
 function methodsOf(text,file){
  const tree=parse(text,file),print=printerOf(tree),out=[],key=n=>ts.isIdentifier(n)||ts.isStringLiteralLike(n)?n.text:ts.isComputedPropertyName(n)?lit(n.expression):undefined;
@@ -461,7 +620,7 @@ function storageOf(text,file){
  (function v(n){if(ts.isIdentifier(n)&&STORE.has(n.text))out.push({text:print(top(n)),place:place(n,tree)});ts.forEachChild(n,v);})(tree);
  return out;
 }
-const storageAdded={};
+const storageAdded={"wallet.tsx":[["sessionStorage.removeItem(pendingKey)","useWallet > sendPending"]]};
 for(const f of sources){
  const h=storageOf(baseline('web/src/'+f),f),n=storageOf(read('web/src/'+f),f),d=difference(h.map(x=>x.text+' @ '+x.place),n.map(x=>x.text+' @ '+x.place));
  assert.deepEqual({removed:d.removed.map(i=>h[i].text),added:d.added.map(i=>[n[i].text,n[i].place])},{removed:[],added:storageAdded[f]??[]},f+': browser storage is used differently from HEAD beyond the documented flag');
@@ -493,13 +652,19 @@ function sendParts(text){
  return {head:text.slice(f.node.getStart(f.tree),wait[0].end),tail:text.slice(wait[0].end,f.node.end)};
 }
 const headSend=sendParts(baseline('web/src/wallet.tsx')),nowSend=sendParts(read('web/src/wallet.tsx'));
-assert.equal(nowSend.head,headSend.head,'wallet.tsx send(): byte-identical head through receipt wait');
-// v16 does not touch wallet.tsx: send() is byte-identical to HEAD, head and tail (no piece); the mined-hash
-// statements are pinned by sendTailWrites below as well.
+// v22: one documented piece in the head (the settle of the saved transaction before verifyNetwork, for every send
+// except genesis listing); the head equals HEAD byte for byte once it is put back.
+const SEND_HEAD_PIECES=[
+ ['      if (s.functionName === "listGenesis") await listingPending();\n      else await sendPending(key);\n','      if (s.functionName === "listGenesis") await listingPending();\n'],
+];
+assert.equal(putBack(nowSend.head,SEND_HEAD_PIECES,'wallet.tsx send() head'),headSend.head,'wallet.tsx send(): head byte-identical to HEAD once the documented piece is put back');
+// v22: one documented piece in the tail (the PendingTransaction branch: the message with its hash, then the refusal);
+// the mined-hash statements are pinned by sendTailWrites below as well.
 const SEND_TAIL_PIECES=[
+ ['      }\n      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n      const message = await explainAction(e, s);','      }\n      const message = await explainAction(e, s);'],
 ];
 assert.equal(putBack(nowSend.tail,SEND_TAIL_PIECES,'wallet.tsx send() tail'),headSend.tail,'wallet.tsx send(): tail byte-identical to HEAD');
-pinnedFunctions['wallet.tsx send()']={headEqualToHead:true,headBytes:Buffer.byteLength(nowSend.head,'utf8'),headSha256:sha256(nowSend.head),tailPieces:SEND_TAIL_PIECES.map(([now,head])=>({now,head}))};
+pinnedFunctions['wallet.tsx send()']={headPieces:SEND_HEAD_PIECES.map(([now,head])=>({now,head})),headBytes:Buffer.byteLength(nowSend.head,'utf8'),headSha256:sha256(nowSend.head),tailPieces:SEND_TAIL_PIECES.map(([now,head])=>({now,head}))};
 // An explicit ordered pin of the changed transaction-status statements, independent of the piece list.
 const sendTailWrites=[];
 {const tree=parse(read('web/src/wallet.tsx'),'wallet.tsx'),print=printerOf(tree);
@@ -546,7 +711,7 @@ function hookReturn(text){
  assert.equal(returns.length,1,'wallet.tsx useWallet: one return');
  return print(returns[0]);
 }
-// v20: the hook's return list is HEAD's (with addToWallet after switchChain since v18), pinned here printed without
+// v22: the hook's return list is HEAD's (sendPending is called inside send() only and is not returned), pinned here printed without
 // comments; nothing in the list may change.
 const HOOK_RETURN_HEAD="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };";
 assert.equal(hookReturn(baseline('web/src/wallet.tsx')),HOOK_RETURN_HEAD,'wallet.tsx: HEAD\'s hook return list as pinned');
@@ -582,8 +747,19 @@ assert.deepEqual(depositStateUses,[['Flows.tsx','DepositPage','<DepositState sna
 protectedCode.depositSign={rawPins:depositSignPins,uses:depositStateUses};
 rawProtected('Flows approveAll','Flows.tsx',n=>ts.isFunctionDeclaration(n)&&n.name?.text==='approveAll');
 rawProtected('Flows onSubmit','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='onSubmit',2);
-rawProtected('Flows getSpec','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='getSpec',3);
-rawProtected('Flows transaction buttons','Flows.tsx',n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText()==='TxButton',3);
+// v22: the three getSpec attributes and the three TxButton elements equal HEAD byte for byte once the generated
+// Flows.tsx pieces are put back; each raw piece is used exactly once over the three texts.
+function rawProtectedWithPieces(label,file,select,count,pieces){
+ const list=text=>{const tree=parse(text,file),found=[];(function visit(n){if(select(n,tree))found.push(text.slice(n.getStart(tree),n.end));ts.forEachChild(n,visit);})(tree);return found;};
+ const h=list(baseline('web/src/'+file)),n=list(read('web/src/'+file)),used=pieces.map(()=>0);
+ assert.equal(h.length,count,label+': protected baseline count');
+ const restored=n.map(text=>{pieces.forEach(([now,head],i)=>{const parts=text.split(now);assert.ok(parts.length<=2,label+': a piece occurs twice in one text');if(parts.length===2){used[i]++;text=parts.join(head);}});return text;});
+ pieces.forEach((p,i)=>assert.equal(used[i],1,label+': the raw piece is used exactly once: '+p[0].slice(0,60)));
+ assert.deepEqual(restored,h,label+': bytes differ from HEAD beyond the documented pieces');
+ protectedCode[label]=h.map(x=>({bytes:Buffer.byteLength(x,'utf8'),sha256:sha256(x)}));
+}
+rawProtectedWithPieces('Flows getSpec','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='getSpec',3,editedFiles['Flows.tsx']);
+rawProtectedWithPieces('Flows transaction buttons','Flows.tsx',n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText()==='TxButton',3,editedFiles['Flows.tsx']);
 rawProtected('Claims Claim all handler','Flows.tsx',(n,t)=>ts.isJsxAttribute(n)&&n.name.getText(t)==='onClick'&&n.getText(t).includes('claimable.slice'));
 const effect=(component,needle)=>(n,t)=>ts.isCallExpression(n)&&['useEffect','useLayoutEffect'].includes(n.expression.getText(t))&&place(n,t)===component&&n.getText(t).includes(needle);
 rawProtected('Claims owed read','Flows.tsx',effect('Claims','vault("owed"'));
@@ -658,8 +834,15 @@ for(const f of Object.keys(editedFiles)){
  assert.deepEqual(n,h,f+': a name used by the transaction code is declared around it differently from HEAD');
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
-// v20 adds no name at the top of a file.
+// v22 adds three names at the top of wallet.tsx: the two status constants and the PendingTransaction class.
 const namesAdded={
+ "wallet.tsx": {
+  "PENDING_WAIT": "PENDING_WAIT = \"Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.\"",
+  "PENDING_FINISHED": "PENDING_FINISHED = \"The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.\"",
+  "PendingTransaction": "class"
+ },
+ "Flows.tsx": {},
+ "Owner.tsx": {}
 };
 // v16: the exact declarations that change at the top of the two files (two imports leave Tokenomics.tsx; four data
 // declarations of tokenomicsData.ts carry the reviewed words); never generated by put-pieces.
@@ -690,6 +873,26 @@ for(const f of Object.keys(editedFiles)){
 }
 // The whole-source digest is additional to the specific structural assertions above.
 for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed source differs; regeneration does not authorize source edits');
+// v22 semantic pins (hand-written; never regenerated). The settle of the saved transaction: its exact text; its call
+// before verifyNetwork for every send except genesis listing; the pending branch in send()'s tail. The two presses:
+// their exact attribute texts (the Deposit press re-reads previewDeposit and refuses a changed fee before the spec; the
+// Redeem press compares the fresh estimate with the preview and builds the floors from quote.amounts). The Owner roles
+// row. The two status constants.
+const SEND_PENDING_TEXT="async function sendPending(key: string) { const pending = pendingRef.current; if (!pending) return; const absent = (name: string) => (e: unknown) => { if ((e as { name?: string; } | null)?.name === name) return undefined; throw new PendingTransaction(PENDING_WAIT, pending.hash); }; let finished = !!(await client .getTransactionReceipt({ hash: pending.hash }) .catch(absent(\"TransactionReceiptNotFoundError\"))); if (!finished) { const [transaction, latest, queued] = await Promise.all([ client .getTransaction({ hash: pending.hash }) .catch(absent(\"TransactionNotFoundError\")), client.getTransactionCount({ address: pending.account, blockTag: \"latest\", }), client.getTransactionCount({ address: pending.account, blockTag: \"pending\", }), ]); finished = transaction !== undefined ? latest > transaction.nonce : pending.nonce !== undefined && latest > pending.nonce && latest === queued; } if (!finished) throw new PendingTransaction(PENDING_WAIT, pending.hash); pendingRef.current = undefined; try { sessionStorage.removeItem(pendingKey); } catch { } void refresh().catch(() => { }); throw new PendingTransaction(PENDING_FINISHED, pending.hash); }";
+assert.deepEqual(functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','sendPending'),[SEND_PENDING_TEXT],'wallet.tsx sendPending() differs from the pinned v22 text');
+assert.equal(nowSend.head.split('      if (s.functionName === "listGenesis") await listingPending();\n      else await sendPending(key);\n').length,2,'wallet.tsx send(): every send except genesis listing settles the saved transaction first, exactly once');
+assert.ok(nowSend.head.indexOf('else await sendPending(key);')<nowSend.head.indexOf('await verifyNetwork();'),'wallet.tsx send(): the settle precedes verifyNetwork and simulate');
+assert.equal(nowSend.tail.split('      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n').length,2,'wallet.tsx send(): the pending branch reports the hash and refuses, exactly once');
+assert.ok(!functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','listingPending')[0].includes('sendPending')&&!functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','waitPending')[0].includes('sendPending'),'wallet.tsx: the listing flow does not use the new settle');
+const DEPOSIT_GETSPEC="getSpec={async () => { const revision = sequence.current; for (let i = 0; i < quote.tokens.length; i++) { const b = await read(token(quote.tokens[i], \"balanceOf\", [w.account])); if (b < quote.amounts[i]) throw new InputError(\"Your stock balance is too low. Preview again.\"); } const [, fee] = await read(vault(\"previewDeposit\", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError(\"Deposit changed. Preview again.\"); if (revision !== sequence.current) throw new InputError(\"Deposit changed. Preview again.\"); return vault(\"deposit\", depositArgs(quote.tokens, quote.amounts, w.account!, quote.shares)); }}";
+const REDEEM_GETSPEC="getSpec={async () => { const revision = seq.current; const receiver = recipient(to); const b = await read(vault(\"balanceOf\", [w.account])); if (b < quote.shares) throw new InputError(\"Your BASK balance is too low.\"); const [amounts, fee] = await read(vault(\"previewRedeem\", [quote.shares])); if (revision !== seq.current) throw new InputError(\"Redemption changed. Preview again.\"); if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError(\"Redemption changed. Preview again.\"); return vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts)); }}";
+{const specs=scans['Flows.tsx'].now.attributes.filter(x=>x.name==='getSpec').map(x=>x.text);
+ assert.equal(specs.filter(t=>t===DEPOSIT_GETSPEC).length,1,'Flows.tsx: the Deposit press re-reads previewDeposit and refuses a changed fee before the spec, as pinned');
+ assert.equal(specs.filter(t=>t===REDEEM_GETSPEC).length,1,'Flows.tsx: the Redeem press compares the fresh estimate with the preview and builds the floors from quote.amounts, as pinned');
+ assert.ok(DEPOSIT_GETSPEC.includes('const [, fee] = await read(vault("previewDeposit", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError("Deposit changed. Preview again."); if (revision !== sequence.current)'),'Flows.tsx: the Deposit fee comparison sits before the revision check and the spec');
+ assert.ok(REDEEM_GETSPEC.includes('if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, quote.amounts)); }}'),'Flows.tsx: the Redeem comparison (fee, leg count, every leg within 0.1%) precedes floors built from quote.amounts');}
+assert.match(read('web/src/Owner.tsx'),/<strong>Fee recipient<\/strong>[\s\S]{0,400}<Addr value=\{s\.globals\.feeRecipient\} \/>/,'Owner.tsx: the roles panel shows the current fee recipient');
+for(const [name,value] of [['PENDING_WAIT','Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.'],['PENDING_FINISHED','The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.']])assert.ok(read('web/src/wallet.tsx').includes('export const '+name+' =\n  '+JSON.stringify(value)+';'),'wallet.tsx: '+name+' as pinned');
 // Differential encoding: HEAD and current governance/model/chain bundled side by side. For the same inputs the
 // calldata must be byte-identical whenever the current page accepts; v12 adds no refusal, never accepts what HEAD
 // refused, and refuses with HEAD's words (model.ts, chain.ts and governance.ts are byte-identical to HEAD in v12).

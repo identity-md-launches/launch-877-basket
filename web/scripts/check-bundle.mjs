@@ -8,7 +8,7 @@ const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 const changed=git(['diff','--name-only','HEAD']).trim().split('\n').filter(Boolean);
 // v20 (two browser checks re-scoped for the Losses route, 2026-10-16): no source may change.
 // check-calldata independently pins each reviewed source and freezes every other.
-const v20Source=[];
+const v22Source=["web/src/wallet.tsx","web/src/Flows.tsx","web/src/Owner.tsx"];
 const SHELL_SHA256='82f66899a0c19f61299254c0005ee5117af0a912b97e8e57d249288e9dbc962d';
 const SHARE_SHA256='dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85';
 // The new favicon: red panel, yellow frame, the header's basket in yellow.
@@ -23,7 +23,7 @@ for(const p of changed){
  // v12 section 5: the exact page shell is pinned below; build configuration and validation fixtures stay unchanged.
  assert.ok(!['web/vite.config.ts','web/tsconfig.json'].includes(p)&&(!p.startsWith('web/validation/')||p==='web/validation/README.md'),'Page shell, build configuration or validation fixture changed: '+p);
  assert.ok(!/(^|\/)(lib|node_modules|\.github|\.git)(\/|$)|(^|\/)\.env(?:\.|$)|(^|\/)(foundry\.toml|foundry\.lock|remappings\.txt|\.gitmodules|package\.json|[^/]*lock[^/]*)$/.test(p),'Protected path changed: '+p);
- if(p.startsWith('web/src/'))assert.ok(v20Source.includes(p),'v20 changes no source, but this changed: '+p);
+ if(p.startsWith('web/src/'))assert.ok(v22Source.includes(p),'Only the three v22 sources may change: '+p);
  assert.ok(!p.startsWith('src/'),'Root contract source changed');
 }
 // v20: no new source and no new public asset.

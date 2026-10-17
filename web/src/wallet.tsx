@@ -38,6 +38,23 @@ export class TransactionCancelled extends InputError {}
 // replaced.
 export const LISTING_FINISHED =
   "The earlier transaction is finished (confirmed or replaced). Press Resume listing.";
+// v22 (2026-10-17, live-site review): every send except genesis listing first
+// settles the saved transaction of this tab. While it has no receipt and its
+// nonce has not passed, the press is refused with its hash and these words.
+export const PENDING_WAIT =
+  "Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.";
+// Once it is found mined or replaced, the record goes, the vault is read again
+// and that press is refused once, so the result is seen before any retry.
+export const PENDING_FINISHED =
+  "The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.";
+class PendingTransaction extends Error {
+  constructor(
+    message: string,
+    public hash?: Hex,
+  ) {
+    super(message);
+  }
+}
 type PendingTx = {
   hash: Hex;
   account: Address;
@@ -172,6 +189,56 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
     }
     await listingPending();
     await refresh();
+  }
+  // v22: settles the saved transaction of this tab before a send, whichever
+  // account sent it (listGenesis keeps listingPending and its Resume buttons).
+  // Mined or replaced: a receipt, the nonce the node reports for the hash
+  // passed, or the count saved before the prompt passed while nothing is
+  // queued (listingPending's second guard). Fail closed: only the node's "not
+  // found" answer to a hash lookup (viem's TransactionReceiptNotFoundError or
+  // TransactionNotFoundError) counts as absent; any other error of the two
+  // lookups refuses the press with the pending words and the hash, and an
+  // error of either count read propagates to send()'s catch; the record stays.
+  async function sendPending(key: string) {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    const absent = (name: string) => (e: unknown) => {
+      if ((e as { name?: string } | null)?.name === name) return undefined;
+      throw new PendingTransaction(PENDING_WAIT, pending.hash);
+    };
+    let finished = !!(await client
+      .getTransactionReceipt({ hash: pending.hash })
+      .catch(absent("TransactionReceiptNotFoundError")));
+    if (!finished) {
+      const [transaction, latest, queued] = await Promise.all([
+        client
+          .getTransaction({ hash: pending.hash })
+          .catch(absent("TransactionNotFoundError")),
+        client.getTransactionCount({
+          address: pending.account,
+          blockTag: "latest",
+        }),
+        client.getTransactionCount({
+          address: pending.account,
+          blockTag: "pending",
+        }),
+      ]);
+      finished =
+        transaction !== undefined
+          ? latest > transaction.nonce
+          : pending.nonce !== undefined &&
+            latest > pending.nonce &&
+            latest === queued;
+    }
+    if (!finished) throw new PendingTransaction(PENDING_WAIT, pending.hash);
+    pendingRef.current = undefined;
+    try {
+      sessionStorage.removeItem(pendingKey);
+    } catch {
+      /* storage unavailable */
+    }
+    void refresh().catch(() => {});
+    throw new PendingTransaction(PENDING_FINISHED, pending.hash);
   }
   const [account, setAccount] = useState<Address>();
   const [chainId, setChainId] = useState<number>();
@@ -347,6 +414,7 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
       if (accounts[0]?.toLowerCase() !== account.toLowerCase())
         throw new Error("The wallet account changed. Please retry.");
       if (s.functionName === "listGenesis") await listingPending();
+      else await sendPending(key);
       await verifyNetwork();
       await simulate(s, account);
       const gas = ["deposit", "redeem", "claim"].includes(s.functionName)
@@ -481,6 +549,10 @@ export function useWallet(refresh: () => Promise<Snapshot>) {
         // No link: the submitted transaction never ran.
         notice(key, e.message);
         throw e;
+      }
+      if (e instanceof PendingTransaction) {
+        report(key, { message: e.message, hash: e.hash });
+        throw new InputError(e.message);
       }
       const message = await explainAction(e, s);
       const status =
