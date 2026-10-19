@@ -9,10 +9,13 @@ import { build } from 'esbuild';
 import { getAddress, encodeFunctionData } from 'viem';
 const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
-const BASE='3038c97b30503df69fd4760381e208df2ba54f34';
+// v24 retains every v23/v22 transaction comparison after exact generated restoration.
+import {checkV24Sources, restoreV24} from './check-v24-source.mjs';
+checkV24Sources(root);
+const BASE='736affca69ad6aefe27b27d7e0ceeb405c236a96', LEGACY='3038c97b30503df69fd4760381e208df2ba54f34';
 assert.equal(git(['rev-parse','HEAD']).trim(),BASE,'exact ITEM base commit');
-const baseline=p=>git(['show','HEAD:'+p]);
-const rawRead=p=>fs.readFileSync(path.join(root,p),'utf8');
+const baseline=p=>git(['show',LEGACY+':'+p]);
+const rawRead=p=>restoreV24(p,fs.readFileSync(path.join(root,p),'utf8'));
 const read=p=>restoreApproved(p,rawRead(p));
 const sha256=s=>createHash('sha256').update(s).digest('hex');
 // ITEM pages on HEAD=v22 (3038c97b, the live site since 2026-10-17; the ITEM work was rebased from v16 onto v20 on
@@ -193,7 +196,7 @@ for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src
 const NEW_SOURCES=ITEM_NEW_SOURCES;
 const MODULE_SOURCES=['Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts'];
 const allSources=fs.readdirSync(path.join(root,'web/src'),{recursive:true}).filter(p=>fs.statSync(path.join(root,'web/src',p)).isFile()).map(p=>p.replaceAll('\\','/')).sort();
-assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'no new source');
+assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'no new source');
 const modulePins={
   "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
   "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a",
@@ -352,7 +355,7 @@ function localDeclarations(file,text,fn,list){
  (function v(n){if(ts.isVariableStatement(n))for(const d of n.declarationList.declarations)if(ts.isIdentifier(d.name)&&list.includes(d.name.text)){assert.ok(!out[d.name.text],file+': one '+d.name.text+' in '+fn);out[d.name.text]=printer.printNode(ts.EmitHint.Unspecified,n,tree).replace(/\s+/g,' ');}ts.forEachChild(n,v);})(f[0]);
  return out;
 }
-const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
+const sources=git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
 assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or an ITEM file with documented pieces (v22\'s three files are HEAD\'s own)');
@@ -890,7 +893,7 @@ for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(r
 // refused, and refuses with HEAD's words (model.ts, chain.ts and governance.ts are byte-identical to HEAD in v12).
 const scratch=path.join(root,'test/scratch/calldata');
 fs.rmSync(scratch,{recursive:true,force:true});
-for(const p of git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.(tsx?|json)$/.test(p))){
+for(const p of git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').filter(p=>/\.(tsx?|json)$/.test(p))){
  const out=path.join(scratch,'head',p.slice(4));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,baseline(p));
 }
 const entry=src=>`export { proposalSpec, proposalAction } from "${src}/governance";\nexport { parseLaunch, address, recipient, amount, uint, deadline, depositArgs, redeemArgs } from "${src}/model";\nexport { encode, vault, token, VAULT } from "${src}/chain";\nexport { newOwner } from "${src}/governance";\n`;

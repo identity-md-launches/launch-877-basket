@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8325478,
-  "fileCount": 271,
-  "productionExportBytes": 1243062,
+  "uncompressedDeliveryBytes": 8235939,
+  "fileCount": 278,
+  "productionExportBytes": 1249329,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -168,17 +168,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-Cg6-0KOr.js": {
+    "dist/assets/ccip-BvpA7xm5.js": {
       "bytes": 2610,
-      "sha256": "267329291edbb3150766db20061a9356dce4549e1906b1c7110a190f40d14454"
+      "sha256": "bc420bc6544a137d2aba7a0015ae200b891fa7b78b4a1816bc08e57e1f38a694"
     },
-    "dist/assets/index-Dj-S4okR.js": {
-      "bytes": 641000,
-      "sha256": "9f2e0d70df68479406373cc0ecb4c57114f0907ac820d4d9fc2d661bcf34e420"
+    "dist/assets/index-BfIl7glJ.css": {
+      "bytes": 59333,
+      "sha256": "0daff0579c31d87ecf2281da4e61b9d5f838bdf9e07f7557867d2ce9be7a0f68"
     },
-    "dist/assets/index-iwMuzi_G.css": {
-      "bytes": 57750,
-      "sha256": "c5fffa787f4bd972bb636887fe5051064164cca4e6b2e25cb7593251071f4e9d"
+    "dist/assets/index-CYI-6Qll.js": {
+      "bytes": 645684,
+      "sha256": "00dee82aae19bdafded2d97ec92c5fb67ee01419cd308905e2cc773a8e701c15"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -194,7 +194,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "2de25c03b3afd9ceeee78f95d9938273d7911feb63bedfac9bbf77067bda8409"
+      "sha256": "e009dc75371d08d339c96c5fe40c7d37b8a869c0a108c2e490c8cadca0d00208"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,

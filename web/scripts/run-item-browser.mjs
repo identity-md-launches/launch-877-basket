@@ -218,19 +218,19 @@ async function ready() {
 }
 async function refresh() { await page.locator('.item-refresh button').click(); await ready(); }
 // 2026-10-16, Earn layout build (option B3): the Pool selector shows one pool card at a time, each card's actions sit in
-// tabs (Add liquidity, Stake, Manage, Pool stats; ITEM staking: Stake, Manage, Staking stats) and the withdraw form and
+// tabs (Add liquidity, Stake, Claim/Withdraw, Pool stats; ITEM staking: Stake, Claim/Withdraw, Staking stats) and the withdraw form and
 // the liquidity details sit in disclosures. The walk drives the selector, the tabs and the disclosures the way a visitor
 // does, right before each action; every send below keeps its original order, inputs and assertions.
-const TABS = { bask: ['Add liquidity', 'Stake', 'Manage', 'Pool stats'], eth: ['Add liquidity', 'Stake', 'Manage', 'Pool stats'], staking: ['Stake', 'Manage', 'Staking stats'] };
-const PLACE = { 'Approve BASK': 'Add liquidity', 'Approve USDG': 'Add liquidity', 'Approve ITEM': 'Add liquidity', 'Add liquidity': 'Add liquidity', Approve: 'Stake', Stake: 'Stake', Withdraw: 'Manage', Unstake: 'Manage', 'Use full staked amount': 'Manage', 'Claim ITEM': 'Manage', 'Claim BASK': 'Manage' };
+const TABS = { bask: ['Add liquidity', 'Stake', 'Claim/Withdraw', 'Pool stats'], eth: ['Add liquidity', 'Stake', 'Claim/Withdraw', 'Pool stats'], staking: ['Stake', 'Claim/Withdraw', 'Staking stats'] };
+const PLACE = { 'Approve BASK': 'Add liquidity', 'Approve USDG': 'Add liquidity', 'Approve ITEM': 'Add liquidity', 'Add liquidity': 'Add liquidity', Approve: 'Stake', Stake: 'Stake', Withdraw: 'Claim/Withdraw', Unstake: 'Claim/Withdraw', 'Use full staked amount': 'Claim/Withdraw', 'Claim ITEM': 'Claim/Withdraw', 'Claim BASK': 'Claim/Withdraw' };
 const WITHDRAW = { bask: 'Withdraw pool tokens', eth: 'Withdraw pool tokens', staking: 'Unstake ITEM' };
 const visited = { pools: new Set(), tabs: new Set(), disclosures: new Set(), keyboard: new Set() };
 const typingEvidence = [];
 const card = prefix => page.locator(`[data-item-card="${prefix}"]`);
 async function showCard(prefix) {
   if (prefix === 'staking') return;
-  const select = page.locator('#earn-pool-select');
-  if (await select.inputValue() !== prefix) await select.selectOption(prefix);
+  const radio = page.locator('input[name=earn-pool][value=' + prefix + ']');
+  if (!await radio.isChecked()) await radio.locator('xpath=..').click();
   await page.locator(`[data-pool-view="${prefix}"]:not([hidden]) [data-item-card="${prefix}"]`).waitFor();
   assert.equal(await page.locator('[data-pool-view]:not([hidden])').count(), 1, 'The Pool selector shows exactly one pool card.');
   assert.equal(await page.locator('[data-pool-view][hidden] [data-item-card]').count(), 1, 'The other pool card stays mounted while hidden.');
@@ -542,7 +542,7 @@ async function layoutCheck() {
   assert.equal(await page.locator('#bask-add').inputValue(), '0.1', 'An amount typed on one pool survives switching away and back.');
   assert.equal(await page.locator('#eth-add').inputValue(), '0.2', 'The amount typed on the other pool survives too.');
   await figures('eth');
-  await page.locator('#earn-pool-select').focus();
+  await page.locator('input[name=earn-pool]:checked').focus();
   let stops = 0;
   for (let i = 0; i < 80; i++) {
     await page.keyboard.press('Tab');
@@ -563,8 +563,8 @@ async function layoutCheck() {
     assert.deepEqual((await card(prefix).locator(':scope > .item-figures [data-figure]').evaluateAll(nodes => nodes.map(node => node.dataset.figure))).sort(), [`${prefix}.staked`, `${prefix}.${gauge ? 'earned' : 'BASK'}`].sort(), `${prefix}: only You have staked and the earned total sit above the tabs`);
     // Where the owner's choice puts each figure: above the tabs (seen on every tab) or on exactly one tab.
     const place = gauge
-      ? { staked: 'above', earned: 'above', matched: 'Add liquidity', tokenBalance: 'Add liquidity', quoteBalance: 'Add liquidity', liquidityEstimate: 'Add liquidity', balance: 'Stake', share: 'Manage', daily: 'Manage', released: 'Pool stats', remaining: 'Pool stats', rate: 'Pool stats', dailyPerToken: 'Pool stats', totalStaked: 'Pool stats' }
-      : { staked: 'above', BASK: 'above', balance: 'Stake', share: 'Manage', estimatedBASK: 'Manage', USDValue: 'Manage', totalStaked: 'Staking stats', pot: 'Staking stats' };
+      ? { staked: 'above', earned: 'above', matched: 'Add liquidity', tokenBalance: 'Add liquidity', quoteBalance: 'Add liquidity', liquidityEstimate: 'Add liquidity', balance: 'Stake', share: 'Claim/Withdraw', daily: 'Claim/Withdraw', released: 'Pool stats', remaining: 'Pool stats', rate: 'Pool stats', dailyPerToken: 'Pool stats', totalStaked: 'Pool stats' }
+      : { staked: 'above', BASK: 'above', balance: 'Stake', share: 'Claim/Withdraw', estimatedBASK: 'Claim/Withdraw', USDValue: 'Claim/Withdraw', totalStaked: 'Staking stats', pot: 'Staking stats' };
     assert.deepEqual(Object.keys(place).map(key => `${prefix}.${key}`).sort(), [...hooks].sort(), `${prefix}: the placement map names every figure hook once`);
     const tabs = card(prefix).getByRole('tab');
     assert.deepEqual(await tabs.allTextContents(), TABS[prefix], `${prefix}: exact tab names in order`);
@@ -583,7 +583,7 @@ async function layoutCheck() {
       assert.equal(await tabs.evaluateAll(nodes => nodes.filter(node => node.tabIndex === 0).length), 1, `${prefix}: one tab stop in the tablist`);
       visited.keyboard.add(`${prefix}: ${key}`);
     }
-    await openTab(prefix, 'Manage'); const withdraw = await openDisclosure(prefix, WITHDRAW[prefix]);
+    await openTab(prefix, 'Claim/Withdraw'); const withdraw = await openDisclosure(prefix, WITHDRAW[prefix]);
     assert.ok(await page.locator(`#${prefix}-withdraw`).isVisible(), `${prefix}: the withdraw box shows once its disclosure opens`);
     await withdraw.locator('summary').click();
     assert.equal(await page.locator(`#${prefix}-withdraw`).isVisible(), false, `${prefix}: the withdraw box hides again`);
@@ -598,7 +598,7 @@ async function layoutCheck() {
   await openTab('bask', 'Add liquidity'); await page.locator('#bask-add').fill('');
   await capture('Pool selector with BASK/USDG', '.refined-focused-section');
   await openTab('eth', 'Add liquidity'); await capture('ITEM/ETH pool selected', '[data-item-card="eth"]');
-  await openTab('bask', 'Manage'); await openDisclosure('bask', 'Withdraw pool tokens'); await capture('Manage with withdraw open', '[data-item-card="bask"]');
+  await openTab('bask', 'Claim/Withdraw'); await openDisclosure('bask', 'Withdraw pool tokens'); await capture('Claim/Withdraw with withdraw open', '[data-item-card="bask"]');
   await openTab('bask', 'Pool stats'); await capture('Pool stats', '[data-item-card="bask"]');
   await openTab('bask', 'Add liquidity');
   pass('Earn layout: the Pool selector shows one mounted card at a time and keeps the other card\'s typed amounts and reads; the hidden pool and the hidden panels take no focus by Tab or by script; every tab works by click and keyboard with one panel showing; fourteen and eight figure hooks once each, the personal summary above the tabs and every other figure visible on its own tab only; the Details and withdraw disclosures open and close.');
@@ -612,7 +612,7 @@ async function typingCheck() {
   let keystrokes = 0;
   for (const prefix of ['bask', 'eth', 'staking']) {
     const gauge = prefix !== 'staking';
-    const boxes = gauge ? [['add', 'Add liquidity'], ['stake', 'Stake'], ['withdraw', 'Manage']] : [['stake', 'Stake'], ['withdraw', 'Manage']];
+    const boxes = gauge ? [['add', 'Add liquidity'], ['stake', 'Stake'], ['withdraw', 'Claim/Withdraw']] : [['stake', 'Stake'], ['withdraw', 'Claim/Withdraw']];
     const pool = gauge ? await poolState(prefix) : null;
     const chain = await figures(prefix);
     for (const [kind, tab] of boxes) {
@@ -822,7 +822,7 @@ try {
     await send(prefix, 'Approve', token, tokenAbi, 'approve', [gauge, quantity]);
     await send(prefix, 'Stake', gauge, gaugeAbi, 'stake', [quantity]);
     await advance(3600); await refresh(); const earned = (await figures(prefix)).earned; assert.ok(earned > 0n);
-    if (prefix === 'bask') { await openTab('bask', 'Manage'); await capture('Staked with earnings', '[data-item-card="bask"]'); }
+    if (prefix === 'bask') { await openTab('bask', 'Claim/Withdraw'); await capture('Staked with earnings', '[data-item-card="bask"]'); }
     await reach(prefix, 'Use full staked amount');
     await card(prefix).getByRole('button', { name: 'Use full staked amount', exact: true }).click();
     assert.equal(await page.locator(`#${prefix}-withdraw`).inputValue(), formatUnits(await read(gauge, gaugeAbi, 'staked', [mock]), 18));
@@ -850,11 +850,11 @@ try {
   assert.ok((await figures('staking')).BASK > 0n, 'BASK stream earnings accrue once the fee stream started behind the earlier one.');
   pass(`A BASK stream started before the fee arrived (one wei and a public sync, with ${feeAmounts.dustStream.totalStakedAtSync} ITEM staked at the time) finishes on the fork before the walk's fee streams; after an hour behind it the site showed ${earnedBehindEarlierStream} BASK earned, and it shows the earnings once they flow.`);
   await compareRewards('with one ITEM staker and accrued fees');
-  await openTab('staking', 'Manage');
+  await openTab('staking', 'Claim/Withdraw');
   await capture('Staking pot share and estimated BASK', '[data-item-card="staking"]');
   await openTab('staking', 'Staking stats');
   await capture('Staking stats with the fee pot', '[data-item-card="staking"]');
-  await openTab('staking', 'Manage');
+  await openTab('staking', 'Claim/Withdraw');
   await stakingDollarValue();
   await baskOnlyStaking();
   await reach('staking', 'Unstake');
@@ -907,7 +907,7 @@ try {
     await fixtureSend(KNOWN.DEV, contract, abi, 'stake', [amount]);
   }
   await refresh(); await compareRewards('after a second staker is funded and stakes in each pool');
-  await openTab('staking', 'Manage');
+  await openTab('staking', 'Claim/Withdraw');
   await capture('Rewards with a second staker', '[data-item-card="staking"]');
   for (const state of [null, 'roles-unavailable']) {
     fixture = state; currentRoute = 'transparency';
@@ -930,10 +930,10 @@ try {
       }
     }
     assert.equal(await page.locator('.item-source a').filter({ hasText: LAUNCH.ITEM_REPO }).getAttribute('href'), LAUNCH.ITEM_REPO, 'Exact accepted source URL remains linked.');
-    assert.equal(rpcByRoute.transparency?.itemCalls ?? 0, 0, 'Transparency reuses the vault snapshot without new ITEM RPC reads.');
+    assert.ok(rpcLog.filter(call => call.route === 'transparency' && isItemCall(call)).every(isHeaderPriceCall), 'Transparency adds only the approved header price reads.');
     await capture(state === null ? 'Contracts and live role addresses' : 'Vault role addresses unavailable', '.item-source', state === null ? 'Configured contracts plus live vault owner and guardian addresses.' : 'Read-only owner/guardian response failure; developer and configured contract addresses stay visible.');
   }
-  pass('Transparency shows contracts, exact source and developer/live vault roles, preserves unavailable roles honestly, and adds no ITEM reads.');
+  pass('Transparency preserves its contracts, source and vault roles; only header pair reads are added.');
   fixture = null;
   await navigate('docs'); await page.getByRole('heading', { name: 'Find ITEM', exact: true }).waitFor();
   assert.equal(await page.getByRole('link', { name: 'Add liquidity on Uniswap', exact: true }).count(), 2);
@@ -942,10 +942,10 @@ try {
   for (const route of ['vault', 'deposit', 'redeem', 'owner', 'losses', 'transparency']) {
     await navigate(route); await page.waitForTimeout(300); const before = rpcLog.length;
     await page.waitForTimeout(1200);
-    assert.equal(rpcLog.slice(before).filter(call => call.method === 'eth_call' && isItemCall(call)).length, 0, `${route}: no ITEM reads while ITEM pages are closed.`);
-    assert.equal(rpcByRoute[route]?.itemCalls ?? 0, 0, `${route}: no ITEM calls on opening.`);
+    assert.ok(rpcLog.slice(before).filter(call => call.method === 'eth_call' && isItemCall(call)).every(isHeaderPriceCall), `${route}: only header pair reads outside Earn.`);
+    assert.ok(rpcLog.filter(call => call.route === route && isItemCall(call)).every(isHeaderPriceCall), `${route}: no gauge, staking, allowance or balance reads on opening.`);
   }
-  pass('Vault, Deposit, Redeem, Owner, Losses and Transparency make no ITEM reads while Earn is closed.');
+  pass('Shared header reads only pool reserves and token order outside Earn; gauge, staking and account reads stay on Earn.');
   await navigate('earn'); await ready();
   // 2026-10-16, Earn layout build: at each width every pool, tab and disclosure is opened; every action that shows must be
   // reachable, the union over those states must cover every button and summary of the three cards, and the hidden pool's
@@ -959,7 +959,7 @@ try {
     for (const prefix of ['bask', 'eth', 'staking']) for (const name of TABS[prefix]) {
       await openTab(prefix, name);
       if (name === 'Add liquidity') await openDisclosure(prefix, 'Details');
-      if (name === 'Manage') await openDisclosure(prefix, WITHDRAW[prefix]);
+      if (name === 'Claim/Withdraw') await openDisclosure(prefix, WITHDRAW[prefix]);
       opened++;
       const geometry = await page.locator('main').evaluate(main => ({ width: main.clientWidth, scroll: main.scrollWidth, boxes: [...main.querySelectorAll('.panel')].map(panel => ({ width: panel.clientWidth, scroll: panel.scrollWidth })) }));
       assert.ok(geometry.scroll <= geometry.width + 1 && geometry.boxes.every(box => box.scroll <= box.width + 1), `Earn ${width} ${prefix} ${name}: panels do not overflow.`);
@@ -1160,4 +1160,9 @@ try {
   if (server) await new Promise(resolve => server.close(resolve));
   if (anvil) anvil.kill();
   if (proxy) await new Promise(resolve => proxy.close(resolve));
+}
+
+// v24: the only ITEM-target reads permitted on other routes belong to header prices.
+function isHeaderPriceCall(call) {
+  return [KNOWN.BASK_USDG_PAIR, LAUNCH.ITEM_WETH_PAIR].some(a=>a.toLowerCase()===String(call.to).toLowerCase()) && ['0x0902f1ac','0x0dfe1681'].includes(String(call.data).slice(0,10).toLowerCase());
 }

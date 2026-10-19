@@ -10,7 +10,7 @@ const changed=git(['diff','--name-only','HEAD']).trim().split('\n').filter(Boole
 // check-calldata independently pins each reviewed source and freezes every other.
 // ITEM prompt rule 7: this exact source list replaces only the old v22 source-scope pin (v17 to v22 are HEAD's own now; rebased onto v22's commit 3038c97b on 2026-10-17).
 // Owner approval 2026-10-14 adds only Tokenomics.tsx's formatLive body; the gate pins every other byte.
-const itemSource=["main.tsx","components.tsx","wallet.tsx","chain.ts","Docs.tsx","tokenomicsData.ts","Tokenomics.tsx","styles.css","itemConstants.ts","itemAbi.ts","itemReads.ts","itemActions.ts","itemFormat.ts","Earn.tsx","Transparency.tsx","FindItem.tsx"].map(f=>'web/src/'+f);
+const itemSource=["main.tsx","Earn.tsx","itemReads.ts","itemFormat.ts","itemConstants.ts","styles.css"].map(f=>'web/src/'+f);
 const itemPublic=["web/public/art/character/earn.webp","web/public/art/character/transparency.webp"];
 // Owner-requested LF repair only: original Anton licence text is pinned after CRLF normalization.
 const licenceFile='web/public/fonts/Anton-OFL.txt';
@@ -45,7 +45,7 @@ for(const p of changed){
 }
 // v20: no new source and no new public asset.
 const untracked=git(['ls-files','--others','--exclude-standard','--','web/src','web/public']).trim().split('\n').filter(Boolean);
-assert.deepEqual(untracked.sort(),[...itemNew,...itemPublic].sort(),'Exactly the named ITEM sources and approved pictures are new');
+assert.deepEqual(untracked.sort(),[],'v24 adds no runtime source or public asset');
 assert.equal(sha256('web/index.html'),SHELL_SHA256,'exact v12 source shell');
 for(const p of ['web/public/share-card.jpg','dist/share-card.jpg']) {
  assert.equal(sha256(p),SHARE_SHA256,'exact v12 link picture: '+p);

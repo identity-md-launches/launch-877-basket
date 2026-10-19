@@ -65,7 +65,7 @@ const forbidden = [
 const files = [];
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if ([".git", ".imd", "node_modules", "lib", "scratch"].includes(entry.name))
+    if ([".git", ".imd", "node_modules", "lib", "scratch", ".cache"].includes(entry.name))
       continue;
     const p = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(p);

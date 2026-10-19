@@ -10,7 +10,8 @@ import { OwnerPage } from "./Owner";
 import { DocsPage } from "./Docs";
 import { LossesPage } from "./Losses";
 // SPEC 3: ITEM routes are mounted only while open.
-import { EarnPage } from "./Earn";
+import { EarnPage, PriceStrip } from "./Earn";
+import { useItemFigures } from "./itemReads";
 import { TransparencyPage } from "./Transparency";
 import { Marquee, StoreShelf } from "./Scenery";
 import "./styles.css";
@@ -48,6 +49,7 @@ function App() {
     }
   }, []);
   const wallet = useWallet(refresh);
+  const items = useItemFigures(page === "Earn" ? "earn" : "prices", page === "Earn" ? wallet.account : undefined, page);
   useEffect(() => {
     void refresh().catch(() => {});
   }, [refresh]);
@@ -139,6 +141,7 @@ function App() {
             )}
           </div>
         </div>
+        <PriceStrip prices={items.prices} snapshot={error ? undefined : data} />
         <nav aria-label="Primary navigation">
           <div>
             {pages.map((p) => (
@@ -174,6 +177,7 @@ function App() {
             disabled={loading}
             onClick={() => {
               void refresh().catch(() => {});
+              void items.refresh();
             }}
           >
             {loading
@@ -263,7 +267,7 @@ function App() {
         ) : page === "Redeem" ? (
           <RedeemPage snapshot={data} wallet={wallet} />
         ) : page === "Earn" ? (
-          <EarnPage snapshot={data} wallet={wallet} />
+          <EarnPage snapshot={data} wallet={wallet} data={items} />
         ) : page === "Transparency" ? (
           <TransparencyPage snapshot={data} />
         ) : page === "Owner" ? (

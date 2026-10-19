@@ -1,3 +1,91 @@
+# 2026-10-19 — contributor rerun of the exact v24 patch
+
+This entry records this workspace's actual results. Earlier entries and supplied reports remain intact and are not fresh results from this run. The website and export are prepared; the required art suite is **incomplete because WebKit is unavailable**. Every other requested check passed. No assertion, runtime source, drawing, layout or website wording was changed beyond the supplied patch.
+
+## Integrity and export
+
+HEAD was already the exact required base, `736affca69ad6aefe27b27d7e0ceeb405c236a96`, with a clean working tree. The Pinata download was **9,031,613 bytes**, SHA-256 **`6ccd127737ab3bf5d26a77c3efa46a1e191c61b3ab88ba3df67ab4737e3019b1`**. `git apply --check` and `git apply` both succeeded. All patched runtime sources and check scripts retain their post-application hashes. Contracts, dependencies, lockfiles, build configuration, original artwork and wallet transaction code remain unchanged. The additional DESIGN.md section documents the final header/control implementation; this entry and regenerated normal evidence record the rerun.
+
+All four required production hashes match exactly:
+
+| Export file | SHA-256 |
+| --- | --- |
+| `dist/assets/index-BfIl7glJ.css` | `0daff0579c31d87ecf2281da4e61b9d5f838bdf9e07f7557867d2ce9be7a0f68` |
+| `dist/assets/index-CYI-6Qll.js` | `00dee82aae19bdafded2d97ec92c5fb67ee01419cd308905e2cc773a8e701c15` |
+| `dist/index.html` | `e009dc75371d08d339c96c5fe40c7d37b8a869c0a108c2e490c8cadca0d00208` |
+| `dist/assets/ccip-BvpA7xm5.js` | `bc420bc6544a137d2aba7a0015ae200b891fa7b78b4a1816bc08e57e1f38a694` |
+
+The other **45 of 49 export files** are byte-identical to the untouched base export. That base was extracted before patch application and supplied through `BASKET_BASELINE_DIST` to art and visibility. The export uses relative asset URLs and hash routing. README.md retains installation, preview and rebuild instructions.
+
+## Commands actually run
+
+Commands ran in `web/`, using the locked dependencies and external Playwright. Read-only chain checks used the contributor relay for the public Robinhood endpoints `https://rpc.mainnet.chain.robinhood.com` and `https://robinhood-rpc.publicnode.com`; no RPC response value was substituted outside the checks' own declared fixtures.
+
+| Command | Actual result |
+| --- | --- |
+| `npm ci`; `npm run typecheck`; `npm run build` | PASS. The initial npm cache was read-only; installation succeeded with a disposable scratch cache. The existing Vite chunk-size advisory remains. |
+| `npx tsx scripts/check-item.ts` | PASS — 71 ITEM checks. |
+| `npx tsx scripts/check-prices.tsx` | PASS — 15 price checks, including freshness boundaries, independent failures, NAV, decimal handling and exact read inventory. |
+| `node scripts/check-prices-live.mjs` | PASS — all eight routes, 1440/375px, both pool choices, Claim/Withdraw labels, failed-feed clearing/recovery and no idle polling. Live values on both widths were BASK Pool $0.96, NAV $0.97 and ITEM $0.000434. |
+| `node scripts/check-calldata.mjs`; `BASKET_ITEM_FINAL=1 node scripts/check-calldata.mjs` | PASS in both modes — six independent v24 source pins and exact v23 restoration; 17 actions, 51 encodings, 15 null-slot guards, 255 null-action refusals; vault comparison: 496 identical encodings and 1,773 jointly refused cases. An initial attempt stopped on an uncached legacy Git blob; genuine pinned history was fetched into disposable scratch storage, then both unchanged gates completed. |
+| `npx tsx scripts/check-tokenomics.tsx`; `node scripts/check-tokenomics-live.mjs`; `npx tsx scripts/check-bask-guide.tsx` | PASS — arithmetic/content, every null-slot guard, mocked live success/failure/retry and BASK examples. |
+| `npm run validate` | PASS — canonical ABI, deployed runtime, snapshot/status and all eleven proposal kinds; live block **92,938,509**. |
+| `node scripts/check-preservation.mjs`; `npx tsx scripts/check-interface.ts` | PASS — protected files, integration invariants, obsolete-address scan, arithmetic, parsing, exact balances and setting units. |
+| `node scripts/check-art.mjs` | **INCOMPLETE, exit 1.** First attempt failed at Chromium's 750px marquee measurement versus the pinned 720px assertion. Full Chromium corrected that runtime difference and completed the Chromium branch, but the next engine failed to launch: WebKit executable `webkit-2365/pw_run.sh` was missing. All 78 asset hash checks precede these browser checks. No fresh successful 56-check art report was produced; the supplied `artifacts/art-validation.json` is retained prior evidence. |
+| `node scripts/check-motion.mjs` | PASS — 39 checks; normal DPR 1/1.25/1.5 evidence regenerated. |
+| `node scripts/inspect-export.mjs` | PASS — 24 page/viewport checks at 1440/800/375/320px. |
+| `node scripts/check-guards.mjs` | PASS — four refusals, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS — 44 deterministic regressions. |
+| `node scripts/check-visibility.mjs` | PASS — 70 prior phone first-screen elements preserved after exactly the measured header-strip displacement; original geometry/copy assertions and Earn control-state checks retained. |
+| `node scripts/check-bundle.mjs` | PASS — 278 candidate files under the unchanged 8,388,608-byte cap. Final byte accounting and all export hashes are in `artifacts/bundle-check.json`. Only lossless JSON whitespace compaction is performed by this gate. |
+
+Full Chromium was selected through disposable external tooling, with writable scratch browser directories. No check script or assertion was edited to select it. Browser helpers, downloaded history, caches, logs and temporary captures remain in disposable scratch and are not delivery files. No extra deliverable screenshot was added.
+
+## Better Interface coverage
+
+The pinned workflow and all six domain cores were read and applied to the changed surfaces. The visual idea remains the existing supermarket flyer for a Stock Token basket vault. The exact-patch rule and the accepted owner decisions govern the implementation.
+
+| Domain | Coverage and limits |
+| --- | --- |
+| Accessibility — Checked in Chromium | Native labelled pool radios and keyboard paths, tab/disclosure controls, disabled reasons, source focus/status semantics, export keyboard checks and reduced motion. The probe found all 48 measured controls at least 24px or sufficiently spaced; 26 were below the comfortable 44px guideline. No screen-reader session or physical-device test. |
+| Layout — Checked in Chromium | Live price UI at 1440/375px; export at four widths; probe at 320/390/1440px; untouched-base phone comparison. Viewed the 390 first screen: branding, shared prices, Connect wallet and Deposit/Redeem navigation are visible. The approved character-before-figures layout remains; the financial forms are not claimed to be above the fold. No native zoom or RTL session. |
+| Writing — Checked | Exact sole caption at `web/src/Earn.tsx:186`, Pool/NAV labels, Claim/Withdraw tabs, and retained Unstake ITEM/Unstake action wording. No additional dash explanation or Add ITEM control. Source gates preserve the remaining copy. |
+| Typography — Checked in Chromium | Source sizes and wrapping at `web/src/styles.css:3191`, 20px logos, desktop/phone price rows and long-form layout viewed. The broader size/family inventory flags below remain under the exact-patch rule. Native Windows rasterization is unverified. |
+| Colors — Checked for measured pairs | Existing tokens and yellow checked radios retained. The probe's resolved solid text pairs meet 4.5:1, or 3:1 for large text; one text box over artwork/gradient was not measured. No unmeasured contrast ratio is claimed. |
+| UI — Checked in Chromium | Both pool cards stay mounted with independent state, only one visible; existing tab/disclosure controls and refresh/error recovery passed their supplied checks. Motion passed 39 checks. The Chromium title/focus-marker capture was viewed. WebKit coverage remains incomplete. |
+
+The unmodified taste probe ran with `--out test/scratch/taste`, using external Playwright, and completed **9/16 checks**. Render, layout, targets, measured contrast, eyebrows, glyphs, slogans, motion and sharing passed. It reported no script errors, missing local files, horizontal overflow, overlapping text, clipped text or obscuring controls. Title, favicon, description, og:title and og:image are present.
+
+The seven retained probe flags are casing (`web/src/styles.css:108`), tracked figure labels (`:393`), type-size and family inventory, repeated ticker copy (`web/src/Scenery.tsx:74`), first-screen prose budget (71 words at 390; 97 at 1440), and border-plus-shadow flyer surfaces (`web/src/styles.css:235`). The existing typography/ticker/surfaces and the exact new caption are prescribed bytes. The brief says **"Do not rewrite the patch or change a word, drawing or layout to pass a check."** These observations are recorded without restyling or weakening checks. Final phone/desktop probe captures, the 375px Earn page and Chromium's phone focus marker were actually viewed; scratch captures are not submitted. DESIGN.md now records the final price-strip and radio tokens, typography, states and responsive behavior.
+
+## Historical evidence and completion limits
+
+All **22 historical JPEGs and eight WebPs** retain their exact patched bytes. Their current sizes/hashes were checked against `artifacts/v24-compression.json`; its recorded 175,052-byte savings are preserved. The supplied Pillow/Chromium/WebKit pixel-equality records are retained evidence from patch preparation, not newly performed pixel comparisons in this run. Screenshot packaging values remain intact. Fork reports and contact sheets remain historical **v23** evidence. Neither `run-browser.mjs` nor `run-item-browser.mjs` ran; no fresh v24 fork evidence, review agent, on-chain deployment, wallet transaction broadcast or publication is claimed.
+
+The useful source/export delivery is prepared, with the art/WebKit limitation above. Physical devices, screen readers and native display scaling remain unverified. Git metadata is read-only: the checkout command could not write it, although HEAD was already the exact base, and no manual commit could be created. Files are left for the network's submission step; original Git metadata was not modified.
+
+---
+
+# 2026-10-19 — v24 bundle headroom follow-up
+
+Evidence-only optimization: all 22 historical JPEGs were losslessly transcoded with MozJPEG, retaining all optional markers, dimensions and quantization tables; all eight historical WebPs were re-encoded losslessly. Total image bytes saved: 175,052. Pillow and independent Chromium/WebKit decodes prove identical dimensions and every RGBA byte for all 30 captures. The eight original WebP RGBA hashes are unchanged. No capture, state, text, crop or detail was removed. artifacts/v24-compression.json records before/after bytes, file hashes and pixel comparisons; screenshot-packaging.json changes only encoded WebP bytes/hashes.
+
+PASS: full static/read-only list rerun: npm ci, typecheck, build, ITEM 71, prices 15, live price UI, both calldata gates, Tokenomics, Tokenomics live, BASK guide, validate, preservation, interface, art 78/56, motion 39, export 24, guards 4/zero sends, fixes 44 and visibility 70. Complete bundle accounting follows this entry. Runtime, all check scripts and all 49 production export files are byte-identical to the first v24 delivery. No check was weakened; cap remains 8,388,608 bytes. Normal generated JSON and DPR evidence refreshed. No fork walk, review agent, wallet send, upload or publication. Physical devices and native display scaling remain untested. Historical entries below are retained intact.
+
+---
+
+# 2026-10-19 — v24 prices and Earn controls, static/read-only validation
+
+Base: `736affca69ad6aefe27b27d7e0ceeb405c236a96`. Approved: prices in the shared header on every route; BASK pool price and NAV per share; ITEM pool price; both tab kinds named Claim/Withdraw; two LP buttons with the active choice yellow. Exact new sentence: "Pool prices and BASK stock value, read at the last refresh."
+
+PASS: npm ci, typecheck, production build, 71 ITEM unit checks, 15 price checks, live read-only price/UI checks, Tokenomics, Tokenomics live, BASK guide, validate, preservation, interface, guards, fixes, motion, export, visibility, art and complete bundle accounting. The calldata gate passes both without and with BASKET_ITEM_FINAL=1: 17 ITEM actions, 51 encodings, 15 independent null-slot guards, 255 null-action refusals; the inherited vault comparison retains 496 identical encodings and 1,773 jointly refused cases. The added gate pins six actual sources, reverses only generated v24 pieces to v23, and then runs the unchanged earlier transaction comparisons.
+
+Art: 78 hashes and 56 browser-layout checks. Motion: 39 checks. Export: 24 page/viewport checks. Fixes: 44 regressions. Guards: four refusals, zero sends. Visibility: 70 existing phone first-screen elements retain their words and geometry after accounting for exactly the approved header strip. Both LP choices and every tab/disclosure remain keyboard-operable and reachable. Live price checks cover all eight routes, 1440/375 px, failed-feed clearing and refresh recovery, with only read-only RPC methods and no wallet. Live network validation passed at block 92,900,818.
+
+No fork walk, wallet transaction, review agent, upload or publication ran for v24. Fork reports and contact sheets below are retained historical v23 evidence, not a v24 walkthrough claim. Headless Chromium/WebKit and screenshots were checked; physical devices and native display scaling were not tested. Full command/result and export/patch integrity records accompany the v24 BUILD document.
+
+---
+
 # 2026-10-19 — ITEM exact patch on v22, vault 6
 
 Applied the supplied patch exactly to clean `3038c97b30503df69fd4760381e208df2ba54f34`. Download verification passed: **8,040,187 bytes**, SHA-256 **`95255121cde00b4958ed1a0ef69f566ca108105a480dea76b644c70f944a1e35`**. `git apply --check` and `git apply` passed. All **35 non-artifact patched files** (source, scripts, public art/license and documentation) retain their post-application SHA-256 values. Contracts, protected configuration, dependencies, lockfiles and ignore files are unchanged. This dated entry and regenerated export/evidence accompany the unchanged patch. Files are prepared for the submission system's commit; no deployment or publication was performed.

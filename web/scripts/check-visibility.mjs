@@ -304,7 +304,7 @@ try {
   for(const statusCase of ['normal','closed','weekend']) for(const variant of ['no-wallet','connected']) for(const name of (statusCase==='weekend'?['deposit']:statusCase==='closed'?['vault','deposit']:['vault','deposit','redeem','docs','owner','losses'])) {
     statusFixture=statusCase==='weekend'?3:statusCase==='closed'?14:0;
     const beforeFixtureReads=statusFixtureReads,beforeBlocks=weekendBlockReads;
-    const snapshots=[],layout=[];
+    const snapshots=[],layout=[],headerChanges=[];
     for(const ver of ['old','new']) {
       await page.goto(`${base}/${ver}/?${variant}#${name}`);
       await page.evaluate(()=>document.fonts.ready);
@@ -313,7 +313,25 @@ try {
       for(let quiet=0;quiet<2;){await page.waitForTimeout(100);quiet=inflight===0?quiet+1:0;}
       await page.waitForFunction(()=>![...document.querySelectorAll('main p, main small, main button')].some(e=>/Reading\.\.\.|Reading your wallet/.test(e.textContent)));
       await page.evaluate(()=>scrollTo(0,0));
-      // The complete original selector stays; metadata only narrows the v12 exceptions.
+      // v24 placement B: verify the actual added strip and its exact displacement,
+      // then hide only that strip for the unchanged v23 page geometry comparison.
+      if(ver==='new'){
+        const delta=await page.evaluate(()=>{
+          const el=document.querySelector('.token-prices'),header=document.querySelector('header'),nav=document.querySelector('nav'),main=document.querySelector('main');
+          const before={header:header.getBoundingClientRect().height,nav:nav.getBoundingClientRect().top,main:main.getBoundingClientRect().top};
+          const r=el.getBoundingClientRect(),gap=parseFloat(getComputedStyle(el).marginBottom),caption=el.querySelector('p').textContent;
+          const logos=[...el.querySelectorAll('svg')].map(e=>({name:e.getAttribute('aria-label'),width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}));
+          const overflow=document.documentElement.scrollWidth>innerWidth;
+          el.style.display='none';
+          return {height:r.height,gap,caption,logos,overflow,header:before.header-header.getBoundingClientRect().height,nav:before.nav-nav.getBoundingClientRect().top,main:before.main-main.getBoundingClientRect().top};
+        });
+        assert.equal(delta.caption,'Pool prices and BASK stock value, read at the last refresh.');
+        assert.deepEqual(delta.logos,[{name:'BASK',width:20,height:20},{name:'ITEM',width:20,height:20}]);
+        assert.equal(delta.overflow,false,'real shared header fits the phone');
+        for(const key of ['header','nav','main'])assert.ok(near(delta[key],delta.height+delta.gap),'only the measured strip displaces '+key);
+        headerChanges.push(delta);
+      }
+      // All underlying page positions and words still compare exactly with v23.
       snapshots.push(await page.locator('main p, main input, main button, main select, main textarea, main summary, main .empty, main .note').evaluateAll(elementSnapshots));
       await page.evaluate(source=>{window.ledGeometry=Function('return ('+source+')')();},ledGeometry.toString());
       layout.push(await page.evaluate(layoutSnapshot));
@@ -322,7 +340,7 @@ try {
     }
     const [old,now]=snapshots,[oldLayout,newLayout]=layout,regressions=[],checks=[],exceptions=[];
     // Decision A: only Earn is added; existing header and every first-screen vertical position stay pinned below.
-    assert.deepEqual(oldLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Docs'],'baseline navigation');
+    assert.deepEqual(oldLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Earn','Docs'],'baseline navigation');
     assert.deepEqual(newLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Earn','Docs'],'ITEM navigation');
     for(const x of newLayout.nav)assert.ok(x.top>=0&&x.bottom<=812,name+': nav remains on first screen');
     for(const x of oldLayout.nav){const n=newLayout.nav.find(y=>y.text===x.text);assert.ok(near(n.top,x.top)&&near(n.bottom,x.bottom),name+': existing nav entries keep their vertical position');}
@@ -423,43 +441,10 @@ try {
       // equals the baseline in order, place and size again.
       assert.equal(newLayout.docsTitles[newLayout.docsTitles.indexOf('Safety')+1],'If a stock goes missing','The v19 panel stands right after Safety');
       assert.deepEqual(newLayout.docsTitles,oldLayout.docsTitles,'The Docs panels equal the baseline, in order');
-      // Pin the exact approved BASK-only copy and account for its two paragraph
-      // height changes only. The unchanged middle paragraph, typography, spacing
-      // and every remaining panel still receive the complete geometry comparison.
-      const oldStaking=oldLayout.stakingParagraphs,newStaking=newLayout.stakingParagraphs;
-      assert.equal(oldStaking.length,3);assert.equal(newStaking.length,3);
-      assert.deepEqual([oldStaking[0].text,oldStaking[2].text],STAKING_COPY_BEFORE,'Baseline proves the original staking copy');
-      assert.deepEqual([newStaking[0].text,newStaking[2].text],STAKING_COPY_AFTER,'Only the two approved BASK-only paragraphs change');
-      assert.equal(newStaking[1].text,oldStaking[1].text,'Seven-day streaming explanation unchanged');
-      let stakingShift=0;
-      for(let index=0;index<3;index++){
-        const before=oldStaking[index],after=newStaking[index],delta=index===1?0:after.height-before.height;
-        assert.ok(before.top>812&&after.top>812,'Staking copy changes remain below the first phone screen');
-        assert.deepEqual(rounded({...after,text:before.text,top:after.top-stakingShift,bottom:after.bottom-stakingShift-delta,height:after.height-delta}),rounded(before),'Exact staking paragraph geometry after its authorized copy-height adjustment');
-        stakingShift+=delta;
-      }
-      const stakingIndex=newLayout.docsTitles.indexOf('Earn BASK by staking ITEM');
-      assert.ok(stakingIndex>=0);
-      // Owner, 2026-10-16: one row "Basket Protocol on Medium" after the Telegram row of Find Basket, the last panel. The rows
-      // before it equal the baseline; the rows after it keep their text and size and move down by the row; the panel grows
-      // by exactly that much and nothing follows it. The baseline has no Medium link; the new page has exactly one.
-      const oldFB=oldLayout.findBasket,newFB=newLayout.findBasket;
-      assert.ok(oldFB&&newFB,'Find Basket panel present on both pages');
-      assert.deepEqual(oldFB.links.filter(h=>h.includes('medium.com')),[],'Baseline Find Basket has no Medium link');
-      assert.deepEqual(newFB.links.filter(h=>h.includes('medium.com')),['https://medium.com/@protocolbasket'],'Find Basket has the one Medium link');
-      const mediumIndex=newFB.rows.findIndex(r=>r.text==='Basket Protocol on Medium');
-      assert.ok(mediumIndex>0&&newFB.rows[mediumIndex-1].text==='Basket Protocol on Telegram','The Medium row stands right after the Telegram row');
-      assert.equal(newFB.rows.length,oldFB.rows.length+1,'Find Basket gains exactly one row');
-      const mediumShift=newFB.rows[mediumIndex+1].top-oldFB.rows[mediumIndex].top;
-      assert.ok(mediumShift>0&&mediumShift<=newFB.rows[mediumIndex].height+40,'The shift is the Medium row and its spacing: '+mediumShift);
-      assert.deepEqual(rounded(newFB.rows.slice(0,mediumIndex)),rounded(oldFB.rows.slice(0,mediumIndex)),'Find Basket rows before the Medium row equal the baseline');
-      assert.deepEqual(rounded(newFB.rows.slice(mediumIndex+1).map(r=>({...r,top:r.top-mediumShift}))),rounded(oldFB.rows.slice(mediumIndex)),'Find Basket rows after the Medium row keep their text and size and move down by the row');
-      const findBasketIndex=newLayout.docsTitles.indexOf('Find Basket');
-      assert.equal(findBasketIndex,newLayout.docs.length-1,'Find Basket is the last Docs panel');
-      const normalizedDocs=newLayout.docs.map((panel,index)=>{const p=index<stakingIndex?panel:index===stakingIndex?{...panel,bottom:panel.bottom-stakingShift,height:panel.height-stakingShift}:{...panel,top:panel.top-stakingShift,bottom:panel.bottom-stakingShift};return index===findBasketIndex?{...p,bottom:p.bottom-mediumShift,height:p.height-mediumShift}:p;});
-      assert.deepEqual(rounded(normalizedDocs),rounded(oldLayout.docs),'Every Docs panel keeps its place and size after only the exact staking-copy, Find ITEM and Medium-row additions');
-      for(const d of newLayout.docs)assert.ok(d.height>0,'Docs panel rendered');
-      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket, "If a stock goes missing" after Safety; the two BASK-only staking paragraphs normalize only their measured height changes, Find ITEM only its own height before Find Basket and the Medium row only its own height inside Find Basket; every other panel equals the baseline in place and size');
+      assert.deepEqual([oldLayout.stakingParagraphs[0].text,oldLayout.stakingParagraphs[2].text],STAKING_COPY_AFTER,'v23 already contains the approved staking copy');
+      for(const key of ['stakingParagraphs','findItem','findBasket','docs'])assert.deepEqual(rounded(newLayout[key]),rounded(oldLayout[key]),'v24 keeps all '+key+' words and geometry');
+      assert.deepEqual(newLayout.findBasket.links.filter(h=>h.includes('medium.com')),['https://medium.com/@protocolbasket']);
+      checks.push('Every Docs word, link and panel equals v23; no remaining legacy copy exception');
     }
     if(name==='redeem') {
       assert.equal(oldLayout.redeemAside,null);
@@ -490,7 +475,7 @@ try {
     }
     // Original slogan-strip and title-character assertions, with explicit header
     // height and overflow pins added. No exception applies to these parts.
-    checks.push('header retains its exact position and height');
+    checks.push('header grows only by the measured approved price strip; header and every underlying element equal v23 with that strip alone hidden');
     if(!near(newLayout.header.top,oldLayout.header.top)||!near(newLayout.header.height,oldLayout.header.height))regressions.push({tag:'HEADER',text:'header',old:oldLayout.header,now:newLayout.header});
     checks.push('slogan strip in the same place and size, still and full under reduced motion');
     {const o=oldLayout.strip,n=newLayout.strip;if(Math.abs(n.top-o.top)>0.01||Math.abs(n.height-o.height)>0.01||n.animations!==0||!n.still)regressions.push({tag:'DIV',text:'slogan strip',old:o,now:n});}
@@ -501,7 +486,7 @@ try {
     assert.equal(newLayout.sideways,false,'No horizontal overflow');
     // Keep the shipped report small; full layout values are used above by every
     // assertion, while the report retains the prior elements and measured deltas.
-    results.push({statusCase,variant,name,prior,hintGrowth,checks,exceptions,regressions,
+    results.push({statusCase,variant,name,prior,hintGrowth,checks,exceptions,regressions,headerChanges,
       headerHeights:[oldLayout.header.height,newLayout.header.height],
       ...(name==='docs'?{docsAddedHeight:docsGrowth}:{}),
     });
@@ -548,12 +533,12 @@ try {
     const earnLayout=name==='earn'&&itemReady;
     const states=earnLayout?[['bask',0],['bask',1],['bask',2],['bask',3],['eth',0],['eth',1],['eth',2],['eth',3],['staking',0],['staking',1],['staking',2]]:[null];
     // The hit-tested set gains the Pool selector and the disclosure summaries, the two control kinds this build adds.
-    const controls='main button, main summary, main select';
+    const controls='main button, main summary, main select, main .pool-buttons label';
     const total=await page.locator(controls).count(),covered=new Set();let reachable=0;
     for(const state of states){
       if(state){
         const [prefix,index]=state;
-        if(prefix!=='staking')await page.locator('#earn-pool-select').selectOption(prefix);
+        if(prefix!=='staking')await page.locator('input[name=earn-pool][value='+prefix+'] + span').click();
         assert.equal(await page.locator('[data-pool-view]:not([hidden])').count(),1,`${width} ${variant}: one pool card shows`);
         const tabs=page.locator(`[data-item-card="${prefix}"] [role="tab"]`);
         await tabs.nth(index).click();
@@ -579,7 +564,7 @@ try {
     }
     assert.equal(covered.size,total,`${name} ${width} ${variant}: every one of ${total} buttons, summaries and selects is reachable in the state that shows it`);
     if(earnLayout)for(const prefix of ['bask','eth','staking']){
-      if(prefix!=='staking')await page.locator('#earn-pool-select').selectOption(prefix);
+      if(prefix!=='staking')await page.locator('input[name=earn-pool][value='+prefix+'] + span').click();
       const tabs=page.locator(`[data-item-card="${prefix}"] [role="tab"]`),count=await tabs.count();
       assert.equal(count,prefix==='staking'?3:4,`${width} ${variant} ${prefix}: tab count`);
       await tabs.nth(0).click();await tabs.nth(0).focus();
@@ -592,6 +577,14 @@ try {
       }
       await tabs.nth(0).click();
     }
+    if(earnLayout){
+      const bask=page.locator('input[name=earn-pool][value=bask]'),eth=page.locator('input[name=earn-pool][value=eth]');
+      await page.locator('input[name=earn-pool][value=bask] + span').click();await bask.focus();
+      await page.keyboard.press('ArrowRight');assert.ok(await eth.isChecked(),'native pool radio arrow selects ITEM/ETH');
+      assert.ok(await page.locator('[data-pool-view=eth]').isVisible());
+      await page.keyboard.press('ArrowLeft');assert.ok(await bask.isChecked(),'native pool radio arrow returns to BASK/USDG');
+      assert.equal(await page.locator('.pool-buttons legend').textContent(),'Pool','the visual cleanup preserves the accessible group name');
+    }
     itemGeometry.push({width,variant,name,buttonsReachable:covered.size,controls:total,hits:reachable,states:states.length,tables:geometry.tables.length});
   }
   if(itemReady)assert.ok(itemFixtureReads>0,'filled mode proves new-page content using deterministic figures');else assert.equal(itemFixtureReads,0,'null mode reaches no ITEM fixture read');
@@ -599,6 +592,6 @@ try {
 
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements with their words in the same vertical place, no exception; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements unchanged after the exact measured header-strip displacement; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}

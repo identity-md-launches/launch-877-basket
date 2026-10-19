@@ -1,5 +1,11 @@
 import type { Address, Hex } from "viem";
 
+// v24: public quote feeds used only to display pool prices.
+export const PRICE_FEEDS = {
+  USDG: "0x61b7e5650328764b076a108eff5fa7282a1b9ad2",
+  ETH: "0x78f3556b67e17df817d51ef5a990cdaf09e8d3a9",
+} as const satisfies Record<string, Address>;
+
 // SPEC 2: the single source of ITEM addresses and launch evidence.
 export const KNOWN = {
   BASK: "0x739fD5B653aA092a434534FA1aDE67C1770b5a5B",

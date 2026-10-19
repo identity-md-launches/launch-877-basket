@@ -1,5 +1,19 @@
 # Website checks
 
+## v24: shared prices and Earn controls
+
+Base: `736affca69ad6aefe27b27d7e0ceeb405c236a96`. This display update uses the static and read-only checks below. Do not run either fork walk for this update; the existing fork evidence is historical v23 evidence.
+
+In `web/`, run `npm ci`, `npm run typecheck`, `npm run build`, `npx tsx scripts/check-item.ts`, `npx tsx scripts/check-prices.tsx`, `node scripts/check-prices-live.mjs`, `node scripts/check-calldata.mjs`, then the same gate with `BASKET_ITEM_FINAL=1`. Run every remaining non-fork command listed below: Tokenomics, Tokenomics live, BASK guide, validate, preservation, interface, art, motion, export, guards, fixes, visibility and bundle. `PLAYWRIGHT_MODULE` selects the external browser tooling. Set `BASKET_BASELINE_DIST` to the untouched v23 export for art and visibility.
+
+The two header logos, BASK pool price and NAV per share, ITEM pool price, exact caption, two native LP radio buttons and both Claim/Withdraw tabs are approved. Header reads on every route are limited to the two pools' reserves/token order and the two quote feeds. Gauge, staking and account reads remain on Earn. There is no polling; route changes discard earlier price results. Earn reuses its fresh reserve reads, and both manual Refresh controls update prices. NAV uses the existing vault snapshot and its refresh.
+
+`check-prices.tsx` covers independent arithmetic, token order and decimals, exact header read inventory, every null launch slot, feed freshness, partial failures, NAV and formatting. `check-prices-live.mjs` is read-only: it checks all eight routes, both selectors and tab labels, desktop/phone fit, failed-feed clearing and refresh recovery, without a wallet or fork. Its screenshots are disposable scratch, and `artifacts/v24-prices.json` records the run.
+
+The v24 source gate checks six independent digests and generated v24-to-v23 pieces before the original v23-to-v22 transaction comparisons. Regenerate pieces with adapted copies of the existing `gen-pieces.mjs` / `put-pieces.mjs` workflow; regeneration does not update independent digests. The original Earn read function, transaction functions, approvals and calldata builders remain byte-identical. The walk script's selectors and labels are updated for the next explicitly authorized fork run, but that run is not part of this delivery.
+
+Visibility proves the precise added header-strip displacement, then hides only that strip while comparing unchanged v23 page geometry and words. Existing Docs exceptions are removed because those changes are already in v23. The art check compares restored shelf geometry relative to its own title, as the rest of its geometry sweep does. Preservation excludes the ignored local tooling cache; the complete tracked delivery remains subject to the unchanged 8 MiB bundle cap.
+
 Run from `web/` after the production build. `../artifacts/validation.md` is the actual final evidence and limitation record.
 
 - `npm run validate`: ABI, decimal arithmetic, reason/error wording, inputs, encodings and live read-only verification.

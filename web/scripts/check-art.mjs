@@ -953,7 +953,9 @@ try {
         const legacy=await page.addStyleTag({content:'.page-title .title-character:after{bottom:-3px!important;width:calc(var(--pad) + var(--gx) + var(--w) + 12px)!important}'});
         const old=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
         assert.throws(()=>assertShelfMeetsMarker(old,label+' with the v14 line'),{name:'AssertionError'},label+': the check accepts the v14 corner');
-        assert.deepEqual(old.shelf,plain.shelf,label+': the put-back line is not the line without a marker');
+        // Compare within the title, as in the complete geometry sweep: refreshed
+        // header prices and read notices may move the whole panel down the page.
+        assert.deepEqual(placed(old).shelf,placed(plain).shelf,label+': the put-back line is not the line without a marker');
         await legacy.evaluate(e=>e.remove());
         assertShelfMeetsMarker(await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false}),label+' restored');
         if([430,375,320].includes(width)) {
@@ -971,6 +973,6 @@ try {
     await baselinePage.close();baselinePage=undefined;
     await browser.close();browser=undefined;
   }
-  fs.writeFileSync(path.join(root,'artifacts/art-validation.json'),JSON.stringify({hashes,checks,bubbles,wideLabels,limitations:['Linux browser engines; physical iPhone not tested. Rendered screenshots reviewed separately.']},null,2)+'\n');
+  fs.writeFileSync(path.join(root,'artifacts/art-validation.json'),JSON.stringify({hashes,checks,bubbles,wideLabels,limitations:['Headless Chromium and WebKit; physical iPhone not tested. Rendered screenshots inspected separately.']},null,2)+'\n');
   console.log('PASS art hashes and browser layout',hashes.length,checks.length);
 } finally {await browser?.close();await new Promise(r=>server.close(r));}

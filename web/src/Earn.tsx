@@ -4,8 +4,8 @@ import { PageTitle, AddressLink, ActionStatus } from "./components";
 import type { Wallet } from "./wallet";
 import { KNOWN, LAUNCH, itemReady } from "./itemConstants";
 import { itemSend, itemError, type ItemAction } from "./itemActions";
-import { itemAmount, itemShare, itemRewardUsd, itemLiquidityQuote, itemRatioAmount, parseItemAmount } from "./itemFormat";
-import { readItemFigures, useItemFigures, type ItemFigures } from "./itemReads";
+import { itemAmount, itemShare, itemRewardUsd, itemLiquidityQuote, itemRatioAmount, parseItemAmount, freshPriceTime, navUsdPrice, usdPrice } from "./itemFormat";
+import { readItemFigures, type useItemFigures, type ItemFigures, type PoolPrices } from "./itemReads";
 import { LiquidityLink } from "./FindItem";
 import { deadline, navOf, type Snapshot } from "./model";
 import { InputError } from "./chain";
@@ -28,7 +28,7 @@ export function StakeCard({ prefix, figures, wallet, refresh, snapshot }: CardPr
   const has = (...keys: string[]) => keys.every(key => figures[prefix + "." + key] !== undefined);
   const unreadable = "ITEM figures: unreadable. Retry.";
   const gauge = prefix !== "staking";
-  const tabs = gauge ? ["Add liquidity", "Stake", "Manage", "Pool stats"] : ["Stake", "Manage", "Staking stats"];
+  const tabs = gauge ? ["Add liquidity", "Stake", "Claim/Withdraw", "Pool stats"] : ["Stake", "Claim/Withdraw", "Staking stats"];
   const stakeTab = gauge ? 1 : 0, manageTab = gauge ? 2 : 1, statsTab = gauge ? 3 : 2;
   function moveTab(event: KeyboardEvent<HTMLButtonElement>) {
     const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : event.key === "ArrowRight" || event.key === "ArrowDown" ? (tab + 1) % tabs.length : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (tab + tabs.length - 1) % tabs.length : undefined;
@@ -111,7 +111,7 @@ export function StakeCard({ prefix, figures, wallet, refresh, snapshot }: CardPr
     {wallet.account ? <dl className="item-figures refined-personal">{figure("You have staked", "staked", gauge ? "pool tokens" : "ITEM", gauge)}{gauge ? figure("Your ITEM earned", "earned", "ITEM") : figure("Your BASK earned", "BASK", "BASK")}</dl> : <p className="refined-empty">Connect a wallet to view your position.</p>}
     <div className="refined-workspace">
     <div className="docs-tabs refined-tabs" role="tablist" aria-label={title}>
-      {tabs.map((label, index) => <button key={label} ref={node => { tabButtons.current[index] = node; }} type="button" role="tab" id={prefix + "-tab-" + index} aria-controls={prefix + "-panel-" + index} aria-selected={tab === index} tabIndex={tab === index ? 0 : -1} onClick={() => setTab(index)} onKeyDown={moveTab}>{label}</button>)}
+      {tabs.map((label, index) => <button key={label} ref={node => { tabButtons.current[index] = node; }} type="button" role="tab" id={prefix + "-tab-" + index} aria-controls={prefix + "-panel-" + index} aria-selected={tab === index} tabIndex={tab === index ? 0 : -1} onClick={() => setTab(index)} onKeyDown={moveTab}>{label === "Claim/Withdraw" ? <>Claim/<wbr />Withdraw</> : label}</button>)}
     </div>
     <div className="refined-panels">
     {gauge && <div className="refined-tab-panel" id={prefix + "-panel-0"} role="tabpanel" aria-labelledby={prefix + "-tab-0"} hidden={tab !== 0}>
@@ -158,19 +158,31 @@ export function StakeCard({ prefix, figures, wallet, refresh, snapshot }: CardPr
     <ActionStatus wallet={wallet} scope={prefix} /><p className="error" role="alert">{error}</p>
   </section>;
 }
-export function EarnPage({ wallet, snapshot }: { wallet: Wallet; snapshot: Snapshot }) {
-  const data = useItemFigures("earn", wallet.account);
+export function EarnPage({ wallet, snapshot, data }: { wallet: Wallet; snapshot: Snapshot; data: ReturnType<typeof useItemFigures> }) {
   const [selectedPool, setSelectedPool] = useState<"bask" | "eth">("bask");
   // 2026-10-17, pre-launch review: a transaction saved before a reload is settled (mined, replaced or passed) when the page opens.
   useLayoutEffect(() => { void wallet.itemPending(); }, [wallet.account]);
   return <>
     <PageTitle eyebrow="Rewards counter" title="Earn" character={{ kind: "earn", src: "art/character/earn.webp", width: 453, height: 1000, alt: "Store worker waving goodbye with a big smile", line: "same time tomorrow?" }}>Stake pool tokens to earn ITEM. Stake ITEM to earn the vault's fees in BASK.</PageTitle>
-    {itemReady() && <div className="item-refresh"><button type="button" disabled={data.loading || wallet.busy} onClick={() => { void wallet.itemPending(); void data.refresh(); }}>{data.failed ? "Retry" : "Refresh"}</button>{data.loading && <p role="status">Reading...</p>}{data.failed && <p role="alert">ITEM figures: unreadable. Retry.</p>}</div>}
+    {itemReady() && <div className="item-refresh"><button type="button" disabled={data.loading || wallet.busy} onClick={() => { void wallet.itemPending(); void data.refresh(); snapshot.retry?.(); }}>{data.failed ? "Retry" : "Refresh"}</button>{data.loading && <p role="status">Reading...</p>}{data.failed && <p role="alert">ITEM figures: unreadable. Retry.</p>}</div>}
     <section className="item-section refined-focused-section"><h2>Earn ITEM by providing liquidity</h2><p>Add liquidity to a pool, then stake the pool tokens you receive. There is no lock: withdraw and claim whenever you like.</p>{data.figures && <>
-      <div className="refined-pool-picker"><label htmlFor="earn-pool-select">Pool</label><select id="earn-pool-select" value={selectedPool} onChange={event => setSelectedPool(event.target.value as "bask" | "eth")}><option value="bask">BASK/USDG</option><option value="eth">ITEM/ETH</option></select></div>
+      <fieldset className="refined-pool-picker pool-buttons"><legend className="price-sr-only">Pool</legend>{([["bask", "BASK/USDG"], ["eth", "ITEM/ETH"]] as const).map(([value, label]) => <label key={value}><input type="radio" name="earn-pool" value={value} checked={selectedPool === value} onChange={() => setSelectedPool(value)} /><span>{label}</span></label>)}</fieldset>
       <div className="earn-gauges refined-gauges refined-focused-gauges"><div data-pool-view="bask" hidden={selectedPool !== "bask"}><StakeCard key={"bask-" + wallet.account} prefix="bask" figures={data.figures} wallet={wallet} refresh={data.refresh} /></div><div data-pool-view="eth" hidden={selectedPool !== "eth"}><StakeCard key={"eth-" + wallet.account} prefix="eth" figures={data.figures} wallet={wallet} refresh={data.refresh} /></div></div>
     </>}</section>
     <section className="item-section"><h2>Earn BASK by staking ITEM</h2><p>Fees reach stakers as a 7-day stream, second by second.</p>{data.figures && <StakeCard key={"staking-" + wallet.account} prefix="staking" figures={data.figures} wallet={wallet} refresh={data.refresh} snapshot={snapshot} />}</section>
     <p className="item-links"><a href="#docs">How rewards work</a><a href="#transparency">Contracts and source</a></p>
   </>;
+}
+
+// v24: the approved drawings are inline, without image requests.
+export function PriceStrip({ prices, snapshot }: { prices: PoolPrices | null; snapshot?: Snapshot }) {
+  const bask = freshPriceTime(prices?.baskUpdatedAt) ? prices?.bask : undefined;
+  const item = freshPriceTime(prices?.itemUpdatedAt) ? prices?.item : undefined;
+  return <div className="token-prices">
+    <div className="token-price-values">
+      <span className="token-price"><svg role="img" aria-label="BASK" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><rect width="1024" height="1024" fill="#df2029"/><g transform="translate(176 218) scale(8.4)" fill="none" stroke="#ffdb29" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round"><path d="M9 28h62L63 62H17L9 28Z"/><path d="M23 28 35 8M57 28 45 8M28 39v12M40 39v12M52 39v12M6 28h68"/></g></svg><b>BASK</b><span>Pool <strong data-price="bask-pool">{usdPrice(bask, 2)}</strong> · NAV <strong data-price="bask-nav">{usdPrice(prices ? navUsdPrice(snapshot) : undefined, 2)}</strong></span></span>
+      <span className="token-price"><svg role="img" aria-label="ITEM" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><g transform="matrix(.65 0 0 .65 93.4 79.75)"><path fill="#ffdb29" fillRule="evenodd" d="M682 187C714 152 755 137 803 143L1083 180C1129 186 1152 221 1158 259L1197 550C1202 590 1189 616 1162 641L547 1155C515 1182 481 1195 447 1190C421 1186 394 1175 374 1156L119 907C81 869 80 815 103 769C109 756 120 742 133 729ZM1022 392A69 69 0 1 0 884 392A69 69 0 1 0 1022 392Z"/><path fill="#df2029" fillRule="evenodd" d="M722 224C743 207 764 198 793 203L1082 241C1097 243 1097 249 1099 261L1137 547C1142 572 1130 588 1110 605L511 1117C481 1141 450 1143 421 1124L167 875C141 849 140 815 162 786ZM1067 392A114 114 0 1 0 839 392A114 114 0 1 0 1067 392Z"/><circle cx="534" cy="602" r="59" fill="#ffdb29"/><circle cx="786" cy="666" r="59" fill="#ffdb29"/><path d="M453 719C486 831 643 870 743 790" fill="none" stroke="#ffdb29" strokeWidth="70" strokeLinecap="round"/></g></svg><b>ITEM</b><strong data-price="item-pool">{usdPrice(item, 6)}</strong></span>
+    </div>
+    <p>Pool prices and BASK stock value, read at the last refresh.</p>
+  </div>;
 }
