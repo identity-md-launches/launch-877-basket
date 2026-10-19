@@ -1,3 +1,4 @@
+import { itemReady } from "../src/itemConstants.ts"; // SPEC 3.3: optional live figures.
 import assert from 'node:assert/strict';
 import { ALLOCATION_HEADERS, ALLOCATION_ROWS, RELEASE_HEADERS, RELEASE_ROWS, PARAGRAPHS, SUPPLY_LABEL, RELEASE_LABEL } from '../src/tokenomicsData.ts';
 export async function checkTokenomics(page) {
@@ -6,7 +7,7 @@ export async function checkTokenomics(page) {
   assert.equal(await tabs.nth(0).getAttribute('aria-selected'),'true');
   assert.equal(await page.locator('#tokenomics').count(),0);
   const navigation=await page.locator('nav a').allTextContents();
-  assert.deepEqual(navigation.map(x=>x.trim()),['Vault','Deposit','Redeem','Docs']);
+  assert.deepEqual(navigation.map(x=>x.trim()),['Vault','Deposit','Redeem','Earn','Docs'] /* SPEC 3.5 decision A */);
   await tabs.nth(0).focus();await page.keyboard.press('ArrowRight');
   assert.equal(await tabs.nth(1).getAttribute('aria-selected'),'true');
   assert.equal(await tabs.nth(1).evaluate(e=>e===document.activeElement),true);
@@ -20,7 +21,7 @@ export async function checkTokenomics(page) {
     assert.deepEqual(await module.locator(selector+' thead th').allTextContents(),headers);
     assert.deepEqual(await module.locator(selector+' tbody tr').evaluateAll(rs=>rs.map(r=>[...r.children].map(c=>c.textContent))),rows);
   }
-  assert.equal(await module.locator('.tm-live').count(),0);assert(!/not live|planned numbers|pre.launch/i.test(await module.textContent()));
+  assert.equal(await module.locator('.tm-live').count(),Number(itemReady()));assert(!/not live|planned numbers|pre.launch/i.test(await module.textContent()));
   assert.equal(await module.locator('.tm-supply svg').getAttribute('role'),'img');assert.equal(await module.locator('.tm-supply svg').getAttribute('aria-label'),SUPPLY_LABEL);
   for(const svg of await module.locator('.tm-release svg').all()){assert.equal(await svg.getAttribute('role'),'img');assert.equal(await svg.getAttribute('aria-label'),RELEASE_LABEL);}
   const initial=page.viewportSize();

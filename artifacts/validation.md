@@ -1,3 +1,77 @@
+# 2026-10-19 — ITEM exact patch on v22, vault 6
+
+Applied the supplied patch exactly to clean `3038c97b30503df69fd4760381e208df2ba54f34`. Download verification passed: **8,040,187 bytes**, SHA-256 **`95255121cde00b4958ed1a0ef69f566ca108105a480dea76b644c70f944a1e35`**. `git apply --check` and `git apply` passed. All **35 non-artifact patched files** (source, scripts, public art/license and documentation) retain their post-application SHA-256 values. Contracts, protected configuration, dependencies, lockfiles and ignore files are unchanged. This dated entry and regenerated export/evidence accompany the unchanged patch. Files are prepared for the submission system's commit; no deployment or publication was performed.
+
+## Export integrity
+
+The starting `dist/` was copied outside the tree before applying/building and supplied through `BASKET_BASELINE_DIST`. `npm ci` passed with a temporary cache after its initial cache-write failure. Explicit typecheck and production builds passed. The final production build matches all requested hashes:
+
+| File | SHA-256 |
+| --- | --- |
+| `dist/assets/index-Dj-S4okR.js` | `9f2e0d70df68479406373cc0ecb4c57114f0907ac820d4d9fc2d661bcf34e420` |
+| `dist/assets/index-iwMuzi_G.css` | `c5fffa787f4bd972bb636887fe5051064164cca4e6b2e25cb7593251071f4e9d` |
+| `dist/index.html` | `2de25c03b3afd9ceeee78f95d9938273d7911feb63bedfac9bbf77067bda8409` |
+
+The CCIP chunk differs from the baseline only in its import of the new index filename. The share card is byte-identical to the baseline (`dc14dd6f4068ec9325426583104b1c6ae8748fbb17d8326863c9612280eacd85`). Relative asset URLs, static hash routing, locally bundled fonts/art, title, favicon, description and Open Graph metadata remain intact. README.md retains installation, preview and rebuild instructions; the patched root DESIGN.md records the implemented tokens, typography, shared components and responsive ITEM layouts.
+
+## Actual verification
+
+Commands below ran from `web/` unless stated otherwise. Scripts and assertions were not altered. Public RPC identity: **https://rpc.mainnet.chain.robinhood.com**; reads used the worker-provided relay as instructed. Only isolated local forks received transactions.
+
+| Command/check | Actual result |
+| --- | --- |
+| `npm run typecheck`; `npm run build` | PASS; final export hashes above match. Vite retains its large-chunk advisory. |
+| `npx tsx scripts/run-browser.mjs` | PASS: **95 checks, 70 wallet sends, 24 screenshots**, fork **83874298**, every LAUNCH slot temporarily null. Exact constants restored before the final build. |
+| Baseline walkthrough comparison | PASS: all **91 inherited checks** remain in order, four v22 checks remain, all **70 sends** equal the baseline apart from clock-derived deposit/redeem deadlines, and all **24 screenshot positions** remain. |
+| Lossless screenshot packaging | PASS: eight Docs/Owner WebPs independently match the original PNG RGBA pixels in Pillow and the browser; sixteen other vault captures retain JPEG quality 18. Current packaging hashes are in `screenshot-packaging.json`. |
+| `BASKET_ITEM_CONFIG=... npx tsx scripts/run-item-browser.mjs` | PASS: **45 checks, 17 sends, 23 photographed states, six contact sheets**, fork **92775649**; snapshot restored. External configuration contains the exact 15 LAUNCH entries plus the specified public RPC and block. Two additional held Claim ITEM sends remain separately identified as proof sends. |
+| `npm run validate` | PASS: canonical vault ABI, live **verifyNetwork**, runtime hash, snapshot/status and all 11 proposal kinds. Final live block: **92811554**. |
+| Additional live ITEM verification | PASS: chain 4663, all nine ITEM/pair/router/USDG runtime hashes and both factory `getPair` identities. |
+| `node scripts/check-preservation.mjs` | PASS: protected files, existing integration/send invariants, wording and abandoned-vault scan. |
+| `npx tsx scripts/check-interface.ts` | PASS: **17** arithmetic/parser/exact-balance/setting checks. |
+| `node scripts/check-calldata.mjs`; `BASKET_ITEM_FINAL=1 node scripts/check-calldata.mjs` | PASS: **496 identical vault encodings, 1,773 mutually refused cases**, no new refusal; **17 ITEM actions, 51 exact encodings, 15 independent null-slot guards, 255 null-action refusals**; source/read/storage/provider pins preserved and no vault send builder carries ETH value. |
+| `npx tsx scripts/check-item.ts` | PASS: **71** ITEM unit checks, including liquidity rounding, reward estimates, tolerant reads and pending-state refusals. |
+| `npx tsx scripts/check-tokenomics.tsx` | PASS: supply, allocation/schedule/cliff, annual rows, every-null guard, configured reads and formatting. |
+| `node scripts/check-tokenomics-live.mjs` | PASS: five null mounts without reads, success/failure/Retry, zero external requests. |
+| `npx tsx scripts/check-bask-guide.tsx` | PASS: audited integer arithmetic, five worked examples and exact canonical copy. |
+| `node scripts/check-guards.mjs` | PASS: four pre-send failure guards, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS: **44** wallet/Claims regressions. |
+| `node scripts/check-visibility.mjs` | PASS: six inherited routes, connected/disconnected at 375×812, **70** preserved first-screen elements; **16** ITEM visibility/geometry checks. |
+| `node scripts/check-motion.mjs` | PASS: **39** motion/layout checks, DPR 1/1.25/1.5, loop/speed/geometry and reduced motion. |
+| `node scripts/inspect-export.mjs` | PASS: **24** page/viewport checks at 320/375/800/1440, subpath loading, fonts, keyboard, reduced motion and seven solid contrast pairs; zero issues. |
+| `node scripts/check-art.mjs` | PASS: **78 verified asset copies, 56 browser layout groups**, Chromium and WebKit; original manifest and approved ITEM art match. |
+| Supplementary new-page browser review | PASS in **Chromium and WebKit at 390/1440**: pool selector, Manage disclosure, keyboard tabs, 16px inputs, three live Transparency roles, no horizontal overflow or script errors. |
+| `node scripts/check-bundle.mjs` | PASS: complete candidate below **8,388,608 bytes**, including tracked libraries, required evidence and this entry; exact final accounting is in `bundle-check.json`. |
+
+The ITEM walk also exercises the partial-allowance read, moved-pool refusal, disconnect during a fresh quote, seven-day BASK stream recovery, exact router mint/reserve/wallet changes, pending records across accounts/reloads, late receipts after navigation/account changes, late failed lock reads, and RPC lookup errors that must retain the lock. Required walk records and captures are from this run, not merely the patch's inherited evidence.
+
+Initial tooling attempts are not passes: the default headless-shell backend measured the unchanged Pixel marquee line as 750px rather than the pinned 720px, failing art and motion. Selecting the installed full Chromium backend corrected these measurements without changing any source or assertion; the full backend needed temporary writable browser directories. The art run then stopped at the missing WebKit executable. The same installed Playwright module downloaded only that missing engine into temporary storage; required libraries were obtained from official Ubuntu package records with SHA-256 checks, and its temporary launcher was configured to retain their library path. The completed art/motion results above use the working runtime. The walkthroughs, visibility/export and component suites passed with the originally installed headless-shell backend. No browser, library, helper, dependency archive or cache is included in the submission.
+
+The supplementary scratch review initially expected source-case heading text from `innerText`; the approved CSS displays uppercase. Its expectation was corrected to the actual approved uppercase label. No patched check or application file was changed.
+
+## Better Interface coverage and limitations
+
+The pinned guide was reviewed across all six domains while preserving the brief's exact-patch direction and accepted owner choices. Evidence includes both fork walks, the production export checks, the pinned taste probe and the supplementary cross-engine review.
+
+| Domain | Checked scope and evidence |
+| --- | --- |
+| Accessibility | Native labeled inputs, selected/controlled tabs, keyboard movement, hidden-control focus refusal, visible focused tab, disclosure controls, disabled reasons and reduced motion (`Earn.tsx:110`, `:120`, `:143`). ITEM typing and the full tab/disclosure sweep pass. Screen-reader output, forced colors and every focus/background combination were not tested. |
+| Layout | One selected pool card, all three cards' tabs/disclosures and long addresses fit the tested widths. The walks cover 320/375/1440/1920; additional Chromium/WebKit checks cover 390/1440. The baseline first-screen geometry is preserved. Native 200% zoom and RTL/localization stress were not tested. |
+| Writing | Approved Earn action labels, exact approval/minimum explanations, BASK-only staking rewards, indicative USD wording, honest unavailable roles/figures and the requested source/Medium links are retained (`Earn.tsx:118`, `:141`, `Transparency.tsx:9`, `FindItem.tsx:13`). No copy was rewritten. |
+| Typography | Local display faces, system body text, tabular figures, full pool-token precision and wrapping retained. New-page inputs measure at least 16px in both engines; rendered phone/desktop samples were viewed. Native Windows scaling and physical phone rasterization remain unverified. |
+| Colors | Existing tokens remain canonical. Seven named solid pairs pass; minimum **4.7987:1** (white/red), white/royal **7.4656:1**, ink/paper **13.8337:1**. The probe passes measured text contrast; one image/gradient text box and every interactive background/state are not comprehensively measured. There is one light theme. |
+| UI | The selector, native disclosures, active tabs, disconnected/empty/unseeded/not-started/mismatched/partial-read/pending/confirmed states and all required sends are exercised. No setup control, zap, swap, removal or APR was added. No physical wallet signing, iPhone session or 10%-speed animation-panel inspection was performed. |
+
+The unchanged taste probe completed **10/16 checks** in both the initial and full Chromium runs. Render, layout, targets, contrast, eyebrows, glyphs, slogans, copy budget, motion and sharing pass. Its six flags remain the inherited casing (`styles.css:108`), tracked figure label (`:393`), larger type-size inventory and four families (`:1`, `:26`, `:186`), repeated scrolling marquee and border-plus-shadow flyer surfaces (`:221`, `:442`). The brief says **“Apply it as it is”** and **“never change the look or a text to make a check pass”**; these flags were recorded rather than restyled. All measured controls meet the 24px-or-spacing rule, with 26 below the comfortable 44px guideline. No measured overflow, text overlap, obscuring control, clipped text, script error or missing local resource was reported.
+
+The 390px first screen was visually checked: product branding, Connect wallet, navigation including Earn and the refresh control are visible. Vault figures and transaction forms remain below the inherited header/character composition and require scrolling; this preserves the approved baseline rather than claiming those figures are above the fold. All six regenerated ITEM contact sheets, the probe's phone/desktop captures and the new-page Chromium/WebKit captures were viewed. Scratch screenshots are disposable and are not substituted for required evidence. The MCP browser transport returned **“Transport closed”**; direct Playwright supplied the successful rendered checks.
+
+No additional application fix was applied under the exact-patch constraint. All ITEM launch addresses occur only in `web/src/itemConstants.ts` and generated `dist/`/artifacts. No vault 1–5 address fragment, protected-path change, submodule or dependency/cache/archive payload remains in the candidate. Final bundle accounting, including tracked contract libraries, the complete production export, required captures and this entry, is recorded in `artifacts/bundle-check.json`.
+
+**Complete for the stated exact-patch implementation and functional-validation scope.** Both walks, final build/typecheck, live verification and every required functional gate pass. The inherited design-probe flags and unperformed device/accessibility checks remain explicitly documented; they are not claimed as passes.
+
+---
+
 # 2026-10-17 — v22 exact audit patch on v20, vault 6
 
 Applied the supplied patch unchanged to clean commit `f86e5d80e53174c37f5cd4e14cf6df453ffa33c6`. Its nine files are the only implementation/documentation changes outside regenerated `dist/` and validation artifacts. No contract, dependency, lockfile, build configuration, stylesheet, picture, ignore file or deployment setting changed. Nothing was deployed or published. Git metadata was not modified; the source, existing lockfile, complete export and artifacts are ready for the submission commit.

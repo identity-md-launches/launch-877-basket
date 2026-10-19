@@ -3,6 +3,7 @@ import { Tokenomics } from "./Tokenomics";
 import { BaskGuide } from "./BaskGuide";
 import { PageTitle, AddressLink } from "./components";
 import { VAULT } from "./deployment";
+import { FindItem } from "./FindItem"; // SPEC 3.3: address panel.
 export function DocsPage({
   onAddToWallet,
 }: {
@@ -191,7 +192,7 @@ export function DocsPage({
         <section className="panel">
           <h2>Earn ITEM by providing liquidity</h2>
           <p>
-            Add liquidity to one of the two Uniswap v2 pools, BASK/USDG or ITEM/ETH, and stake the pool token you receive on the Earn page. From that moment ITEM accrues to you every second, in proportion to your share of everything staked in that pool's gauge.
+            Add liquidity to one of the two Uniswap v2 pools, BASK/USDG or ITEM/ETH, and stake the pool token you receive on <a href="#earn">the Earn page</a>. From that moment ITEM accrues to you every second, in proportion to your share of everything staked in that pool's gauge.
           </p>
           <p>
             There is no lock and no minimum time. Stake more, withdraw some or all, and claim whenever you like, in any order. Claiming pays everything you have earned so far and resets nothing. Unclaimed ITEM stays yours. Withdrawing moves only your pool token, so it always works, even if a claim could not go through.
@@ -238,13 +239,13 @@ export function DocsPage({
         <section className="panel">
           <h2>Earn BASK by staking ITEM</h2>
           <p>
-            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on the Earn page and you receive those fees in BASK, in proportion to your stake. The staking contract can also receive USDG and WETH, so other income can be sent to stakers the same way.
+            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on <a href="#earn">the Earn page</a> and you receive those fees in BASK, in proportion to your stake.
           </p>
           <p>
             Fees are not paid out the moment they arrive. Each batch is streamed to stakers evenly over 7 days, second by second, and you earn only for the time you are staked. This stops anyone from staking just before a large fee lands and leaving with it. While one stream is running, new fees wait and start their own 7-day stream when it ends.
           </p>
           <p>
-            Stake and unstake at any time, with no lock or cooldown. Claim is per token: BASK, USDG and WETH are claimed separately, each paying what you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.
+            Stake and unstake at any time, with no lock or cooldown. Claim BASK pays the BASK you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.
           </p>
         </section>
         <section className="panel">
@@ -268,6 +269,7 @@ export function DocsPage({
             Rewards depend on use. Liquidity rewards fall every day by design, and fee rewards are zero when nobody deposits or redeems. Providing liquidity carries the usual pool risk: if the two tokens move apart in price, you can end up with less value than holding them. ITEM's price can fall. The contracts cannot be changed or paused, which also means a defect could not be fixed.
           </p>
         </section>
+        {tab === 0 && <FindItem />}
         <section className="panel">
           <h2>Find Basket</h2>
           <p>BaskVault on Robinhood Chain:</p>
@@ -280,6 +282,11 @@ export function DocsPage({
           <p>
             <a href="https://t.me/basket_protocol" target="_blank" rel="noreferrer">
               Basket Protocol on Telegram
+            </a>
+          </p>
+          <p>
+            <a href="https://medium.com/@protocolbasket" target="_blank" rel="noreferrer">
+              Basket Protocol on Medium
             </a>
           </p>
           <p>

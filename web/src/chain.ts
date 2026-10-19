@@ -67,7 +67,7 @@ export type Spec = {
   abi: Abi;
   functionName: string;
   args?: readonly unknown[];
-};
+} & ({ itemAction?: never; value?: never; itemUser?: never } | { itemAction: string; value?: bigint; itemUser?: Address }); // 2026-10-16, Add liquidity build: value belongs only to ITEM specs.
 export const vault = (
   functionName: string,
   args: readonly unknown[] = [],
@@ -329,11 +329,21 @@ export function explain(
   return err.shortMessage ?? err.message ?? "The request failed. Please retry.";
 }
 export async function simulate(s: Spec, account?: Address): Promise<void> {
+  // 2026-10-16, Add liquidity build: the router recipient is the sending account.
+  if (s.itemUser !== undefined && s.itemUser.toLowerCase() !== account?.toLowerCase()) throw new InputError("The wallet account changed. Please retry.");
   await client.call({
     to: s.address,
     data: encode(s),
     account,
     gas: GAS,
     batch: false,
+    ...(s.value !== undefined ? { value: s.value } : {}), // 2026-10-16, Add liquidity build: simulate the exact ETH value.
   });
+}
+
+// SPEC 6: ITEM-only target check; existing vault verification and reads stay unchanged.
+export async function verifyItemTarget(address: Address, hash: Hex): Promise<void> {
+  const [id, code] = await Promise.all([client.getChainId(), client.getCode({ address })]);
+  if (id !== 4663 || !code || code === "0x" || keccak256(code) !== hash)
+    throw new InputError("ITEM contract code could not be verified. Transactions are unavailable.");
 }

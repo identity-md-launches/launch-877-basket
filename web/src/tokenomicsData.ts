@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import { LAUNCH, itemReady } from "./itemConstants"; // SPEC 2: all-slot guard, one address source.
 
 export const TOTAL_SUPPLY = 1_000_000_000;
 export const DAY = 86_400;
@@ -60,7 +61,7 @@ export const PARAGRAPHS = [
 export const ALLOCATION_HEADERS = ["Share","ITEM","Who","Terms"] as const;
 export const RELEASE_HEADERS = ["End of","Liquidity rewards released","Development unlocked","Total ITEM available"] as const;
 export const ADDRESSES: Record<"ITEM" | "ITEM_STAKING" | "BASK_USDG_GAUGE" | "ITEM_ETH_GAUGE" | "DEV_VESTING", Address | null> = {
-  ITEM: null, ITEM_STAKING: null, BASK_USDG_GAUGE: null, ITEM_ETH_GAUGE: null, DEV_VESTING: null,
+  ITEM: itemReady(LAUNCH) ? LAUNCH.ITEM : null, ITEM_STAKING: itemReady(LAUNCH) ? LAUNCH.ITEM_STAKING : null, BASK_USDG_GAUGE: itemReady(LAUNCH) ? LAUNCH.BASK_USDG_GAUGE : null, ITEM_ETH_GAUGE: itemReady(LAUNCH) ? LAUNCH.ITEM_ETH_GAUGE : null, DEV_VESTING: itemReady(LAUNCH) ? LAUNCH.DEV_VESTING : null,
 };
 export type Addresses = typeof ADDRESSES;
 export const GAUGE_ALLOCATION = ALLOCATIONS[0].amount + ALLOCATIONS[1].amount;

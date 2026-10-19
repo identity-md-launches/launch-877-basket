@@ -1863,25 +1863,31 @@ button.quiet.small-toggle {
   .page-title.character-redeem { --bw: 160px; }
 
   .page-title.character-deposit,
-  .page-title.character-redeem {
+  .page-title.character-redeem,
+  .page-title.character-earn {
     --col-gap: 12px;
     display: grid;
     grid-template-columns: calc(var(--w) + var(--col-gap)) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto auto auto;
   }
   .page-title.character-deposit .title-character,
-  .page-title.character-redeem .title-character {
+  .page-title.character-redeem .title-character,
+  .page-title.character-earn .title-character {
     --gx: 0px;
     grid-area: 1 / 1 / 4 / 3;
   }
   .page-title.character-deposit > .eyebrow,
-  .page-title.character-redeem > .eyebrow { grid-area: 2 / 2; }
+  .page-title.character-redeem > .eyebrow,
+  .page-title.character-earn > .eyebrow { grid-area: 2 / 2; }
   .page-title.character-deposit h1,
-  .page-title.character-redeem h1 { grid-area: 3 / 2; margin-bottom: 17px; }
+  .page-title.character-redeem h1,
+  .page-title.character-earn h1 { grid-area: 3 / 2; margin-bottom: 17px; }
   .page-title.character-deposit > p:last-of-type,
-  .page-title.character-redeem > p:last-of-type { grid-area: 4 / 1 / 5 / 3; }
+  .page-title.character-redeem > p:last-of-type,
+  .page-title.character-earn > p:last-of-type { grid-area: 4 / 1 / 5 / 3; }
   .page-title.character-deposit:after,
-  .page-title.character-redeem:after { grid-area: 5 / 1 / 6 / 3; }
+  .page-title.character-redeem:after,
+  .page-title.character-earn:after { grid-area: 5 / 1 / 6 / 3; }
 }
 /* Smallest phones: a slightly smaller picture. Redeem keeps the side-by-side layout: its eyebrow
    wraps to two lines beside her and the column gap shrinks so "REDEEM" fits. */
@@ -3020,4 +3026,164 @@ button.quiet.small-toggle {
     bottom: -6px;
     width: calc(var(--pad) + var(--gx) + var(--w) + var(--col-gap) - 6px);
   }
+}
+
+/* SPEC 5: approved ITEM title pictures and bubble placement. */
+.page-title.character-earn { --ratio: .453; --bx: .776; --tx: .57; --mouth: .173; --bw: 126px; --em1: 2.6; --em2: 2.6; }
+.page-title.character-transparency { --ratio: .4; --bx: 1.035; --tx: .71; --mouth: .199; --bw: 182px; --em1: 8.3; --em2: 8.3; }
+@media (max-width: 660px) {
+  .page-title.character-earn { --bw: 102px; --bx: .83; }
+  .page-title.character-transparency { --bw: 147px; --bx: 1.035; --tx: .69; }
+}
+/* SPEC 3: new pages only; existing page geometry is preserved. */
+.item-section { margin: 28px 0; }
+.item-section > h2 { margin-bottom: 12px; }
+.earn-gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.earn-card { min-width: 0; }
+.item-pool { margin-bottom: 20px; }
+.item-pool .address { display: block; }
+.item-figures, .item-setup { margin: 16px 0; }
+.item-figures > div, .item-setup > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.item-figures dt, .item-setup dt { min-width: 0; }
+.item-figures dd, .item-setup dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.item-action { margin-top: 22px; padding-top: 18px; border-top: 2px solid var(--line); }
+.item-action label { display: block; }
+.item-action input { width: 100%; margin: 8px 0; }
+.item-buttons, .item-claims, .item-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.item-refresh { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.item-source, .find-item, .transparency-balances { overflow-wrap: anywhere; }
+.transparency-balances .item-table { max-width: 100%; overflow-x: auto; }
+.transparency-balances table { width: 100%; }
+.transparency-balances td, .transparency-balances th { padding: 14px 12px; vertical-align: top; }
+.transparency-balances small { display: block; margin-top: 6px; font-size: .85em; }
+.transparency-balances .address { display: block; min-width: 12ch; }
+@media (max-width: 660px) {
+  .earn-gauges { grid-template-columns: minmax(0, 1fr); }
+  .item-figures > div { gap: 10px; }
+  .transparency-balances table { min-width: 660px; }
+}
+
+/* SPEC 3.5 decision A: five primary navigation entries. */
+nav > div { grid-template-columns: repeat(5, 1fr); }
+
+/* SPEC 4: keep allocation and balance numbers whole in the scrolling table. */
+.transparency-balances td:nth-child(2), .transparency-balances td:nth-child(3) { white-space: nowrap; }
+/* SPEC 3.2: keep holder labels readable inside the scrolling table. */
+.transparency-balances th:first-child { min-width: 14ch; overflow-wrap: normal; }
+/* SPEC 3.3: the two new inline Earn links retain the existing paragraph geometry. */
+.docs-grid p a[href="#earn"] { display: inline; min-height: 0; }
+/* Owner approval 2026-10-14: fit five nav labels below 360px; retain the existing row height. */
+@media (max-width: 359px) {
+  nav > div { gap: 6px; }
+  nav a { font-size: 18px; line-height: 25.2px; }
+}
+
+/* Revised Phase A: separate personal position, tasks and global statistics. */
+.refined-card { align-self: start; min-width: 0; }
+.refined-heading h3 { margin: 0; }
+.refined-personal { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; padding: 18px 0 22px; margin: 0; }
+.refined-personal > div { display: block; border: 0; padding: 0; }
+.refined-personal dt { font-size: 13px; margin-bottom: 7px; }
+.refined-personal dd { text-align: left; max-width: none; font-size: 21px; line-height: 1.35; }
+.refined-personal > div:first-child dd { font-size: 15px; }
+.refined-empty { margin: 14px 0 22px; font-size: 14px; }
+.refined-workspace, .refined-panels, .refined-tab-panel { min-width: 0; }
+.refined-tabs { display: flex; gap: 0; margin: 0; border-bottom: 2px solid var(--royal); }
+.refined-tabs [role="tab"] { flex: 1 1 0; min-width: 0; padding: 12px 6px; border: 0; border-radius: 0; background: transparent; font-size: 14px; line-height: 1.25; }
+.refined-tabs [role="tab"][aria-selected="true"] { background: var(--sun); color: var(--ink); }
+.refined-card [hidden] { display: none !important; }
+.refined-tab-panel { padding: 22px 0 0; }
+.refined-tab-panel h4 { margin: 0 0 14px; font-size: 20px; }
+.refined-explainer { font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
+.refined-explainer strong { display: block; margin-bottom: 4px; }
+.refined-card .item-action { border: 0; margin: 0; padding: 0; }
+.refined-card .item-action label { font-weight: 700; font-size: 14px; }
+.refined-card .item-action input { margin: 8px 0; min-width: 0; height: 49px; }
+.refined-token-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.refined-token-entry { min-width: 0; }
+.refined-matched { margin: 0; }
+.refined-matched > div { display: block; border: 0; padding: 0; }
+.refined-matched dt { font-weight: 700; line-height: 1.5; }
+.refined-matched dt span { font-size: 11px; font-weight: 400; margin-left: 4px; }
+.refined-matched dd { display: flex; align-items: center; text-align: left; max-width: none; min-height: 49px; margin: 8px 0; border: 1px solid var(--line); background: var(--subtle); padding: 10px 12px; font-size: 18px; line-height: 1.4; }
+.refined-balance { margin: 0; font-size: 12px; }
+.refined-balance > div { display: block; border: 0; padding: 0; }
+.refined-balance dt { font-size: 12px; }
+.refined-balance dd { max-width: none; text-align: left; margin: 2px 0 4px; }
+.refined-card .refined-max { margin-top: 5px; padding: 5px 0; min-height: 36px; border: 0; background: transparent; color: var(--royal); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.refined-card .refined-max:disabled { color: #53617a; }
+.refined-estimate { margin: 20px 0 0; font-size: 13px; }
+.refined-estimate > div { display: block; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 0; }
+.refined-estimate dd { text-align: left; max-width: none; margin-top: 4px; }
+.refined-card .item-buttons { gap: 8px; margin-top: 14px; }
+.refined-card .item-buttons button { padding: 9px 12px; }
+.refined-details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 13px; }
+.refined-details summary, .refined-withdraw summary { cursor: pointer; padding: 10px 0; color: var(--royal); font-weight: 700; }
+.refined-details .item-pool { margin: 8px 0 0; }
+.refined-card .refined-available { margin: 0 0 18px; padding: 12px; background: var(--subtle); }
+.refined-available > div { display: block; padding: 0; border: 0; }
+.refined-available dd { text-align: left; max-width: none; margin-top: 4px; }
+.refined-card .item-claims { margin-top: 16px; }
+.refined-card .item-claims button { background: var(--royal); color: var(--paper); border-color: var(--royal); }
+.refined-card .item-claims button:disabled { background: #e4e9f0; color: #53617a; border-color: #8c98ab; }
+.refined-manage-figures, .refined-global { font-size: 14px; margin: 0; }
+.refined-global > div, .refined-manage-figures > div { padding: 10px 0; }
+.refined-caption { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }
+.refined-withdraw { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--line); }
+.refined-withdraw .refined-caption { margin: 4px 0 18px; }
+.refined-address { margin-top: 22px; margin-bottom: 0; font-size: 13px; }
+.refined-card > .error:empty { display: none; }
+@media (max-width: 660px) {
+  .refined-card { padding: 16px 12px; }
+  .refined-tabs [role="tab"] { font-size: 12px; padding: 11px 4px; min-height: 52px; }
+  .refined-personal { gap: 12px; padding-bottom: 18px; }
+  .refined-personal dd { font-size: 18px; }
+  .refined-personal > div:first-child dd { font-size: 13px; }
+  .refined-tab-panel { padding-top: 18px; }
+  .refined-token-pair { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .refined-balance > div { display: flex; flex-wrap: wrap; gap: 3px 8px; justify-content: space-between; }
+  .refined-balance dd { margin: 0; }
+  .refined-explainer { margin-bottom: 18px; font-size: 13px; }
+  .refined-global > div { display: block; }
+  .refined-global dd { max-width: none; text-align: left; margin-top: 3px; }
+}
+
+/* Revised Phase A B3: select one pool and give its task room to breathe. */
+.refined-pool-picker { display: flex; align-items: center; gap: 16px; margin: 24px 0 16px; }
+.refined-pool-picker label { font-size: 14px; font-weight: 700; }
+.refined-pool-picker select { width: 240px; max-width: 100%; margin: 0; }
+.refined-focused-gauges { grid-template-columns: minmax(0, 1fr); }
+.refined-focused-gauges > [hidden] { display: none !important; }
+.refined-focused-gauges > div { min-width: 0; }
+.refined-b3 .refined-workspace { max-width: 960px; margin-inline: auto; }
+.refined-b3 .refined-heading { margin-bottom: 12px; }
+.refined-b3 .refined-personal { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-width: 740px; padding-bottom: 28px; gap: 32px; }
+.refined-b3 .refined-tabs [role="tab"] { flex: 0 1 auto; padding-inline: 24px; }
+.refined-b3 .refined-tab-panel { padding-top: 28px; }
+@media (min-width: 901px) {
+  .refined-b3 { padding: 30px 36px; }
+  .refined-b3 .refined-heading { max-width: 960px; margin: 0 auto; }
+  .refined-b3 .refined-personal, .refined-b3 .refined-empty { max-width: 960px; margin-inline: auto; }
+  .refined-b3 .refined-personal { padding-top: 20px; }
+  .refined-b3 .item-action[data-liquidity] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 0 42px; }
+  .refined-b3 .item-action[data-liquidity] > .refined-explainer { grid-column: 1; grid-row: 1 / 7; font-size: 15px; line-height: 1.7; max-width: 32ch; margin: 0; }
+  .refined-b3 .item-action[data-liquidity] > .refined-explainer strong { font-size: 18px; line-height: 1.5; margin-bottom: 12px; }
+  .refined-b3 .item-action[data-liquidity] > :not(.refined-explainer) { grid-column: 2; }
+  .refined-b3 .refined-tab-panel:not(:has([data-liquidity])) { max-width: 740px; }
+  .refined-b3 .refined-tab-panel:not(:has([data-liquidity])) .item-action { max-width: 580px; }
+}
+@media (max-width: 660px) {
+  .refined-pool-picker { margin-top: 20px; gap: 12px; }
+  .refined-pool-picker select { flex: 1; min-width: 0; width: auto; }
+  .refined-b3 .refined-personal { gap: 12px; padding-bottom: 18px; }
+  .refined-b3 .refined-tabs [role="tab"] { flex: 1 1 0; padding-inline: 4px; }
+  .refined-b3 .refined-tab-panel { padding-top: 18px; }
+}
+
+/* Revised preview review: align editable and calculated token amounts. */
+.refined-card .refined-token-entry label { margin-bottom: 8px; }
+
+/* Earn layout build, review fix: on desktop the state notes, the send status and the error line sit in the card's centred column too. */
+@media (min-width: 901px) {
+  .refined-b3 > .note, .refined-b3 > .action-status, .refined-b3 > .error { max-width: 960px; margin-inline: auto; }
 }

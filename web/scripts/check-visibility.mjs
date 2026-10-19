@@ -11,6 +11,40 @@ const accountAbi = parseAbi([
   'function allowance(address,address) view returns (uint256)',
   'function owed(address,address) view returns (uint256)',
 ]);
+// ITEM SPEC 6: synthetic figures are used only for the additional new-page geometry sweep.
+// Every original existing-page route and public-read assertion below remains unchanged.
+const itemConstantsText=fs.readFileSync('src/itemConstants.ts','utf8');
+const launchMatch=itemConstantsText.match(/export const LAUNCH: Launch\s*=\s*(\{[\s\S]*?\n\});/);
+assert.ok(launchMatch,'one JSON launch object for the ITEM fixture');
+const itemLaunch=JSON.parse(launchMatch[1]);
+const itemKnown=Object.fromEntries([...itemConstantsText.matchAll(/^  ([A-Z_]+): "(0x[0-9a-fA-F]{40})",$/gm)].map(m=>[m[1],m[2]]));
+const itemReady=Object.values(itemLaunch).every(x=>x!==null);
+const itemTargets=new Set([itemLaunch.ITEM,itemLaunch.ITEM_STAKING,itemLaunch.BASK_USDG_GAUGE,itemLaunch.ITEM_ETH_GAUGE,itemLaunch.DEV_VESTING,itemLaunch.ITEM_WETH_PAIR,itemKnown.BASK_USDG_PAIR].filter(Boolean).map(x=>x.toLowerCase()));
+// 2026-10-16, Add liquidity build: extend only the new-page fixture ABI for the three pair views.
+const itemFixtureAbi=parseAbi(['function started() view returns(bool)','function funded() view returns(bool)','function pair() view returns(address)','function totalStaked() view returns(uint256)','function released() view returns(uint256)','function remaining() view returns(uint256)','function rate() view returns(uint256)','function staked(address) view returns(uint256)','function earned(address) view returns(uint256)','function earned(address,address) view returns(uint256)','function balanceOf(address) view returns(uint256)','function allowance(address,address) view returns(uint256)','function vested() view returns(uint256)','function getReserves() view returns(uint112,uint112,uint32)','function token0() view returns(address)','function totalSupply() view returns(uint256)']);
+let itemFixtureMode=false,itemFixtureReads=0;
+async function itemFigureAnswer(url,call){
+ // 2026-10-16, Add liquidity build: native balance is fixture-only, never a new public-RPC allowance.
+ if(itemFixtureMode&&itemReady&&call.method==='eth_getBalance'){
+  assert.equal(String(call.params[0]).toLowerCase(),account,'Only the synthetic wallet native balance is permitted');
+  itemFixtureReads++;return {jsonrpc:'2.0',id:call.id,result:'0xde0b6b3a7640000'};
+ }
+ if(!itemFixtureMode||!itemReady||call.method!=='eth_call')return undefined;
+ const tx=call.params?.[0];if(!tx?.data)return undefined;
+ let aggregate;try{aggregate=decodeFunctionData({abi:multicall3Abi,data:tx.data});}catch{}
+ if(aggregate?.functionName==='aggregate3'){
+  const result=await Promise.all(aggregate.args[0].map(async c=>{const value=await answer(url,{...call,params:[{...tx,to:c.target,data:c.callData},...call.params.slice(1)]});return {success:!value.error,returnData:value.error?'0x':value.result};}));
+  return {jsonrpc:'2.0',id:call.id,result:encodeFunctionResult({abi:multicall3Abi,functionName:'aggregate3',result})};
+ }
+ let decoded;try{decoded=decodeFunctionData({abi:itemFixtureAbi,data:tx.data});}catch{return undefined;}
+ const target=String(tx.to).toLowerCase();
+ const feeBalance=[itemKnown.BASK,itemKnown.USDG,itemKnown.WETH].filter(Boolean).some(x=>x.toLowerCase()===target)&&decoded.functionName==='balanceOf'&&String(decoded.args?.[0]).toLowerCase()===itemLaunch.ITEM_STAKING.toLowerCase();
+ if(!itemTargets.has(target)&&!feeBalance)return undefined;
+ itemFixtureReads++;
+ const result=['started','funded'].includes(decoded.functionName)?true:decoded.functionName==='getReserves'?[10n**18n,10n**18n,0]:decoded.functionName==='token0'?(target===itemKnown.BASK_USDG_PAIR.toLowerCase()?itemKnown.BASK:itemLaunch.ITEM):decoded.functionName==='pair'?(target===itemLaunch.BASK_USDG_GAUGE.toLowerCase()?itemKnown.BASK_USDG_PAIR:itemLaunch.ITEM_WETH_PAIR):10n**18n;
+ return {jsonrpc:'2.0',id:call.id,result:encodeFunctionResult({abi:itemFixtureAbi,functionName:decoded.functionName,args:decoded.args,result})};
+}
+
 const RPC = /^https:\/\/(rpc\.mainnet\.chain\.robinhood\.com|robinhood-rpc\.publicnode\.com)\/?$/;
 const READS = new Set(['eth_call','eth_chainId','eth_getCode','eth_blockNumber','eth_getBlockByNumber','eth_getBlockByHash']);
 // Replace only the existing empty-token depositStatus read; other public reads stay live.
@@ -63,6 +97,15 @@ const docsAdded=[
   'The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM.',
 ];
 const ITEM_PANELS=['ITEM','Earn ITEM by providing liquidity','Earn BASK by staking ITEM','Rewards FAQ','ITEM risks'];
+// Owner revision changes only these two existing staking paragraphs to BASK-only copy.
+const STAKING_COPY_BEFORE=[
+  'The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on the Earn page and you receive those fees in BASK, in proportion to your stake. The staking contract can also receive USDG and WETH, so other income can be sent to stakers the same way.',
+  'Stake and unstake at any time, with no lock or cooldown. Claim is per token: BASK, USDG and WETH are claimed separately, each paying what you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.',
+];
+const STAKING_COPY_AFTER=[
+  'The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on the Earn page and you receive those fees in BASK, in proportion to your stake.',
+  'Stake and unstake at any time, with no lock or cooldown. Claim BASK pays the BASK you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.',
+];
 const words=t=>String(t).replace(/\s+/g,'');
 const normalize=t=>String(t).replace(/\s+/g,' ').trim();
 const near=(a,b)=>Math.abs(a-b)<=0.5;
@@ -109,6 +152,7 @@ function synthetic(data) {
   return encodeFunctionResult({abi:accountAbi,functionName:decoded.functionName,result:0n});
 }
 async function answer(url,call) {
+  const itemFixed=await itemFigureAnswer(url,call);if(itemFixed)return itemFixed;
   const fixed=fixtureStatus(call);if(fixed)return fixed;
   if(call.method==='eth_call'&&call.params?.[0]?.data?.toLowerCase().includes(accountWord)) {
     const tx=call.params[0],made=synthetic(tx.data);
@@ -172,14 +216,28 @@ function layoutSnapshot() {
   };
   const m=document.querySelector('header .marquee'),w=m.querySelector('.marquee-window').getBoundingClientRect();
   const halves=[...m.querySelectorAll('.marquee-half')].map(e=>e.getBoundingClientRect()).sort((a,c)=>a.left-c.left);
-  const docs=[...document.querySelectorAll('.docs-grid > .panel')];
+  const allDocs=[...document.querySelectorAll('.docs-grid > .panel')];
+  const itemPanel=allDocs.find(p=>p.classList.contains('find-item'));
+  const gap=parseFloat(getComputedStyle(document.querySelector('.docs-grid')??document.body).rowGap)||0;
+  // SPEC 3.3: remove only the inserted panel's outer height and one grid gap; the inherited phone panel margin is pinned below.
+  const itemMargin=itemPanel?parseFloat(getComputedStyle(itemPanel).marginBottom)||0:0;
+  const itemShift=itemPanel?itemPanel.getBoundingClientRect().height+itemMargin+gap:0;
+  const docs=allDocs.filter(p=>p!==itemPanel);
   const paragraphs=docs[0]?[...docs[0].querySelectorAll(':scope > p')]:[];
+  const stakingPanel=docs.find(p=>p.querySelector('h2')?.textContent==='Earn BASK by staking ITEM');
+  // Owner, 2026-10-16: the Find Basket rows, relative to the panel's top, for the one-row Medium link normalization.
+  const findBasketPanel=docs.find(p=>p.querySelector('h2')?.textContent==='Find Basket'),findBasketTop=findBasketPanel?findBasketPanel.getBoundingClientRect().top:0;
+  const findBasket=findBasketPanel?{rows:[...findBasketPanel.querySelectorAll(':scope > p')].map(p=>{const r=p.getBoundingClientRect();return {text:p.textContent.replace(/\s+/g,' ').trim(),top:r.top-findBasketTop,height:r.height};}),links:[...findBasketPanel.querySelectorAll('a[href]')].map(a=>a.getAttribute('href'))}:null;
   return {
+    nav:[...document.querySelectorAll('nav[aria-label="Primary navigation"] a')].map(a=>({text:a.textContent.trim(),top:a.getBoundingClientRect().top,bottom:a.getBoundingClientRect().bottom})),
+    findItem:itemPanel?{...box(itemPanel),marginBottom:itemMargin,next:itemPanel.nextElementSibling?.querySelector('h2')?.textContent}:null,
+    findBasket,
+    stakingParagraphs:stakingPanel?[...stakingPanel.querySelectorAll(':scope > p')].map(p=>{const style=getComputedStyle(p);return {text:p.textContent.replace(/\s+/g,' ').trim(),...box(p),width:p.getBoundingClientRect().width,marginTop:style.marginTop,marginBottom:style.marginBottom,fontSize:style.fontSize,lineHeight:style.lineHeight};}):[],
     header:box('header'),hint:box('main .wallet-help'),title:box('main .page-title'),picture:box('main .page-title .title-character img.character-picture'),
     strip:{...box('header .marquee'),animations:m.getAnimations({subtree:true}).length,still:halves.length===2&&Math.abs(halves[0].left-w.left)<0.01&&Math.abs(halves[1].left-halves[0].right)<0.01&&halves[1].right>=w.right-0.01},
     titleParagraphs:[...document.querySelectorAll('.page-title > p')].map(e=>e.textContent.replace(/\s+/g,' ').trim()),
     heading:document.querySelector('.page-title > h1')?.textContent,
-    docs:docs.map(box),docsTitles:docs.map(p=>p.querySelector('h2')?.textContent??null),docsParagraphs:paragraphs.map(e=>({text:e.textContent.replace(/\s+/g,' ').trim(),...box(e)})),
+    docs:docs.map(p=>{const r=box(p);return itemPanel&&p.compareDocumentPosition(itemPanel)&Node.DOCUMENT_POSITION_PRECEDING?{...r,top:r.top-itemShift,bottom:r.bottom-itemShift}:r;}),docsTitles:docs.map(p=>p.querySelector('h2')?.textContent??null),docsParagraphs:paragraphs.map(e=>({text:e.textContent.replace(/\s+/g,' ').trim(),...box(e)})),
     docsAddedHeight:paragraphs.length===5?box(paragraphs[4]).bottom-box(paragraphs[0]).bottom:0,
     redeemAside:document.querySelector('.flow-layout > aside')?.querySelector('h2')?.textContent??null,
     oneColumn:document.querySelector('.flow-layout')?.classList.contains('one-column')??false,
@@ -263,6 +321,11 @@ try {
       if(name==='vault')layout.at(-1).capacity=await page.locator('.stats > div').nth(3).evaluate(e=>({label:e.querySelector(':scope > span').firstChild.textContent.trim(),value:e.querySelector(':scope > strong').textContent}));
     }
     const [old,now]=snapshots,[oldLayout,newLayout]=layout,regressions=[],checks=[],exceptions=[];
+    // Decision A: only Earn is added; existing header and every first-screen vertical position stay pinned below.
+    assert.deepEqual(oldLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Docs'],'baseline navigation');
+    assert.deepEqual(newLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Earn','Docs'],'ITEM navigation');
+    for(const x of newLayout.nav)assert.ok(x.top>=0&&x.bottom<=812,name+': nav remains on first screen');
+    for(const x of oldLayout.nav){const n=newLayout.nav.find(y=>y.text===x.text);assert.ok(near(n.top,x.top)&&near(n.bottom,x.bottom),name+': existing nav entries keep their vertical position');}
     const hintGrowth=(newLayout.hint?.height??0)-(oldLayout.hint?.height??0);
     const counterpart=x=>now.filter(y=>y.tag===x.tag&&words(y.text)===words(x.text)&&y.inTitle===x.inTitle&&y.inClaims===x.inClaims&&y.docsIndex===x.docsIndex).sort((a,c)=>Math.abs(a.y-x.y)-Math.abs(c.y-x.y))[0]??null;
     const prior=old.filter(x=>x.y>=0&&x.bottom<=812);
@@ -346,6 +409,9 @@ try {
     }
     checks.push(statusCase==='normal'?'Owner follow-up: no normal status area/sign':'Owner follow-up: exact single '+statusCase+' sentence, compact Vault Closed notice, Deposit-only CLOSED sign');
     if(name==='docs') {
+      // SPEC 3.3: normalize only Find ITEM outer height (including the pinned existing phone margin) and one grid gap before Find Basket.
+      assert.equal(!!newLayout.findItem,itemReady,'Find ITEM is present exactly when every launch slot is filled');
+      if(newLayout.findItem){assert.equal(newLayout.findItem.marginBottom,4,'Find ITEM inherits the exact existing 4px phone panel margin');assert.equal(newLayout.findItem.next,'Find Basket','Find ITEM is immediately before Find Basket');assert.ok(newLayout.findItem.top>812,'Find ITEM does not replace first-screen content');}
       // The v14 Docs tab equals the baseline: the four paragraphs of "What Basket is" (the live fee sentence last, no
       // not-live sentence), the five ITEM panels between Risks and Find Basket, every panel in its place with its size.
       assert.equal(oldLayout.docsParagraphs.length,4);
@@ -357,9 +423,43 @@ try {
       // equals the baseline in order, place and size again.
       assert.equal(newLayout.docsTitles[newLayout.docsTitles.indexOf('Safety')+1],'If a stock goes missing','The v19 panel stands right after Safety');
       assert.deepEqual(newLayout.docsTitles,oldLayout.docsTitles,'The Docs panels equal the baseline, in order');
-      assert.deepEqual(rounded(newLayout.docs),rounded(oldLayout.docs),'Every Docs panel keeps its place and size');
+      // Pin the exact approved BASK-only copy and account for its two paragraph
+      // height changes only. The unchanged middle paragraph, typography, spacing
+      // and every remaining panel still receive the complete geometry comparison.
+      const oldStaking=oldLayout.stakingParagraphs,newStaking=newLayout.stakingParagraphs;
+      assert.equal(oldStaking.length,3);assert.equal(newStaking.length,3);
+      assert.deepEqual([oldStaking[0].text,oldStaking[2].text],STAKING_COPY_BEFORE,'Baseline proves the original staking copy');
+      assert.deepEqual([newStaking[0].text,newStaking[2].text],STAKING_COPY_AFTER,'Only the two approved BASK-only paragraphs change');
+      assert.equal(newStaking[1].text,oldStaking[1].text,'Seven-day streaming explanation unchanged');
+      let stakingShift=0;
+      for(let index=0;index<3;index++){
+        const before=oldStaking[index],after=newStaking[index],delta=index===1?0:after.height-before.height;
+        assert.ok(before.top>812&&after.top>812,'Staking copy changes remain below the first phone screen');
+        assert.deepEqual(rounded({...after,text:before.text,top:after.top-stakingShift,bottom:after.bottom-stakingShift-delta,height:after.height-delta}),rounded(before),'Exact staking paragraph geometry after its authorized copy-height adjustment');
+        stakingShift+=delta;
+      }
+      const stakingIndex=newLayout.docsTitles.indexOf('Earn BASK by staking ITEM');
+      assert.ok(stakingIndex>=0);
+      // Owner, 2026-10-16: one row "Basket Protocol on Medium" after the Telegram row of Find Basket, the last panel. The rows
+      // before it equal the baseline; the rows after it keep their text and size and move down by the row; the panel grows
+      // by exactly that much and nothing follows it. The baseline has no Medium link; the new page has exactly one.
+      const oldFB=oldLayout.findBasket,newFB=newLayout.findBasket;
+      assert.ok(oldFB&&newFB,'Find Basket panel present on both pages');
+      assert.deepEqual(oldFB.links.filter(h=>h.includes('medium.com')),[],'Baseline Find Basket has no Medium link');
+      assert.deepEqual(newFB.links.filter(h=>h.includes('medium.com')),['https://medium.com/@protocolbasket'],'Find Basket has the one Medium link');
+      const mediumIndex=newFB.rows.findIndex(r=>r.text==='Basket Protocol on Medium');
+      assert.ok(mediumIndex>0&&newFB.rows[mediumIndex-1].text==='Basket Protocol on Telegram','The Medium row stands right after the Telegram row');
+      assert.equal(newFB.rows.length,oldFB.rows.length+1,'Find Basket gains exactly one row');
+      const mediumShift=newFB.rows[mediumIndex+1].top-oldFB.rows[mediumIndex].top;
+      assert.ok(mediumShift>0&&mediumShift<=newFB.rows[mediumIndex].height+40,'The shift is the Medium row and its spacing: '+mediumShift);
+      assert.deepEqual(rounded(newFB.rows.slice(0,mediumIndex)),rounded(oldFB.rows.slice(0,mediumIndex)),'Find Basket rows before the Medium row equal the baseline');
+      assert.deepEqual(rounded(newFB.rows.slice(mediumIndex+1).map(r=>({...r,top:r.top-mediumShift}))),rounded(oldFB.rows.slice(mediumIndex)),'Find Basket rows after the Medium row keep their text and size and move down by the row');
+      const findBasketIndex=newLayout.docsTitles.indexOf('Find Basket');
+      assert.equal(findBasketIndex,newLayout.docs.length-1,'Find Basket is the last Docs panel');
+      const normalizedDocs=newLayout.docs.map((panel,index)=>{const p=index<stakingIndex?panel:index===stakingIndex?{...panel,bottom:panel.bottom-stakingShift,height:panel.height-stakingShift}:{...panel,top:panel.top-stakingShift,bottom:panel.bottom-stakingShift};return index===findBasketIndex?{...p,bottom:p.bottom-mediumShift,height:p.height-mediumShift}:p;});
+      assert.deepEqual(rounded(normalizedDocs),rounded(oldLayout.docs),'Every Docs panel keeps its place and size after only the exact staking-copy, Find ITEM and Medium-row additions');
       for(const d of newLayout.docs)assert.ok(d.height>0,'Docs panel rendered');
-      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket, "If a stock goes missing" after Safety; every panel equals the baseline in place and size');
+      checks.push('Docs: the four paragraphs with the live fee sentence, the five ITEM panels between Risks and Find Basket, "If a stock goes missing" after Safety; the two BASK-only staking paragraphs normalize only their measured height changes, Find ITEM only its own height before Find Basket and the Medium row only its own height inside Find Basket; every other panel equals the baseline in place and size');
     }
     if(name==='redeem') {
       assert.equal(oldLayout.redeemAside,null);
@@ -406,6 +506,97 @@ try {
       ...(name==='docs'?{docsAddedHeight:docsGrowth}:{}),
     });
   }
+  // SPEC 3: preserve and record the complete legacy first-screen proof before the new-page sweep.
+  for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
+  fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
+  console.log('PASS existing 375x812 first-screen checks:',results.reduce((n,r)=>n+r.prior.length,0),'previous elements; all original assertions retained');
+  // ITEM SPEC 3/5 and decision A: widths include the minimum phone and wide desktop.
+  itemFixtureMode=true;
+  const itemGeometry=[];
+  for(const width of [320,375,1440,1920])for(const variant of ['no-wallet','connected'])for(const name of ['earn','transparency']){
+    await page.setViewportSize({width,height:812});
+    // Each geometry case is a direct page load; a hash-only navigation focuses h1 and scrolls the header offscreen.
+    await page.goto('about:blank');
+    await page.goto(`${base}/new/?${variant}#${name}`);
+    await page.waitForFunction(n=>document.querySelector('.page-title h1')?.textContent?.toLowerCase()===n,name);
+    await page.evaluate(()=>document.fonts.ready);
+    await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
+    // Owner revision: Transparency contains contracts/source plus the developer
+    // and the existing live vault owner/guardian roles; balance/setup panels are removed.
+    if(itemReady)await page.waitForFunction(n=>n==='earn'?document.querySelectorAll('.earn-card').length===3:document.querySelectorAll('.item-source').length===1&&document.querySelectorAll('.item-source [data-role]').length===3&&![...document.querySelectorAll('.item-source [data-role]')].some(e=>e.textContent.includes('Reading...')),name);
+    else assert.equal(await page.locator('.earn-card,.transparency-balances,.item-setup,.item-source,.item-refresh,[data-role]').count(),0,'null mode has title/static words only');
+    if(name==='transparency'){
+      assert.equal(await page.locator('.transparency-balances,.item-setup,.item-refresh').count(),0,`${width}: removed balance/setup/ITEM refresh panels stay absent`);
+      assert.deepEqual(await page.locator('main h2').allTextContents(),itemReady?['Contracts and source']:[],`${width}: exact Transparency content panels`);
+      const roles=await page.locator('.item-source [data-role]').evaluateAll(rows=>rows.map(row=>({role:row.dataset.role,text:row.textContent.trim()})));
+      assert.deepEqual(roles.map(row=>row.role),itemReady?['dev','owner','guardian']:[],`${width}: exactly the three protocol roles in order`);
+      if(itemReady){
+        assert.equal(roles[0].text,'Developer: '+itemKnown.DEV,`${width}: developer address comes from the known constants`);
+        assert.match(roles[1].text,/^Vault owner: (?:0x[0-9a-fA-F]{40}|unreadable)$/,`${width}: live vault owner or explicit unreadable state`);
+        assert.match(roles[2].text,/^Vault guardian: (?:0x[0-9a-fA-F]{40}|unreadable)$/,`${width}: live vault guardian or explicit unreadable state`);
+      }
+    }
+    const geometry=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,nav:[...document.querySelectorAll('nav[aria-label="Primary navigation"] a')].map(a=>({text:a.textContent.trim(),top:a.getBoundingClientRect().top,bottom:a.getBoundingClientRect().bottom,left:a.getBoundingClientRect().left,right:a.getBoundingClientRect().right})),tables:[...document.querySelectorAll('main table')].map(t=>{const p=t.closest('.panel'),w=t.closest('.item-table')??t,pr=p.getBoundingClientRect(),r=w.getBoundingClientRect();return {left:r.left,right:r.right,panelLeft:pr.left,panelRight:pr.right};})}));
+    assert.ok(geometry.scrollWidth<=width,`${name} ${width}: no horizontal overflow`);
+    assert.deepEqual(geometry.nav.map(a=>a.text),['Vault','Deposit','Redeem','Earn','Docs'],`${name} ${width}: exact nav`);
+    for(const a of geometry.nav)assert.ok(a.left>=0&&a.right<=width&&a.top>=0&&a.bottom<=812,`${name} ${width}: every nav entry inside first screen`);
+    for(const t of geometry.tables)assert.ok(t.left>=t.panelLeft&&t.right<=t.panelRight,`${name} ${width}: table scroller remains inside its panel`);
+    // 2026-10-16, Earn layout build (option B3): Earn's actions sit behind a Pool selector, tabs and disclosures. Every pool,
+    // tab and disclosure is opened at each width; every action that shows must be reachable exactly as before; the union over
+    // the states must cover every button on the page, as the one-state sweep did; hidden controls refuse focus; each tablist
+    // works by keyboard with one panel showing. Transparency and the null build keep the single-state sweep.
+    const earnLayout=name==='earn'&&itemReady;
+    const states=earnLayout?[['bask',0],['bask',1],['bask',2],['bask',3],['eth',0],['eth',1],['eth',2],['eth',3],['staking',0],['staking',1],['staking',2]]:[null];
+    // The hit-tested set gains the Pool selector and the disclosure summaries, the two control kinds this build adds.
+    const controls='main button, main summary, main select';
+    const total=await page.locator(controls).count(),covered=new Set();let reachable=0;
+    for(const state of states){
+      if(state){
+        const [prefix,index]=state;
+        if(prefix!=='staking')await page.locator('#earn-pool-select').selectOption(prefix);
+        assert.equal(await page.locator('[data-pool-view]:not([hidden])').count(),1,`${width} ${variant}: one pool card shows`);
+        const tabs=page.locator(`[data-item-card="${prefix}"] [role="tab"]`);
+        await tabs.nth(index).click();
+        assert.equal(await tabs.nth(index).getAttribute('aria-selected'),'true',`${width} ${variant} ${prefix} tab ${index}: selected`);
+        const panel=page.locator('#'+await tabs.nth(index).getAttribute('aria-controls'));
+        assert.ok(await panel.isVisible(),`${width} ${variant} ${prefix} tab ${index}: its panel shows`);
+        assert.equal(await page.locator(`[data-item-card="${prefix}"] [role="tabpanel"]:not([hidden])`).count(),1,`${width} ${variant} ${prefix}: one panel at a time`);
+        for(const details of await panel.locator('details').all())await details.evaluate(d=>{d.open=true;});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${name} ${width} ${variant} ${prefix} tab ${index}: no horizontal overflow`);
+        const hidden=await page.locator('[data-pool-view][hidden] :is(input,button,a,select,summary),[role="tabpanel"][hidden] :is(input,button,a,select,summary)').all();
+        assert.ok(hidden.length>0,`${width} ${variant} ${prefix} tab ${index}: the hidden pool and the hidden panels keep their controls mounted`);
+        for(const control of hidden){await control.evaluate(e=>e.focus());assert.equal(await control.evaluate(e=>document.activeElement===e),false,`${width} ${variant} ${prefix} tab ${index}: a hidden control refuses focus`);}
+      }
+      const buttons=page.locator(controls);
+      for(let i=0;i<await buttons.count();i++){
+        const button=buttons.nth(i);
+        if(state&&!(await button.isVisible()))continue;
+        // Center each control so subpixel 'already in view' rounding cannot leave its edge outside the viewport; exact bounds stay asserted.
+        await button.evaluate(e=>e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'}));
+        const hit=await button.evaluate(e=>{const r=e.getBoundingClientRect(),top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return {inside:r.width>0&&r.height>0&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,hit:top===e||e.contains(top),text:e.textContent,rect:{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height},viewport:{width:innerWidth,height:innerHeight},cover:top?.tagName};});
+        assert.ok(hit.inside&&hit.hit,`${name} ${width}: action ${i+1} reachable by scrolling ${JSON.stringify(hit)}`);reachable++;covered.add(i);
+      }
+    }
+    assert.equal(covered.size,total,`${name} ${width} ${variant}: every one of ${total} buttons, summaries and selects is reachable in the state that shows it`);
+    if(earnLayout)for(const prefix of ['bask','eth','staking']){
+      if(prefix!=='staking')await page.locator('#earn-pool-select').selectOption(prefix);
+      const tabs=page.locator(`[data-item-card="${prefix}"] [role="tab"]`),count=await tabs.count();
+      assert.equal(count,prefix==='staking'?3:4,`${width} ${variant} ${prefix}: tab count`);
+      await tabs.nth(0).click();await tabs.nth(0).focus();
+      for(const [key,index] of [['End',count-1],['ArrowRight',0],['ArrowLeft',count-1],['Home',0],['ArrowRight',1]]){
+        await page.keyboard.press(key);
+        assert.equal(await tabs.nth(index).getAttribute('aria-selected'),'true',`${width} ${variant} ${prefix}: ${key} selects tab ${index}`);
+        assert.ok(await tabs.nth(index).evaluate(e=>e===document.activeElement),`${width} ${variant} ${prefix}: ${key} moves focus`);
+        assert.ok(await page.locator('#'+await tabs.nth(index).getAttribute('aria-controls')).isVisible(),`${width} ${variant} ${prefix}: ${key} shows the controlled panel`);
+        assert.equal(await page.locator(`[data-item-card="${prefix}"] [role="tabpanel"]:not([hidden])`).count(),1,`${width} ${variant} ${prefix}: one panel after ${key}`);
+      }
+      await tabs.nth(0).click();
+    }
+    itemGeometry.push({width,variant,name,buttonsReachable:covered.size,controls:total,hits:reachable,states:states.length,tables:geometry.tables.length});
+  }
+  if(itemReady)assert.ok(itemFixtureReads>0,'filled mode proves new-page content using deterministic figures');else assert.equal(itemFixtureReads,0,'null mode reaches no ITEM fixture read');
+  fs.writeFileSync('../artifacts/item-visibility.json',JSON.stringify({itemReady,itemFixtureReads,checks:itemGeometry},null,2)+'\n');
+
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
   console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements with their words in the same vertical place, no exception; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');

@@ -1,3 +1,4 @@
+import { LAUNCH, itemReady } from "../src/itemConstants"; // SPEC 2: all launch slots gate the existing live block.
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -31,13 +32,18 @@ assert.equal(developmentVested(CLIFF-1),0);assert.equal(developmentVested(CLIFF)
 const configured=Object.fromEntries(Object.keys(ADDRESSES).map((k,i)=>[k,('0x'+String(i+1).padStart(40,'0'))])) as typeof ADDRESSES;
 let calls=0;let contractNames:string[]=[];
 const reader=async (specs: {functionName:string;address:string}[])=>{calls++;contractNames=specs.map(c=>c.functionName);return Array(10).fill({ok:true,value:1234567890123456789n});};
-assert.deepEqual(Object.values(ADDRESSES),[null,null,null,null,null]);
+assert.deepEqual(Object.values(ADDRESSES), itemReady(LAUNCH) ? [LAUNCH.ITEM, LAUNCH.ITEM_STAKING, LAUNCH.BASK_USDG_GAUGE, LAUNCH.ITEM_ETH_GAUGE, LAUNCH.DEV_VESTING] : [null,null,null,null,null]);
 for(const key of Object.keys(ADDRESSES)){const addresses={...configured,[key]:null};assert.equal(await readLiveFigures(addresses,reader),null);assert.equal(renderToStaticMarkup(<LiveFigures addresses={addresses} reader={reader}/>),'');}
 assert.equal(calls,0,'every single-null configuration has zero calls and no block');
-assert(!renderToStaticMarkup(<Tokenomics/>).includes('Live figures'));
+assert.equal(renderToStaticMarkup(<Tokenomics/>).includes('Live figures'), itemReady(LAUNCH)); // SPEC 3.3: the guarded live block is present only when configured.
 assert.deepEqual(await readLiveFigures(configured,reader),Array(10).fill(1234567890123456789n));assert.equal(calls,1);assert.deepEqual(contractNames,['totalSupply','released','remaining','totalStaked','released','remaining','totalStaked','vested','released','totalStaked']);
 await assert.rejects(readLiveFigures(configured,async()=>{throw Error('fixture unavailable');}),/fixture unavailable/);
 await assert.rejects(readLiveFigures(configured,async()=>[{ok:false,error:'fixture unavailable'}]),/Live figures unreadable/);
-assert.equal(formatLive(1234567890123456789012345n),'1,234,567');assert.equal(formatLive(1234567890123456789n,true),'1.234567');assert.equal(formatLive(1000000000000000001n,true),'1');
+// Owner approval 2026-10-14: exact new formatter outputs replace the old truncation pins; words/reads/math stay fixed.
+assert.equal(formatLive(1234567890123456789012345n),'1,234,567.890123');assert.equal(formatLive(1234567890123456789n,true),'1.234567890123456789');assert.equal(formatLive(1000000000000000001n,true),'1.000000000000000001');
+for(const lp of [false,true])assert.equal(formatLive(0n,lp),'0');
+assert.equal(formatLive(1n),'<0.000001');assert.equal(formatLive(1n,true),'0.000000000000000001');
+assert.equal(formatLive(999999999999n),'<0.000001');assert.equal(formatLive(1000000000000n),'0.000001');
+assert.equal(formatLive(45000000000000n,true),'0.000045');
 assert.equal(PARAGRAPHS.length,6);
 console.log('PASS tokenomics: brief parsing, supply, schedule, cliff, four annual rows, every-null guard, absent live block, configured multicall, rejected read, formatting');

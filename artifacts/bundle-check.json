@@ -1,16 +1,24 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8120384,
-  "fileCount": 247,
-  "productionExportBytes": 1009508,
+  "uncompressedDeliveryBytes": 8325478,
+  "fileCount": 271,
+  "productionExportBytes": 1243062,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
       "sha256": "98d42bf6ad7df061fb131fea714a7930adf3db3a6338df15d90d136aed256374"
     },
+    "dist/art/character/earn.webp": {
+      "bytes": 99214,
+      "sha256": "b6909185b01f73b987c6c9bd2caf7b96a600d0c3dc91a3cb2757d72eac8bc051"
+    },
     "dist/art/character/redeem.webp": {
       "bytes": 61992,
       "sha256": "3a937c9d853cdea982828642225e96e3c14e238bd941bb6eb572c878d1401598"
+    },
+    "dist/art/character/transparency.webp": {
+      "bytes": 92840,
+      "sha256": "f48d0a806c47889e1f01f6c846428eefc528771c51a43ff24140261d567480fe"
     },
     "dist/art/character/vault.webp": {
       "bytes": 72014,
@@ -160,25 +168,25 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-BjiNo5WX.js": {
+    "dist/assets/ccip-Cg6-0KOr.js": {
       "bytes": 2610,
-      "sha256": "80692856b234c08b0834808beeb2b5a0e2d23c96bdf8f6f6d5895640f2bb3105"
+      "sha256": "267329291edbb3150766db20061a9356dce4549e1906b1c7110a190f40d14454"
     },
-    "dist/assets/index-BRdefnhV.css": {
-      "bytes": 48903,
-      "sha256": "6d9deadc70d0c2350019458324a868b605b929425e3f5352864dddc9bc97fa80"
+    "dist/assets/index-Dj-S4okR.js": {
+      "bytes": 641000,
+      "sha256": "9f2e0d70df68479406373cc0ecb4c57114f0907ac820d4d9fc2d661bcf34e420"
     },
-    "dist/assets/index-ClAUmb7a.js": {
-      "bytes": 608254,
-      "sha256": "cf125ce8584d7a1620b691c547b2010cd4b00add5ea1f9db56fad3e9dccedcbd"
+    "dist/assets/index-iwMuzi_G.css": {
+      "bytes": 57750,
+      "sha256": "c5fffa787f4bd972bb636887fe5051064164cca4e6b2e25cb7593251071f4e9d"
     },
     "dist/favicon.svg": {
       "bytes": 416,
       "sha256": "0a31ead9064a33cbc12abe6388cf3f0a29888d3a183819e02116e56dd8ba2238"
     },
     "dist/fonts/Anton-OFL.txt": {
-      "bytes": 4484,
-      "sha256": "ee67e6ee22790b7929f1a3769ca2801d565c64b5a9096942c1adf5596de9c9e4"
+      "bytes": 4391,
+      "sha256": "eee1d24ff8f553eb732237c7dd9b945a78313ed49ad6de02872a47277741b44a"
     },
     "dist/fonts/VT323-OFL.txt": {
       "bytes": 4367,
@@ -186,7 +194,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "49e706ca8d8698c36c8a69cfe6601c214afa47fb1a37f5e724cdb86a4a638206"
+      "sha256": "2de25c03b3afd9ceeee78f95d9938273d7911feb63bedfac9bbf77067bda8409"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,
@@ -197,7 +205,7 @@
   "checks": [
     "Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; ITEM and BASK source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged",
     "No git submodules or nested dependency/cache/archive payloads",
-    "24 required empty/25-stock JPEGs retained (quality 18 in v14, 26 in v12 and v13, 32 in v11, 36 in v9/v10, 40 before); no additional artifact images",
-    "Both copies of all 37 manifest assets included"
+    "24 required empty/25-stock screenshots retained: sixteen quality-18 JPEGs and exactly eight full Docs/Owner lossless WebPs with independent browser/Pillow pixel equality; only the exact named ITEM walk JPEGs are added",
+    "Both copies of all 37 original manifest assets and the two exact approved ITEM pictures included"
   ]
 }

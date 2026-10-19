@@ -9,10 +9,13 @@ import { DepositPage, RedeemPage, Claims } from "./Flows";
 import { OwnerPage } from "./Owner";
 import { DocsPage } from "./Docs";
 import { LossesPage } from "./Losses";
+// SPEC 3: ITEM routes are mounted only while open.
+import { EarnPage } from "./Earn";
+import { TransparencyPage } from "./Transparency";
 import { Marquee, StoreShelf } from "./Scenery";
 import "./styles.css";
-const pages = ["Vault", "Deposit", "Redeem", "Docs"];
-const routes = [...pages, "Owner", "Losses"];
+const pages = ["Vault", "Deposit", "Redeem", "Earn", "Docs"];
+const routes = [...pages, "Owner", "Losses", "Transparency"];
 function currentPage() {
   const p = location.hash.slice(1).toLowerCase();
   return routes.find((n) => n.toLowerCase() === p) ?? "Vault";
@@ -259,6 +262,10 @@ function App() {
           <DepositPage snapshot={data} wallet={wallet} />
         ) : page === "Redeem" ? (
           <RedeemPage snapshot={data} wallet={wallet} />
+        ) : page === "Earn" ? (
+          <EarnPage snapshot={data} wallet={wallet} />
+        ) : page === "Transparency" ? (
+          <TransparencyPage snapshot={data} />
         ) : page === "Owner" ? (
           <OwnerPage snapshot={data} wallet={wallet} />
         ) : page === "Docs" ? (
@@ -282,12 +289,16 @@ function App() {
             >
               Owner controls
             </a>
+            <a href="#transparency" aria-current={page === "Transparency" ? "page" : undefined}>Transparency</a>
             <a href="#docs">Docs</a>
             <a href="https://x.com/Basket_IMD" target="_blank" rel="noreferrer">
               Basket Protocol on X
             </a>
             <a href="https://t.me/basket_protocol" target="_blank" rel="noreferrer">
               Basket Protocol on Telegram
+            </a>
+            <a href="https://medium.com/@protocolbasket" target="_blank" rel="noreferrer">
+              Basket Protocol on Medium
             </a>
             <a href="mailto:protocolbasket@gmail.com">protocolbasket@gmail.com</a>
           </span>

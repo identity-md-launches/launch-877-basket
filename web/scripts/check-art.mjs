@@ -10,12 +10,14 @@ const manifestBytes = fs.readFileSync(path.join(root, "artifacts/art-manifest.js
 const sha = b => createHash("sha256").update(b).digest("hex");
 assert.equal(sha(manifestBytes), "2d22583bb51557f412a6894d897cfc3bb839d31850fd676a6d0746cd61a588fa");
 const manifest = JSON.parse(manifestBytes), hashes = [];
+// ITEM SPEC 5: exact approved additions; the original manifest digest and all original assets remain unchanged.
+const ITEM_ART=[{"path":"art/character/earn.webp","bytes":99214,"sha256":"b6909185b01f73b987c6c9bd2caf7b96a600d0c3dc91a3cb2757d72eac8bc051","width":453,"height":1000},{"path":"art/character/transparency.webp","bytes":92840,"sha256":"f48d0a806c47889e1f01f6c846428eefc528771c51a43ff24140261d567480fe","width":400,"height":1000}];
 for (const dir of ["web/public", "dist"]) {
-  const expected = manifest.files.map(f => f.path).sort();
+  const expected = [...manifest.files,...ITEM_ART].map(f => f.path).sort();
   const actual = fs.readdirSync(path.join(root, dir, "art"), {recursive:true, withFileTypes:true})
     .filter(e => e.isFile()).map(e => path.relative(path.join(root,dir),path.join(e.parentPath,e.name)).split(path.sep).join("/")).sort();
   assert.deepEqual(actual, expected);
-  for (const f of manifest.files) {
+  for (const f of [...manifest.files,...ITEM_ART]) {
     const b = fs.readFileSync(path.join(root, dir, f.path));
     assert.equal(b.length, f.bytes, f.path);
     assert.equal(sha(b), f.sha256, f.path);
@@ -916,7 +918,10 @@ try {
       await page.waitForFunction(routeShown,name);
       await page.evaluate(()=>document.fonts.ready);
       await page.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth>0));
-      // Opening the page from another page already moved the focus to the heading: take it away for the plain state.
+      // Opening the page from another page moves the focus to the heading in a requestAnimationFrame after the hash
+      // change (main.tsx), which can land after the route shows: let that frame pass, then take the focus away for the
+      // plain state (2026-10-16: measured before it landed once in sixteen runs).
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
       await page.evaluate(()=>document.activeElement?.blur?.());
       const plain=await page.evaluate(titleGeometry,{R:REGIONS,name,pixels:false});
       assert.equal(plain.ring.shown,false,label+': marker shown without focus');

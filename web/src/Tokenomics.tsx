@@ -35,9 +35,10 @@ export async function readLiveFigures(addresses: Addresses, reader: typeof many 
 const liveLabels = ["ITEM supply", "BASK/USDG gauge: released", "remaining", "LP staked", "ITEM/ETH gauge: released", "remaining", "LP staked", "Development vesting: vested", "released", "ITEM staking: ITEM staked"];
 const addressLabels = ["ITEM", "ITEM staking", "BASK/USDG gauge", "ITEM/ETH gauge", "Development vesting"];
 export function formatLive(value: bigint, lp = false) {
-  if (!lp) return (value / 10n ** 18n).toLocaleString("en-US");
+  // Owner approval 2026-10-14: preserve nonzero live amounts and full pool-token precision.
   const [whole, fraction = ""] = formatUnits(value, 18).split(".");
-  const decimals = fraction.slice(0, 6).replace(/0+$/, "");
+  const decimals = fraction.slice(0, lp ? 18 : 6).replace(/0+$/, "");
+  if (value > 0n && whole === "0" && !decimals) return "<0.000001";
   return BigInt(whole).toLocaleString("en-US") + (decimals ? "." + decimals : "");
 }
 export function LiveFigures({ addresses = ADDRESSES, reader = many }: { addresses?: Addresses; reader?: typeof many }) {

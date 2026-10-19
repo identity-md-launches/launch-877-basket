@@ -81,7 +81,7 @@ export function PageTitle({
   title: string;
   children?: ReactNode;
   character?: {
-    kind: "vault" | "deposit" | "redeem";
+    kind: "vault" | "deposit" | "redeem" | "earn" | "transparency"; // SPEC 5: approved title art.
     src: string;
     width: number;
     height: number;

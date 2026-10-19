@@ -1,5 +1,7 @@
+import { checkVaultRpc } from "./vault-rpc-browser.mjs";
 import { checkBaskGuide } from "./bask-guide-browser.mjs";
 import { checkTokenomics } from "./tokenomics-browser.mjs";
+import { losslessEvidence } from "./lossless-evidence.mjs";
 // One bounded foreground process owns its fork, preview server and browser.
 import fs from "node:fs";
 import path from "node:path";
@@ -661,6 +663,8 @@ try {
       Number((await raw("eth_getBlockByNumber", ["latest", false])).timestamp) *
       1000;
     await page.goto(url + "#" + name.toLowerCase());
+    // SPEC 3.5 decision A: the only new primary navigation entry.
+    assert.deepEqual(await page.locator("nav a").allTextContents(), ["Vault", "Deposit", "Redeem", "Earn", "Docs"]);
     await page.evaluate((n) => (window.__clock = n), now);
     await page.waitForFunction(
       () => !document.querySelector("button.refresh")?.disabled,
@@ -824,6 +828,7 @@ try {
     );
   }
   const shots = [];
+  const losslessShots = [];
   async function screenshots(state) {
     for (const width of [1440, 375]) {
       await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
@@ -863,13 +868,15 @@ try {
           false,
           `${state} ${name} overflow ${width}`,
         );
-        const file = `${state}-${name.toLowerCase()}-${width}.jpg`;
+        // 2026-10-16, Add liquidity build: only the four Owner captures join Docs' lossless encoding.
+        const file = `${state}-${name.toLowerCase()}-${width}.${["Docs", "Owner"].includes(name) ? "webp" : "jpg"}`;
         // Quality 18 in v14 (26 in v12 and v13, 32 in v11, 36 in v9/v10, 40
         // before): the Docs page is five panels and a tab row longer, so the
         // 24 readable full-page screenshots keep at least 250,000 bytes
         // within the 8 MiB delivery budget, including the two share-picture
         // copies.
-        await page.screenshot({
+        if (["Docs", "Owner"].includes(name)) losslessShots.push(await losslessEvidence(page, artifacts, file));
+        else await page.screenshot({
           path: path.join(artifacts, file),
           type: "jpeg",
           quality: 18,
@@ -2369,10 +2376,21 @@ try {
     // the same order, with none renamed or left out; v22 adds its four documented checks (named "v22: ...") and nothing else.
     assert.deepEqual(checks.filter((c) => !c.startsWith("v22: ")),previous.checks,'Every page check of the previous walk retained under its name, in order, and none added beyond the v22 ones');
     assert.equal(checks.filter((c) => c.startsWith("v22: ")).length,4,'The four v22 checks');
-    assert.deepEqual(shots,previous.shots,'Every prior screenshot retained in order');
+    // 2026-10-16, Add liquidity build: only Docs/Owner containers change; every state and position stays required.
+    const expectedShots=previous.shots.map(file=>/^(empty|stocks25)-(docs|owner)-(1440|375)\.jpg$/.test(file)?file.replace(/\.jpg$/,'.webp'):file);
+    assert.equal(previous.shots.filter(file=>/^(empty|stocks25)-(docs|owner)-(1440|375)\.jpg$/.test(file)).length,8);
+    assert.deepEqual(shots,expectedShots,'Every prior screenshot retained in order with exact eight-name lossless mapping');
   }
+  // SPEC 6/7: compare each protected page against the untouched v16 export.
+  const vaultRpcCounts = await checkVaultRpc(browser, process.env.BASKET_BASELINE_DIST, path.resolve("../dist"), rpc);
   assert.equal(revoked.length,0);
   assert.deepEqual(issues,[]);
+  assert.equal(losslessShots.length,8,'All four Docs and four Owner states are lossless');
+  fs.writeFileSync(path.join(artifacts,'screenshot-packaging.json'),JSON.stringify({
+    status:'Current successful walk; all 24 required states retained in their original order.',
+    method:'Four full Docs and four full Owner PNG captures encoded as lossless WebP; exact RGBA equality checked independently in Pillow and the browser. The other sixteen JPEG captures retain quality 18.',
+    count:24,losslessCount:8,files:losslessShots
+  })+'\n');
   fs.writeFileSync(
     path.join(artifacts, "browser-fork.json"),
     JSON.stringify(
@@ -2384,6 +2402,7 @@ try {
         sends,
         shots,
         rpcCalls: rpcCalls.length,
+        vaultRpcCounts,
         tokenomicsRequests: {before:beforeTokenomics,after:afterTokenomics},
         docsStorageWrites,
         issues,

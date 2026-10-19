@@ -6,32 +6,177 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import { build } from 'esbuild';
+import { getAddress, encodeFunctionData } from 'viem';
 const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
+const BASE='3038c97b30503df69fd4760381e208df2ba54f34';
+assert.equal(git(['rev-parse','HEAD']).trim(),BASE,'exact ITEM base commit');
 const baseline=p=>git(['show','HEAD:'+p]);
-const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const rawRead=p=>fs.readFileSync(path.join(root,p),'utf8');
+const read=p=>restoreApproved(p,rawRead(p));
 const sha256=s=>createHash('sha256').update(s).digest('hex');
-// v22 on HEAD=v20 (f86e5d8): three sources change, the live-site audit fixes (character/v22/SPEC.md). wallet.tsx: every
-// send except genesis listing first settles the saved transaction of this tab (sendPending: a receipt, or its nonce
-// passed; refused with its hash while unresolved; refused once with the finished words after); its call is the one
-// documented piece in send()'s head and the PendingTransaction branch the one in its tail. Flows.tsx: the Redeem press
-// compares the fresh previewRedeem (fee, leg count, every leg within 0.1%) with the preview on screen and builds the
-// floors from quote.amounts; the Deposit press re-reads previewDeposit and refuses when the fee changed. Owner.tsx:
-// a fourth roles row shows the current feeRecipient. Every other web/src file is byte-identical to HEAD, styles.css
-// included. connect(), disconnect(), switchChain(), listingPending() and waitPending() keep their pins; send()'s head
-// and tail equal HEAD once their documented pieces are put back.
+// ITEM pages on HEAD=v22 (3038c97b, the live site since 2026-10-17; the ITEM work was rebased from v16 onto v20 on
+// 2026-10-16 and onto v22 on 2026-10-17). v17 to v22 (the contact links, addToWallet() and its Docs button, the short-stock
+// notice and the Docs panel "If a stock goes missing", the check re-scopes, v22's vault-send settle sendPending(), the Redeem
+// and Deposit preview checks and the Fee recipient row) are HEAD's own: every assertion below compares with HEAD itself,
+// and only the ITEM additions are documented exceptions. Transactions remain HEAD's: send(), connect(), disconnect(),
+// switchChain() and sendPending() keep their pins; the ITEM send path is pinned separately below.
+// ITEM SPEC 2-7: approved edits are restored before every unchanged legacy AST/state/calldata assertion.
+// Raw independent pins below bind every approved byte; regenerating the two marked lists cannot authorize edits.
+const ITEM_NEW_SOURCES=["itemConstants.ts","itemAbi.ts","itemReads.ts","itemActions.ts","itemFormat.ts","Earn.tsx","Transparency.tsx","FindItem.tsx"];
+// >>> item-site pieces (generated; every raw source also has an independent pin)
+const editedFiles={
+ "main.tsx":[
+  ["import { LossesPage } from \"./Losses\";\n// SPEC 3: ITEM routes are mounted only while open.\nimport { EarnPage } from \"./Earn\";\nimport { TransparencyPage } from \"./Transparency\";\nimport { Marquee, StoreShelf } from \"./Scenery\";\nimport \"./styles.css\";\nconst pages = [\"Vault\", \"Deposit\", \"Redeem\", \"Earn\", \"Docs\"];\nconst routes = [...pages, \"Owner\", \"Losses\", \"Transparency\"];\nfunction currentPage() {\n",
+   "import { LossesPage } from \"./Losses\";\nimport { Marquee, StoreShelf } from \"./Scenery\";\nimport \"./styles.css\";\nconst pages = [\"Vault\", \"Deposit\", \"Redeem\", \"Docs\"];\nconst routes = [...pages, \"Owner\", \"Losses\"];\nfunction currentPage() {\n"],
+  ["          <RedeemPage snapshot={data} wallet={wallet} />\n        ) : page === \"Earn\" ? (\n          <EarnPage snapshot={data} wallet={wallet} />\n        ) : page === \"Transparency\" ? (\n          <TransparencyPage snapshot={data} />\n        ) : page === \"Owner\" ? (\n",
+   "          <RedeemPage snapshot={data} wallet={wallet} />\n        ) : page === \"Owner\" ? (\n"],
+  ["            </a>\n            <a href=\"#transparency\" aria-current={page === \"Transparency\" ? \"page\" : undefined}>Transparency</a>\n            <a href=\"#docs\">Docs</a>\n",
+   "            </a>\n            <a href=\"#docs\">Docs</a>\n"],
+  ["            </a>\n            <a href=\"https://medium.com/@protocolbasket\" target=\"_blank\" rel=\"noreferrer\">\n              Basket Protocol on Medium\n            </a>\n            <a href=\"mailto:protocolbasket@gmail.com\">protocolbasket@gmail.com</a>\n",
+   "            </a>\n            <a href=\"mailto:protocolbasket@gmail.com\">protocolbasket@gmail.com</a>\n"]
+ ],
+ "components.tsx":[
+  ["  character?: {\n    kind: \"vault\" | \"deposit\" | \"redeem\" | \"earn\" | \"transparency\"; // SPEC 5: approved title art.\n    src: string;\n",
+   "  character?: {\n    kind: \"vault\" | \"deposit\" | \"redeem\";\n    src: string;\n"]
+ ],
+ "wallet.tsx":[
+  ["import { useEffect, useRef, useState } from \"react\";\nimport { checkItemSend, itemError } from \"./itemActions\"; // SPEC 6: isolated ITEM checks and errors.\nimport { decodeEventLog, type Address, type Hex } from \"viem\";\n",
+   "import { useEffect, useRef, useState } from \"react\";\nimport { decodeEventLog, type Address, type Hex } from \"viem\";\n"],
+  ["  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\n// 2026-10-17, pre-launch review: the ITEM pages' reason while an earlier send has no receipt yet (their existing words).\nexport const ITEM_PENDING = \"Another transaction is pending. Finish it in your wallet or wait for its receipt.\";\n// v22 (2026-10-17, live-site review): every send except genesis listing first\n",
+   "  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\n// v22 (2026-10-17, live-site review): every send except genesis listing first\n"],
+  ["}\n// 2026-10-17, round-3 review: ITEM sends keep a saved record of their own, apart from the vault's, so a vault send in\n// this tab never overwrites or clears it.\nconst itemPendingKey = \"basket-item-pending-4663\";\nfunction savedItemPending(): PendingTx | undefined {\n  try {\n    return (\n      JSON.parse(sessionStorage.getItem(itemPendingKey) || \"null\") || undefined\n    );\n  } catch {\n    return undefined;\n  }\n}\n// Set by Disconnect and kept across reloads until Connect wallet is answered.\n",
+   "}\n// Set by Disconnect and kept across reloads until Connect wallet is answered.\n"],
+  ["  const pendingShown = useRef(!!pendingRef.current);\n  // 2026-10-17, round-3 review: the ITEM sends' own saved record, apart from the vault's slot above.\n  const itemRef = useRef<PendingTx | undefined>(savedItemPending());\n  function report(key: string, value: ActionProgress) {\n",
+   "  const pendingShown = useRef(!!pendingRef.current);\n  function report(key: string, value: ActionProgress) {\n"],
+  ["  }\n  // 2026-10-17, pre-launch review: ITEM actions stay off while a sent transaction has no receipt yet. Settles the\n  // saved one when it is mined, replaced or its nonce has passed; returns the hash still unresolved, if any.\n  async function itemPending(): Promise<Hex | undefined> {\n    const pending = itemRef.current;\n    if (!account || !pending) {\n      setUnresolved(undefined);\n      return undefined;\n    }\n    // 2026-10-17, v22 rebase (Codex V22-02, the rule of sendPending above): only viem's \"not found\" answer to a hash lookup\n    // counts as absent; any other error of the two lookups leaves this check unresolved (no settle by either nonce rule; the\n    // record and the lock stay) and never rejects, so Refresh and opening Earn keep working.\n    let failed = false;\n    const absent = (name: string) => (e: unknown) => {\n      if ((e as { name?: string } | null)?.name === name) return undefined;\n      failed = true;\n      return undefined;\n    };\n    let settled = !!(await client\n      .getTransactionReceipt({ hash: pending.hash })\n      .catch(absent(\"TransactionReceiptNotFoundError\")));\n    if (!settled && !failed) {\n      // 2026-10-17, round-2 review: the record's own account is read, so another account in this tab waits too; a nonce\n      // the node reports settles alone; the predicted one only while nothing is queued, as listingPending's second guard.\n      const [transaction, latest, queued] = await Promise.all([\n        client.getTransaction({ hash: pending.hash }).catch(absent(\"TransactionNotFoundError\")),\n        client.getTransactionCount({ address: pending.account, blockTag: \"latest\" }).catch(() => undefined),\n        client.getTransactionCount({ address: pending.account, blockTag: \"pending\" }).catch(() => undefined),\n      ]);\n      settled = !failed && latest !== undefined && (transaction !== undefined ? latest > transaction.nonce : pending.nonce !== undefined && latest > pending.nonce && latest === queued);\n    }\n    // 2026-10-17, round-3 review: a late answer settles only the record it examined; a newer send's record stays.\n    const current = itemRef.current;\n    if (settled && (current === pending || current === undefined)) {\n      itemRef.current = undefined;\n      try {\n        sessionStorage.removeItem(itemPendingKey);\n      } catch {\n        /* storage unavailable */\n      }\n      setUnresolved(undefined);\n      return undefined;\n    }\n    const hash = current?.hash; // 2026-10-17, round-4 review: a record cleared meanwhile (by its receipt or a check that settled it) leaves nothing to wait for.\n    setUnresolved(hash);\n    return hash;\n  }\n  const [account, setAccount] = useState<Address>();\n",
+   "  }\n  const [account, setAccount] = useState<Address>();\n"],
+  ["  const [busy, setBusy] = useState(false);\n  // 2026-10-17, pre-launch review: the hash of a sent transaction without a receipt yet; ITEM actions wait for it.\n  const [unresolved, setUnresolved] = useState<Hex | undefined>(itemRef.current?.hash);\n  const [confirmed, setConfirmed] = useState<{\n",
+   "  const [busy, setBusy] = useState(false);\n  const [confirmed, setConfirmed] = useState<{\n"],
+  ["  }\n  async function send(s: Spec, key = s.functionName, label = key, afterItem?: () => Promise<void>) {\n    const item = \"itemAction\" in s; // SPEC 6: explicit ITEM context, never inferred from claim name.\n    if (sending.current)\n",
+   "  }\n  async function send(s: Spec, key = s.functionName, label = key) {\n    if (sending.current)\n"],
+  ["        throw new Error(\"Connect a wallet to send this transaction.\");\n      // 2026-10-17, pre-launch review: an ITEM send waits for the earlier one to be mined, replaced or passed by its nonce.\n      if (item) { const earlier = await itemPending(); if (earlier) throw new PendingTransaction(ITEM_PENDING, earlier); }\n      const [id, accounts] = await Promise.all([\n",
+   "        throw new Error(\"Connect a wallet to send this transaction.\");\n      const [id, accounts] = await Promise.all([\n"],
+  ["      if (s.functionName === \"listGenesis\") await listingPending();\n      else if (!item) await sendPending(key); // 2026-10-17, v22 rebase: the vault settle, for vault sends; an ITEM send settled its own record above.\n      // SPEC 6: ITEM target code check; the vault path is unchanged.\n      if (item) await checkItemSend(s);\n      else await verifyNetwork();\n      await simulate(s, account);\n      const gas = !item && [\"deposit\", \"redeem\", \"claim\"].includes(s.functionName) // SPEC 6: no vault gas branch for ITEM.\n        ? ((await client.estimateGas({\n",
+   "      if (s.functionName === \"listGenesis\") await listingPending();\n      else await sendPending(key);\n      await verifyNetwork();\n      await simulate(s, account);\n      const gas = [\"deposit\", \"redeem\", \"claim\"].includes(s.functionName)\n        ? ((await client.estimateGas({\n"],
+  ["            ...(gas ? { gas: `0x${gas.toString(16)}` } : {}),\n            ...(s.value !== undefined ? { value: `0x${s.value.toString(16)}` } : {}), // 2026-10-16, Add liquidity build: ITEM-only ETH value.\n          },\n",
+   "            ...(gas ? { gas: `0x${gas.toString(16)}` } : {}),\n          },\n"],
+  ["      setHash(tx);\n      const record = { hash: tx, account, functionName: s.functionName, nonce };\n      // 2026-10-17, round-3 review: an ITEM send keeps a saved record of its own; the vault's slot is written by vault sends only.\n      if (item) {\n        itemRef.current = record;\n        try {\n          sessionStorage.setItem(itemPendingKey, JSON.stringify(record));\n        } catch {\n          /* storage unavailable */\n        }\n      } else {\n        pendingRef.current = record;\n        try {\n          sessionStorage.setItem(pendingKey, JSON.stringify(pendingRef.current));\n        } catch {\n          /* nonce guard also protects reloads */\n        }\n      }\n",
+   "      setHash(tx);\n      pendingRef.current = { hash: tx, account, functionName: s.functionName, nonce };\n      try {\n        sessionStorage.setItem(pendingKey, JSON.stringify(pendingRef.current));\n      } catch {\n        /* nonce guard also protects reloads */\n      }\n"],
+  ["      settled = true;\n      if (item) {\n        itemRef.current = undefined;\n        try {\n          sessionStorage.removeItem(itemPendingKey);\n        } catch {\n          /* storage unavailable */\n        }\n        setUnresolved(undefined); // 2026-10-17, round-4 review: this send's own receipt; the record it wrote is gone.\n      } else {\n        pendingRef.current = undefined;\n        try {\n          sessionStorage.removeItem(pendingKey);\n        } catch {\n          /* storage unavailable */\n        }\n      }\n",
+   "      settled = true;\n      pendingRef.current = undefined;\n      try {\n        sessionStorage.removeItem(pendingKey);\n      } catch {\n        /* storage unavailable */\n      }\n"],
+  ["        throw new TransactionCancelled(\n          item ? \"The transaction did not run. Refresh before retrying.\" : // SPEC 6: no vault words for ITEM.\n          replaced === \"cancelled\"\n",
+   "        throw new TransactionCancelled(\n          replaced === \"cancelled\"\n"],
+  ["      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });\n      // SPEC 6: refresh only the ITEM page; never run vault owed/proposal follow-ups.\n      if (item) {\n        await afterItem?.();\n        report(key, { message: `${label}: Confirmed.`, hash: mined });\n        return receipt;\n      }\n      let detail = \"\";\n",
+   "      report(key, { message: `${label}: Confirmed. Refreshing…`, hash: mined });\n      let detail = \"\";\n"],
+  ["      }\n      const message = item ? itemError(e) : await explainAction(e, s); // SPEC 6: vault decoding is vault-only.\n      const status =\n",
+   "      }\n      const message = await explainAction(e, s);\n      const status =\n"],
+  ["          : message;\n      if (item && sent && !settled) setUnresolved(sent); // 2026-10-17, pre-launch review: ITEM actions wait for this hash.\n      if (sent && !settled && s.functionName === \"listGenesis\")\n",
+   "          : message;\n      if (sent && !settled && s.functionName === \"listGenesis\")\n"],
+  ["    waitPending,\n    itemPending,\n    unresolved,\n    chainId,\n",
+   "    waitPending,\n    chainId,\n"]
+ ],
+ "chain.ts":[
+  ["  args?: readonly unknown[];\n} & ({ itemAction?: never; value?: never; itemUser?: never } | { itemAction: string; value?: bigint; itemUser?: Address }); // 2026-10-16, Add liquidity build: value belongs only to ITEM specs.\nexport const vault = (\n",
+   "  args?: readonly unknown[];\n};\nexport const vault = (\n"],
+  ["export async function simulate(s: Spec, account?: Address): Promise<void> {\n  // 2026-10-16, Add liquidity build: the router recipient is the sending account.\n  if (s.itemUser !== undefined && s.itemUser.toLowerCase() !== account?.toLowerCase()) throw new InputError(\"The wallet account changed. Please retry.\");\n  await client.call({\n",
+   "export async function simulate(s: Spec, account?: Address): Promise<void> {\n  await client.call({\n"],
+  ["    batch: false,\n    ...(s.value !== undefined ? { value: s.value } : {}), // 2026-10-16, Add liquidity build: simulate the exact ETH value.\n  });\n}\n\n// SPEC 6: ITEM-only target check; existing vault verification and reads stay unchanged.\nexport async function verifyItemTarget(address: Address, hash: Hex): Promise<void> {\n  const [id, code] = await Promise.all([client.getChainId(), client.getCode({ address })]);\n  if (id !== 4663 || !code || code === \"0x\" || keccak256(code) !== hash)\n    throw new InputError(\"ITEM contract code could not be verified. Transactions are unavailable.\");\n}\n",
+   "    batch: false,\n  });\n}\n"]
+ ],
+ "Docs.tsx":[
+  ["import { VAULT } from \"./deployment\";\nimport { FindItem } from \"./FindItem\"; // SPEC 3.3: address panel.\nexport function DocsPage({\n",
+   "import { VAULT } from \"./deployment\";\nexport function DocsPage({\n"],
+  ["          <p>\n            Add liquidity to one of the two Uniswap v2 pools, BASK/USDG or ITEM/ETH, and stake the pool token you receive on <a href=\"#earn\">the Earn page</a>. From that moment ITEM accrues to you every second, in proportion to your share of everything staked in that pool's gauge.\n          </p>\n",
+   "          <p>\n            Add liquidity to one of the two Uniswap v2 pools, BASK/USDG or ITEM/ETH, and stake the pool token you receive on the Earn page. From that moment ITEM accrues to you every second, in proportion to your share of everything staked in that pool's gauge.\n          </p>\n"],
+  ["          <p>\n            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on <a href=\"#earn\">the Earn page</a> and you receive those fees in BASK, in proportion to your stake.\n          </p>\n",
+   "          <p>\n            The 0.5% fee on each deposit and redemption goes to ITEM staking, so more trading through the vault means more fees for ITEM. Stake ITEM on the Earn page and you receive those fees in BASK, in proportion to your stake. The staking contract can also receive USDG and WETH, so other income can be sent to stakers the same way.\n          </p>\n"],
+  ["          <p>\n            Stake and unstake at any time, with no lock or cooldown. Claim BASK pays the BASK you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.\n          </p>\n",
+   "          <p>\n            Stake and unstake at any time, with no lock or cooldown. Claim is per token: BASK, USDG and WETH are claimed separately, each paying what you have earned so far. Unclaimed amounts stay owed to you. A reward token that cannot be transferred can never block staking or unstaking; it can only delay its own claim. BASK you claim can be redeemed for the Stock Tokens in the vault or sold in the BASK/USDG pool.\n          </p>\n"],
+  ["        </section>\n        {tab === 0 && <FindItem />}\n        <section className=\"panel\">\n",
+   "        </section>\n        <section className=\"panel\">\n"],
+  ["          </p>\n          <p>\n            <a href=\"https://medium.com/@protocolbasket\" target=\"_blank\" rel=\"noreferrer\">\n              Basket Protocol on Medium\n            </a>\n          </p>\n          <p>\n",
+   "          </p>\n          <p>\n"]
+ ],
+ "tokenomicsData.ts":[
+  ["import type { Address } from \"viem\";\nimport { LAUNCH, itemReady } from \"./itemConstants\"; // SPEC 2: all-slot guard, one address source.\n\n",
+   "import type { Address } from \"viem\";\n\n"],
+  ["export const ADDRESSES: Record<\"ITEM\" | \"ITEM_STAKING\" | \"BASK_USDG_GAUGE\" | \"ITEM_ETH_GAUGE\" | \"DEV_VESTING\", Address | null> = {\n  ITEM: itemReady(LAUNCH) ? LAUNCH.ITEM : null, ITEM_STAKING: itemReady(LAUNCH) ? LAUNCH.ITEM_STAKING : null, BASK_USDG_GAUGE: itemReady(LAUNCH) ? LAUNCH.BASK_USDG_GAUGE : null, ITEM_ETH_GAUGE: itemReady(LAUNCH) ? LAUNCH.ITEM_ETH_GAUGE : null, DEV_VESTING: itemReady(LAUNCH) ? LAUNCH.DEV_VESTING : null,\n};\n",
+   "export const ADDRESSES: Record<\"ITEM\" | \"ITEM_STAKING\" | \"BASK_USDG_GAUGE\" | \"ITEM_ETH_GAUGE\" | \"DEV_VESTING\", Address | null> = {\n  ITEM: null, ITEM_STAKING: null, BASK_USDG_GAUGE: null, ITEM_ETH_GAUGE: null, DEV_VESTING: null,\n};\n"]
+ ],
+ "Tokenomics.tsx":[
+  ["export function formatLive(value: bigint, lp = false) {\n  // Owner approval 2026-10-14: preserve nonzero live amounts and full pool-token precision.\n  const [whole, fraction = \"\"] = formatUnits(value, 18).split(\".\");\n  const decimals = fraction.slice(0, lp ? 18 : 6).replace(/0+$/, \"\");\n  if (value > 0n && whole === \"0\" && !decimals) return \"<0.000001\";\n  return BigInt(whole).toLocaleString(\"en-US\") + (decimals ? \".\" + decimals : \"\");\n",
+   "export function formatLive(value: bigint, lp = false) {\n  if (!lp) return (value / 10n ** 18n).toLocaleString(\"en-US\");\n  const [whole, fraction = \"\"] = formatUnits(value, 18).split(\".\");\n  const decimals = fraction.slice(0, 6).replace(/0+$/, \"\");\n  return BigInt(whole).toLocaleString(\"en-US\") + (decimals ? \".\" + decimals : \"\");\n"]
+ ]
+};
+// <<< item-site pieces
+// SPEC 5: exact page-class extensions and additive ITEM styles. No selector affecting old pages may drift.
+const ITEM_CSS_PIECES=[["  .page-title.character-redeem { --bw: 160px; }\n\n  .page-title.character-deposit,\n  .page-title.character-redeem,\n  .page-title.character-earn {\n    --col-gap: 12px;\n    display: grid;\n    grid-template-columns: calc(var(--w) + var(--col-gap)) minmax(0, 1fr);\n    grid-template-rows: minmax(0, 1fr) auto auto auto auto;\n  }\n  .page-title.character-deposit .title-character,\n  .page-title.character-redeem .title-character,\n  .page-title.character-earn .title-character {\n    --gx: 0px;\n    grid-area: 1 / 1 / 4 / 3;\n  }\n  .page-title.character-deposit > .eyebrow,\n  .page-title.character-redeem > .eyebrow,\n  .page-title.character-earn > .eyebrow { grid-area: 2 / 2; }\n  .page-title.character-deposit h1,\n  .page-title.character-redeem h1,\n  .page-title.character-earn h1 { grid-area: 3 / 2; margin-bottom: 17px; }\n  .page-title.character-deposit > p:last-of-type,\n  .page-title.character-redeem > p:last-of-type,\n  .page-title.character-earn > p:last-of-type { grid-area: 4 / 1 / 5 / 3; }\n  .page-title.character-deposit:after,\n  .page-title.character-redeem:after,\n  .page-title.character-earn:after { grid-area: 5 / 1 / 6 / 3; }\n}\n/* Smallest phones: a slightly smaller picture. Redeem keeps the side-by-side layout: its eyebrow\n   wraps to two lines beside her and the column gap shrinks so \"REDEEM\" fits. */\n","  .page-title.character-redeem { --bw: 160px; }\n\n  .page-title.character-deposit,\n  .page-title.character-redeem {\n    --col-gap: 12px;\n    display: grid;\n    grid-template-columns: calc(var(--w) + var(--col-gap)) minmax(0, 1fr);\n    grid-template-rows: minmax(0, 1fr) auto auto auto auto;\n  }\n  .page-title.character-deposit .title-character,\n  .page-title.character-redeem .title-character {\n    --gx: 0px;\n    grid-area: 1 / 1 / 4 / 3;\n  }\n  .page-title.character-deposit > .eyebrow,\n  .page-title.character-redeem > .eyebrow { grid-area: 2 / 2; }\n  .page-title.character-deposit h1,\n  .page-title.character-redeem h1 { grid-area: 3 / 2; margin-bottom: 17px; }\n  .page-title.character-deposit > p:last-of-type,\n  .page-title.character-redeem > p:last-of-type { grid-area: 4 / 1 / 5 / 3; }\n  .page-title.character-deposit:after,\n  .page-title.character-redeem:after { grid-area: 5 / 1 / 6 / 3; }\n}\n/* Smallest phones: a slightly smaller picture. Redeem keeps the side-by-side layout: its eyebrow\n   wraps to two lines beside her and the column gap shrinks so \"REDEEM\" fits. */\n"],["    width: calc(var(--pad) + var(--gx) + var(--w) + var(--col-gap) - 6px);\n  }\n}\n\n/* SPEC 5: approved ITEM title pictures and bubble placement. */\n.page-title.character-earn { --ratio: .453; --bx: .776; --tx: .57; --mouth: .173; --bw: 126px; --em1: 2.6; --em2: 2.6; }\n.page-title.character-transparency { --ratio: .4; --bx: 1.035; --tx: .71; --mouth: .199; --bw: 182px; --em1: 8.3; --em2: 8.3; }\n@media (max-width: 660px) {\n  .page-title.character-earn { --bw: 102px; --bx: .83; }\n  .page-title.character-transparency { --bw: 147px; --bx: 1.035; --tx: .69; }\n}\n/* SPEC 3: new pages only; existing page geometry is preserved. */\n.item-section { margin: 28px 0; }\n.item-section > h2 { margin-bottom: 12px; }\n.earn-gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }\n.earn-card { min-width: 0; }\n.item-pool { margin-bottom: 20px; }\n.item-pool .address { display: block; }\n.item-figures, .item-setup { margin: 16px 0; }\n.item-figures > div, .item-setup > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }\n.item-figures dt, .item-setup dt { min-width: 0; }\n.item-figures dd, .item-setup dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }\n.item-action { margin-top: 22px; padding-top: 18px; border-top: 2px solid var(--line); }\n.item-action label { display: block; }\n.item-action input { width: 100%; margin: 8px 0; }\n.item-buttons, .item-claims, .item-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }\n.item-refresh { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0; }\n.item-source, .find-item, .transparency-balances { overflow-wrap: anywhere; }\n.transparency-balances .item-table { max-width: 100%; overflow-x: auto; }\n.transparency-balances table { width: 100%; }\n.transparency-balances td, .transparency-balances th { padding: 14px 12px; vertical-align: top; }\n.transparency-balances small { display: block; margin-top: 6px; font-size: .85em; }\n.transparency-balances .address { display: block; min-width: 12ch; }\n@media (max-width: 660px) {\n  .earn-gauges { grid-template-columns: minmax(0, 1fr); }\n  .item-figures > div { gap: 10px; }\n  .transparency-balances table { min-width: 660px; }\n}\n\n/* SPEC 3.5 decision A: five primary navigation entries. */\nnav > div { grid-template-columns: repeat(5, 1fr); }\n\n/* SPEC 4: keep allocation and balance numbers whole in the scrolling table. */\n.transparency-balances td:nth-child(2), .transparency-balances td:nth-child(3) { white-space: nowrap; }\n/* SPEC 3.2: keep holder labels readable inside the scrolling table. */\n.transparency-balances th:first-child { min-width: 14ch; overflow-wrap: normal; }\n/* SPEC 3.3: the two new inline Earn links retain the existing paragraph geometry. */\n.docs-grid p a[href=\"#earn\"] { display: inline; min-height: 0; }\n/* Owner approval 2026-10-14: fit five nav labels below 360px; retain the existing row height. */\n@media (max-width: 359px) {\n  nav > div { gap: 6px; }\n  nav a { font-size: 18px; line-height: 25.2px; }\n}\n\n/* Revised Phase A: separate personal position, tasks and global statistics. */\n.refined-card { align-self: start; min-width: 0; }\n.refined-heading h3 { margin: 0; }\n.refined-personal { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; padding: 18px 0 22px; margin: 0; }\n.refined-personal > div { display: block; border: 0; padding: 0; }\n.refined-personal dt { font-size: 13px; margin-bottom: 7px; }\n.refined-personal dd { text-align: left; max-width: none; font-size: 21px; line-height: 1.35; }\n.refined-personal > div:first-child dd { font-size: 15px; }\n.refined-empty { margin: 14px 0 22px; font-size: 14px; }\n.refined-workspace, .refined-panels, .refined-tab-panel { min-width: 0; }\n.refined-tabs { display: flex; gap: 0; margin: 0; border-bottom: 2px solid var(--royal); }\n.refined-tabs [role=\"tab\"] { flex: 1 1 0; min-width: 0; padding: 12px 6px; border: 0; border-radius: 0; background: transparent; font-size: 14px; line-height: 1.25; }\n.refined-tabs [role=\"tab\"][aria-selected=\"true\"] { background: var(--sun); color: var(--ink); }\n.refined-card [hidden] { display: none !important; }\n.refined-tab-panel { padding: 22px 0 0; }\n.refined-tab-panel h4 { margin: 0 0 14px; font-size: 20px; }\n.refined-explainer { font-size: 14px; line-height: 1.6; margin: 0 0 22px; }\n.refined-explainer strong { display: block; margin-bottom: 4px; }\n.refined-card .item-action { border: 0; margin: 0; padding: 0; }\n.refined-card .item-action label { font-weight: 700; font-size: 14px; }\n.refined-card .item-action input { margin: 8px 0; min-width: 0; height: 49px; }\n.refined-token-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }\n.refined-token-entry { min-width: 0; }\n.refined-matched { margin: 0; }\n.refined-matched > div { display: block; border: 0; padding: 0; }\n.refined-matched dt { font-weight: 700; line-height: 1.5; }\n.refined-matched dt span { font-size: 11px; font-weight: 400; margin-left: 4px; }\n.refined-matched dd { display: flex; align-items: center; text-align: left; max-width: none; min-height: 49px; margin: 8px 0; border: 1px solid var(--line); background: var(--subtle); padding: 10px 12px; font-size: 18px; line-height: 1.4; }\n.refined-balance { margin: 0; font-size: 12px; }\n.refined-balance > div { display: block; border: 0; padding: 0; }\n.refined-balance dt { font-size: 12px; }\n.refined-balance dd { max-width: none; text-align: left; margin: 2px 0 4px; }\n.refined-card .refined-max { margin-top: 5px; padding: 5px 0; min-height: 36px; border: 0; background: transparent; color: var(--royal); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }\n.refined-card .refined-max:disabled { color: #53617a; }\n.refined-estimate { margin: 20px 0 0; font-size: 13px; }\n.refined-estimate > div { display: block; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 0; }\n.refined-estimate dd { text-align: left; max-width: none; margin-top: 4px; }\n.refined-card .item-buttons { gap: 8px; margin-top: 14px; }\n.refined-card .item-buttons button { padding: 9px 12px; }\n.refined-details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 13px; }\n.refined-details summary, .refined-withdraw summary { cursor: pointer; padding: 10px 0; color: var(--royal); font-weight: 700; }\n.refined-details .item-pool { margin: 8px 0 0; }\n.refined-card .refined-available { margin: 0 0 18px; padding: 12px; background: var(--subtle); }\n.refined-available > div { display: block; padding: 0; border: 0; }\n.refined-available dd { text-align: left; max-width: none; margin-top: 4px; }\n.refined-card .item-claims { margin-top: 16px; }\n.refined-card .item-claims button { background: var(--royal); color: var(--paper); border-color: var(--royal); }\n.refined-card .item-claims button:disabled { background: #e4e9f0; color: #53617a; border-color: #8c98ab; }\n.refined-manage-figures, .refined-global { font-size: 14px; margin: 0; }\n.refined-global > div, .refined-manage-figures > div { padding: 10px 0; }\n.refined-caption { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }\n.refined-withdraw { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--line); }\n.refined-withdraw .refined-caption { margin: 4px 0 18px; }\n.refined-address { margin-top: 22px; margin-bottom: 0; font-size: 13px; }\n.refined-card > .error:empty { display: none; }\n@media (max-width: 660px) {\n  .refined-card { padding: 16px 12px; }\n  .refined-tabs [role=\"tab\"] { font-size: 12px; padding: 11px 4px; min-height: 52px; }\n  .refined-personal { gap: 12px; padding-bottom: 18px; }\n  .refined-personal dd { font-size: 18px; }\n  .refined-personal > div:first-child dd { font-size: 13px; }\n  .refined-tab-panel { padding-top: 18px; }\n  .refined-token-pair { grid-template-columns: minmax(0, 1fr); gap: 18px; }\n  .refined-balance > div { display: flex; flex-wrap: wrap; gap: 3px 8px; justify-content: space-between; }\n  .refined-balance dd { margin: 0; }\n  .refined-explainer { margin-bottom: 18px; font-size: 13px; }\n  .refined-global > div { display: block; }\n  .refined-global dd { max-width: none; text-align: left; margin-top: 3px; }\n}\n\n/* Revised Phase A B3: select one pool and give its task room to breathe. */\n.refined-pool-picker { display: flex; align-items: center; gap: 16px; margin: 24px 0 16px; }\n.refined-pool-picker label { font-size: 14px; font-weight: 700; }\n.refined-pool-picker select { width: 240px; max-width: 100%; margin: 0; }\n.refined-focused-gauges { grid-template-columns: minmax(0, 1fr); }\n.refined-focused-gauges > [hidden] { display: none !important; }\n.refined-focused-gauges > div { min-width: 0; }\n.refined-b3 .refined-workspace { max-width: 960px; margin-inline: auto; }\n.refined-b3 .refined-heading { margin-bottom: 12px; }\n.refined-b3 .refined-personal { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-width: 740px; padding-bottom: 28px; gap: 32px; }\n.refined-b3 .refined-tabs [role=\"tab\"] { flex: 0 1 auto; padding-inline: 24px; }\n.refined-b3 .refined-tab-panel { padding-top: 28px; }\n@media (min-width: 901px) {\n  .refined-b3 { padding: 30px 36px; }\n  .refined-b3 .refined-heading { max-width: 960px; margin: 0 auto; }\n  .refined-b3 .refined-personal, .refined-b3 .refined-empty { max-width: 960px; margin-inline: auto; }\n  .refined-b3 .refined-personal { padding-top: 20px; }\n  .refined-b3 .item-action[data-liquidity] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 0 42px; }\n  .refined-b3 .item-action[data-liquidity] > .refined-explainer { grid-column: 1; grid-row: 1 / 7; font-size: 15px; line-height: 1.7; max-width: 32ch; margin: 0; }\n  .refined-b3 .item-action[data-liquidity] > .refined-explainer strong { font-size: 18px; line-height: 1.5; margin-bottom: 12px; }\n  .refined-b3 .item-action[data-liquidity] > :not(.refined-explainer) { grid-column: 2; }\n  .refined-b3 .refined-tab-panel:not(:has([data-liquidity])) { max-width: 740px; }\n  .refined-b3 .refined-tab-panel:not(:has([data-liquidity])) .item-action { max-width: 580px; }\n}\n@media (max-width: 660px) {\n  .refined-pool-picker { margin-top: 20px; gap: 12px; }\n  .refined-pool-picker select { flex: 1; min-width: 0; width: auto; }\n  .refined-b3 .refined-personal { gap: 12px; padding-bottom: 18px; }\n  .refined-b3 .refined-tabs [role=\"tab\"] { flex: 1 1 0; padding-inline: 4px; }\n  .refined-b3 .refined-tab-panel { padding-top: 18px; }\n}\n\n/* Revised preview review: align editable and calculated token amounts. */\n.refined-card .refined-token-entry label { margin-bottom: 8px; }\n\n/* Earn layout build, review fix: on desktop the state notes, the send status and the error line sit in the card's centred column too. */\n@media (min-width: 901px) {\n  .refined-b3 > .note, .refined-b3 > .action-status, .refined-b3 > .error { max-width: 960px; margin-inline: auto; }\n}\n","    width: calc(var(--pad) + var(--gx) + var(--w) + var(--col-gap) - 6px);\n  }\n}\n"]];
+// Manual review pins: never generated by put-pieces, never changed by the launch kit.
+// 2026-10-16 Add liquidity build: the eight changed source diffs were reviewed against the previous ITEM build;
+// only their pins change. Existing vault builders remain byte-identical and all legacy comparisons still run.
+const ITEM_REVIEWED_PINS={
+ "main.tsx": "20581ffb29277bcb14dcd20526a3ea369f8ef40a0e3ff5b225d03f4d735abbeb",
+ "components.tsx": "7b3f5c741ec81e3eef289c0179ad35056fa97641302165f4f72e4ebc8917b40b",
+ "wallet.tsx": "6439fafab303be801bc8032ab9d492d94a58f99c3f3df0dbb015e8e1f550044d",
+ "chain.ts": "8477f756be249b1446de21f6964124f9e3f22a6a91d90cfffdce123fbe6b01eb",
+ "Docs.tsx": "036798a3209d330aaf175dd89984d4bd7c8a5bbee77e5be62dccf71938267ab9",
+ "tokenomicsData.ts": "c84d346ab2bc6d04445a0bb0c288b08ab30d2a53b444eefe60bca771be3f3cba",
+ "Tokenomics.tsx": "a5c036e37a0684b84c49141bff193c63f0967e39e275065c2da1032559420488",
+ "itemConstants.ts": "6ee04472bcc387933d7f3b58234cb42573496e656847a261a009a11831568163",
+ "itemAbi.ts": "42a4fb064c2bb1348948b7ea448136e13d97b57d005a2ccc3bce4d1679731d80",
+ "itemReads.ts": "45f1b009807305f4c5003fcd6f59047f5fa09a8f095e82db5457f92d63453019",
+ "itemActions.ts": "4c84ddbd80962d69c6315e33841e1562308bb2b32dcbda47512e2f34d8f2368a",
+ "itemFormat.ts": "ad75601c2b32bc0c3be7ac7e874f765aefd141ef16ee43b7d3583f27a72eb811",
+ "Earn.tsx": "9b1dc219c8582e800ca99b614879293ad4475851bebd57acfbc600331bf8e7ae",
+ "Transparency.tsx": "3481af8504a07ab82e8b35982bb2ecbaedc4646c33e3763b68b6dd1623c63fad",
+ "FindItem.tsx": "398170f167c1ae68286273aafffa60a4c79eea8286054bc376699182c13c5a8d",
+ "styles.css": "0db9569699f5bc0aebb5b3734dbcf9d3c0d625c8919a7235fae4f5ce95569de5"
+};
+const LAUNCH_ADDRESSES=['ITEM','ITEM_STAKING','BASK_USDG_GAUGE','ITEM_ETH_GAUGE','DEV_VESTING','ITEM_WETH_PAIR'];
+const LAUNCH_HASHES=[...LAUNCH_ADDRESSES.map(k=>k+'_HASH'),'BASK_USDG_PAIR_HASH'];
+const LAUNCH_KEYS=[...LAUNCH_ADDRESSES,...LAUNCH_HASHES,'ITEM_REPO','ITEM_COMMIT'];
+function launchText(text){
+ const tree=ts.createSourceFile('itemConstants.ts',text,ts.ScriptTarget.Latest,true),nodes=[];
+ for(const statement of tree.statements)if(ts.isVariableStatement(statement))for(const d of statement.declarationList.declarations)if(d.name.getText(tree)==='LAUNCH')nodes.push(d.initializer);
+ assert.equal(nodes.length,1,'one LAUNCH initializer');const node=nodes[0];assert.ok(node&&ts.isObjectLiteralExpression(node),'LAUNCH is a plain object');
+ const slots=JSON.parse(node.getText(tree));assert.deepEqual(Object.keys(slots).sort(),[...LAUNCH_KEYS].sort(),'exact launch slot keys, no omissions or extra keys');
+ for(const key of LAUNCH_ADDRESSES)assert.ok(slots[key]===null||typeof slots[key]==='string'&&getAddress(slots[key])===slots[key]&&!/^0x0{40}$/.test(slots[key]),key+': null or checksummed nonzero address');
+ for(const key of LAUNCH_HASHES)assert.ok(slots[key]===null||typeof slots[key]==='string'&&/^0x[0-9a-f]{64}$/.test(slots[key])&&!/^0x0{64}$/.test(slots[key]),key+': null or runtime hash');
+ assert.ok(slots.ITEM_REPO===null||typeof slots.ITEM_REPO==='string'&&new URL(slots.ITEM_REPO).protocol==='https:'&&!new URL(slots.ITEM_REPO).username&&!new URL(slots.ITEM_REPO).password,'repository is null or HTTPS source repository');
+ assert.ok(slots.ITEM_COMMIT===null||typeof slots.ITEM_COMMIT==='string'&&/^[0-9a-f]{40}$/.test(slots.ITEM_COMMIT),'commit is null or full commit');
+ if(process.env.BASKET_ITEM_FINAL==='1')assert.ok(LAUNCH_KEYS.every(key=>slots[key]!==null),'final mode requires every launch slot');
+ return {slots,normalized:text.slice(0,node.getStart(tree))+'__LAUNCH_JSON__'+text.slice(node.end)};
+}
+const itemLaunch=launchText(rawRead('web/src/itemConstants.ts'));
+for(const [file,digest] of Object.entries(ITEM_REVIEWED_PINS)){
+ const text=rawRead('web/src/'+file);
+ assert.equal(sha256(file==='itemConstants.ts'?launchText(text).normalized:text),digest,file+': independently reviewed raw source; regeneration cannot authorize an edit');
+}
+// Owner-approved formatter exception: only the formatLive body may differ; declarations, reads, effects and words remain byte-frozen.
+function outsideFormatLive(text){
+ const tree=ts.createSourceFile('Tokenomics.tsx',text,ts.ScriptTarget.Latest,true),nodes=tree.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.name?.getText(tree)==='formatLive');
+ assert.equal(nodes.length,1,'one Tokenomics formatLive declaration');const body=nodes[0].body;assert.ok(body,'formatLive has a body');
+ return text.slice(0,body.getStart(tree))+'__APPROVED_FORMAT_LIVE_BODY__'+text.slice(body.end);
+}
+assert.equal(outsideFormatLive(rawRead('web/src/Tokenomics.tsx')),outsideFormatLive(baseline('web/src/Tokenomics.tsx')),'Tokenomics is byte-frozen outside the approved formatLive body');
+function restoreApproved(file,text){
+ const name=file.startsWith('web/src/')?file.slice(8):'',pieces=name==='styles.css'?ITEM_CSS_PIECES:editedFiles[name]??[];
+ for(const [now,old] of pieces){assert.equal(text.split(now).length,2,name+': exact approved piece occurs once');text=text.split(now).join(old);}
+ return text;
+}
+for(const file of [...Object.keys(editedFiles),'styles.css'])assert.equal(read('web/src/'+file),baseline('web/src/'+file),file+': after the approved edits are reversed every original byte remains');
+// Known BASK addresses already frozen in older vault files remain untouched. New ITEM modules contain no address or hash literals outside the single constants file.
+for(const file of ITEM_NEW_SOURCES.filter(f=>f!=='itemConstants.ts'))assert.doesNotMatch(rawRead('web/src/'+file),/0x[0-9a-fA-F]{40}(?:[0-9a-fA-F]{24})?\b/,file+': no address or hash outside constants');
+for(const [key,value] of Object.entries(itemLaunch.slots))if(value&&[...LAUNCH_ADDRESSES,...LAUNCH_HASHES].includes(key))for(const file of fs.readdirSync(path.join(root,'web/src')).filter(f=>f!=='itemConstants.ts'&&/\.(tsx?|json)$/.test(f)))assert.ok(!rawRead('web/src/'+file).toLowerCase().includes(value.toLowerCase()),file+': launch address/hash duplicated outside constants');
 const protectedFiles=[
  "BaskGuide.tsx",
+ "Flows.tsx",
  "Losses.tsx",
+ "Owner.tsx",
  "Scenery.tsx",
  "Vault.tsx",
- "components.tsx",
- "Tokenomics.tsx",
- "tokenomicsData.ts",
- "main.tsx",
- "Docs.tsx",
  "baskGuideData.ts",
- "chain.ts",
  "deployment.ts",
  "governance.ts",
  "model.ts",
@@ -45,7 +190,7 @@ for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src
 // below). All four stay pinned by independently reviewed digests (the two v16 files by their new ones) and scanned
 // for wallet, storage, network and send sinks; the ITEM statistics read stays behind the null-address guard.
 // styles.css equals HEAD's text (its first 63880 bytes are still the exact approved module CSS).
-const NEW_SOURCES=[];
+const NEW_SOURCES=ITEM_NEW_SOURCES;
 const MODULE_SOURCES=['Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts'];
 const allSources=fs.readdirSync(path.join(root,'web/src'),{recursive:true}).filter(p=>fs.statSync(path.join(root,'web/src',p)).isFile()).map(p=>p.replaceAll('\\','/')).sort();
 assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'no new source');
@@ -63,47 +208,18 @@ for(const f of MODULE_SOURCES){
 }
 assert.match(read('web/src/Tokenomics.tsx'),/if \(!hasAddresses\(addresses\)\) return null;[\s\S]*const results = await reader/,'null guard before the sole optional existing many reader');
 assert.ok(read('web/src/styles.css').startsWith(baseline('web/src/styles.css')),'CSS additions only');
-assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(0,63880)),'556616a829d32cd47a07e81280a030b9adcd49ffa1a665776ca894c63e593ad8','entire approved module CSS is an exact prefix; v14 Deposit rules follow it');
+assert.equal(sha256(Buffer.from(read('web/src/styles.css')).subarray(0,63880)),'556616a829d32cd47a07e81280a030b9adcd49ffa1a665776ca894c63e593ad8','entire approved module CSS is an exact prefix; v14 Deposit rules follow it');
 // v16: no style rule after HEAD's text (the v15 rules are HEAD's own now).
-const cssTail=fs.readFileSync(path.join(root,'web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
+const cssTail=Buffer.from(read('web/src/styles.css')).subarray(Buffer.byteLength(baseline('web/src/styles.css'))).toString('utf8');
 assert.equal(cssTail,'','v16: no style rule after the text of HEAD');
-// The v22 files (wallet.tsx, Flows.tsx, Owner.tsx): byte-identical to HEAD once their documented pieces [v22, HEAD] are put back (each exactly once), so
+// The ITEM files: byte-identical to HEAD once their documented pieces [item-site, HEAD] are put back (each exactly once), so
 // every word, call and attribute in them is pinned. The list between the two marker lines was generated from the
 // difference to HEAD; the pins further down do not depend on it: they compare with HEAD itself or with texts written
 // out in this file, so a piece cannot carry a change to a transaction, a wallet request or a chain read past them.
-// >>> v22 pieces (generated from the difference to HEAD, not edited by hand)
-const editedFiles={
- "wallet.tsx":[
-  ["  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\n// v22 (2026-10-17, live-site review): every send except genesis listing first\n// settles the saved transaction of this tab. While it has no receipt and its\n// nonce has not passed, the press is refused with its hash and these words.\nexport const PENDING_WAIT =\n  \"Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.\";\n// Once it is found mined or replaced, the record goes, the vault is read again\n// and that press is refused once, so the result is seen before any retry.\nexport const PENDING_FINISHED =\n  \"The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.\";\nclass PendingTransaction extends Error {\n  constructor(\n    message: string,\n    public hash?: Hex,\n  ) {\n    super(message);\n  }\n}\ntype PendingTx = {\n",
-   "  \"The earlier transaction is finished (confirmed or replaced). Press Resume listing.\";\ntype PendingTx = {\n"],
-  ["  }\n  // v22: settles the saved transaction of this tab before a send, whichever\n  // account sent it (listGenesis keeps listingPending and its Resume buttons).\n  // Mined or replaced: a receipt, the nonce the node reports for the hash\n  // passed, or the count saved before the prompt passed while nothing is\n  // queued (listingPending's second guard). Fail closed: only the node's \"not\n  // found\" answer to a hash lookup (viem's TransactionReceiptNotFoundError or\n  // TransactionNotFoundError) counts as absent; any other error of the two\n  // lookups refuses the press with the pending words and the hash, and an\n  // error of either count read propagates to send()'s catch; the record stays.\n  async function sendPending(key: string) {\n    const pending = pendingRef.current;\n    if (!pending) return;\n    const absent = (name: string) => (e: unknown) => {\n      if ((e as { name?: string } | null)?.name === name) return undefined;\n      throw new PendingTransaction(PENDING_WAIT, pending.hash);\n    };\n    let finished = !!(await client\n      .getTransactionReceipt({ hash: pending.hash })\n      .catch(absent(\"TransactionReceiptNotFoundError\")));\n    if (!finished) {\n      const [transaction, latest, queued] = await Promise.all([\n        client\n          .getTransaction({ hash: pending.hash })\n          .catch(absent(\"TransactionNotFoundError\")),\n        client.getTransactionCount({\n          address: pending.account,\n          blockTag: \"latest\",\n        }),\n        client.getTransactionCount({\n          address: pending.account,\n          blockTag: \"pending\",\n        }),\n      ]);\n      finished =\n        transaction !== undefined\n          ? latest > transaction.nonce\n          : pending.nonce !== undefined &&\n            latest > pending.nonce &&\n            latest === queued;\n    }\n    if (!finished) throw new PendingTransaction(PENDING_WAIT, pending.hash);\n    pendingRef.current = undefined;\n    try {\n      sessionStorage.removeItem(pendingKey);\n    } catch {\n      /* storage unavailable */\n    }\n    void refresh().catch(() => {});\n    throw new PendingTransaction(PENDING_FINISHED, pending.hash);\n  }\n  const [account, setAccount] = useState<Address>();\n",
-   "  }\n  const [account, setAccount] = useState<Address>();\n"],
-  ["      if (s.functionName === \"listGenesis\") await listingPending();\n      else await sendPending(key);\n      await verifyNetwork();\n",
-   "      if (s.functionName === \"listGenesis\") await listingPending();\n      await verifyNetwork();\n"],
-  ["      }\n      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n      const message = await explainAction(e, s);\n",
-   "      }\n      const message = await explainAction(e, s);\n"]
- ],
- "Flows.tsx":[
-  ["                      }\n                      // v22: the fee shown must be the fee charged; a fee that\n                      // changed since the preview needs a new preview.\n                      const [, fee] = await read(\n                        vault(\"previewDeposit\", [quote.tokens, quote.amounts]),\n                      );\n                      if (fee !== quote.fee)\n                        throw new InputError(\"Deposit changed. Preview again.\");\n                      if (revision !== sequence.current)\n",
-   "                      }\n                      if (revision !== sequence.current)\n"],
-  ["                    throw new InputError(\"Your BASK balance is too low.\");\n                  const [amounts, fee] = await read(\n                    vault(\"previewRedeem\", [quote.shares]),\n",
-   "                    throw new InputError(\"Your BASK balance is too low.\");\n                  const [amounts] = await read(\n                    vault(\"previewRedeem\", [quote.shares]),\n"],
-  ["                    throw new InputError(\"Redemption changed. Preview again.\");\n                  // v22: the minimums are 0.1% under the preview on screen; a\n                  // fresh estimate under them, or another fee, needs a new one.\n                  if (\n                    fee !== quote.fee ||\n                    amounts.length !== quote.amounts.length ||\n                    amounts.some(\n                      (a: bigint, i: number) =>\n                        a < (quote.amounts[i] * 999n) / 1000n,\n                    )\n                  )\n                    throw new InputError(\"Redemption changed. Preview again.\");\n                  return vault(\n                    \"redeem\",\n                    redeemArgs(quote.shares, receiver, quote.amounts),\n                  );\n",
-   "                    throw new InputError(\"Redemption changed. Preview again.\");\n                  return vault(\n                    \"redeem\",\n                    redeemArgs(quote.shares, receiver, amounts),\n                  );\n"]
- ],
- "Owner.tsx":[
-  ["        </div>\n        <div>\n          <strong>Fee recipient</strong>\n          {s.loading ? (\n            \"Reading...\"\n          ) : s.globals.feeRecipient === undefined ? (\n            <span>unreadable</span>\n          ) : same(s.globals.feeRecipient, zeroAddress) ? (\n            <span>None</span>\n          ) : (\n            <Addr value={s.globals.feeRecipient} />\n          )}\n        </div>\n      </div>\n",
-   "        </div>\n      </div>\n"]
- ]
-};
-// <<< v22 pieces
-assert.deepEqual(Object.keys(editedFiles),[
- "wallet.tsx",
- "Flows.tsx",
- "Owner.tsx"
-],'the v22 files');
+
+assert.deepEqual(Object.keys(editedFiles),["main.tsx","components.tsx","wallet.tsx","chain.ts","Docs.tsx","tokenomicsData.ts","Tokenomics.tsx"],'exact ITEM editable existing files');
 const putBack=(text,pieces,what)=>{for(const [n,o] of pieces){assert.equal(text.split(n).length,2,what+': expected once: '+n);text=text.split(n).join(o);}return text;};
-for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(read('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
+for(const [f,edits] of Object.entries(editedFiles)) assert.equal(putBack(rawRead('web/src/'+f),edits,f),baseline('web/src/'+f),f+' changed beyond the documented pieces');
 // Calls that build, encode, simulate or send a transaction (or parse its arguments) or read the chain.
 const names=new Set(['vault','token','feed','read','many','simulate','verifyNetwork','encode','depositArgs','redeemArgs','w.send','p.request',
  'safe','proposalSpec','proposalAction','settingValues','poolValues','parseLaunch','encodeFunctionData','client.call','client.estimateGas',
@@ -155,67 +271,25 @@ function difference(a,b){
 }
 // Guarded calls: the exact, documented differences from HEAD, each added call with the place it must sit in
 // (everything equals HEAD, in order and place). The existing receipt read and display-only amount parser are
-// already part of HEAD (v18's addToWallet() calls included). v22's added guarded calls (the settle's four client reads, the Deposit press's previewDeposit read and its encoder, the Redeem floors built from quote.amounts) are written out below, each in its place.
-const expected={
- "wallet.tsx": {
-  "removed": [],
-  "added": [
-   [
-    "client .getTransactionReceipt({ hash: pending.hash })",
-    "useWallet > sendPending"
-   ],
-   [
-    "client .getTransaction({ hash: pending.hash })",
-    "useWallet > sendPending"
-   ],
-   [
-    "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
-    "useWallet > sendPending"
-   ],
-   [
-    "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
-    "useWallet > sendPending"
-   ]
-  ]
- },
- "Flows.tsx": {
-  "removed": [
-   "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
-   "redeemArgs(quote.shares, receiver, amounts)"
-  ],
-  "added": [
-   [
-    "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
-    "DepositPage, in getSpec"
-   ],
-   [
-    "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
-    "DepositPage, in getSpec"
-   ],
-   [
-    "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
-    "RedeemPage, in getSpec"
-   ],
-   [
-    "redeemArgs(quote.shares, receiver, quote.amounts)",
-    "RedeemPage, in getSpec"
-   ]
-  ]
- }
-};
+// already part of HEAD (v18's addToWallet() calls included). v20 adds no guarded call, wallet request or chain read.
+const expected={};
 // Action attributes: the exact differences from HEAD, in page order, each [element, attribute, why]. Everything else
 // equals HEAD in order, text for text. None of them builds or starts a transaction (no onSubmit, getSpec, build or
 // claim) and none contains a guarded call (both asserted below). The list between the marker lines was generated
 // from the difference to HEAD, as the pieces were; each why was written by hand, and an entry without one fails.
-// >>> v22 attributes (generated from the difference to HEAD; each why written by hand)
+// >>> item-site attributes (generated from the difference to HEAD; each why written by hand)
 const attributeChanges={
- "Owner.tsx":{
+ "main.tsx":{
   removed:[],
   added:[
-   ["Addr","value={s.globals.feeRecipient}",
-    "v22, the owner (2026-10-17, live-site review, Codex F6): the Owner page's roles panel gains a fourth row, Fee recipient, showing the vault's current feeRecipient() from the snapshot's globals (already read since v12), None while it is zero, unreadable when the read failed; a display-only Addr, no read, check or send."]]}
+   ["EarnPage","snapshot={data}",
+    "Owner correction: value earned BASK from the existing vault snapshot without adding reads or changing Vault behavior."],
+   ["EarnPage","wallet={wallet}",
+    "ITEM SPEC 3/5/6: exact approved page routing or ITEM transaction isolation; raw source independently pinned."],
+   ["TransparencyPage","snapshot={data}",
+    "ITEM SPEC 3/5/6: exact approved page routing or ITEM transaction isolation; raw source independently pinned."]]}
 };
-// <<< v22 attributes
+// <<< item-site attributes
 // Every call expression: HEAD's calls, in order and place, are all still there, except the removed ones listed here;
 // a call that only gained the documented piece inside it (put back before comparing) counts as kept. Every added
 // call, including display helpers and effects, is independently pinned below, not only the guarded calls.
@@ -228,66 +302,9 @@ const attributeChanges={
 // The guarded startup eth_accounts answer is part of HEAD and must remain exact.
 const restoreAccountReply=(x)=>x.text;
 // Reviewed v16 differences in calls and watched-name uses. Independent of the generated pieces.
-// v22: the Redeem floors call changes its argument (a documented removed call and its replacement); the new uses of watched names (client in sendPending, read and vault in the Deposit press, quote.amounts in the Redeem floors) are written out below.
-const callChanges={
- "wallet.tsx": {
-  "why": "v22: sendPending reads the saved record and the public client (receipt, transaction, two nonce counts) to settle it; nothing else of HEAD moves.",
-  "pieces": [],
-  "removed": [],
-  "uses": [
-   [
-    "pendingRef.current",
-    "useWallet > sendPending"
-   ],
-   [
-    "client .getTransactionReceipt({ hash: pending.hash }) .catch(absent(\"TransactionReceiptNotFoundError\"))",
-    "useWallet > sendPending"
-   ],
-   [
-    "client .getTransaction({ hash: pending.hash }) .catch(absent(\"TransactionNotFoundError\"))",
-    "useWallet > sendPending"
-   ],
-   [
-    "client.getTransactionCount({ address: pending.account, blockTag: \"latest\", })",
-    "useWallet > sendPending"
-   ],
-   [
-    "client.getTransactionCount({ address: pending.account, blockTag: \"pending\", })",
-    "useWallet > sendPending"
-   ],
-   [
-    "pendingRef.current",
-    "useWallet > sendPending"
-   ]
-  ]
- },
- "Flows.tsx": {
-  "why": "v22: the Redeem floors are built from the preview on screen (quote.amounts) after the fresh estimate was compared with it; the Deposit press re-reads previewDeposit for its fee.",
-  "pieces": [],
-  "removed": [
-   "vault(\"redeem\", redeemArgs(quote.shares, receiver, amounts))",
-   "redeemArgs(quote.shares, receiver, amounts)"
-  ],
-  "uses": [
-   [
-    "read(vault(\"previewDeposit\", [quote.tokens, quote.amounts]))",
-    "DepositPage, in getSpec"
-   ],
-   [
-    "vault(\"previewDeposit\", [quote.tokens, quote.amounts])",
-    "DepositPage, in getSpec"
-   ],
-   [
-    "vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts))",
-    "RedeemPage, in getSpec"
-   ],
-   [
-    "redeemArgs(quote.shares, receiver, quote.amounts)",
-    "RedeemPage, in getSpec"
-   ]
-  ]
- }
-};
+// ITEM: in the restored text no call of HEAD is removed and no watched name gains a use; the ITEM additions are bound
+// by their raw source pins above and the ITEM gate below.
+const callChanges={};
 const WATCHED=[...names].filter(x=>!x.includes('.')).concat('client');
 // The state setters and refs a file declares: const [x, setX] = useState(...) gives setX, const r = useRef(...) gives r.
 function stateNames(text,file){
@@ -338,16 +355,7 @@ function localDeclarations(file,text,fn,list){
 const sources=git(['ls-tree','-r','--name-only','HEAD','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
 assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
-assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or a documented v22 file');
-// v22: the attributes that build a transaction (the Deposit and Redeem getSpec) carry the documented Flows.tsx pieces;
-// they are compared with HEAD once those pieces, printed as the scan prints them, are put back. Each printed piece must
-// be used exactly once over all attributes of the file. No other attribute carries a piece.
-const attributePieces={"Flows.tsx":[
- ['} const [, fee] = await read(vault("previewDeposit", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError("Deposit changed. Preview again."); if (revision !== sequence.current)','} if (revision !== sequence.current)'],
- ['const [amounts, fee] = await read(vault("previewRedeem", [quote.shares])); if (revision !== seq.current) throw new InputError("Redemption changed. Preview again."); if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, quote.amounts));','const [amounts] = await read(vault("previewRedeem", [quote.shares])); if (revision !== seq.current) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, amounts));'],
-]};
-const attributePieceUses={};
-const restoreAttribute=(f,a)=>{if(!TX_ATTRIBUTES.has(a.name))return a.text;let t=a.text;(attributePieces[f]??[]).forEach(([n,h],i)=>{const parts=t.split(n);assert.ok(parts.length<=2,f+': an attribute piece occurs twice in one attribute: '+n);if(parts.length===2){(attributePieceUses[f]??=[])[i]=(attributePieceUses[f]?.[i]??0)+1;t=parts.join(h);}});return t;};
+assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or an ITEM file with documented pieces (v22\'s three files are HEAD\'s own)');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
 for(const f of sources){
  const old=calls(baseline('web/src/'+f),f),now=calls(read('web/src/'+f),f),c=callChanges[f]??{pieces:[],removed:[],uses:[]},used=c.pieces.map(()=>0);
@@ -356,7 +364,7 @@ for(const f of sources){
  const restored=now.all.map(x=>restore(x.text));
  const watched=new Set([...WATCHED,...stateNames(baseline('web/src/'+f),f)]),usesOld=usesOf(baseline('web/src/'+f),f,watched),usesNow=usesOf(read('web/src/'+f),f,watched),uses=difference(usesOld.map(x=>x.text+' @ '+x.place),usesNow.map(x=>restore(x.text)+' @ '+x.place));
  // Two calls are the same when their text and their place are; two attributes when their element and their text are.
- const attributes=difference(old.attributes.map(a=>a.tag+' '+a.text),now.attributes.map(a=>a.tag+' '+restoreAttribute(f,a))),guarded=difference(old.found.map(x=>x.text+' @ '+x.place),now.found.map(x=>restoreAccountReply(x,f)+' @ '+x.place)),all=difference(old.all.map(x=>x.text+' @ '+x.place),restored.map((x,i)=>x+' @ '+now.all[i].place));
+ const attributes=difference(old.attributes.map(a=>a.tag+' '+a.text),now.attributes.map(a=>a.tag+' '+a.text)),guarded=difference(old.found.map(x=>x.text+' @ '+x.place),now.found.map(x=>restoreAccountReply(x,f)+' @ '+x.place)),all=difference(old.all.map(x=>x.text+' @ '+x.place),restored.map((x,i)=>x+' @ '+now.all[i].place));
   scans[f]={old,now,c,used,attributes,guarded,all,usesOld,usesNow,uses};
  if(attributes.removed.length+attributes.added.length)facts.attributes[f]={removed:attributes.removed.map(i=>[old.attributes[i].tag,old.attributes[i].text]),added:attributes.added.map(i=>[now.attributes[i].tag,now.attributes[i].text])};
  if(guarded.removed.length+guarded.added.length)facts.guarded[f]={removed:guarded.removed.map(i=>old.found[i].text),added:guarded.added.map(i=>[now.found[i].text,now.found[i].place])};
@@ -365,24 +373,41 @@ for(const f of sources){
 // For the tool that generated the two lists between marker lines (it is not part of this tree): when BASKET_GATE_FACTS
 // names a file, the differences computed from this tree are written to it before they are checked. Nothing is
 // skipped or loosened by it.
+for(const f of Object.keys(editedFiles)){const h=calls(baseline('web/src/'+f),f),n=calls(rawRead('web/src/'+f),f),d=difference(h.attributes.map(a=>a.tag+' '+a.text),n.attributes.map(a=>a.tag+' '+a.text));if(d.removed.length+d.added.length)facts.attributes[f]={removed:d.removed.map(i=>[h.attributes[i].tag,h.attributes[i].text]),added:d.added.map(i=>[n.attributes[i].tag,n.attributes[i].text])};}
 if(process.env.BASKET_GATE_FACTS)fs.writeFileSync(process.env.BASKET_GATE_FACTS,JSON.stringify(facts,null,1)+'\n');
-for(const [f,pieces] of Object.entries(attributePieces))pieces.forEach((p,i)=>assert.equal(attributePieceUses[f]?.[i]??0,1,f+': the attribute piece is used exactly once over its attributes: '+p[0].slice(0,80)));
+for(const [f,a] of Object.entries(facts.attributes)){const approved=attributeChanges[f]??{removed:[],added:[]};for(const kind of ['removed','added']){assert.deepEqual(a[kind],approved[kind].map(x=>x.slice(0,2)),f+': exact approved raw attribute changes');for(const x of approved[kind])assert.ok(typeof x[2]==='string'&&x[2].trim().length>20,f+': every ITEM attribute change needs its SPEC reason');}}
 // Hand-reviewed complete ordered additions. SHA-256 binds JSON.stringify([[full printed call, place], ...]); the
 // ordered callee names make the list readable without repeating large nested JSX bodies. No regeneration block
 // includes these pins. Changing a callback, receiver, argument, location, order or count changes the digest.
 // >>> reviewed calls (manual; never refreshed by put-pieces)
 const addedCallPins={
+ "main.tsx": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
+ },
+ "components.tsx": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
+ },
  "wallet.tsx": {
-  "callees": "(expression) catch getTransactionReceipt absent all catch getTransaction absent getTransactionCount getTransactionCount removeItem catch refresh sendPending report",
-  "sha256": "88c506b1a61cee524cb639339aa5544bddcd6d2b1ade989b4a576c7030403479"
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
  },
- "Flows.tsx": {
-  "callees": "read vault some vault redeemArgs",
-  "sha256": "cfcc36196b942db1408478afc506239e72adc2bfd2b2d0272dbb48787550ac66"
+ "chain.ts": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
  },
- "Owner.tsx": {
-  "callees": "same",
-  "sha256": "003598b1cc1bd05f81547de19ff078e021d708fd8b5a8e19706c79fe8e82f436"
+ "Docs.tsx": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
+ },
+ "tokenomicsData.ts": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
+ },
+ "Tokenomics.tsx": {
+  "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "callees": ""
  }
 };
 // <<< reviewed calls
@@ -474,7 +499,7 @@ for(const f of Object.keys(editedFiles)){
 }
 const counts={};
 for(const f of sources){
- const {old,now,c,used,attributes,guarded,all,usesOld,usesNow,uses}=scans[f],e=expected[f]??{removed:[],added:[]},a=attributeChanges[f]??{removed:[],added:[]};
+ const {old,now,c,used,attributes,guarded,all,usesOld,usesNow,uses}=scans[f],e=expected[f]??{removed:[],added:[]},a={removed:[],added:[]};
  // Guarded calls: equal HEAD in order and place, apart from the documented ones, each added one in its documented place.
  assert.deepEqual({removed:guarded.removed.map(i=>old.found[i].text),added:guarded.added.map(i=>[now.found[i].text,now.found[i].place])},{removed:e.removed,added:e.added},f+' changed calldata/read/check/send call expressions beyond the documented ones');
  // Action attributes: equal HEAD in order, apart from the documented ones.
@@ -485,9 +510,9 @@ for(const f of sources){
   assert.deepEqual(list[i].guarded,[],f+' '+list[i].where+': a guarded call inside an added or removed attribute: '+list[i].text);
  }
  // The attributes that build or start a transaction, spelled out: the same texts as at HEAD, in order.
- assert.deepEqual(now.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>restoreAttribute(f,x)),old.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),f+': an onSubmit, getSpec, build or claim attribute differs from HEAD beyond the documented v22 pieces');
+ assert.deepEqual(now.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),old.attributes.filter(x=>TX_ATTRIBUTES.has(x.name)).map(x=>x.text),f+': an onSubmit, getSpec, build or claim attribute differs from HEAD');
  // No guarded call moved into or out of an attribute: inside the attributes they are HEAD's, in order.
- assert.deepEqual(now.attributes.flatMap(x=>x.guarded).filter(t=>!e.added.some(a=>a[0]===t)),old.attributes.flatMap(x=>x.guarded).filter(t=>!e.removed.includes(t)),f+': the guarded calls inside action attributes differ from HEAD beyond the documented ones');
+ assert.deepEqual(now.attributes.flatMap(x=>x.guarded),old.attributes.flatMap(x=>x.guarded),f+': the guarded calls inside action attributes differ from HEAD');
  // Every call expression (see callChanges).
  assert.deepEqual(all.removed.map(i=>old.all[i].text),c.removed,f+': a call of HEAD is gone or moved beyond the documented ones');
  c.pieces.forEach(([n],i)=>assert.ok(used[i]>0,f+': the call piece is in no call: '+n));
@@ -528,7 +553,7 @@ function sendsOf(text,file){
  })(tree);
  return out;
 }
-// v22 adds no provider use: every file's list equals HEAD's (sendPending reads the chain through the public client only).
+// v20 adds no provider use: every file's list equals HEAD's.
 const sendAdded={};
 const NO_SEND=['Vault.tsx','Scenery.tsx','main.tsx','Docs.tsx'],sendUses={};
 for(const f of sources){
@@ -570,7 +595,8 @@ function loadsOf(text,file){
  })(tree);
  return out;
 }
-// v22 adds, removes and moves nothing a page loads or opens: every file's list equals HEAD's, in order and in place.
+// v20 adds, removes and moves nothing a page loads or opens: every file's list equals HEAD's (v19's Losses link move
+// and Docs link included), in order and in place.
 const loadDisplayAdded={};
 const loadDisplayRemoved={};
 const loadUses={};
@@ -588,8 +614,11 @@ for(const f of sources){
 }
 // v12: the wallet and RPC methods the pages name. Every `method` given as a property (or assigned) in web/src, in order
 // with its place: exactly HEAD's list. Local-only Disconnect names no new wallet or RPC method.
-// v22 names no new wallet or RPC method in any file.
+// v20 names no new wallet or RPC method in any file. 2026-10-16 Add liquidity build:
+// the ITEM-only client.getBalance({ address: account }) adds eth_getBalance, pinned below;
+// no existing page or raw provider method changes.
 const methodsAdded={};
+const itemMethodsAdded=[{method:'eth_getBalance',file:'itemReads.ts',callee:'client.getBalance',scope:'readItemFigures',when:'Earn open, all launch slots filled, connected account only'}];
 function methodsOf(text,file){
  const tree=parse(text,file),print=printerOf(tree),out=[],key=n=>ts.isIdentifier(n)||ts.isStringLiteralLike(n)?n.text:ts.isComputedPropertyName(n)?lit(n.expression):undefined;
  const put=(n,value)=>out.push({method:value?lit(value)??'not a plain string: '+print(value):'not a plain string: shorthand',place:place(n,tree)});
@@ -620,7 +649,7 @@ function storageOf(text,file){
  (function v(n){if(ts.isIdentifier(n)&&STORE.has(n.text))out.push({text:print(top(n)),place:place(n,tree)});ts.forEachChild(n,v);})(tree);
  return out;
 }
-const storageAdded={"wallet.tsx":[["sessionStorage.removeItem(pendingKey)","useWallet > sendPending"]]};
+const storageAdded={};
 for(const f of sources){
  const h=storageOf(baseline('web/src/'+f),f),n=storageOf(read('web/src/'+f),f),d=difference(h.map(x=>x.text+' @ '+x.place),n.map(x=>x.text+' @ '+x.place));
  assert.deepEqual({removed:d.removed.map(i=>h[i].text),added:d.added.map(i=>[n[i].text,n[i].place])},{removed:[],added:storageAdded[f]??[]},f+': browser storage is used differently from HEAD beyond the documented flag');
@@ -652,19 +681,13 @@ function sendParts(text){
  return {head:text.slice(f.node.getStart(f.tree),wait[0].end),tail:text.slice(wait[0].end,f.node.end)};
 }
 const headSend=sendParts(baseline('web/src/wallet.tsx')),nowSend=sendParts(read('web/src/wallet.tsx'));
-// v22: one documented piece in the head (the settle of the saved transaction before verifyNetwork, for every send
-// except genesis listing); the head equals HEAD byte for byte once it is put back.
-const SEND_HEAD_PIECES=[
- ['      if (s.functionName === "listGenesis") await listingPending();\n      else await sendPending(key);\n','      if (s.functionName === "listGenesis") await listingPending();\n'],
-];
-assert.equal(putBack(nowSend.head,SEND_HEAD_PIECES,'wallet.tsx send() head'),headSend.head,'wallet.tsx send(): head byte-identical to HEAD once the documented piece is put back');
-// v22: one documented piece in the tail (the PendingTransaction branch: the message with its hash, then the refusal);
-// the mined-hash statements are pinned by sendTailWrites below as well.
+assert.equal(nowSend.head,headSend.head,'wallet.tsx send(): byte-identical head through receipt wait');
+// v16 does not touch wallet.tsx: send() is byte-identical to HEAD, head and tail (no piece); the mined-hash
+// statements are pinned by sendTailWrites below as well.
 const SEND_TAIL_PIECES=[
- ['      }\n      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n      const message = await explainAction(e, s);','      }\n      const message = await explainAction(e, s);'],
 ];
 assert.equal(putBack(nowSend.tail,SEND_TAIL_PIECES,'wallet.tsx send() tail'),headSend.tail,'wallet.tsx send(): tail byte-identical to HEAD');
-pinnedFunctions['wallet.tsx send()']={headPieces:SEND_HEAD_PIECES.map(([now,head])=>({now,head})),headBytes:Buffer.byteLength(nowSend.head,'utf8'),headSha256:sha256(nowSend.head),tailPieces:SEND_TAIL_PIECES.map(([now,head])=>({now,head}))};
+pinnedFunctions['wallet.tsx send()']={headEqualToHead:true,headBytes:Buffer.byteLength(nowSend.head,'utf8'),headSha256:sha256(nowSend.head),tailPieces:SEND_TAIL_PIECES.map(([now,head])=>({now,head}))};
 // An explicit ordered pin of the changed transaction-status statements, independent of the piece list.
 const sendTailWrites=[];
 {const tree=parse(read('web/src/wallet.tsx'),'wallet.tsx'),print=printerOf(tree);
@@ -711,7 +734,7 @@ function hookReturn(text){
  assert.equal(returns.length,1,'wallet.tsx useWallet: one return');
  return print(returns[0]);
 }
-// v22: the hook's return list is HEAD's (sendPending is called inside send() only and is not returned), pinned here printed without
+// v20: the hook's return list is HEAD's (with addToWallet after switchChain since v18), pinned here printed without
 // comments; nothing in the list may change.
 const HOOK_RETURN_HEAD="return { account, connecting, progress, report, fail, notice, listingPending, waitPending, chainId, message, hash, busy, confirmed, connect, disconnect, switchChain, addToWallet, send, setMessage, };";
 assert.equal(hookReturn(baseline('web/src/wallet.tsx')),HOOK_RETURN_HEAD,'wallet.tsx: HEAD\'s hook return list as pinned');
@@ -747,19 +770,8 @@ assert.deepEqual(depositStateUses,[['Flows.tsx','DepositPage','<DepositState sna
 protectedCode.depositSign={rawPins:depositSignPins,uses:depositStateUses};
 rawProtected('Flows approveAll','Flows.tsx',n=>ts.isFunctionDeclaration(n)&&n.name?.text==='approveAll');
 rawProtected('Flows onSubmit','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='onSubmit',2);
-// v22: the three getSpec attributes and the three TxButton elements equal HEAD byte for byte once the generated
-// Flows.tsx pieces are put back; each raw piece is used exactly once over the three texts.
-function rawProtectedWithPieces(label,file,select,count,pieces){
- const list=text=>{const tree=parse(text,file),found=[];(function visit(n){if(select(n,tree))found.push(text.slice(n.getStart(tree),n.end));ts.forEachChild(n,visit);})(tree);return found;};
- const h=list(baseline('web/src/'+file)),n=list(read('web/src/'+file)),used=pieces.map(()=>0);
- assert.equal(h.length,count,label+': protected baseline count');
- const restored=n.map(text=>{pieces.forEach(([now,head],i)=>{const parts=text.split(now);assert.ok(parts.length<=2,label+': a piece occurs twice in one text');if(parts.length===2){used[i]++;text=parts.join(head);}});return text;});
- pieces.forEach((p,i)=>assert.equal(used[i],1,label+': the raw piece is used exactly once: '+p[0].slice(0,60)));
- assert.deepEqual(restored,h,label+': bytes differ from HEAD beyond the documented pieces');
- protectedCode[label]=h.map(x=>({bytes:Buffer.byteLength(x,'utf8'),sha256:sha256(x)}));
-}
-rawProtectedWithPieces('Flows getSpec','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='getSpec',3,editedFiles['Flows.tsx']);
-rawProtectedWithPieces('Flows transaction buttons','Flows.tsx',n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText()==='TxButton',3,editedFiles['Flows.tsx']);
+rawProtected('Flows getSpec','Flows.tsx',n=>ts.isJsxAttribute(n)&&n.name.getText()==='getSpec',3);
+rawProtected('Flows transaction buttons','Flows.tsx',n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText()==='TxButton',3);
 rawProtected('Claims Claim all handler','Flows.tsx',(n,t)=>ts.isJsxAttribute(n)&&n.name.getText(t)==='onClick'&&n.getText(t).includes('claimable.slice'));
 const effect=(component,needle)=>(n,t)=>ts.isCallExpression(n)&&['useEffect','useLayoutEffect'].includes(n.expression.getText(t))&&place(n,t)===component&&n.getText(t).includes(needle);
 rawProtected('Claims owed read','Flows.tsx',effect('Claims','vault("owed"'));
@@ -834,15 +846,15 @@ for(const f of Object.keys(editedFiles)){
  assert.deepEqual(n,h,f+': a name used by the transaction code is declared around it differently from HEAD');
  transactionCode[f]={pieces:n.count,namesDeclaredAroundThem:n.names};
 }
-// v22 adds three names at the top of wallet.tsx: the two status constants and the PendingTransaction class.
+// ITEM: the restored text adds no name at the top of a file (the ITEM imports sit inside the pieces and the raw pins).
 const namesAdded={
- "wallet.tsx": {
-  "PENDING_WAIT": "PENDING_WAIT = \"Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.\"",
-  "PENDING_FINISHED": "PENDING_FINISHED = \"The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.\"",
-  "PendingTransaction": "class"
- },
- "Flows.tsx": {},
- "Owner.tsx": {}
+ "main.tsx": {},
+ "components.tsx": {},
+ "wallet.tsx": {},
+ "chain.ts": {},
+ "Docs.tsx": {},
+ "tokenomicsData.ts": {},
+ "Tokenomics.tsx": {}
 };
 // v16: the exact declarations that change at the top of the two files (two imports leave Tokenomics.tsx; four data
 // declarations of tokenomicsData.ts carry the reviewed words); never generated by put-pieces.
@@ -873,26 +885,6 @@ for(const f of Object.keys(editedFiles)){
 }
 // The whole-source digest is additional to the specific structural assertions above.
 for(const [f,digest] of Object.entries(reviewedSourcePins))assert.equal(sha256(read('web/src/'+f)),digest,f+': reviewed source differs; regeneration does not authorize source edits');
-// v22 semantic pins (hand-written; never regenerated). The settle of the saved transaction: its exact text; its call
-// before verifyNetwork for every send except genesis listing; the pending branch in send()'s tail. The two presses:
-// their exact attribute texts (the Deposit press re-reads previewDeposit and refuses a changed fee before the spec; the
-// Redeem press compares the fresh estimate with the preview and builds the floors from quote.amounts). The Owner roles
-// row. The two status constants.
-const SEND_PENDING_TEXT="async function sendPending(key: string) { const pending = pendingRef.current; if (!pending) return; const absent = (name: string) => (e: unknown) => { if ((e as { name?: string; } | null)?.name === name) return undefined; throw new PendingTransaction(PENDING_WAIT, pending.hash); }; let finished = !!(await client .getTransactionReceipt({ hash: pending.hash }) .catch(absent(\"TransactionReceiptNotFoundError\"))); if (!finished) { const [transaction, latest, queued] = await Promise.all([ client .getTransaction({ hash: pending.hash }) .catch(absent(\"TransactionNotFoundError\")), client.getTransactionCount({ address: pending.account, blockTag: \"latest\", }), client.getTransactionCount({ address: pending.account, blockTag: \"pending\", }), ]); finished = transaction !== undefined ? latest > transaction.nonce : pending.nonce !== undefined && latest > pending.nonce && latest === queued; } if (!finished) throw new PendingTransaction(PENDING_WAIT, pending.hash); pendingRef.current = undefined; try { sessionStorage.removeItem(pendingKey); } catch { } void refresh().catch(() => { }); throw new PendingTransaction(PENDING_FINISHED, pending.hash); }";
-assert.deepEqual(functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','sendPending'),[SEND_PENDING_TEXT],'wallet.tsx sendPending() differs from the pinned v22 text');
-assert.equal(nowSend.head.split('      if (s.functionName === "listGenesis") await listingPending();\n      else await sendPending(key);\n').length,2,'wallet.tsx send(): every send except genesis listing settles the saved transaction first, exactly once');
-assert.ok(nowSend.head.indexOf('else await sendPending(key);')<nowSend.head.indexOf('await verifyNetwork();'),'wallet.tsx send(): the settle precedes verifyNetwork and simulate');
-assert.equal(nowSend.tail.split('      if (e instanceof PendingTransaction) {\n        report(key, { message: e.message, hash: e.hash });\n        throw new InputError(e.message);\n      }\n').length,2,'wallet.tsx send(): the pending branch reports the hash and refuses, exactly once');
-assert.ok(!functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','listingPending')[0].includes('sendPending')&&!functionsNamed(read('web/src/wallet.tsx'),'wallet.tsx','waitPending')[0].includes('sendPending'),'wallet.tsx: the listing flow does not use the new settle');
-const DEPOSIT_GETSPEC="getSpec={async () => { const revision = sequence.current; for (let i = 0; i < quote.tokens.length; i++) { const b = await read(token(quote.tokens[i], \"balanceOf\", [w.account])); if (b < quote.amounts[i]) throw new InputError(\"Your stock balance is too low. Preview again.\"); } const [, fee] = await read(vault(\"previewDeposit\", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError(\"Deposit changed. Preview again.\"); if (revision !== sequence.current) throw new InputError(\"Deposit changed. Preview again.\"); return vault(\"deposit\", depositArgs(quote.tokens, quote.amounts, w.account!, quote.shares)); }}";
-const REDEEM_GETSPEC="getSpec={async () => { const revision = seq.current; const receiver = recipient(to); const b = await read(vault(\"balanceOf\", [w.account])); if (b < quote.shares) throw new InputError(\"Your BASK balance is too low.\"); const [amounts, fee] = await read(vault(\"previewRedeem\", [quote.shares])); if (revision !== seq.current) throw new InputError(\"Redemption changed. Preview again.\"); if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError(\"Redemption changed. Preview again.\"); return vault(\"redeem\", redeemArgs(quote.shares, receiver, quote.amounts)); }}";
-{const specs=scans['Flows.tsx'].now.attributes.filter(x=>x.name==='getSpec').map(x=>x.text);
- assert.equal(specs.filter(t=>t===DEPOSIT_GETSPEC).length,1,'Flows.tsx: the Deposit press re-reads previewDeposit and refuses a changed fee before the spec, as pinned');
- assert.equal(specs.filter(t=>t===REDEEM_GETSPEC).length,1,'Flows.tsx: the Redeem press compares the fresh estimate with the preview and builds the floors from quote.amounts, as pinned');
- assert.ok(DEPOSIT_GETSPEC.includes('const [, fee] = await read(vault("previewDeposit", [quote.tokens, quote.amounts])); if (fee !== quote.fee) throw new InputError("Deposit changed. Preview again."); if (revision !== sequence.current)'),'Flows.tsx: the Deposit fee comparison sits before the revision check and the spec');
- assert.ok(REDEEM_GETSPEC.includes('if (fee !== quote.fee || amounts.length !== quote.amounts.length || amounts.some((a: bigint, i: number) => a < (quote.amounts[i] * 999n) / 1000n)) throw new InputError("Redemption changed. Preview again."); return vault("redeem", redeemArgs(quote.shares, receiver, quote.amounts)); }}'),'Flows.tsx: the Redeem comparison (fee, leg count, every leg within 0.1%) precedes floors built from quote.amounts');}
-assert.match(read('web/src/Owner.tsx'),/<strong>Fee recipient<\/strong>[\s\S]{0,400}<Addr value=\{s\.globals\.feeRecipient\} \/>/,'Owner.tsx: the roles panel shows the current fee recipient');
-for(const [name,value] of [['PENDING_WAIT','Receipt timed out or unreadable. This transaction may still be pending. Wait for its receipt before retrying.'],['PENDING_FINISHED','The earlier transaction is finished (confirmed or replaced). Refresh the vault before retrying.']])assert.ok(read('web/src/wallet.tsx').includes('export const '+name+' =\n  '+JSON.stringify(value)+';'),'wallet.tsx: '+name+' as pinned');
 // Differential encoding: HEAD and current governance/model/chain bundled side by side. For the same inputs the
 // calldata must be byte-identical whenever the current page accepts; v12 adds no refusal, never accepts what HEAD
 // refused, and refuses with HEAD's words (model.ts, chain.ts and governance.ts are byte-identical to HEAD in v12).
@@ -1058,10 +1050,245 @@ assert.ok(tally.sameCalldata>400,'corpus size '+JSON.stringify(tally));
 assert.equal(tally.sameCalldata,496,'v12 retains all 496 accepted differential cases');
 assert.equal(tally.bothRefused,1773,'v12 retains all 1773 refused differential cases');
 fs.rmSync(scratch,{recursive:true,force:true});
+// 2026-10-16 Add liquidity build: native value belongs only to the ITEM ETH add.
+// These files also contain display/read values, so inspect their actual send builders, not unrelated JSX values.
+const vaultNoValueBuilders={};
+const vaultWriteNames=new Set(JSON.parse(rawRead('web/src/vault.abi.json')).filter(entry=>entry.type==='function'&&['payable','nonpayable'].includes(entry.stateMutability)).map(entry=>entry.name));
+for(const file of ['model.ts','Flows.tsx','Owner.tsx','Losses.tsx']){
+ const text=rawRead('web/src/'+file),tree=parse(text,file),builders=[];
+ (function v(node){
+  if(file==='model.ts'&&(ts.isFunctionDeclaration(node)||ts.isVariableDeclaration(node))&&['deadline','depositArgs','redeemArgs'].includes(node.name?.text))builders.push(node.getText(tree));
+  if(ts.isJsxAttribute(node)&&['getSpec','build'].includes(node.name.getText(tree)))builders.push(node.getText(tree));
+  if(ts.isCallExpression(node)&&/^(?:w|wallet)\.send$/.test(node.expression.getText(tree)))builders.push(node.arguments[0].getText(tree));
+  if(ts.isCallExpression(node)){
+   const callee=node.expression.getText(tree),name=callee==='vault'?node.arguments[0]:callee==='token'?node.arguments[1]:undefined;
+   if(callee==='proposalSpec'||name&&ts.isStringLiteralLike(name)&&(callee==='vault'?vaultWriteNames.has(name.text):name.text==='approve'))builders.push(node.getText(tree));
+  }
+  ts.forEachChild(node,v);
+ })(tree);
+ assert.ok(builders.length,file+': vault send builders found');
+ for(const builder of builders)assert.doesNotMatch(builder,/\bvalue\b/,file+': no vault send builder mentions native value');
+ vaultNoValueBuilders[file]=builders.length;
+}
+// ITEM SPEC 6: independent structural/read/send checks supplement reviewed raw pins.
+const itemSafety=[];
+for(const file of ITEM_NEW_SOURCES){
+ const text=rawRead('web/src/'+file),tree=parse(text,file);
+ assert.deepEqual(storageOf(text,file),[],file+': ITEM introduces no browser storage');
+ assert.deepEqual(methodsOf(text,file),[],file+': ITEM introduces no raw provider method');
+ assert.doesNotMatch(text,/\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|setInterval|setTimeout|eval|Function)\b|window\.ethereum|\b(?:start|fund|release|sync)\s*\(/,file+': no extra network, timer, code execution or setup transaction');
+ const send=sendsOf(text,file);
+ if(file==='Earn.tsx'){
+  assert.equal(send.length,2,'2026-10-16 Add liquidity build: exactly two ITEM page wallet send sinks');
+  assert.match(send[0].text,/^wallet\.send\(itemSend\(action, amount\), prefix, /,'all ITEM sends use checked allowlist constructor');
+  assert.ok(send[0].text.endsWith(', refresh)'),'ITEM confirmation refresh is the current page callback');
+  assert.equal(send[1].text,'wallet.send(spec, prefix, kind === "add" ? "Add liquidity" : "Approve " + (kind === "token" ? tokenSymbol : quoteSymbol), refresh)','new form sink uses the checked spec and current page refresh callback');
+  assert.match(text,/const spec = itemSend\(action, kind === "quote" \? amounts\.matched : amount, LAUNCH, kind === "add" \? \{ user: account, matched: amounts\.matched, minimumA: amounts\.minimumA, minimumB: amounts\.minimumB, deadline: deadline\(\) \} : undefined\);/,'router send takes exact freshly quoted amounts, minima, connected user and site deadline');
+ }else assert.deepEqual(send,[],file+': no wallet send sink');
+ const urls=[...text.matchAll(/https?:[^\s\x60"']+/g)].map(m=>m[0]);
+ assert.deepEqual(urls,file==='FindItem.tsx'?[
+  'https://app.uniswap.org/positions/add/new?chain=robinhood&protocolVersion=v2&currencyA=NATIVE&currencyB=${LAUNCH.ITEM}',
+  'https://app.uniswap.org/positions/add/new?chain=robinhood&protocolVersion=v2&currencyA=${KNOWN.BASK}&currencyB=${KNOWN.USDG}',
+ ]:file==='itemConstants.ts'&&itemLaunch.slots.ITEM_REPO?[itemLaunch.slots.ITEM_REPO]:[],file+': exact permitted URL patterns');
+ itemSafety.push({file,storage:0,providerMethods:0,sendSinks:send.length});
+}
+// Owner-approved source link: the sole direct anchor uses the already validated launch repository unchanged.
+// Owner correction: Transparency keeps contracts/source and current protocol roles; no separate ITEM read hook.
+const transparencyText=rawRead('web/src/Transparency.tsx'),transparencyTree=parse(transparencyText,'Transparency.tsx'),sourceAnchors=[];
+function visitSourceAnchor(node){if(ts.isJsxElement(node)&&node.openingElement.tagName.getText(transparencyTree)==='a'||ts.isJsxSelfClosingElement(node)&&node.tagName.getText(transparencyTree)==='a')sourceAnchors.push(node.getText(transparencyTree));ts.forEachChild(node,visitSourceAnchor);}
+visitSourceAnchor(transparencyTree);
+assert.deepEqual(sourceAnchors,['<a href={LAUNCH.ITEM_REPO} target="_blank" rel="noreferrer">{LAUNCH.ITEM_REPO}</a>'],'one exact source anchor to validated ITEM_REPO, with no substituted or appended destination');
+assert.doesNotMatch(transparencyText,/useItemFigures|readItemFigures|Where the ITEM is|Launch setup/,'owner correction removes separate Transparency ITEM reads and inventory/setup panels');
+assert.match(transparencyText,/<p data-role="dev">Developer: \{address\(KNOWN\.DEV\)\}<\/p>/,'developer address is the approved constant');
+assert.match(transparencyText,/snapshot\.globals\[key\]/,'owner and guardian use the current existing vault snapshot');
+for(const role of ['owner','guardian'])assert.ok(transparencyText.includes('<p data-role="'+role+'">Vault '+role+': {role("'+role+'")}</p>'),'exact live vault role '+role);
+assert.match(rawRead('web/src/itemActions.ts'),/await verifyItemTarget\(expected\.address, expected\.itemHash\);/,'every ITEM send verifies its exact expected target hash');
+assert.match(rawRead('web/src/wallet.tsx'),/if \(item\) await checkItemSend\(s\);\s*else await verifyNetwork\(\);\s*await simulate\(s, account\);/,'target hash check and exact simulation before wallet prompt');
+assert.match(rawRead('web/src/Earn.tsx'),/act\(\(actionPrefix \+ "Approve"\) as ItemAction, stakeAmount\)/,'approval uses the stake input amount');
+assert.match(rawRead('web/src/Earn.tsx'),/act\(\(actionPrefix \+ "Stake"\) as ItemAction, stakeAmount\)/,'stake uses the identical input amount');
+// 2026-10-16 Add liquidity build: a disconnected wallet, changed chain or closed card cancels its pending pre-wallet quote.
+assert.match(rawRead('web/src/Earn.tsx'),/useLayoutEffect\(\(\) => \(\) => \{ requestVersion\.current\+\+; \}, \[wallet\.account, wallet\.chainId\]\);/,'pending liquidity reads are invalidated before the old wallet context or card can continue');
+assert.match(rawRead('web/src/Earn.tsx'),/const version = requestVersion\.current;[\s\S]*const fresh = await readItemFigures\("earn", account\);\s*if \(version !== requestVersion\.current\) return;/,'fresh quote is followed immediately by cancellation check before constructing or sending');
+assert.match(rawRead('web/src/Earn.tsx'),/const fresh = await readItemFigures\("earn", account\);\s*if \(version !== requestVersion\.current\) return;[\s\S]*?const amounts = quote\(fresh, amount\);\s*if \(amount > \(fresh\[prefix \+ "\.tokenBalance"\] as bigint\) \|\| amounts\.matched > \(fresh\[prefix \+ "\.quoteBalance"\] as bigint\)\) throw new InputError\("More than your balance\."\);/,'2026-10-16 Claude check: the quote and the balance check come from the fresh read, never from the rendered figures');
+assert.match(rawRead('web/src/Earn.tsx'),/\) \{ await refresh\(\); throw new InputError\("The request failed\. Please retry\."\); \}/,'2026-10-16 Claude check: a short allowance found by the fresh read refreshes the figures before the refusal, so the exact Approve button shows again');
+// 2026-10-17 audit review: the matched amount the page showed is the accepted quote; a fresh read that differs refreshes and sends nothing.
+assert.match(rawRead('web/src/Earn.tsx'),/const amounts = quote\(fresh, amount\);[\s\S]*?if \(kind === "add" && amounts\.matched !== liquidityQuote\?\.matched\) \{ await refresh\(\); throw new InputError\("The request failed\. Please retry\."\); \}[\s\S]*?const spec = itemSend\(/,'2026-10-17 audit review: when the fresh quote differs from the matched amount the page showed, the add refreshes the figures and sends nothing');
+// 2026-10-17 pre-launch review: an ITEM send waits for an unresolved earlier transaction; a failed figure read is absent, never zero; actions that need an unreadable figure are off.
+assert.match(rawRead('web/src/wallet.tsx'),/if \(item\) \{ const earlier = await itemPending\(\); if \(earlier\) throw new PendingTransaction\(ITEM_PENDING, earlier\); \}/,'2026-10-17 pre-launch review: an ITEM send first settles or refuses on an unresolved earlier transaction (v22 rebase: with the ITEM words and the hash, through the one PendingTransaction class)');
+assert.match(rawRead('web/src/wallet.tsx'),/if \(item && sent && !settled\) setUnresolved\(sent\);/,'2026-10-17 pre-launch review: a receipt timeout marks the ITEM send unresolved');
+// 2026-10-17 round-2 review: the lock holds for any saved send in the tab (the record's own account is read, both counts guarded); a predicted nonce settles only while nothing is queued; a node-reported nonce settles alone.
+assert.match(rawRead('web/src/wallet.tsx'),/async function itemPending\(\): Promise<Hex \| undefined> \{\s*const pending = itemRef\.current;\s*if \(!account \|\| !pending\) \{\s*setUnresolved\(undefined\);\s*return undefined;\s*\}/,'2026-10-17 round-2 review: an unresolved record locks ITEM sends whichever account sent it (round-3 review: the ITEM sends\' own record)');
+assert.match(rawRead('web/src/wallet.tsx'),/client\.getTransaction\(\{ hash: pending\.hash \}\)\.catch\(absent\("TransactionNotFoundError"\)\),\s*client\.getTransactionCount\(\{ address: pending\.account, blockTag: "latest" \}\)\.catch\(\(\) => undefined\),\s*client\.getTransactionCount\(\{ address: pending\.account, blockTag: "pending" \}\)\.catch\(\(\) => undefined\),/,'2026-10-17 round-2 review: both counts are read for the record account and a failed read is undefined, never a number (v22 rebase: the transaction lookup lets only viem\'s not-found class through)');
+assert.match(rawRead('web/src/wallet.tsx'),/settled = !failed && latest !== undefined && \(transaction !== undefined \? latest > transaction\.nonce : pending\.nonce !== undefined && latest > pending\.nonce && latest === queued\);/,'2026-10-17 round-2 review: a node-reported nonce settles alone; the predicted nonce only while nothing is queued; an undefined count never settles (v22 rebase: nor does a failed lookup)');
+// 2026-10-17, v22 rebase (Codex V22-02 for the ITEM lock, at the owner's word): only viem's "not found" answer to a hash lookup counts as absent, told apart by
+// its name exactly as v22's sendPending does; any other error of either lookup leaves the check unresolved (no settle, the record and the lock stay) and the
+// check never rejects. The vault's own settle (sendPending) is HEAD's, byte for byte, and runs for vault sends only; an ITEM send settles its own record.
+{const w=rawRead('web/src/wallet.tsx'),ip=rawFunction(w,'wallet.tsx','itemPending').text,sp=rawFunction(w,'wallet.tsx','send').text;
+ assert.match(ip,/let failed = false;\s*const absent = \(name: string\) => \(e: unknown\) => \{\s*if \(\(e as \{ name\?: string \} \| null\)\?\.name === name\) return undefined;\s*failed = true;\s*return undefined;\s*\};\s*let settled = !!\(await client\s*\.getTransactionReceipt\(\{ hash: pending\.hash \}\)\s*\.catch\(absent\("TransactionReceiptNotFoundError"\)\)\);\s*if \(!settled && !failed\) \{/,'v22 rebase: the receipt lookup lets only viem\'s not-found class through; any other error marks the check failed before the nonce reads');
+ const count=(re)=>(ip.match(re)??[]).length;
+ assert.deepEqual([count(/\.catch\(absent\("TransactionReceiptNotFoundError"\)\)/g),count(/\.catch\(absent\("TransactionNotFoundError"\)\)/g),count(/getTransactionReceipt[\s\S]{0,80}?\.catch\(\(\) => undefined\)/g),count(/getTransaction\(\{ hash: pending\.hash \}\)\.catch\(\(\) => undefined\)/g),count(/const absent = /g),count(/failed = true;/g),count(/!failed/g)],[1,1,0,0,1,1,2],'v22 rebase: each hash lookup catches with its own not-found name once, neither swallows every error, and the failed flag guards both the nonce reads and the settle');
+ assert.ok(!/\bthrow\b/.test(ip),'v22 rebase: itemPending never rejects (Refresh and opening Earn never fail on a lookup error)');
+ assert.equal(sp.split('      if (s.functionName === "listGenesis") await listingPending();\n      else if (!item) await sendPending(key); // 2026-10-17, v22 rebase: the vault settle, for vault sends; an ITEM send settled its own record above.\n      // SPEC 6: ITEM target code check; the vault path is unchanged.\n      if (item) await checkItemSend(s);\n      else await verifyNetwork();\n').length,2,'v22 rebase: every vault send except genesis listing settles the saved vault transaction first, exactly once, before verifyNetwork; an ITEM send settles its own record and skips the vault settle');
+ assert.equal((sp.match(/sendPending\(/g)??[]).length,1,'v22 rebase: one call of the vault settle in send()');
+ assert.equal(rawFunction(w,'wallet.tsx','sendPending').text,rawFunction(baseline('web/src/wallet.tsx'),'wallet.tsx','sendPending').text,'v22 rebase: the vault settle sendPending() is HEAD\'s byte for byte');
+ assert.ok(!/itemRef|itemPendingKey|itemPending\(/.test(rawFunction(w,'wallet.tsx','sendPending').text),'v22 rebase: the vault settle never touches the ITEM record');
+ assert.equal((w.match(/class PendingTransaction extends Error/g)??[]).length,1,'v22 rebase: one PendingTransaction class (HEAD\'s), the ITEM throw passing ITEM_PENDING and the hash');}
+// 2026-10-17 round-3 review: ITEM sends keep a saved record of their own (itemRef, key basket-item-pending-4663) that the vault path never writes or clears;
+// the vault's slot (pendingRef, key basket-pending-4663) is written and cleared only in the else branches, as at HEAD; a late settle clears only the record it examined.
+{const w=rawRead('web/src/wallet.tsx');
+ assert.match(w,/const itemPendingKey = "basket-item-pending-4663";\s*function savedItemPending\(\): PendingTx \| undefined \{\s*try \{\s*return \(\s*JSON\.parse\(sessionStorage\.getItem\(itemPendingKey\) \|\| "null"\) \|\| undefined\s*\);\s*\} catch \{\s*return undefined;\s*\}\s*\}/,'2026-10-17 round-3 review: the ITEM record has its own key and reader beside the vault\'s');
+ assert.match(w,/const pendingRef = useRef<PendingTx \| undefined>\(savedPending\(\)\);[\s\S]{0,400}?const itemRef = useRef<PendingTx \| undefined>\(savedItemPending\(\)\);/,'2026-10-17 round-3 review: the ITEM record has its own ref, read once at load like the vault\'s');
+ assert.match(w,/const \[unresolved, setUnresolved\] = useState<Hex \| undefined>\(itemRef\.current\?\.hash\);/,'2026-10-17 round-3 review: the lock starts from the ITEM record');
+ assert.match(w,/const record = \{ hash: tx, account, functionName: s\.functionName, nonce \};\s*(?:\/\/[^\n]*\n\s*)?if \(item\) \{\s*itemRef\.current = record;\s*try \{\s*sessionStorage\.setItem\(itemPendingKey, JSON\.stringify\(record\)\);\s*\} catch \{\s*\/\*[^*]*\*\/\s*\}\s*\} else \{\s*pendingRef\.current = record;\s*try \{\s*sessionStorage\.setItem\(pendingKey, JSON\.stringify\(pendingRef\.current\)\);\s*\} catch \{\s*\/\* nonce guard also protects reloads \*\/\s*\}\s*\}/,'2026-10-17 round-3 review: a sent ITEM transaction is recorded in the ITEM slot and key only; the vault slot and key only in the else branch');
+ assert.match(w,/settled = true;\s*if \(item\) \{\s*itemRef\.current = undefined;\s*try \{\s*sessionStorage\.removeItem\(itemPendingKey\);\s*\} catch \{\s*\/\*[^*]*\*\/\s*\}\s*setUnresolved\(undefined\);(?:[ \t]*\/\/[^\n]*)?\s*\} else \{\s*pendingRef\.current = undefined;\s*try \{\s*sessionStorage\.removeItem\(pendingKey\);\s*\} catch \{\s*\/\* storage unavailable \*\/\s*\}\s*\}/,'2026-10-17 round-3 review: the receipt clears the slot and key the send wrote, the ITEM ones inside if (item), the vault ones in the else branch (round-4 review: the ITEM receipt also clears the lock)');
+ assert.match(w,/const current = itemRef\.current;\s*if \(settled && \(current === pending \|\| current === undefined\)\) \{\s*itemRef\.current = undefined;\s*try \{\s*sessionStorage\.removeItem\(itemPendingKey\);\s*\} catch \{\s*\/\*[^*]*\*\/\s*\}\s*setUnresolved\(undefined\);\s*return undefined;\s*\}\s*const hash = current\?\.hash;(?:[ \t]*\/\/[^\n]*)?\s*setUnresolved\(hash\);\s*return hash;/,'2026-10-17 round-3 review: a settle clears only the record it examined (or an already empty slot); otherwise the newest record stays unresolved (round-4 review: a record cleared meanwhile leaves the lock off)');
+ const count=(re)=>(w.match(re)??[]).length;
+ assert.deepEqual([count(/sessionStorage\.setItem\(pendingKey/g),count(/sessionStorage\.removeItem\(pendingKey\)/g),count(/pendingRef\.current = record;/g),count(/pendingRef\.current = \{/g)],[1,4,1,0],'2026-10-17 round-3 review: the vault slot and key are written once and cleared four times, as at HEAD (listingPending twice, v22\'s sendPending once, the receipt once)');
+ assert.deepEqual([count(/sessionStorage\.getItem\(itemPendingKey\)/g),count(/sessionStorage\.setItem\(itemPendingKey/g),count(/sessionStorage\.removeItem\(itemPendingKey\)/g),count(/itemRef\.current = record;/g),count(/itemRef\.current = undefined;/g)],[1,1,2,1,2],'2026-10-17 round-3 review: the ITEM key is read once, written once and cleared twice (the receipt, the settle); the ITEM ref is set once and cleared twice');
+ // 2026-10-17 round-4 review: the lock is cleared three times (no record, a settle, the ITEM receipt), set once by a receipt timeout and once to the newest record's hash.
+ assert.deepEqual([count(/setUnresolved\(undefined\)/g),count(/setUnresolved\(sent\)/g),count(/setUnresolved\(hash\)/g),count(/setUnresolved\(/g)],[3,1,1,5],'2026-10-17 round-4 review: the lock is cleared with no record, at a settle and at the ITEM receipt; set at a receipt timeout and to the newest record only');
+ const itemPendingText=rawFunction(w,'wallet.tsx','itemPending').text;
+ assert.ok(!/pendingRef|pendingKey/.test(itemPendingText),'2026-10-17 round-3 review: itemPending never touches the vault slot or key');
+ for(const name of ['listingPending','waitPending','sendPending'])assert.ok(!/itemRef|itemPendingKey/.test(rawFunction(w,'wallet.tsx',name).text),'2026-10-17 round-3 review: the vault\'s '+name+' never touches the ITEM slot or key');}
+assert.match(rawRead('web/src/itemReads.ts'),/if \(!result\.ok\) return \[\];/,'2026-10-17 pre-launch review: a failed read leaves its key absent');
+// 2026-10-17 round-4 review: a refresh kept by a send (the afterItem callback) whose page was left or whose account changed touches nothing of
+// that page or account: it runs the refresh of the figures on screen instead, so they are read again after the receipt.
+{const r=rawRead('web/src/itemReads.ts');
+ assert.match(r,/\nlet shownRefresh: \(\(\) => Promise<void>\) \| undefined;\nexport function useItemFigures\(/,'2026-10-17 round-4 review: one module slot holds the refresh of the figures on screen');
+ assert.match(r,/const currentScope = view \+ ":" \+ \(account \?\? ""\);\s*const liveScope = useRef<string \| undefined>\(currentScope\);\s*useLayoutEffect\(\(\) => \{ liveScope\.current = currentScope; return \(\) => \{ liveScope\.current = undefined; \}; \}, \[currentScope\]\);\s*const refresh = useCallback\(async \(\): Promise<void> => \{\s*if \(liveScope\.current !== view \+ ":" \+ \(account \?\? ""\)\) return shownRefresh === refresh \? undefined : shownRefresh\?\.\(\);\s*const current = \+\+revision\.current;/,'2026-10-17 round-4 review: an obsolete refresh returns before it touches the revision, loading, failure, figures or scope, running the shown one instead');
+ assert.match(r,/\}, \[view, account\]\);\s*useLayoutEffect\(\(\) => \{ shownRefresh = refresh; return \(\) => \{ if \(shownRefresh === refresh\) shownRefresh = undefined; \}; \}, \[refresh\]\);\s*useEffect\(\(\) => \{\s*void refresh\(\);/,'2026-10-17 round-4 review: the slot holds the mounted hook\'s current refresh and is emptied when the page closes');
+ assert.equal((r.match(/shownRefresh = /g)??[]).length,2,'2026-10-17 round-4 review: the slot is written only by the mounted hook (set and cleared)');}
+assert.match(rawRead('web/src/Earn.tsx'),/const stakeReason = common \|\| \(!startedKnown \|\| !has\("balance", "allowance"\) \|\| \(gauge && !has\("pair"\)\) \? unreadable : /,'2026-10-17 pre-launch review: staking is off while a figure it needs is unreadable');
+assert.match(rawRead('web/src/Earn.tsx'),/const withdrawReason = common \|\| \(!has\("staked"\) \? unreadable : /,'2026-10-17 pre-launch review: withdraw is off only while the staked figure is unreadable');
+assert.match(rawRead('web/src/Earn.tsx'),/wallet\.busy \|\| pending \|\| wallet\.unresolved \? "Another transaction is pending\./,'2026-10-17 pre-launch review: every ITEM action is off while a sent transaction has no receipt yet');
+// 2026-10-16 Earn layout build (option B3): layout and words only. Earn.tsx and styles.css were re-pinned by hand after
+// reading their diffs; the two send sinks, the spec line, the cancellation line and the fresh-read block above are unchanged.
+// The Pool selector shows one of two mounted pool cards; each card's actions sit in tabs and native disclosures; hidden
+// parts carry the hidden attribute (no focus, no tab stop); the only new import is a type.
+const earnLayout=rawRead('web/src/Earn.tsx');
+assert.ok(earnLayout.startsWith('import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";\n'),'Earn layout build: the React import gains only the KeyboardEvent type');
+assert.ok(earnLayout.includes('<div className="refined-pool-picker"><label htmlFor="earn-pool-select">Pool</label><select id="earn-pool-select" value={selectedPool} onChange={event => setSelectedPool(event.target.value as "bask" | "eth")}><option value="bask">BASK/USDG</option><option value="eth">ITEM/ETH</option></select></div>'),'Earn layout build: the exact Pool selector');
+assert.ok(earnLayout.includes('<div data-pool-view="bask" hidden={selectedPool !== "bask"}><StakeCard key={"bask-" + wallet.account} prefix="bask" figures={data.figures} wallet={wallet} refresh={data.refresh} /></div><div data-pool-view="eth" hidden={selectedPool !== "eth"}><StakeCard key={"eth-" + wallet.account} prefix="eth" figures={data.figures} wallet={wallet} refresh={data.refresh} /></div>'),'Earn layout build: both pool cards stay mounted and the unselected one carries hidden');
+assert.ok(earnLayout.includes('<div className="docs-tabs refined-tabs" role="tablist" aria-label={title}>'),'Earn layout build: one tablist per card, named by the card title');
+assert.equal((earnLayout.match(/role="tabpanel"/g)??[]).length,4,'Earn layout build: four tab panels');
+assert.equal(earnLayout.split('id={prefix + "-panel-0"} role="tabpanel" aria-labelledby={prefix + "-tab-0"} hidden={tab !== 0}').length,2,'Earn layout build: the first panel is labelled by tab 0 and hidden unless tab 0 is selected');
+for(const tabName of ['stakeTab','manageTab','statsTab'])assert.equal(earnLayout.split('id={prefix + "-panel-" + '+tabName+'} role="tabpanel" aria-labelledby={prefix + "-tab-" + '+tabName+'} hidden={tab !== '+tabName+'}').length,2,'Earn layout build: the '+tabName+' panel is labelled by its own tab and hidden unless that tab is selected');
+assert.ok(earnLayout.includes('onKeyDown={moveTab}')&&earnLayout.includes('tabIndex={tab === index ? 0 : -1}')&&earnLayout.includes('aria-selected={tab === index}')&&earnLayout.includes('aria-controls={prefix + "-panel-" + index}'),'Earn layout build: roving tabindex, aria-selected and aria-controls on every tab');
+assert.equal((earnLayout.match(/<details className="refined-(?:details|withdraw)">/g)??[]).length,2,'Earn layout build: the Details and the withdraw disclosures are native details elements');
+assert.match(rawRead('web/src/itemReads.ts'),/if \(!itemReady\(config\)\) return null;[\s\S]*const \[results, native\] = await Promise\.all\(\[reader\(specs\.map\(\(\[, spec\]\) => spec\)\), account \? balanceReader\(account\)\.catch\(\(\) => undefined\) : undefined\]\);/,'2026-10-16 Add liquidity build: all-slot guard precedes the one contract/native read batch');
+assert.match(rawRead('web/src/itemReads.ts'),/balanceReader: \(account: Address\) => Promise<bigint> = account => client\.getBalance\(\{ address: account \}\)/,'the sole new RPC is eth_getBalance through the existing client for the connected account');
+assert.equal((rawRead('web/src/itemReads.ts').match(/client\.getBalance\(/g)??[]).length,1,'one native balance read implementation');
+const walletValueLine='...(s.value !== undefined ? { value: `0x${s.value.toString(16)}` } : {}), // 2026-10-16, Add liquidity build: ITEM-only ETH value.';
+const simulationValueLine='...(s.value !== undefined ? { value: s.value } : {}), // 2026-10-16, Add liquidity build: simulate the exact ETH value.';
+assert.equal(rawFunction(rawRead('web/src/wallet.tsx'),'wallet.tsx','send').text.split(walletValueLine).length,2,'one exact optional-value wallet line');
+const rawSimulate=rawFunction(rawRead('web/src/chain.ts'),'chain.ts','simulate').text;
+assert.equal(rawSimulate.split(simulationValueLine).length,2,'one exact optional-value simulation line');
+assert.match(rawSimulate,/if \(s\.itemUser !== undefined && s\.itemUser\.toLowerCase\(\) !== account\?\.toLowerCase\(\)\) throw new InputError\("The wallet account changed\. Please retry\."\);/,'router recipient is the account simulated by the guarded wallet flow');
+assert.match(rawRead('web/src/chain.ts'),/\} & \(\{ itemAction\?: never; value\?: never; itemUser\?: never \} \| \{ itemAction: string; value\?: bigint; itemUser\?: Address \}\);/,'native value and recipient are excluded at type level from non-ITEM specs');
+assert.match(rawRead('web/src/tokenomicsData.ts'),/ITEM: itemReady\(LAUNCH\) \? LAUNCH\.ITEM : null/,'Tokenomics is behind the same all-slot guard');
+fs.mkdirSync(scratch,{recursive:true});
+const itemEntry=path.join(scratch,'item-entry.ts'),itemBundle=path.join(scratch,'item.mjs');
+fs.writeFileSync(itemEntry,`export * from ${JSON.stringify(path.join(root,'web/src/itemConstants').replaceAll('\\','/'))};\nexport * from ${JSON.stringify(path.join(root,'web/src/itemActions').replaceAll('\\','/'))};\nexport * from ${JSON.stringify(path.join(root,'web/src/itemReads').replaceAll('\\','/'))};\nexport { ADDRESSES } from ${JSON.stringify(path.join(root,'web/src/tokenomicsData').replaceAll('\\','/'))};\nexport { RUNTIME_HASH } from ${JSON.stringify(path.join(root,'web/src/deployment').replaceAll('\\','/'))};\n`);
+await build({entryPoints:[itemEntry],bundle:true,format:'esm',platform:'node',outfile:itemBundle,nodePaths:[path.resolve('node_modules')],logLevel:'error'});
+const item=await import(pathToFileURL(itemBundle).href);
+const fixture=Object.fromEntries(LAUNCH_ADDRESSES.map((key,i)=>[key,getAddress('0x'+BigInt(0x100+i).toString(16).padStart(40,'0'))]));
+for(const [i,key] of LAUNCH_HASHES.entries())fixture[key]='0x'+BigInt(i+1).toString(16).padStart(64,'0');
+fixture.ITEM_REPO='https://github.com/example/item';fixture.ITEM_COMMIT='a'.repeat(40);
+const user=getAddress('0x'+BigInt(0xa11ce).toString(16).padStart(40,'0'));
+assert.equal(item.itemReady(fixture),true,'complete launch config is ready');
+// 2026-10-16 Add liquidity build: the twelve existing actions keep their order, followed by exactly five form actions.
+const expectedActions=['baskApprove','baskStake','baskWithdraw','baskClaim','ethApprove','ethStake','ethWithdraw','ethClaim','itemApprove','itemStake','itemUnstake','claimBask','baskLiquidityApprove','usdgLiquidityApprove','baskAddLiquidity','itemLiquidityApprove','ethAddLiquidity'];
+assert.deepEqual(item.ITEM_ACTIONS,expectedActions,'exactly seventeen ITEM actions; staking claims BASK only');
+const liquidityActions=['baskAddLiquidity','ethAddLiquidity'];
+const itemClock=1791000000000,itemDeadline=1791000600n;
+// 2026-10-16 Claude check: the fixture's matched amount differs from the typed amount, so swapped minimums or a value
+// that is not the matched ETH are caught by the exact argument and value comparisons below, not only by check-item.ts.
+const liquidityFor=amount=>{const matched=amount/2n+7n;return {user,matched,minimumA:amount*995n/1000n,minimumB:matched*995n/1000n,deadline:itemDeadline};};
+let nullCases=0,nullActionCases=0;
+for(const key of LAUNCH_KEYS){
+ const config={...fixture,[key]:null};let calls=0;
+ assert.equal(item.itemReady(config),false,key+': any null slot disables ITEM');
+ for(const view of ['earn'])assert.equal(await item.readItemFigures(view,user,config,async()=>{calls++;throw Error('null guard reached chain');},async()=>{calls++;throw Error('null guard reached native balance');}),null,key+': null reads are unreachable');
+ assert.equal(calls,0,key+': zero ITEM contract or native-balance reader calls');
+ for(const action of expectedActions){assert.throws(()=>item.itemSend(action,1000n,config,liquidityFor(1000n)),/ITEM figures: unreadable/,key+': '+action+' refuses a null slot');nullActionCases++;}nullCases++;
+}
+if(!LAUNCH_KEYS.every(key=>itemLaunch.slots[key]!==null))assert.ok(Object.values(item.ADDRESSES).every(x=>x===null),'any incomplete launch disables every Tokenomics address');
+const expectedCall=(action,amount,liquidity)=>({
+ baskApprove:[item.KNOWN.BASK_USDG_PAIR,'approve',[fixture.BASK_USDG_GAUGE,amount],'BASK_USDG_PAIR_HASH'],
+ baskStake:[fixture.BASK_USDG_GAUGE,'stake',[amount],'BASK_USDG_GAUGE_HASH'],
+ baskWithdraw:[fixture.BASK_USDG_GAUGE,'withdraw',[amount],'BASK_USDG_GAUGE_HASH'],
+ baskClaim:[fixture.BASK_USDG_GAUGE,'claim',[],'BASK_USDG_GAUGE_HASH'],
+ ethApprove:[fixture.ITEM_WETH_PAIR,'approve',[fixture.ITEM_ETH_GAUGE,amount],'ITEM_WETH_PAIR_HASH'],
+ ethStake:[fixture.ITEM_ETH_GAUGE,'stake',[amount],'ITEM_ETH_GAUGE_HASH'],
+ ethWithdraw:[fixture.ITEM_ETH_GAUGE,'withdraw',[amount],'ITEM_ETH_GAUGE_HASH'],
+ ethClaim:[fixture.ITEM_ETH_GAUGE,'claim',[],'ITEM_ETH_GAUGE_HASH'],
+ itemApprove:[fixture.ITEM,'approve',[fixture.ITEM_STAKING,amount],'ITEM_HASH'],
+ itemStake:[fixture.ITEM_STAKING,'stake',[amount],'ITEM_STAKING_HASH'],
+ itemUnstake:[fixture.ITEM_STAKING,'unstake',[amount],'ITEM_STAKING_HASH'],
+ claimBask:[fixture.ITEM_STAKING,'claim',[item.KNOWN.BASK],'ITEM_STAKING_HASH'],
+ baskLiquidityApprove:[item.KNOWN.BASK,'approve',[item.KNOWN.V2_ROUTER,amount],'RUNTIME_HASH'],
+ usdgLiquidityApprove:[item.KNOWN.USDG,'approve',[item.KNOWN.V2_ROUTER,amount],'USDG_HASH'],
+ baskAddLiquidity:[item.KNOWN.V2_ROUTER,'addLiquidity',[item.KNOWN.BASK,item.KNOWN.USDG,amount,liquidity.matched,liquidity.minimumA,liquidity.minimumB,liquidity.user,liquidity.deadline],'V2_ROUTER_HASH'],
+ itemLiquidityApprove:[fixture.ITEM,'approve',[item.KNOWN.V2_ROUTER,amount],'ITEM_HASH'],
+ ethAddLiquidity:[item.KNOWN.V2_ROUTER,'addLiquidityETH',[fixture.ITEM,amount,liquidity.minimumA,liquidity.minimumB,liquidity.user,liquidity.deadline],'V2_ROUTER_HASH',liquidity.matched],
+}[action]);
+let itemEncodingCases=0;
+Date.now=()=>itemClock;
+try{
+ for(const originalAmount of [1n,1234567890123456789n,2n**255n])for(const action of expectedActions){
+  // Keep all 36 old encoding cases. An add with a one-wei input has a zero minimum and must refuse;
+  // its smallest encoding case therefore uses 1000 wei, with the one-wei refusal tested below.
+  const amount=liquidityActions.includes(action)&&originalAmount===1n?1000n:originalAmount,liquidity=liquidityFor(amount);
+  const spec=item.itemSend(action,amount,fixture,liquidityActions.includes(action)?liquidity:undefined),[address,functionName,args,hashKey,value]=expectedCall(action,amount,liquidity);
+  const hash=fixture[hashKey]??item.KNOWN[hashKey]??item[hashKey];
+  assert.ok(hash,action+': expected runtime hash exists');
+  assert.deepEqual([spec.address,spec.functionName,spec.args,spec.itemHash,spec.value],[address,functionName,args,hash,value],action+': exact target, call, arguments, target hash and ETH value');
+  assert.equal(Object.hasOwn(spec,'value'),action==='ethAddLiquidity',action+': value property only on ETH add');
+  assert.equal(spec.itemUser,liquidityActions.includes(action)?user:undefined,action+': recipient bound only for router adds');
+  const types=functionName==='approve'?['address','uint256']:functionName==='claim'?(args.length?['address']:[]):functionName==='addLiquidity'?['address','address','uint256','uint256','uint256','uint256','address','uint256']:functionName==='addLiquidityETH'?['address','uint256','uint256','uint256','address','uint256']:['uint256'];
+  const expected=encodeFunctionData({abi:[{type:'function',name:functionName,inputs:types.map((type,i)=>({name:'arg'+i,type})),outputs:[],stateMutability:action==='ethAddLiquidity'?'payable':'nonpayable'}],functionName,args});
+  assert.equal(encodeFunctionData(spec),expected,action+': independent exact calldata encoding');itemEncodingCases++;
+ }
+ assert.equal(itemEncodingCases,51,'seventeen actions times three independent encodings');
+ for(const action of ['sync','start','fund','release','approveUnlimited','claimUsdg','claimWeth','removeLiquidity','swapExactTokensForTokens'])assert.throws(()=>item.itemSend(action,1000n,fixture),'no unapproved ITEM send '+action);
+ for(const action of ['baskApprove','baskStake','baskWithdraw','ethApprove','ethStake','ethWithdraw','itemApprove','itemStake','itemUnstake','baskLiquidityApprove','usdgLiquidityApprove','baskAddLiquidity','itemLiquidityApprove','ethAddLiquidity'])for(const amount of [undefined,0n,-1n,2n**256n])assert.throws(()=>item.itemSend(action,amount,fixture,liquidityActions.includes(action)?liquidityFor(1000n):undefined),action+': amount bounds');
+ for(const action of liquidityActions){
+  assert.throws(()=>item.itemSend(action,1n,fixture,liquidityFor(1n)),action+': one-wei add refuses zero minimums');
+  assert.throws(()=>item.itemSend(action,1000n,fixture),action+': add requires explicit liquidity terms');
+  for(const change of [{minimumA:0n},{minimumB:0n},{minimumA:994n},{minimumB:996n},{matched:0n},{matched:-1n},{matched:2n**256n},{user:'0x'+'0'.repeat(40)},{deadline:itemDeadline+1n},{deadline:itemDeadline+31536000n},{deadline:BigInt(itemClock/1000)-1n}])assert.throws(()=>item.itemSend(action,1000n,fixture,{...liquidityFor(1000n),...change}),action+': malformed, zero-minimum, wrong-ratio or deadline terms refused');
+ }
+}finally{Date.now=clock;}
+// Independent ordered read specifications: argument shapes, targets and count are all compared.
+const readShape=s=>[s.address,s.functionName,s.args??[]];
+const expectedReads=(view,account)=>{
+ const out=[],add=(a,f,args=[])=>out.push([a,f,args]);
+ for(const [gauge,pair] of [[fixture.BASK_USDG_GAUGE,item.KNOWN.BASK_USDG_PAIR],[fixture.ITEM_ETH_GAUGE,fixture.ITEM_WETH_PAIR]]){
+  for(const fn of ['started','pair','totalStaked','released','remaining','rate'])add(gauge,fn);
+  if(view==='earn'&&account){for(const fn of ['staked','earned'])add(gauge,fn,[account]);add(pair,'balanceOf',[account]);add(pair,'allowance',[account,gauge]);}
+  for(const fn of ['getReserves','token0','totalSupply'])add(pair,fn);
+ }
+ add(fixture.ITEM_STAKING,'totalStaked');
+ add(item.KNOWN.BASK,'balanceOf',[fixture.ITEM_STAKING]);
+ if(view==='earn'&&account){add(fixture.ITEM_STAKING,'staked',[account]);add(fixture.ITEM,'balanceOf',[account]);add(fixture.ITEM,'allowance',[account,fixture.ITEM_STAKING]);add(fixture.ITEM_STAKING,'earned',[account,item.KNOWN.BASK]);}
+ // ITEM's wallet balance is already read for staking above; the form reuses that same result.
+ if(view==='earn'&&account)for(const token of [item.KNOWN.BASK,item.KNOWN.USDG,fixture.ITEM]){if(token!==fixture.ITEM)add(token,'balanceOf',[account]);add(token,'allowance',[account,item.KNOWN.V2_ROUTER]);}
+ return out;
+};
+const itemReads=[];
+for(const view of ['earn'])for(const account of [undefined,user]){
+ let calls=0,nativeCalls=0,list;
+ await item.readItemFigures(view,account,fixture,async specs=>{calls++;list=specs;return specs.map(s=>({ok:true,value:['started','funded'].includes(s.functionName)?false:s.functionName==='pair'?fixture.ITEM_WETH_PAIR:s.functionName==='token0'?(s.address===item.KNOWN.BASK_USDG_PAIR?item.KNOWN.BASK:fixture.ITEM):s.functionName==='getReserves'?[1000n,2000n,0]:0n}));},async address=>{nativeCalls++;assert.equal(address,user,'native balance is the connected account');return 1234n;});
+ assert.equal(calls,1,'one batched ITEM read per explicit page refresh');assert.deepEqual(list.map(readShape),expectedReads(view,account),view+': exact permitted ordered reads');
+ assert.equal(nativeCalls,account?1:0,'eth_getBalance only for the connected account in the same refresh');
+ assert.equal(list.length,account?37:20,'exact contract read count including liquidity and fee-pot reads');
+ itemReads.push({view,account:!!account,reads:list.length,nativeBalanceReads:nativeCalls});
+}
+console.log('PASS ITEM gate',expectedActions.length,'actions;',itemEncodingCases,'exact encodings;',nullCases,'independent null-slot guards;',nullActionCases,'null-action refusals; raw source pins and read allowlists');
+
 // The report. The delivery is close to its size limit, so each piece is recorded by length and SHA-256, not repeated.
 const pieceRecord=([v12,head])=>({v12:{length:v12.length,sha256:sha256(v12)},head:{length:head.length,sha256:sha256(head)}});
 const brief=x=>x.length>120?{start:x.slice(0,80),length:x.length,sha256:sha256(x)}:x;
-fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',baseline:git(['rev-parse','HEAD']).trim(),protectedFiles,editedFiles:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.length+' documented pieces [v12, HEAD]'])),v12Pieces:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.map(pieceRecord)])),counts,
+fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',item:{mode:process.env.BASKET_ITEM_FINAL==='1'?'final':'null-or-filled',actions:expectedActions,encodingCases:itemEncodingCases,nullSlotCases:nullCases,nullActionCases,reads:itemReads,nativeRpcMethods:itemMethodsAdded,vaultNoValueBuilders,safety:itemSafety,independentRawSourcePins:ITEM_REVIEWED_PINS,legacyNormalization:'Exact approved pieces restored to base before unchanged legacy assertions'},baseline:git(['rev-parse','HEAD']).trim(),protectedFiles,editedFiles:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.length+' documented pieces [v12, HEAD]'])),v12Pieces:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.map(pieceRecord)])),counts,
  documentedGuardedCallChanges:expected,documentedAttributeChanges:Object.fromEntries(Object.entries(attributeChanges).map(([f,a])=>[f,{removed:a.removed.map(x=>'<'+x[0]+'> '+x[1]),added:a.added.map(x=>'<'+x[0]+'> '+x[1]),why:'each has its why in scripts/check-calldata.mjs'}])),
  documentedCallChanges:Object.fromEntries(Object.entries(callChanges).map(([f,c])=>[f,{why:c.why,piecesPutBackInsideCalls:c.pieces.map(pieceRecord),removed:c.removed.map(brief),newUsesOfWatchedNames:c.uses.map(([x,where])=>[brief(x),where])}])),
  vaultStockShelves:{attributes:vaultAttributes,handlers:vaultHandlers},pinnedFunctions,walletHookReturn:{equalToHead:true,text:HOOK_RETURN_HEAD},
