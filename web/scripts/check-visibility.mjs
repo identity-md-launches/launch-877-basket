@@ -304,7 +304,7 @@ try {
   for(const statusCase of ['normal','closed','weekend']) for(const variant of ['no-wallet','connected']) for(const name of (statusCase==='weekend'?['deposit']:statusCase==='closed'?['vault','deposit']:['vault','deposit','redeem','docs','owner','losses'])) {
     statusFixture=statusCase==='weekend'?3:statusCase==='closed'?14:0;
     const beforeFixtureReads=statusFixtureReads,beforeBlocks=weekendBlockReads;
-    const snapshots=[],layout=[],headerChanges=[];
+    const snapshots=[],layout=[],headerChanges=[];let vaultTabs=null;
     for(const ver of ['old','new']) {
       await page.goto(`${base}/${ver}/?${variant}#${name}`);
       await page.evaluate(()=>document.fonts.ready);
@@ -313,23 +313,42 @@ try {
       for(let quiet=0;quiet<2;){await page.waitForTimeout(100);quiet=inflight===0?quiet+1:0;}
       await page.waitForFunction(()=>![...document.querySelectorAll('main p, main small, main button')].some(e=>/Reading\.\.\.|Reading your wallet/.test(e.textContent)));
       await page.evaluate(()=>scrollTo(0,0));
-      // v24 placement B: verify the actual added strip and its exact displacement,
-      // then hide only that strip for the unchanged v23 page geometry comparison.
-      if(ver==='new'){
-        const delta=await page.evaluate(()=>{
-          const el=document.querySelector('.token-prices'),header=document.querySelector('header'),nav=document.querySelector('nav'),main=document.querySelector('main');
-          const before={header:header.getBoundingClientRect().height,nav:nav.getBoundingClientRect().top,main:main.getBoundingClientRect().top};
+      // v24 placement B proved the added strip's displacement and hid it for the v23 comparison. 2026-10-20, v25: the
+      // strip is part of the v24 baseline now, so it is measured on both versions and compared below (same words,
+      // logos, place, size and gap, no overflow) instead of being hidden; the header-height pin covers the rest.
+      {
+        const strip=await page.evaluate(()=>{
+          const el=document.querySelector('.token-prices');
           const r=el.getBoundingClientRect(),gap=parseFloat(getComputedStyle(el).marginBottom),caption=el.querySelector('p').textContent;
           const logos=[...el.querySelectorAll('svg')].map(e=>({name:e.getAttribute('aria-label'),width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}));
-          const overflow=document.documentElement.scrollWidth>innerWidth;
-          el.style.display='none';
-          return {height:r.height,gap,caption,logos,overflow,header:before.header-header.getBoundingClientRect().height,nav:before.nav-nav.getBoundingClientRect().top,main:before.main-main.getBoundingClientRect().top};
+          return {top:r.top,height:r.height,gap,caption,logos,overflow:document.documentElement.scrollWidth>innerWidth};
         });
-        assert.equal(delta.caption,'Pool prices and BASK stock value, read at the last refresh.');
-        assert.deepEqual(delta.logos,[{name:'BASK',width:20,height:20},{name:'ITEM',width:20,height:20}]);
-        assert.equal(delta.overflow,false,'real shared header fits the phone');
-        for(const key of ['header','nav','main'])assert.ok(near(delta[key],delta.height+delta.gap),'only the measured strip displaces '+key);
-        headerChanges.push(delta);
+        assert.equal(strip.caption,'Pool prices and BASK stock value, read at the last refresh.');
+        assert.deepEqual(strip.logos,[{name:'BASK',width:20,height:20},{name:'ITEM',width:20,height:20}]);
+        assert.equal(strip.overflow,false,'real shared header fits the phone');
+        headerChanges.push({version:ver,...strip});
+      }
+      // 2026-10-20, vault stats build (v25): the Vault page carries Overview/Stats child tabs right under its title.
+      // Verify the actual added tab bar (two tabs of at least 44 px, Overview selected, the Stats panel hidden and no
+      // stats report mounted) and its exact displacement of the overview content below it, then hide only that bar
+      // for the unchanged v24 page geometry comparison, as the price strip above.
+      if(ver==='new'&&name==='vault'){
+        vaultTabs=await page.evaluate(()=>{
+          const bar=document.querySelector('main .vault-view-tabs'),title=document.querySelector('main .page-title'),panel=document.querySelector('#vault-view-panel-0'),first=panel?.querySelector(':scope > section.panel');
+          if(!bar||!title||!panel||!first)return null;
+          const tabs=[...bar.querySelectorAll('[role="tab"]')].map(b=>({text:b.textContent.trim(),selected:b.getAttribute('aria-selected'),tabIndex:b.tabIndex,height:b.getBoundingClientRect().height}));
+          const r=bar.getBoundingClientRect(),cs=getComputedStyle(bar),before={first:first.getBoundingClientRect().top,panel:panel.getBoundingClientRect().top};
+          const stats=document.querySelectorAll('.basket-vault-stats').length,hiddenPanel=document.querySelector('#vault-view-panel-1')?.hidden??null;
+          bar.style.display='none';
+          return {role:bar.getAttribute('role'),label:bar.getAttribute('aria-label'),tabs,top:r.top,height:r.height,gap:parseFloat(cs.marginBottom),titleBottom:title.getBoundingClientRect().bottom,stats,hiddenPanel,first:before.first-first.getBoundingClientRect().top,panel:before.panel-panel.getBoundingClientRect().top};
+        });
+        assert.ok(vaultTabs,'v25: the Vault view tab bar, its Overview panel and the first overview panel exist');
+        assert.deepEqual([vaultTabs.role,vaultTabs.label],['tablist','Vault view'],'v25: the child tabs are one labelled tablist');
+        assert.deepEqual(vaultTabs.tabs.map(t=>[t.text,t.selected,t.tabIndex]),[['Overview','true',0],['Stats','false',-1]],'v25: exactly Overview and Stats, Overview selected by default with the roving tab stop');
+        assert.ok(vaultTabs.tabs.every(t=>t.height>=44),'v25: each child tab is at least 44 px tall');
+        assert.deepEqual([vaultTabs.stats,vaultTabs.hiddenPanel],[0,true],'v25: no stats report is mounted and the Stats panel is hidden while Overview shows');
+        assert.ok(vaultTabs.top>=vaultTabs.titleBottom-0.5,'v25: the tab bar sits below the Vault title, not inside it');
+        assert.ok(vaultTabs.height>0&&near(vaultTabs.first,vaultTabs.height+vaultTabs.gap)&&near(vaultTabs.panel,vaultTabs.height+vaultTabs.gap),'v25: only the measured tab bar displaces the overview content: '+JSON.stringify(vaultTabs));
       }
       // All underlying page positions and words still compare exactly with v23.
       snapshots.push(await page.locator('main p, main input, main button, main select, main textarea, main summary, main .empty, main .note').evaluateAll(elementSnapshots));
@@ -339,6 +358,7 @@ try {
       if(name==='vault')layout.at(-1).capacity=await page.locator('.stats > div').nth(3).evaluate(e=>({label:e.querySelector(':scope > span').firstChild.textContent.trim(),value:e.querySelector(':scope > strong').textContent}));
     }
     const [old,now]=snapshots,[oldLayout,newLayout]=layout,regressions=[],checks=[],exceptions=[];
+    assert.ok(near(headerChanges[0].top,headerChanges[1].top)&&near(headerChanges[0].height,headerChanges[1].height)&&near(headerChanges[0].gap,headerChanges[1].gap),name+': v25: the price strip equals the baseline in place, size and gap');
     // Decision A: only Earn is added; existing header and every first-screen vertical position stay pinned below.
     assert.deepEqual(oldLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Earn','Docs'],'baseline navigation');
     assert.deepEqual(newLayout.nav.map(x=>x.text),['Vault','Deposit','Redeem','Earn','Docs'],'ITEM navigation');
@@ -475,7 +495,7 @@ try {
     }
     // Original slogan-strip and title-character assertions, with explicit header
     // height and overflow pins added. No exception applies to these parts.
-    checks.push('header grows only by the measured approved price strip; header and every underlying element equal v23 with that strip alone hidden');
+    checks.push('the v24 price strip equals the baseline in words, logos, place, size and gap; header and every underlying element equal v24');
     if(!near(newLayout.header.top,oldLayout.header.top)||!near(newLayout.header.height,oldLayout.header.height))regressions.push({tag:'HEADER',text:'header',old:oldLayout.header,now:newLayout.header});
     checks.push('slogan strip in the same place and size, still and full under reduced motion');
     {const o=oldLayout.strip,n=newLayout.strip;if(Math.abs(n.top-o.top)>0.01||Math.abs(n.height-o.height)>0.01||n.animations!==0||!n.still)regressions.push({tag:'DIV',text:'slogan strip',old:o,now:n});}
@@ -488,6 +508,7 @@ try {
     // assertion, while the report retains the prior elements and measured deltas.
     results.push({statusCase,variant,name,prior,hintGrowth,checks,exceptions,regressions,headerChanges,
       headerHeights:[oldLayout.header.height,newLayout.header.height],
+      ...(name==='vault'?{vaultTabs}:{}),
       ...(name==='docs'?{docsAddedHeight:docsGrowth}:{}),
     });
   }
@@ -592,6 +613,6 @@ try {
 
   assert.deepEqual(routingErrors,[],'Only local files and allowed public RPC reads; fixture account reads stay synthetic');
   for(const r of results)if(r.regressions.length)throw Error(JSON.stringify({variant:r.variant,name:r.name,regressions:r.regressions}));
-  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements unchanged after the exact measured header-strip displacement; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');
+  console.log('PASS 375x812 baseline visibility: six pages, no-wallet and connected;',results.reduce((n,r)=>n+r.prior.length,0),'previous first-screen elements unchanged with the v24 price strip compared (not hidden) and, on Vault, the measured v25 Overview/Stats tab-bar displacement; the three title panels equal to the baseline across the panel, the Vault title in its v15 placing; header height, slogan strip and character assertions retained');
   fs.writeFileSync('../artifacts/phone-visibility.json',JSON.stringify(results,null,2)+'\n');
 }finally{await b.close();await new Promise(r=>server.close(r));}

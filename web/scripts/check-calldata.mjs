@@ -11,11 +11,14 @@ const root=process.env.BASKET_SOURCE_ROOT||path.resolve('..');
 const git=args=>execFileSync('git',args,{cwd:root,encoding:'utf8'});
 // v24 retains every v23/v22 transaction comparison after exact generated restoration.
 import {checkV24Sources, restoreV24} from './check-v24-source.mjs';
+// 2026-10-20, vault stats build (v25) on the live v24 site: HEAD is the v24 commit; the v25 pieces of Vault.tsx and
+// styles.css are put back first (v25-restore.mjs), then v24's, before every inherited comparison below.
+import {restoreV25, V25_BASE, V25_NEW_SOURCES} from './v25-restore.mjs';
 checkV24Sources(root);
 const BASE='736affca69ad6aefe27b27d7e0ceeb405c236a96', LEGACY='3038c97b30503df69fd4760381e208df2ba54f34';
-assert.equal(git(['rev-parse','HEAD']).trim(),BASE,'exact ITEM base commit');
+assert.equal(git(['rev-parse','HEAD']).trim(),V25_BASE,'exact v25 base commit (the live v24 site)');
 const baseline=p=>git(['show',LEGACY+':'+p]);
-const rawRead=p=>restoreV24(p,fs.readFileSync(path.join(root,p),'utf8'));
+const rawRead=p=>restoreV24(p,restoreV25(p,fs.readFileSync(path.join(root,p),'utf8')));
 const read=p=>restoreApproved(p,rawRead(p));
 const sha256=s=>createHash('sha256').update(s).digest('hex');
 // ITEM pages on HEAD=v22 (3038c97b, the live site since 2026-10-17; the ITEM work was rebased from v16 onto v20 on
@@ -196,7 +199,49 @@ for(const f of protectedFiles) assert.equal(read('web/src/'+f),baseline('web/src
 const NEW_SOURCES=ITEM_NEW_SOURCES;
 const MODULE_SOURCES=['Tokenomics.tsx','tokenomicsData.ts','BaskGuide.tsx','baskGuideData.ts'];
 const allSources=fs.readdirSync(path.join(root,'web/src'),{recursive:true}).filter(p=>fs.statSync(path.join(root,'web/src',p)).isFile()).map(p=>p.replaceAll('\\','/')).sort();
-assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES].sort(),'no new source');
+assert.deepEqual(allSources,[...git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').map(p=>p.slice('web/src/'.length)),...NEW_SOURCES,...V25_NEW_SOURCES].sort(),'no new source beyond the ITEM files and the two v25 stats sources');
+// 2026-10-20, vault stats build (v25) on the live v24 site: the Vault page gains Overview/Stats child tabs under its
+// title and the Earn title joins the v15 phone focus-corner rule. Vault.tsx differs from v24 by exactly three pieces
+// (the VaultViews import, the wrapper's opening and closing tags) and styles.css by two (the comment and the added Earn
+// selector) plus the stats styles appended after the v24 text under one marker, formerly a separate stylesheet, kept in
+// styles.css like every earlier module's rules so that no component imports CSS; v25-restore.mjs cuts that block (pinned
+// by digest) and puts the pieces back before every inherited comparison, so Vault.tsx still equals LEGACY and the CSS
+// prefix/tail pins hold. The two new sources are pinned by independent digests and scanned here: the only network
+// use v25 adds to the site is one credential-free GET of the public stats report from VaultStats.tsx; the report is
+// rebuilt as React elements from an allowlist (never inserted as HTML); no wallet, storage, send or chain read is touched.
+for(const f of ['Vault.tsx','styles.css'])assert.equal(restoreV25('web/src/'+f,fs.readFileSync(path.join(root,'web/src/'+f),'utf8')),git(['show',V25_BASE+':web/src/'+f]),f+': equals the live v24 text once the v25 pieces are put back');
+const V25_PINS={
+ "VaultStats.tsx": "2a0f85f2c3494234204a20bdd83a6f0b713860e09cb84270215c097355f61d5c",
+ "vaultStatsReport.tsx": "826a6871ec25257580eb9924d135d5a0371ad152c097cceb3fef2ac7ad6c68e7"
+};
+for(const [f,digest] of Object.entries(V25_PINS))assert.equal(sha256(fs.readFileSync(path.join(root,'web/src/'+f),'utf8')),digest,'independent reviewed v25 source pin: '+f);
+const V25_ENDPOINT='https://monitor-production-2eae.up.railway.app/api/vault-stats';
+{
+ const stats=fs.readFileSync(path.join(root,'web/src/VaultStats.tsx'),'utf8'),report=fs.readFileSync(path.join(root,'web/src/vaultStatsReport.tsx'),'utf8'),stylesText=fs.readFileSync(path.join(root,'web/src/styles.css'),'utf8');
+ const css=stylesText.slice(stylesText.indexOf('\n/* v25: Vault stats'));
+ assert.equal(sha256(css),'844ee92940f9a8b1347bc165282256bf9bca5d7e140cf07a2a4669af08433fe8','styles.css: the appended v25 stats block is the reviewed one');
+ const imports=s=>[...s.matchAll(/^import [^;]* from "([^"]+)";$/gm)].map(m=>m[1]).concat([...s.matchAll(/^import "([^"]+)";$/gm)].map(m=>m[1]));
+ // Names, not prose: every identifier (also property names), every string and every dynamic import of the two files.
+ const names=s=>{const tree=ts.createSourceFile('v25.tsx',s,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX),out={identifiers:new Set(),strings:new Set(),dynamicImports:0,requestCalls:0};(function v(n){if(ts.isIdentifier(n)||ts.isPrivateIdentifier(n))out.identifiers.add(n.text);if(ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)&&n.expression.name.text==='request')out.requestCalls++;if(ts.isStringLiteral(n)||ts.isNoSubstitutionTemplateLiteral(n))out.strings.add(n.text);if(ts.isTemplateExpression(n))out.strings.add(n.head.text+n.templateSpans.map(x=>x.literal.text).join(''));if(ts.isCallExpression(n)&&n.expression.kind===ts.SyntaxKind.ImportKeyword)out.dynamicImports++;ts.forEachChild(n,v);})(tree);return out;};
+ const SINK_NAMES=new Set(['ethereum','localStorage','sessionStorage','indexedDB','sendTransaction','writeContract','sendRawTransaction','XMLHttpRequest','WebSocket','EventSource','sendBeacon','importScripts','Worker','SharedWorker','serviceWorker','dangerouslySetInnerHTML','innerHTML','outerHTML','insertAdjacentHTML','eval','Function','Reflect','globalThis','window','self','document','location','history','navigator','postMessage','cookie']);
+ for(const [f,s] of [['VaultStats.tsx',stats],['vaultStatsReport.tsx',report]]){
+  const n=names(s);
+  assert.deepEqual([...n.identifiers].filter(x=>SINK_NAMES.has(x)),[],f+': no wallet, storage, send, raw-HTML, global-object, navigation or worker name');
+  assert.deepEqual([...n.strings].filter(x=>/^(?:eth_|wallet_|personal_)|sendTransaction|writeContract|javascript:/i.test(x)),[],f+': no wallet method or script string');
+  assert.equal(n.dynamicImports,0,f+': no dynamic import');
+  assert.equal(n.requestCalls,0,f+': no provider-style .request() call');
+ }
+ assert.deepEqual(imports(stats),['react','./vaultStatsReport'],'VaultStats.tsx imports only React and the report module');
+ assert.deepEqual(imports(report),['react'],'vaultStatsReport.tsx imports only React');
+ assert.equal((stats.match(/\bfetch\s*\(/g)??[]).length,1,'VaultStats.tsx: exactly one fetch');
+ assert.ok(stats.includes('void fetch(url, { signal: controller.signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })'),'VaultStats.tsx: the one fetch is a plain GET without credentials or referrer');
+ assert.ok(stats.includes('const endpoint = (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_VAULT_STATS_URL || "'+V25_ENDPOINT+'";'),'VaultStats.tsx: the production stats endpoint, overridable only at build time');
+ assert.deepEqual([...stats.matchAll(/https?:\/\/[^\s"'`]+/g)].map(m=>m[0]),[V25_ENDPOINT],'VaultStats.tsx: the stats endpoint is its only address');
+ assert.ok(stats.includes('const url = new URL(endpoint); url.searchParams.set("period", period);'),'VaultStats.tsx: the request carries only the period');
+ assert.equal((report.match(/\bfetch\b/g)??[]).length,0,'vaultStatsReport.tsx: no network use');
+ assert.ok(report.includes('else if (/^https:\\/\\/robin\\.etherscan\\.io\\/tx\\/0x[0-9a-fA-F]{64}$/.test(href)) {')&&report.includes('props.href = href; props.target = "_blank"; props.rel = "noopener noreferrer";')&&report.includes('if (period) { props.href = "#vault";')&&report.includes('else return createElement("span", { key }, el.textContent);'),'vaultStatsReport.tsx: a link is kept only as a Robinhood explorer transaction (new tab, noopener) or a #vault period switch; any other link becomes plain text');
+ assert.doesNotMatch(css,/url\(|@import/,'the v25 stats styles load nothing');
+}
 const modulePins={
   "Tokenomics.tsx": "6d57c2f9d8629f7207368b6d00618da9351e72aba0de52fcff225490be47c85a",
   "tokenomicsData.ts": "8e2cfc45c8055f2dbfdc7a7610e57856809845d52dd103712dd8398f3b11a99a",
@@ -356,7 +401,7 @@ function localDeclarations(file,text,fn,list){
  return out;
 }
 const sources=git(['ls-tree','-r','--name-only',LEGACY,'web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8));
-assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES].sort(),'No source file added or removed');
+assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').filter(p=>/\.tsx?$/.test(p)).map(p=>p.slice(8)).sort(),[...sources,...NEW_SOURCES,...V25_NEW_SOURCES.filter(f=>/\.tsx?$/.test(f))].sort(),'No source file added or removed beyond the ITEM files and the v25 stats sources');
 // Every source is either frozen (byte-identical to HEAD) or a v16 file with its documented pieces (above).
 assert.deepEqual([...sources].sort(),[...protectedFiles,...Object.keys(editedFiles)].filter(f=>/\.tsx?$/.test(f)).sort(),'every web/src source is frozen or an ITEM file with documented pieces (v22\'s three files are HEAD\'s own)');
 const scans={},facts={attributes:{},guarded:{},calls:{}};
@@ -1291,7 +1336,7 @@ console.log('PASS ITEM gate',expectedActions.length,'actions;',itemEncodingCases
 // The report. The delivery is close to its size limit, so each piece is recorded by length and SHA-256, not repeated.
 const pieceRecord=([v12,head])=>({v12:{length:v12.length,sha256:sha256(v12)},head:{length:head.length,sha256:sha256(head)}});
 const brief=x=>x.length>120?{start:x.slice(0,80),length:x.length,sha256:sha256(x)}:x;
-fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',item:{mode:process.env.BASKET_ITEM_FINAL==='1'?'final':'null-or-filled',actions:expectedActions,encodingCases:itemEncodingCases,nullSlotCases:nullCases,nullActionCases,reads:itemReads,nativeRpcMethods:itemMethodsAdded,vaultNoValueBuilders,safety:itemSafety,independentRawSourcePins:ITEM_REVIEWED_PINS,legacyNormalization:'Exact approved pieces restored to base before unchanged legacy assertions'},baseline:git(['rev-parse','HEAD']).trim(),protectedFiles,editedFiles:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.length+' documented pieces [v12, HEAD]'])),v12Pieces:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.map(pieceRecord)])),counts,
+fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:'PASS',v25:{base:V25_BASE,restoredBeforeInheritedChecks:['Vault.tsx','styles.css'],newSources:V25_NEW_SOURCES,independentRawSourcePins:V25_PINS,endpoint:V25_ENDPOINT},item:{mode:process.env.BASKET_ITEM_FINAL==='1'?'final':'null-or-filled',actions:expectedActions,encodingCases:itemEncodingCases,nullSlotCases:nullCases,nullActionCases,reads:itemReads,nativeRpcMethods:itemMethodsAdded,vaultNoValueBuilders,safety:itemSafety,independentRawSourcePins:ITEM_REVIEWED_PINS,legacyNormalization:'Exact approved pieces restored to base before unchanged legacy assertions'},baseline:git(['rev-parse','HEAD']).trim(),protectedFiles,editedFiles:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.length+' documented pieces [v12, HEAD]'])),v12Pieces:Object.fromEntries(Object.entries(editedFiles).map(([f,x])=>[f,x.map(pieceRecord)])),counts,
  documentedGuardedCallChanges:expected,documentedAttributeChanges:Object.fromEntries(Object.entries(attributeChanges).map(([f,a])=>[f,{removed:a.removed.map(x=>'<'+x[0]+'> '+x[1]),added:a.added.map(x=>'<'+x[0]+'> '+x[1]),why:'each has its why in scripts/check-calldata.mjs'}])),
  documentedCallChanges:Object.fromEntries(Object.entries(callChanges).map(([f,c])=>[f,{why:c.why,piecesPutBackInsideCalls:c.pieces.map(pieceRecord),removed:c.removed.map(brief),newUsesOfWatchedNames:c.uses.map(([x,where])=>[brief(x),where])}])),
  vaultStockShelves:{attributes:vaultAttributes,handlers:vaultHandlers},pinnedFunctions,walletHookReturn:{equalToHead:true,text:HOOK_RETURN_HEAD},
@@ -1310,6 +1355,7 @@ fs.writeFileSync('../artifacts/calldata-comparison.json',JSON.stringify({result:
   'All protected wallet functions, flow effects, transaction buttons and handlers are byte-identical to HEAD; declaration and wrapper-scope checks prevent name rebinding',
   'Provider methods and uses, browser storage and network sinks equal HEAD; page loads equal HEAD; Disconnect makes no request; components retains the same single wallet.send',
   'The differential encoding corpus, six-clock send builders, parser declarations, pinned v9 decisions and imported bindings retain every prior assertion',
-  'Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs'
+  'Only approved v12 source files change; shell and share-card bytes are separately pinned by check-bundle.mjs',
+  'v25: Vault.tsx and styles.css equal the live v24 text once their five pieces and the appended stats block are put back; the two new stats sources are pinned by independent digests, import only React and each other, add one credential-free GET of the public stats report as the only new network use, rebuild the report from an allowlist and keep only explorer transaction links'
  ]},null,2)+'\n');
 console.log('PASS baseline call-expression comparison',counts,'differential encoding',tally,'send builders',sends);

@@ -1,8 +1,8 @@
 {
   "limitBytes": 8388608,
-  "uncompressedDeliveryBytes": 8235939,
-  "fileCount": 278,
-  "productionExportBytes": 1249329,
+  "uncompressedDeliveryBytes": 8325567,
+  "fileCount": 282,
+  "productionExportBytes": 1267708,
   "productionFiles": {
     "dist/art/character/deposit.webp": {
       "bytes": 61194,
@@ -168,17 +168,17 @@
       "bytes": 17936,
       "sha256": "8ddbebcc1048154132e1d78eb9b1f7850bca1b7d857035ccf1cb4318ebc615b6"
     },
-    "dist/assets/ccip-BvpA7xm5.js": {
+    "dist/assets/ccip-DVSpff_c.js": {
       "bytes": 2610,
-      "sha256": "bc420bc6544a137d2aba7a0015ae200b891fa7b78b4a1816bc08e57e1f38a694"
+      "sha256": "6c1b950fbe36ef47072e3a56ff59f70459a3804f5bb439ef681786a36ab01ccf"
     },
-    "dist/assets/index-BfIl7glJ.css": {
-      "bytes": 59333,
-      "sha256": "0daff0579c31d87ecf2281da4e61b9d5f838bdf9e07f7557867d2ce9be7a0f68"
+    "dist/assets/index-BizfU3zC.js": {
+      "bytes": 651216,
+      "sha256": "12f8ff483f42e6eeaf00befd1ca7721ba3ac366bb23b4e2514ce534c7f4f938d"
     },
-    "dist/assets/index-CYI-6Qll.js": {
-      "bytes": 645684,
-      "sha256": "00dee82aae19bdafded2d97ec92c5fb67ee01419cd308905e2cc773a8e701c15"
+    "dist/assets/index-wqZRUeaL.css": {
+      "bytes": 72180,
+      "sha256": "67c0ffc06c1245f57beafb6f51a8eefa2f60b1d11f6b5971447b31de5a6038a2"
     },
     "dist/favicon.svg": {
       "bytes": 416,
@@ -194,7 +194,7 @@
     },
     "dist/index.html": {
       "bytes": 1330,
-      "sha256": "e009dc75371d08d339c96c5fe40c7d37b8a869c0a108c2e490c8cadca0d00208"
+      "sha256": "5a03c45efd8ff5a25183f9a3a132589f80a961997b22c9219bbc626e7cd86048"
     },
     "dist/share-card.jpg": {
       "bytes": 44831,
@@ -204,6 +204,7 @@
   "accounting": "Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.",
   "checks": [
     "Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; ITEM and BASK source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged",
+    "v25: source scope adds Vault.tsx, the two new stats sources and no public asset",
     "No git submodules or nested dependency/cache/archive payloads",
     "24 required empty/25-stock screenshots retained: sixteen quality-18 JPEGs and exactly eight full Docs/Owner lossless WebPs with independent browser/Pillow pixel equality; only the exact named ITEM walk JPEGs are added",
     "Both copies of all 37 original manifest assets and the two exact approved ITEM pictures included"

@@ -10,7 +10,9 @@ const changed=git(['diff','--name-only','HEAD']).trim().split('\n').filter(Boole
 // check-calldata independently pins each reviewed source and freezes every other.
 // ITEM prompt rule 7: this exact source list replaces only the old v22 source-scope pin (v17 to v22 are HEAD's own now; rebased onto v22's commit 3038c97b on 2026-10-17).
 // Owner approval 2026-10-14 adds only Tokenomics.tsx's formatLive body; the gate pins every other byte.
-const itemSource=["main.tsx","Earn.tsx","itemReads.ts","itemFormat.ts","itemConstants.ts","styles.css"].map(f=>'web/src/'+f);
+// 2026-10-20, vault stats build (v25): Vault.tsx (the three VaultViews wrapper pieces), styles.css (the Earn focus corner
+// and the appended stats block) and the two new stats sources join the scope; check-calldata restores the two and pins the new ones.
+const itemSource=["main.tsx","Earn.tsx","itemReads.ts","itemFormat.ts","itemConstants.ts","styles.css","Vault.tsx","VaultStats.tsx","vaultStatsReport.tsx"].map(f=>'web/src/'+f);
 const itemPublic=["web/public/art/character/earn.webp","web/public/art/character/transparency.webp"];
 // Owner-requested LF repair only: original Anton licence text is pinned after CRLF normalization.
 const licenceFile='web/public/fonts/Anton-OFL.txt';
@@ -45,7 +47,9 @@ for(const p of changed){
 }
 // v20: no new source and no new public asset.
 const untracked=git(['ls-files','--others','--exclude-standard','--','web/src','web/public']).trim().split('\n').filter(Boolean);
-assert.deepEqual(untracked.sort(),[],'v24 adds no runtime source or public asset');
+// v25: its two new stats sources are accepted tracked or untracked (git apply with or without --index); nothing else is new.
+const V25_NEW=['web/src/VaultStats.tsx','web/src/vaultStatsReport.tsx'];
+assert.deepEqual(untracked.filter(p=>!V25_NEW.includes(p)).sort(),[],'v25 adds no runtime source or public asset beyond its two stats sources');
 assert.equal(sha256('web/index.html'),SHELL_SHA256,'exact v12 source shell');
 for(const p of ['web/public/share-card.jpg','dist/share-card.jpg']) {
  assert.equal(sha256(p),SHARE_SHA256,'exact v12 link picture: '+p);
@@ -86,7 +90,7 @@ for(const p of files.filter(p=>p.startsWith('artifacts/')&&p.endsWith('.json')&&
  if(Buffer.byteLength(after)<Buffer.byteLength(before))fs.writeFileSync(file,after);
 }
 const productionFiles={};for(const p of files.filter(p=>p.startsWith('dist/'))){const b=fs.readFileSync(path.join(root,p));productionFiles[p]={bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')};}
-const result={limitBytes:8388608,uncompressedDeliveryBytes:0,fileCount:files.length,productionExportBytes:Object.values(productionFiles).reduce((a,b)=>a+b.bytes,0),productionFiles,accounting:'Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.',checks:['Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; ITEM and BASK source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged','No git submodules or nested dependency/cache/archive payloads','24 required empty/25-stock screenshots retained: sixteen quality-18 JPEGs and exactly eight full Docs/Owner lossless WebPs with independent browser/Pillow pixel equality; only the exact named ITEM walk JPEGs are added','Both copies of all 37 original manifest assets and the two exact approved ITEM pictures included']};
+const result={limitBytes:8388608,uncompressedDeliveryBytes:0,fileCount:files.length,productionExportBytes:Object.values(productionFiles).reduce((a,b)=>a+b.bytes,0),productionFiles,accounting:'Complete candidate file contents including tracked lib sources and this report. Excludes Git metadata, removed task inputs and disposable test/scratch. No Git metadata was modified.',checks:['Protected configuration, dependencies, root contracts, web/pinned, build configuration and validation fixtures unchanged; ITEM and BASK source scope independently pinned; exact share shell and both share JPEG copies pinned; both favicon copies unchanged','v25: source scope adds Vault.tsx, the two new stats sources and no public asset','No git submodules or nested dependency/cache/archive payloads','24 required empty/25-stock screenshots retained: sixteen quality-18 JPEGs and exactly eight full Docs/Owner lossless WebPs with independent browser/Pillow pixel equality; only the exact named ITEM walk JPEGs are added','Both copies of all 37 original manifest assets and the two exact approved ITEM pictures included']};
 const report=path.join(root,'artifacts/bundle-check.json');
 for(let i=0;i<4;i++){fs.writeFileSync(report,JSON.stringify(result,null,2)+'\n');result.uncompressedDeliveryBytes=files.reduce((sum,p)=>sum+fs.statSync(path.join(root,p)).size,0);}
 fs.writeFileSync(report,JSON.stringify(result,null,2)+'\n');assert.ok(result.uncompressedDeliveryBytes<=result.limitBytes,"Over the 8 MiB budget (if the 24 screenshots are still an older set, run scripts/run-browser.mjs first: it rewrites them at quality 18): "+JSON.stringify(result));console.log('PASS complete bundle',result.uncompressedDeliveryBytes,'/',result.limitBytes,'bytes; lib included');

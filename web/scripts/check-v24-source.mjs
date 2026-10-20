@@ -7,6 +7,9 @@ import ts from 'typescript';
 const pieces=JSON.parse(fs.readFileSync(new URL('./v24-pieces.json',import.meta.url),'utf8'));
 // Digests are independent of generated restoration pieces.
 const pins=JSON.parse(fs.readFileSync(new URL('./v24-pins.json',import.meta.url),'utf8'));
+// 2026-10-20, vault stats build (v25): the Vault wrapper and Earn focus-corner pieces are put back before the v24
+// digests and the v23 restoration below, which are unchanged; the two new stats sources are the only additions.
+import {restoreV25, V25_NEW_SOURCES} from './v25-restore.mjs';
 export function restoreV24(file,text){
  for(const [now,old] of pieces[file.replace(/^web\/src\//,'')]??[]){assert.equal(text.split(now).length,2,file+': one exact v24 piece');text=text.replace(now,old);}
  return text;
@@ -17,9 +20,9 @@ export function checkV24Sources(root){
  const names=['Earn.tsx','itemConstants.ts','itemFormat.ts','itemReads.ts','main.tsx','styles.css'];
  assert.deepEqual(Object.keys(pieces).sort(),names);assert.deepEqual(Object.keys(pins).sort(),names);
  const sources=git(['ls-tree','-r','--name-only',base,'web/src']).trim().split('\n');
- assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').sort(),sources.sort(),'No source added or removed');
+ assert.deepEqual(git(['ls-files','--cached','--others','--exclude-standard','web/src']).trim().split('\n').sort(),[...sources,...V25_NEW_SOURCES.map(f=>'web/src/'+f)].sort(),'No source added or removed beyond the two v25 stats sources');
  for(const file of sources){
-  const text=fs.readFileSync(path.join(root,file),'utf8'),name=path.basename(file),old=git(['show',base+':'+file]);
+  const text=restoreV25(file,fs.readFileSync(path.join(root,file),'utf8')),name=path.basename(file),old=git(['show',base+':'+file]);
   if(pins[name]) assert.equal(createHash('sha256').update(text).digest('hex'),pins[name],file+': independently pinned v24 source');
   assert.equal(restoreV24(file,text),old,file+': v23 byte equality after exact v24 restoration');
  }
@@ -31,5 +34,5 @@ export function checkV24Sources(root){
  assert.match(actual('Earn.tsx'),/type="radio" name="earn-pool"/);
  assert.match(actual('main.tsx'),/useItemFigures\(page === "Earn" \? "earn" : "prices", page === "Earn" \? wallet.account : undefined, page\)/);
  assert.doesNotMatch(actual('itemReads.ts'),/setInterval|setTimeout|localStorage|sessionStorage|wallet\./);
- console.log('PASS v24 source gate: six independently pinned display/read sources; exact v23 restoration; unchanged sends, approvals, liquidity quotes and original Earn reads');
+ console.log('PASS v24 source gate (after exact v25 restoration of Vault.tsx and styles.css): six independently pinned display/read sources; exact v23 restoration; unchanged sends, approvals, liquidity quotes and original Earn reads');
 }

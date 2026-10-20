@@ -19,6 +19,7 @@ import {
   type Snapshot,
 } from "./model";
 import { PageTitle, AddressLink, Note, Empty } from "./components";
+import { VaultViews } from "./VaultStats";
 import { StoreShelf } from "./Scenery";
 import {
   countdown,
@@ -206,6 +207,7 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
           line: "I was hoping you would come through my aisle",
         }}
       />
+      <VaultViews>
       <section className="panel">
         <div className="section-heading">
           <h2>Inside the basket</h2>
@@ -264,6 +266,7 @@ export function VaultPage({ snapshot: s }: { snapshot: Snapshot }) {
         </div>
       </section>
       <StockShelves snapshot={s} />
+      </VaultViews>
     </>
   );
 }

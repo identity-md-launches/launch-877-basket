@@ -1,3 +1,34 @@
+# 2026-10-20 — v25 preparation: Vault Overview/Stats child tabs and the Earn phone corner
+
+Base `66bf0100cbc5b333b6184cd9b87071886d04742e` (the v24 delivery). Prepared on a fresh clone of that commit with the cumulative patch applied, then the inherited gates narrowly extended as described in the v25 section of `web/validation/README.md`. Static and read-only checks only: no fork walk, wallet send, review-agent pass, upload or payment ran in this preparation. Historical fork records remain v23 evidence. External Playwright (Chromium and WebKit) ran the browser checks; `BASKET_BASELINE_DIST` pointed at the untouched v24 export.
+
+| Command | Result |
+| --- | --- |
+| `npm ci` | PASS; existing dependency audit findings remain |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS; existing large-chunk advisory remains |
+| `node scripts/check-vault-stats-source.mjs` | PASS: 29 original sources byte-identical (main.tsx included), Vault.tsx exactly three pieces, styles.css exactly two replacements plus the pinned appended stats block, two new sources, 31 dependency/configuration/check files unchanged, the four narrowly extended check scripts listed |
+| `npx tsx scripts/check-item.ts` | PASS 71 |
+| `npx tsx scripts/check-prices.tsx` | PASS 15 |
+| `node scripts/check-prices-live.mjs` | PASS eight routes at 1440/375; observed BASK pool $0.96, NAV $0.97, ITEM $0.000249 (observations, nothing embedded) |
+| `node scripts/check-calldata.mjs`, also with `BASKET_ITEM_FINAL=1` | PASS after exact v25 then v24 restoration: 17 actions, 51 encodings, 15 null-slot guards, 255 refusals; vault 496 identical / 1,773 jointly refused; the two new sources pinned by digest and name-scanned |
+| `npx tsx scripts/check-tokenomics.tsx`, `node scripts/check-tokenomics-live.mjs`, `npx tsx scripts/check-bask-guide.tsx` | PASS |
+| `npm run validate` | PASS; block 93,056,947 |
+| `node scripts/check-preservation.mjs`, `npx tsx scripts/check-interface.ts` | PASS |
+| `node scripts/check-art.mjs` | PASS 78 hashes / 56 layout checks in both engines |
+| `node scripts/check-motion.mjs` | PASS 39; native Windows display scaling not verified |
+| `node scripts/inspect-export.mjs` | PASS 24 page/viewport checks |
+| `node scripts/check-guards.mjs` | PASS four refusals, zero sends |
+| `node scripts/check-fixes.mjs` | PASS 44 |
+| `node scripts/check-visibility.mjs` | PASS: 48 previous first-screen elements unchanged against the v24 export with the price strip compared rather than hidden; on Vault the tab bar (52 px, 20 px gap, two 44 px tabs, Overview selected, Stats panel hidden, no report mounted) measured and then hidden; the three title panels equal across the panel |
+| `node scripts/check-bundle.mjs` | PASS, under the 8,388,608-byte cap (its JSON records the exact count) |
+
+Export: four changed files (index JS, index CSS, index.html and the CCIP chunk's import); the other 45 of 49 files are byte-identical to the base.
+
+Two differences from the first local build of this feature, both required by the inherited checks and without visual change: the stats styles are appended to `styles.css` under one marker instead of a separate stylesheet imported by a component (the interface check loads `Vault.tsx` in Node, which cannot import CSS), and the endpoint constant reads `import.meta.env` through optional chaining (Node has no `env`).
+
+A lean pre-release review (three independent reviewers; each finding then challenged by a second agent) added five defensive bounds to the two new sources, with no visual change: the declared response size is refused above 2 MiB before the body is read, a report with more than 50,000 elements is refused at validation, a `<title>` is kept only inside SVG, children are passed as one keyed array rather than spread, and a rendering failure shows a notice instead of unmounting the page. It also added the export pin to `check-vault-stats-source.mjs`: the one built module script must resolve the stats endpoint through the pinned fallback exactly once, with no override value, no other Railway address and no env file under `web/`. Recorded without change on the monitor side: an invalid `PUBLIC_VAULT_STATS_ORIGINS` value would stop the monitor at start-up, and the adapter does not cache a failed render.
+
 # 2026-10-19 — contributor rerun of the exact v24 patch
 
 This entry records this workspace's actual results. Earlier entries and supplied reports remain intact and are not fresh results from this run. The website and export are prepared; the required art suite is **incomplete because WebKit is unavailable**. Every other requested check passed. No assertion, runtime source, drawing, layout or website wording was changed beyond the supplied patch.
@@ -1152,3 +1183,72 @@ The pinned guide was applied as a review of the patched surfaces (title-panel ch
 - Worker-side evidence only; the verifier checks paths and bytes. The live vault's state was not relied on; the walk-through used the pinned empty-vault block through an archive RPC.
 - The two scratch helpers above (archive proxy, full-Chromium shim) live in `test/scratch/` and are not delivered; without them this machine's Anvil cannot fork the pinned block through that archive RPC and Playwright's headless shell measures the strip at 750 px.
 
+
+---
+
+# 2026-10-20 — contributor rerun of the exact v25 patch
+
+This entry records this workspace's actual checks. The v25 preparation entry and earlier reports remain historical evidence, not fresh results from this run. The useful website source/export delivery is prepared; the full art suite is **incomplete because the provided WebKit executable is missing**. All other listed checks passed. No assertion, runtime source, drawing, layout or page wording was changed beyond the supplied patch.
+
+## Patch and export integrity
+
+The clean starting HEAD was already `66bf0100cbc5b333b6184cd9b87071886d04742e`. The Pinata patch was exactly **1,904,208 bytes**, SHA-256 **`1ecdcb373e62067624ef8615f28605ddb86d7bc7b034c332f2abe99d5e0a7793`**. `git apply --check` and `git apply` succeeded. A post-application hash inventory covered all **282 candidate files**. The patched runtime sources, check scripts and production export retain those exact bytes; subsequent changes are the required normal regenerated evidence and design/validation documentation. Contracts, main.tsx, wallet transaction code, dependencies, lockfiles, configuration and artwork are unchanged.
+
+All four required production hashes match exactly; there are no export hash differences:
+
+| File | SHA-256 |
+| --- | --- |
+| `dist/assets/index-wqZRUeaL.css` | `67c0ffc06c1245f57beafb6f51a8eefa2f60b1d11f6b5971447b31de5a6038a2` |
+| `dist/assets/index-BizfU3zC.js` | `12f8ff483f42e6eeaf00befd1ca7721ba3ac366bb23b4e2514ce534c7f4f938d` |
+| `dist/index.html` | `5a03c45efd8ff5a25183f9a3a132589f80a961997b22c9219bbc626e7cd86048` |
+| `dist/assets/ccip-DVSpff_c.js` | `6c1b950fbe36ef47072e3a56ff59f70459a3804f5bb439ef681786a36ab01ccf` |
+
+The other **45 of 49 export files** are byte-identical to the untouched base export saved before application. Relative assets, hash routing, title, favicon, description, og:title and og:image are retained. README.md already explains installation, preview and rebuilding; DESIGN.md now documents the implemented Vault views, scoped report styles, responsive grids and Earn corner.
+
+## Commands actually run
+
+Commands ran in `web/`, with the unchanged lockfile and external Playwright. Art and visibility received the untouched v24 export through `BASKET_BASELINE_DIST`. Read-only chain traffic used the contributor relay for the public endpoints `https://rpc.mainnet.chain.robinhood.com` and `https://robinhood-rpc.publicnode.com`. Transport routing did not replace response values; fixtures remain those declared by the unchanged checks. No check opened the stats monitor endpoint.
+
+| Command | Actual result |
+| --- | --- |
+| `npm ci`; `npm run typecheck`; `npm run build` | PASS. Installation used a disposable scratch npm cache. npm reported the existing three dependency audit findings (one moderate, two high); dependencies were not altered. Vite's existing large-chunk advisory remains. The final build was repeated after the design probe. |
+| `node scripts/check-vault-stats-source.mjs` | PASS: 29 original sources byte-identical, three exact Vault wrapper pieces, two exact Earn corner pieces, pinned appended styles, two new sources, 31 unchanged dependency/configuration/legacy-check files and the four declared check extensions. Built endpoint fallback pinned, no override. |
+| `npx tsx scripts/check-item.ts` | PASS: 71 ITEM checks. |
+| `npx tsx scripts/check-prices.tsx` | PASS: 15 arithmetic, freshness, read-inventory and failure-isolation checks. |
+| `node scripts/check-prices-live.mjs` | PASS: eight routes, 1440/375px, both pool choices, Claim/Withdraw controls, failed-feed clearing/recovery and no idle polling. Observed BASK Pool $0.96, NAV $0.97, ITEM $0.000242 at both widths; these are observations, not embedded values. |
+| `node scripts/check-calldata.mjs`; `BASKET_ITEM_FINAL=1 node scripts/check-calldata.mjs` | PASS in both modes after exact v25 then v24 restoration: 17 actions, 51 encodings, 15 null-slot guards, 255 null-action refusals; vault 496 identical encodings and 1,773 jointly refused inputs. New sources remain independently pinned and scanned. |
+| `npx tsx scripts/check-tokenomics.tsx`; `node scripts/check-tokenomics-live.mjs`; `npx tsx scripts/check-bask-guide.tsx` | PASS: content/arithmetic, all null mounts, mocked success/failure/Retry and BASK examples. The component fixture made zero external requests. |
+| `npm run validate` | PASS: canonical ABI, live chain/runtime, aggregate snapshot/status and all eleven proposal kinds; block **93,082,525**. |
+| `node scripts/check-preservation.mjs`; `npx tsx scripts/check-interface.ts` | PASS: protected paths, integration invariants, obsolete-address scan, arithmetic, parsers, balances and setting units. |
+| `node scripts/check-art.mjs` | **INCOMPLETE, exit 1.** All 78 asset hashes and the complete Chromium branch ran before launch of the next engine failed: `Executable doesn't exist at /opt/imd-tools/ms-playwright/webkit-2365/pw_run.sh`. The supplied preparation report `artifacts/art-validation.json` remains prior evidence, not a fresh 56-check pass. No browser was installed and no assertion was loosened. |
+| `node scripts/check-motion.mjs` | PASS: 39 checks. Normal DPR 1/1.25/1.5 PNG evidence regenerated and all three images viewed. Native Windows display scaling remains unverified. |
+| `node scripts/inspect-export.mjs` | PASS: 24 page/viewport checks at 1440/800/375/320px. |
+| `node scripts/check-guards.mjs` | PASS: four refusals, zero sends. |
+| `node scripts/check-fixes.mjs` | PASS: 44 deterministic regressions with the checks' existing mocked wallet and read fixtures. |
+| `node scripts/check-visibility.mjs` | PASS: 48 prior first-screen elements preserved. The v24 price strip is compared, not hidden. Vault's 52px tab bar and 20px following gap are measured before comparison; Overview is selected, Stats is hidden/unmounted and both tabs are 44px high. Original title geometry, copy, header and Earn control assertions remain. |
+| `node scripts/check-bundle.mjs` | PASS: 282 candidate files below 8,388,608 bytes, including tracked lib sources. `artifacts/bundle-check.json` records final byte accounting and all export hashes. Only lossless JSON whitespace compaction is applied; evidence values are retained. |
+
+Initial browser attempts stopped before measurement with `chrome_crashpad_handler: --database is required`; writable disposable browser directories resolved startup. Full Chromium was selected through a scratch import wrapper. Initial calldata attempts encountered uncached historical Git blobs; genuine pinned history was fetched from the public project repository into disposable scratch storage and supplied as an alternate object store, after which both unchanged gates passed. Neither workaround changes shipped tooling, sources or assertions. Scratch helpers, logs, caches, history and temporary screenshots are excluded from delivery.
+
+## Better Interface coverage and findings
+
+The pinned workflow and all six domain cores were read and applied to the changed surfaces. The approved child-tab placement, default Overview, monitor-owned content, existing flyer identity and v15 Earn corner rule remain authoritative. The source/export was also checked by the unmodified taste probe, using external Playwright with `--out test/scratch/taste`.
+
+| Domain | Coverage and limitations |
+| --- | --- |
+| Accessibility — checked in source and Chromium | `web/src/VaultStats.tsx:5` uses native buttons, one labelled tablist, selected/panel relationships, roving tab stop and arrow/Home/End handlers. Visibility measures default selection, hidden/unmounted Stats and target heights. Status and request-error recovery are present in source. No screen-reader or physical-device session; live Stats interactions were intentionally not exercised. |
+| Layout — checked in Chromium | Probe at 320/390/1440px, export suite at four widths, price UI at 1440/375px and base comparison at 375x812. The 390 first screen was viewed: Basket branding, Connect wallet, Deposit/Redeem navigation and shared token prices are visible. The character-before-figures composition is preserved; financial forms and child tabs are not claimed to be above the fold. No native zoom or RTL session. |
+| Writing — checked in source | Overview/Stats and Refresh/Retry describe their actions (`VaultStats.tsx:16`, `:58`); request failure gives recovery. `vaultStatsReport.tsx:29` rebuilds monitor text and permitted links without financial arithmetic. Existing copy remains byte-pinned. Live monitor wording/content was not reviewed. |
+| Typography — checked in source and Chromium | The new report rules reuse Flyer, Pixel and system body typography; responsive sizes and wrapping are documented in DESIGN.md. Existing font loading, long labels, title geometry and DPR evidence were checked in Chromium. Native Windows rasterization and live report wrapping remain unverified. |
+| Colors — checked for measured pairs | Existing paper/navy/royal/yellow tokens retained; report additions scoped at `styles.css:3226`. The probe's resolved solid text pairs pass 4.5:1, or 3:1 for large text. One text box over imagery/gradient was not measured. Live Stats contrast and every focus/background combination were not measured. One light theme; no new theme work applies. |
+| UI — checked in source and Chromium | Default Overview, retained figures/shelves, pool selection, tabs/disclosures, refresh/error recovery and send refusals passed their relevant supplied checks. The new Stats loading/stale-response/abort/Retry paths and React allowlists were source-reviewed only. Motion passes 39 checks; no DevTools slow-motion session. WebKit art coverage remains incomplete. |
+
+The probe passed **9/16 checks**: render, layout, targets, measured contrast, eyebrows, glyphs, slogans, motion and sharing. It reported no script errors, missing local files, horizontal overflow, overlapping/clipped text or obscuring floating controls. Its 390 and 1440 first-screen captures were actually viewed; they remain disposable scratch evidence.
+
+Seven retained probe flags are casing (`web/src/styles.css:108`), tracked figure labels (`:393`), type-size/family inventory, repeated ticker copy (`web/src/Scenery.tsx:74`), first-screen prose budget (71 words at 390, 97 at 1440) and border-plus-shadow flyer surfaces (`web/src/styles.css:235`). These are recorded observations under the exact-patch constraint: **"Do not rewrite the patch or change a word, drawing or layout to pass a check."** No prescribed source or layout was changed to remove them. The supplied Stats report's layout/data remains outside live check coverage. The missing WebKit executable is a verification limitation, not a redesigned or tested-around result.
+
+## Historical evidence and completion limits
+
+Historical fork reports and their contact sheets remain **v23 evidence**. Historical JPEG/WebP captures and their lossless packaging/compression records retain their patched values and bytes; no state or evidence field was removed. `run-browser.mjs` and `run-item-browser.mjs` were not run. No new fork transaction, live wallet broadcast, deployment, review-agent pass or publication is claimed. The monitor endpoint, CORS behavior and live report correctness are deliberately untested in this static/read-only update.
+
+The useful source/export and normal regenerated evidence are ready for submission, with the art/WebKit requirement incomplete as stated above. Git metadata is read-only: checkout could not write it, although HEAD was already the exact required base, and a manual commit could not be created. The files are left for the network's submission step. No requester input is needed for this tooling limitation.
